@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Providers } from '@/providers';
 import './globals.css';
 
@@ -20,7 +21,9 @@ export default function RootLayout({
           rel="stylesheet"
           href="/themes/cpt-legacy-dark/theme.css"
         />
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

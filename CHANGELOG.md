@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.9] - 2026-01-27
+
+### Fixed
+
+- Added theme link element directly in layout head for immediate loading
+- Added inline blocking script to set theme from localStorage before React hydrates
+- Theme CSS now loads synchronously before page render
+- CSS variables available immediately for globals.css
+- Fixed white background issue - theme now applies on initial page load
+
 ## [0.1.8] - 2026-01-27
 
 ### Added
