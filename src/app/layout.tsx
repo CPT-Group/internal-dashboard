@@ -4,8 +4,21 @@ import { Providers } from '@/providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Internal Dashboard',
-  description: 'Internal TV dashboard application',
+  title: 'CPT Group Internal',
+  description: 'CPT Group Internal Dashboard',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'none',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: [
       { url: '/icon.png', type: 'image/png' },

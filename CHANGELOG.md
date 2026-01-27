@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.15] - 2026-01-27
+
+### Changed
+
+- Updated metadata title and description to "CPT Group Internal"
+- Added robots.txt file to disallow all crawlers (User-agent: * Disallow: /)
+- Updated metadata robots configuration to prevent indexing
+- Set robots to noindex, nofollow, nocache for all search engines
+
 ## [0.1.14] - 2026-01-27
 
 ### Changed

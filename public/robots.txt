@@ -1,7 +1,3 @@
+# CPT Group Internal Dashboard - Disallow all crawlers
 User-agent: *
-Allow: /
-Disallow: /terms
-Disallow: /privacy
-Disallow: /support-request/success
-Disallow: /api/
-
+Disallow: /
