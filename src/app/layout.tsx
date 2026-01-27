@@ -15,12 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link
-          id="theme-stylesheet"
-          rel="stylesheet"
-          href="/themes/cpt-legacy-dark/theme.css"
-        />
+      <body>
         <Script
           id="theme-init"
           strategy="beforeInteractive"
@@ -41,8 +36,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body>
         <Providers>{children}</Providers>
       </body>
     </html>
