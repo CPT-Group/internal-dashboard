@@ -1,0 +1,2 @@
+# This file ensures the .cursor directory is tracked by git
+# All other files in this directory are git-ignored
