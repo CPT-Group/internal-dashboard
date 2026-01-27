@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.6] - 2026-01-27
+
+### Fixed
+
+- Fixed theme CSS loading conflict between ThemeLink and ThemeProvider
+- Simplified ThemeProvider to only handle state management, not CSS loading
+- Changed ThemeLink to use 'theme-link' ID to match zion pattern
+- ThemeProvider now updates ThemeLink href when theme changes
+- Theme CSS should now load properly on page load
+
 ## [0.1.5] - 2026-01-27
 
 ### Fixed

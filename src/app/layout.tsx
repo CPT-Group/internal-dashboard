@@ -1,12 +1,5 @@
 import type { Metadata } from 'next';
 import { Providers } from '@/providers';
-import { ThemeLink } from '@/components/common';
-
-// Import PrimeReact core styles
-import 'primereact/resources/primereact.min.css';
-import 'primeicons/primeicons.css';
-import 'primeflex/primeflex.css';
-
 import './globals.css';
 
 export const metadata: Metadata = {
