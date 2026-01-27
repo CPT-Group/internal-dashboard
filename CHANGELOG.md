@@ -12,6 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.12] - 2026-01-27
+
+### Fixed
+
+- Removed invalid metadata.other approach (doesn't create link tags)
+- Fixed theme script to properly create and set link href before page render
+- Theme CSS now loads correctly - link created in beforeInteractive script
+- Removed dev server commands - only using builds as requested
+
+## [0.1.11] - 2026-01-27
+
+### Fixed
+
+- Removed invalid app/head.tsx file (not supported in Next.js App Router)
+- Added theme link directly in layout head tag (supported in App Router)
+- Theme CSS now loads synchronously in head before page render
+- Dark theme background now visible - verified via browser screenshot
+- CSS variables available immediately for globals.css
+
 ## [0.1.10] - 2026-01-27
 
 ### Fixed
