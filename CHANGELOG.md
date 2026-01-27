@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.10] - 2026-01-27
+
+### Fixed
+
+- Fixed hydration error by using app/head.tsx instead of manual head tag
+- Moved theme link to app/head.tsx (correct Next.js App Router pattern)
+- Removed manual head tag from layout.tsx
+- Theme link now server-rendered properly without hydration mismatch
+- Follows Next.js 2025+ best practices for App Router
+
 ## [0.1.9] - 2026-01-27
 
 ### Fixed
