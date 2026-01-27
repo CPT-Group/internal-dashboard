@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.14] - 2026-01-27
+
+### Changed
+
+- Replaced Vercel favicon with CPT favicon from support portal
+- Added icon.png and apple-icon.png to src/app directory
+- Updated metadata to include icon configuration matching support portal
+- Icons now properly served from Next.js App Router convention location
+
 ## [0.1.13] - 2026-01-27
 
 ### Fixed

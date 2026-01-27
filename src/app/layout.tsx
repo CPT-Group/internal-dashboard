@@ -6,6 +6,15 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Internal Dashboard',
   description: 'Internal TV dashboard application',
+  icons: {
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
