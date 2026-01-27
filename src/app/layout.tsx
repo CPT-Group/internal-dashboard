@@ -14,6 +14,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          id="theme-stylesheet"
+          rel="stylesheet"
+          href="/themes/cpt-legacy-dark/theme.css"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('cpt-theme') || 'dark';
+                  var link = document.getElementById('theme-stylesheet');
+                  if (link) {
+                    link.href = theme === 'light' 
+                      ? '/themes/cpt-legacy-light/theme.css'
+                      : '/themes/cpt-legacy-dark/theme.css';
+                  }
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>
