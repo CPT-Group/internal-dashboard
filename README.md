@@ -96,9 +96,12 @@ All data sources return consistent JSON structures, making components source-agn
 ### Theme System
 
 Dynamic light/dark theme system:
+- **Default theme**: Dark mode
 - Themes loaded from `public/themes/` folder
 - Theme preference stored in localStorage
 - Uses `data-theme` attribute on HTML element
+- Theme CSS dynamically loaded via ThemeProvider
+- PrimeReact components styled with CPT legacy themes
 
 ### TV Routes
 
@@ -143,6 +146,7 @@ This project follows semantic versioning with custom increment rules:
 - **Patch (0.0.1)**: Small changes, bug fixes
 - **Minor (0.1.0)**: Medium changes, new features
 - **Major (1.0.0)**: Major releases, production-ready
+- **Current Version**: 0.1.2
 
 See `CHANGELOG.md` for version history.
 
@@ -154,7 +158,16 @@ See `CHANGELOG.md` for version history.
 - `docs/data-architecture.md` - Data-driven JSON approach
 - `docs/versioning.md` - Version control and changelog guidelines
 - `docs/import-organization.md` - Import order and hierarchical exports
+- `docs/style-guide-summary.md` - Quick reference summary
 - `CHANGELOG.md` - Version history and changes
+
+## Current Status
+
+- **Version**: 0.1.2
+- **Theme**: Dark mode (default)
+- **Foundation**: Complete - ready for main content development
+- **Components**: Empty placeholders - no UI implemented yet
+- **Data Architecture**: JSON-driven system ready for API, cron, and static data sources
 
 ## License
 
