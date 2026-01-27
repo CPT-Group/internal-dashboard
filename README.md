@@ -159,6 +159,7 @@ See `CHANGELOG.md` for version history.
 - `docs/versioning.md` - Version control and changelog guidelines
 - `docs/import-organization.md` - Import order and hierarchical exports
 - `docs/style-guide-summary.md` - Quick reference summary
+- `docs/primereact-theming.md` - PrimeReact theming implementation guide
 - `CHANGELOG.md` - Version history and changes
 
 ## Current Status
