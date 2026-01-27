@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.16] - 2026-01-27
+
+### Verified
+
+- Verified ProgressSpinner (p-progressspinner) theming in both light and dark themes
+- Confirmed all required CSS classes and animations are present
+- Both themes use primary color (#405c8e) for spinner stroke
+- Created spinner-theming-verification.md documentation
+
 ## [0.1.15] - 2026-01-27
 
 ### Changed
