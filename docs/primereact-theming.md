@@ -2,6 +2,8 @@
 
 Based on [PrimeReact Theming Documentation](https://primereact.org/theming/)
 
+**⚠️ IMPORTANT**: See `theme-implementation-notes.md` for the working solution and what NOT to do.
+
 ## Overview
 
 PrimeReact is design-agnostic - it doesn't enforce a specific styling. Styling is separated into two parts:
