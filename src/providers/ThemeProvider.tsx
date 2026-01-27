@@ -31,48 +31,23 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     // Get theme from localStorage or default to dark
     const savedTheme = (localStorage.getItem('cpt-theme') as Theme) || 'dark';
     setTheme(savedTheme);
-    
-    // Create initial theme link element
-    const linkId = 'theme-stylesheet';
-    let linkElement = document.getElementById(linkId) as HTMLLinkElement;
-    
-    if (!linkElement) {
-      linkElement = document.createElement('link');
-      linkElement.id = linkId;
-      linkElement.rel = 'stylesheet';
-      document.head.appendChild(linkElement);
-    }
-    
-    // Set initial theme
-    const themePath = savedTheme === 'light' 
-      ? '/themes/cpt-legacy-light/theme.css'
-      : '/themes/cpt-legacy-dark/theme.css';
-    linkElement.href = themePath;
     document.documentElement.setAttribute('data-theme', savedTheme);
-    
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
 
-    // Find or create the theme stylesheet link element
-    const linkId = 'theme-stylesheet';
-    let linkElement = document.getElementById(linkId) as HTMLLinkElement;
-
-    if (!linkElement) {
-      linkElement = document.createElement('link');
-      linkElement.id = linkId;
-      linkElement.rel = 'stylesheet';
-      document.head.appendChild(linkElement);
-    }
-
-    // Update the href to point to the selected theme
-    const themePath = theme === 'light' 
-      ? '/themes/cpt-legacy-light/theme.css'
-      : '/themes/cpt-legacy-dark/theme.css';
+    // Update ThemeLink href when theme changes
+    const linkId = 'theme-link';
+    const linkElement = document.getElementById(linkId) as HTMLLinkElement;
     
-    linkElement.href = themePath;
+    if (linkElement) {
+      const themePath = theme === 'light' 
+        ? '/themes/cpt-legacy-light/theme.css'
+        : '/themes/cpt-legacy-dark/theme.css';
+      linkElement.href = themePath;
+    }
 
     // Set data-theme attribute
     document.documentElement.setAttribute('data-theme', theme);

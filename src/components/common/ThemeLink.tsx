@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 export const ThemeLink = () => {
   useEffect(() => {
     // Create or get the theme link element
-    const linkId = 'theme-stylesheet';
+    const linkId = 'theme-link';
     let linkElement = document.getElementById(linkId) as HTMLLinkElement;
 
     if (!linkElement) {

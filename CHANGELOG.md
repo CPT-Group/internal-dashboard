@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.5] - 2026-01-27
+
+### Fixed
+
+- Added ThemeLink component to load theme CSS early in layout
+- Added base styles to globals.css using PrimeReact theme CSS variables
+- Moved PrimeReact core style imports to layout.tsx for proper loading order
+- Fixed dark theme not applying - background now uses var(--surface-ground)
+- Theme CSS now properly loads and applies on page load
+
 ## [0.1.4] - 2026-01-27
 
 ### Changed
