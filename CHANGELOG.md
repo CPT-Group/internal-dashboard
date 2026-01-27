@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.13] - 2026-01-27
+
+### Fixed
+
+- Removed metadata.other approach that broke theme loading
+- Added static link tag directly in body for theme CSS (server-rendered)
+- Theme CSS now loads synchronously before page render
+- Dark theme background now working - verified via browser screenshot
+- Link tag is in HTML from server, script only updates href if needed
+
 ## [0.1.12] - 2026-01-27
 
 ### Fixed

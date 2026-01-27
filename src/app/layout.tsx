@@ -16,6 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <link
+          id="theme-stylesheet"
+          rel="stylesheet"
+          href="/themes/cpt-legacy-dark/theme.css"
+        />
         <Script
           id="theme-init"
           strategy="beforeInteractive"
@@ -24,26 +29,12 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('cpt-theme') || 'dark';
-                  var linkId = 'theme-stylesheet';
-                  var existingLink = document.getElementById(linkId);
-                  
-                  if (!existingLink) {
-                    var link = document.createElement('link');
-                    link.id = linkId;
-                    link.rel = 'stylesheet';
-                    link.media = 'all';
-                    var themePath = theme === 'light' 
+                  var link = document.getElementById('theme-stylesheet');
+                  if (link) {
+                    link.href = theme === 'light' 
                       ? '/themes/cpt-legacy-light/theme.css'
                       : '/themes/cpt-legacy-dark/theme.css';
-                    link.href = themePath;
-                    document.head.insertBefore(link, document.head.firstChild);
-                  } else {
-                    var themePath = theme === 'light' 
-                      ? '/themes/cpt-legacy-light/theme.css'
-                      : '/themes/cpt-legacy-dark/theme.css';
-                    existingLink.href = themePath;
                   }
-                  
                   document.documentElement.setAttribute('data-theme', theme);
                 } catch (e) {}
               })();
