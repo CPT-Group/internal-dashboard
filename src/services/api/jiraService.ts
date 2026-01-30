@@ -20,6 +20,7 @@ const DEFAULT_JIRA_FIELDS = [
   'updated',
   'issuetype',
   'priority',
+  'duedate',
 ] as const;
 
 function getJiraConfig(): { baseUrl: string; authHeader: string } {

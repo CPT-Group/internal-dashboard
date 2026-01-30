@@ -1,9 +1,11 @@
 'use client';
 
 import type { DashboardProps } from '@/types';
+import { NovaDashboard } from '@/components';
 
 export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
-  // Empty placeholder - no UI yet
-  // Will accept JSON data and config to render widgets dynamically
+  if (roomName === 'dev-corner-two') {
+    return <NovaDashboard />;
+  }
   return null;
 };

@@ -39,6 +39,8 @@ export interface JiraIssueFields {
     id: string;
     name: string;
   };
+  /** ISO date string; used for overdue (late) tickets. */
+  duedate?: string | null;
 }
 
 export interface JiraIssue {

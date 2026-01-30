@@ -12,6 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.17] - 2026-01-30
+
+### Added
+
+- NOVA Jira analytics for Dev Corner Two dashboard
+- Cached Jira NOVA data with 5‑min TTL and memoization (jiraNovaStore)
+- JQL constants for NOVA: today (updated today), open (not Done), overdue (late)
+- NovaAnalytics types and by-assignee stats (open / today / overdue)
+- NovaDashboard: summary cards (total open, updated today, overdue) and DataTable by assignee
+- TV route `/tv/dev-corner-two` now renders NOVA dashboard with live-style analytics
+- Auto-refresh: fetch on mount if stale, then every 1 min check; refetch when cache TTL (5 min) expired
+- Optional `duedate` on Jira issue type and in default search fields for overdue tickets
+
+### Changed
+
+- TVDashboard renders NovaDashboard when roomName is dev-corner-two
+- tv/[roomName] page now renders TVDashboard with roomName instead of null
+
 ## [0.1.16] - 2026-01-27
 
 ### Changed

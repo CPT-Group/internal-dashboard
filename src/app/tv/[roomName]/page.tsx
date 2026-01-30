@@ -1,4 +1,5 @@
 import type { TVRouteParams } from '@/types';
+import { TVDashboard } from '@/components';
 
 interface TVRoomPageProps {
   params: Promise<TVRouteParams>;
@@ -6,5 +7,5 @@ interface TVRoomPageProps {
 
 export default async function TVRoomPage({ params }: TVRoomPageProps) {
   const { roomName } = await params;
-  return null;
+  return <TVDashboard roomName={roomName} />;
 }
