@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card } from 'primereact/card';
+import { Chart } from 'primereact/chart';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { DataTable } from 'primereact/datatable';
@@ -21,6 +22,46 @@ export const NovaDashboard = () => {
   }, [fetchNovaData, isStale]);
 
   const analytics = getAnalytics();
+
+  const barChartData = useMemo(() => {
+    const labels = analytics.byAssignee.map((a) => a.displayName);
+    const data = analytics.byAssignee.map((a) => a.openCount);
+    return {
+      labels,
+      datasets: [{ label: 'Open tickets', data }],
+    };
+  }, [analytics.byAssignee]);
+
+  const barChartOptions = useMemo(
+    () => ({
+      indexAxis: 'y' as const,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true },
+      },
+    }),
+    []
+  );
+
+  const doughnutChartData = useMemo(() => {
+    const labels = analytics.byAssignee.map((a) => a.displayName);
+    const data = analytics.byAssignee.map((a) => a.openCount);
+    return {
+      labels,
+      datasets: [{ data }],
+    };
+  }, [analytics.byAssignee]);
+
+  const doughnutChartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' as const } },
+    }),
+    []
+  );
 
   if (loading && analytics.totalOpen === 0 && analytics.totalToday === 0) {
     return (
@@ -67,6 +108,23 @@ export const NovaDashboard = () => {
             <div className="text-center">
               <div className="text-4xl font-bold text-primary">{analytics.totalOverdue}</div>
               <div className="text-color-secondary mt-1">Overdue (late)</div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <div className="grid mb-4">
+        <div className="col-12 lg:col-8">
+          <Card title="Open tickets by assignee">
+            <div style={{ height: '280px' }}>
+              <Chart type="bar" data={barChartData} options={barChartOptions} />
+            </div>
+          </Card>
+        </div>
+        <div className="col-12 lg:col-4">
+          <Card title="Distribution">
+            <div style={{ height: '280px' }}>
+              <Chart type="doughnut" data={doughnutChartData} options={doughnutChartOptions} />
             </div>
           </Card>
         </div>
