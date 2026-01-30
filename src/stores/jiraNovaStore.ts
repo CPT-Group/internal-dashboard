@@ -31,16 +31,22 @@ function getAssigneeName(issue: JiraIssue): string {
   return a?.displayName ?? 'Unassigned';
 }
 
+function isAssigned(issue: JiraIssue): boolean {
+  return Boolean(issue.fields?.assignee);
+}
+
 function buildAnalytics(
   openIssues: JiraIssue[],
   todayIssues: JiraIssue[],
   overdueIssues: JiraIssue[]
 ): NovaAnalytics {
-  const todayKeys = new Set(todayIssues.map((i) => i.id));
-  const overdueKeys = new Set(overdueIssues.map((i) => i.id));
+  const assignedOpen = openIssues.filter(isAssigned);
+  const todayKeys = new Set(todayIssues.filter(isAssigned).map((i) => i.id));
+  const overdueKeys = new Set(overdueIssues.filter(isAssigned).map((i) => i.id));
   const byAssigneeMap = new Map<string, NovaAssigneeStats>();
 
   const upsert = (issue: JiraIssue) => {
+    if (!isAssigned(issue)) return;
     const id = getAssigneeKey(issue);
     const name = getAssigneeName(issue);
     const cur = byAssigneeMap.get(id) ?? {
@@ -56,15 +62,15 @@ function buildAnalytics(
     byAssigneeMap.set(id, cur);
   };
 
-  openIssues.forEach(upsert);
+  assignedOpen.forEach(upsert);
   const byAssignee = Array.from(byAssigneeMap.values()).sort(
     (a, b) => b.openCount - a.openCount
   );
 
   return {
-    totalOpen: openIssues.length,
-    totalToday: todayIssues.length,
-    totalOverdue: overdueIssues.length,
+    totalOpen: assignedOpen.length,
+    totalToday: todayIssues.filter(isAssigned).length,
+    totalOverdue: overdueIssues.filter(isAssigned).length,
     byAssignee,
   };
 }

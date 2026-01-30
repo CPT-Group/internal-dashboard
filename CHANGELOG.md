@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.18] - 2026-01-30
+
+### Changed
+
+- NOVA analytics: exclude unassigned tickets from totals and from by-assignee table (assigned only)
+
 ## [0.1.17] - 2026-01-30
 
 ### Added
