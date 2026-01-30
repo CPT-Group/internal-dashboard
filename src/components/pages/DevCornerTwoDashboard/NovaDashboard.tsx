@@ -70,38 +70,37 @@ export const NovaDashboard = () => {
 
   if (loading && analytics.totalOpen === 0 && analytics.totalToday === 0) {
     return (
-      <div className="p-4 nova-dashboard-loading">
-        <Skeleton width="12rem" height="2rem" className="mb-4" />
-        <Skeleton width="24rem" height="1rem" className="mb-4" />
-        <div className="grid mb-4">
+      <div className="nova-dashboard-loading">
+        <Skeleton width="10rem" height="1.5rem" className="mb-2" />
+        <div className="grid mb-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="col-12 md:col-4">
-              <Card>
-                <div className="flex flex-column align-items-center gap-2">
-                  <Skeleton width="4rem" height="3rem" />
-                  <Skeleton width="6rem" height="1rem" />
+              <Card className="p-2">
+                <div className="flex flex-column align-items-center gap-1">
+                  <Skeleton width="3rem" height="2rem" />
+                  <Skeleton width="4rem" height="0.75rem" />
                 </div>
               </Card>
             </div>
           ))}
         </div>
-        <div className="grid mb-4">
+        <div className="grid mb-2">
           <div className="col-12 lg:col-8">
-            <Card title="Open tickets by assignee">
-              <Skeleton width="100%" height="280px" />
+            <Card title="Open by assignee" className="p-2">
+              <Skeleton width="100%" height="160px" />
             </Card>
           </div>
           <div className="col-12 lg:col-4">
-            <Card title="Distribution">
-              <Skeleton width="100%" height="280px" shape="circle" className="mx-auto" />
+            <Card title="Distribution" className="p-2">
+              <Skeleton width="100%" height="160px" shape="circle" className="mx-auto" />
             </Card>
           </div>
         </div>
-        <Card title="By assignee">
-          <Skeleton width="100%" height="200px" />
+        <Card title="By assignee" className="p-2">
+          <Skeleton width="100%" height="120px" />
         </Card>
-        <div className="flex align-items-center gap-2 mt-2">
-          <ProgressSpinner style={{ width: '24px', height: '24px' }} />
+        <div className="flex align-items-center gap-2 mt-1">
+          <ProgressSpinner style={{ width: '18px', height: '18px' }} />
           <span className="text-color-secondary text-sm">Loading…</span>
         </div>
       </div>
@@ -110,71 +109,74 @@ export const NovaDashboard = () => {
 
   if (error) {
     return (
-      <div className="p-4">
+      <div className="p-2">
         <Message severity="error" text={error} className="w-full" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 nova-dashboard-content">
-      <h1 className="text-3xl font-bold m-0 mb-4">NOVA – Dev Corner Two</h1>
-      <p className="text-color-secondary m-0 mb-4">
-        Live view of active tickets (cached 5 min). Focus: today’s activity, open by assignee, late tickets.
-      </p>
+    <div className="nova-dashboard-content">
+      <div className="nova-dashboard-header flex align-items-center gap-2 mb-2">
+        <h1 className="text-xl font-bold m-0">NOVA – Dev Corner Two</h1>
+        <span className="text-color-secondary text-sm">Open / today / late (cached 5 min)</span>
+      </div>
 
-      <div className="grid mb-4">
+      <div className="nova-dashboard-stats grid mb-2">
         <div className="col-12 md:col-4">
-          <Card className="h-full">
+          <Card className="p-2">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary">{analytics.totalOpen}</div>
-              <div className="text-color-secondary mt-1">Open tickets</div>
+              <div className="text-2xl font-bold text-primary">{analytics.totalOpen}</div>
+              <div className="text-color-secondary text-sm mt-0">Open</div>
             </div>
           </Card>
         </div>
         <div className="col-12 md:col-4">
-          <Card className="h-full">
+          <Card className="p-2">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary">{analytics.totalToday}</div>
-              <div className="text-color-secondary mt-1">Updated today</div>
+              <div className="text-2xl font-bold text-primary">{analytics.totalToday}</div>
+              <div className="text-color-secondary text-sm mt-0">Today</div>
             </div>
           </Card>
         </div>
         <div className="col-12 md:col-4">
-          <Card className="h-full">
+          <Card className="p-2">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary">{analytics.totalOverdue}</div>
-              <div className="text-color-secondary mt-1">Overdue (late)</div>
+              <div className="text-2xl font-bold text-primary">{analytics.totalOverdue}</div>
+              <div className="text-color-secondary text-sm mt-0">Late</div>
             </div>
           </Card>
         </div>
       </div>
 
-      <div className="grid mb-4">
+      <div className="nova-dashboard-charts grid mb-2">
         <div className="col-12 lg:col-8">
-          <Card title="Open tickets by assignee">
-            <div style={{ height: '280px' }}>
+          <Card title="Open by assignee" className="p-2">
+            <div style={{ height: '160px' }}>
               <Chart type="bar" data={barChartData} options={barChartOptions} />
             </div>
           </Card>
         </div>
         <div className="col-12 lg:col-4">
-          <Card title="Distribution">
-            <div style={{ height: '280px' }}>
+          <Card title="Distribution" className="p-2">
+            <div style={{ height: '160px' }}>
               <Chart type="doughnut" data={doughnutChartData} options={doughnutChartOptions} />
             </div>
           </Card>
         </div>
       </div>
 
-      <Card title="By assignee (open / today / late)">
-        <DataTable
-          value={analytics.byAssignee}
-          size="small"
-          stripedRows
-          emptyMessage="No assignees"
-          className="p-datatable-sm"
-        >
+      <div className="nova-dashboard-table-wrap flex flex-column min-h-0 flex-1">
+        <Card title="By assignee" className="p-2 flex flex-column min-h-0 flex-1">
+          <DataTable
+            value={analytics.byAssignee}
+            size="small"
+            stripedRows
+            scrollable
+            scrollHeight="flex"
+            emptyMessage="No assignees"
+            className="p-datatable-sm p-datatable-compact"
+          >
           <Column field="displayName" header="Assignee" sortable />
           <Column
             field="openCount"
@@ -201,11 +203,12 @@ export const NovaDashboard = () => {
             }
           />
         </DataTable>
-      </Card>
+        </Card>
+      </div>
 
       {loading && (
-        <div className="flex align-items-center gap-2 mt-2">
-          <ProgressSpinner style={{ width: '24px', height: '24px' }} />
+        <div className="flex align-items-center gap-2 mt-1 flex-shrink-0">
+          <ProgressSpinner style={{ width: '18px', height: '18px' }} />
           <span className="text-color-secondary text-sm">Refreshing…</span>
         </div>
       )}
