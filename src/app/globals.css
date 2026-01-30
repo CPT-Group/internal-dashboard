@@ -5,8 +5,38 @@ body {
   font-family: var(--font-family);
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
 html {
   background-color: var(--surface-ground);
+  overflow-x: hidden;
+  /* Scale entire UI down by 25% - affects all rem-based sizes (buttons, inputs, spacing, icons, etc.) */
+  font-size: 75%;
+}
+
+/* Home Page Container - TV-optimized, no scrolling */
+.home-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  max-height: 100vh;
+  padding: 2rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Dashboard Card Styles - TV-friendly with theme variables */
+.dashboard-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  /* Using rem instead of px so it scales with global font-size */
+  min-height: 20rem;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }

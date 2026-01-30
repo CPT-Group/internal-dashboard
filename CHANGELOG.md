@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.16] - 2026-01-27
 
+### Changed
+
+- Configured dev server to run on port 3333 (`npm run dev` uses `next dev -p 3333`)
+
 ### Verified
 
 - Verified ProgressSpinner (p-progressspinner) theming in both light and dark themes

@@ -1,8 +1,9 @@
 import type { TVRouteConfig } from '@/types';
 
 export const TV_ROOM_NAMES = [
+  'dev-corner-one',
+  'dev-corner-two',
   'conference-room',
-  'dev',
   'lobby',
   'break-room',
 ] as const;
@@ -10,22 +11,28 @@ export const TV_ROOM_NAMES = [
 export type TVRoomName = (typeof TV_ROOM_NAMES)[number];
 
 export const TV_ROUTE_CONFIGS: Record<string, TVRouteConfig> = {
+  'dev-corner-one': {
+    roomName: 'dev-corner-one',
+    displayName: 'Dev Corner One',
+    description: 'Development team dashboard - Analytics & Metrics',
+    enabled: true,
+  },
+  'dev-corner-two': {
+    roomName: 'dev-corner-two',
+    displayName: 'Dev Corner Two',
+    description: 'Development team dashboard - Performance & Stats',
+    enabled: true,
+  },
   'conference-room': {
     roomName: 'conference-room',
     displayName: 'Conference Room',
     description: 'Main conference room dashboard',
     enabled: true,
   },
-  dev: {
-    roomName: 'dev',
-    displayName: 'Development',
-    description: 'Development team dashboard',
-    enabled: true,
-  },
   lobby: {
     roomName: 'lobby',
     displayName: 'Lobby',
-    description: 'Lobby dashboard',
+    description: 'Lobby dashboard - Case analytics & system metrics',
     enabled: true,
   },
   'break-room': {

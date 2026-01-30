@@ -1,0 +1,49 @@
+/**
+ * Minimal Jira issue shape for dashboard (REST API v3 search response).
+ * Full issue has many more fields; we type what we use.
+ */
+
+export interface JiraIssueStatus {
+  id: string;
+  name: string;
+  statusCategory?: {
+    key: string;
+    name: string;
+  };
+}
+
+export interface JiraIssueProject {
+  key: string;
+  id: string;
+  name: string;
+}
+
+export interface JiraUser {
+  accountId: string;
+  displayName?: string;
+  emailAddress?: string;
+}
+
+export interface JiraIssueFields {
+  summary: string;
+  status: JiraIssueStatus;
+  project: JiraIssueProject;
+  assignee: JiraUser | null;
+  created: string;
+  updated: string;
+  issuetype: {
+    id: string;
+    name: string;
+  };
+  priority?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface JiraIssue {
+  id: string;
+  key: string;
+  self: string;
+  fields: JiraIssueFields;
+}
