@@ -41,28 +41,69 @@ html {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* TV dashboard – single screen, no scrolling */
+/* TV dashboard – single screen, no scrolling, tighter spacing, depth & elevation */
 .nova-dashboard-content {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-  padding: 0.75rem;
+  padding: 0.5rem;
   animation: nova-dashboard-fade-in 0.5s ease-out;
   box-sizing: border-box;
+  gap: 0.5rem;
 }
 
-.nova-dashboard-content .nova-dashboard-header {
-  flex-shrink: 0;
+.nova-dashboard-content .p-card {
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nova-dashboard-content .p-card .p-card-body,
+.nova-dashboard-content .p-card .p-card-content {
+  padding: 0.5rem;
+}
+
+.nova-dashboard-content .nova-dashboard-stats .p-card .p-card-body,
+.nova-dashboard-content .nova-dashboard-stats .p-card .p-card-content {
+  padding: 0.35rem 0.5rem;
 }
 
 .nova-dashboard-content .nova-dashboard-stats {
   flex-shrink: 0;
 }
 
+.nova-dashboard-content .nova-stat-value {
+  color: var(--p-primary-color);
+}
+
 .nova-dashboard-content .nova-dashboard-charts {
   flex-shrink: 0;
+}
+
+/* Distribution card: chart + legend use full width (legend right of chart) */
+.nova-dashboard-content .nova-dashboard-doughnut-card .p-card-content {
+  width: 100%;
+}
+
+.nova-dashboard-doughnut-wrap {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.nova-dashboard-doughnut-wrap .nova-doughnut-root {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.nova-dashboard-content .nova-dashboard-charts .p-card .p-card-content > div {
+  border-radius: 0.35rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .nova-dashboard-content .nova-dashboard-table-wrap {
@@ -85,11 +126,18 @@ html {
   min-height: 0;
 }
 
+/* Table tag colors: Open=blue, Today=purple, Late/Bugs=red, Done=green (via severity); purple custom */
+.nova-dashboard-content .nova-tag-today {
+  background: rgba(168, 85, 247, 0.25);
+  color: rgb(216, 180, 254);
+  border: 1px solid rgba(168, 85, 247, 0.5);
+}
+
 .nova-dashboard-loading {
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-  padding: 0.75rem;
+  padding: 0.5rem;
   animation: nova-dashboard-fade-in 0.3s ease-out;
   box-sizing: border-box;
 }

@@ -15,3 +15,7 @@ export const JIRA_NOVA_JQL_OPEN =
 /** JQL: overdue (late) tickets for NOVA. */
 export const JIRA_NOVA_JQL_OVERDUE =
   `project = ${JIRA_NOVA_PROJECT} AND duedate < now() AND statusCategory != Done order by duedate ASC`;
+
+/** JQL: completed (Done) tickets for NOVA. */
+export const JIRA_NOVA_JQL_DONE =
+  `project = ${JIRA_NOVA_PROJECT} AND statusCategory = Done order by updated DESC`;

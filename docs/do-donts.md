@@ -104,6 +104,11 @@
 - **DON'T** skip testing after changes
 - **DON'T** ignore code smells
 
+### Console & runtime
+
+- **DO** check the browser console after changes; there should be no errors or warnings
+- **DON'T** leave `console.log` / `console.debug` / `console.info` in code (ESLint warns; use `console.warn` or `console.error` only if needed)
+
 ### UI Development
 
 - **DON'T** prebake UI without requirements
@@ -151,6 +156,7 @@
 - Cache expensive operations
 - Extract duplicates
 - Test after changes
+- Check the browser console for errors when making UI or API changes
 
 **Never**:
 - Use `any` types
@@ -158,3 +164,4 @@
 - Call APIs on every render
 - Skip performance considerations
 - Mix concerns
+- Ship with console errors or stray `console.log`
