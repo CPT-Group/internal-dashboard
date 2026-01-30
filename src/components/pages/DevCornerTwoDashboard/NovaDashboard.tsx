@@ -24,14 +24,44 @@ export const NovaDashboard = () => {
 
   const analytics = getAnalytics();
 
+  /* Per-assignee palette: vibrant colors with opacity for modern floating look */
+  const chartColors = useMemo(
+    () => [
+      'rgba(59, 130, 246, 0.78)',
+      'rgba(168, 85, 247, 0.78)',
+      'rgba(34, 197, 94, 0.78)',
+      'rgba(234, 179, 8, 0.78)',
+      'rgba(236, 72, 153, 0.78)',
+      'rgba(20, 184, 166, 0.78)',
+      'rgba(249, 115, 22, 0.78)',
+      'rgba(99, 102, 241, 0.78)',
+    ],
+    []
+  );
+
   const barChartData = useMemo(() => {
     const labels = analytics.byAssignee.map((a) => a.displayName);
     const data = analytics.byAssignee.map((a) => a.openCount);
+    const colors = analytics.byAssignee.map((_, i) => chartColors[i % chartColors.length]);
     return {
       labels,
-      datasets: [{ label: 'Open tickets', data }],
+      datasets: [
+        {
+          label: 'Open tickets',
+          data,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.78', '1')),
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+          hoverBorderWidth: 2,
+          hoverShadowBlur: 6,
+          hoverShadowOffsetY: 2,
+          hoverShadowColor: 'rgba(0,0,0,0.25)',
+        },
+      ],
     };
-  }, [analytics.byAssignee]);
+  }, [analytics.byAssignee, chartColors]);
 
   const barChartOptions = useMemo(
     () => ({
@@ -51,19 +81,36 @@ export const NovaDashboard = () => {
   const doughnutChartData = useMemo(() => {
     const labels = analytics.byAssignee.map((a) => a.displayName);
     const data = analytics.byAssignee.map((a) => a.openCount);
+    const colors = analytics.byAssignee.map((_, i) => chartColors[i % chartColors.length]);
     return {
       labels,
-      datasets: [{ data }],
+      datasets: [
+        {
+          data,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.78', '1')),
+          borderWidth: 2,
+          hoverBorderWidth: 3,
+          hoverShadowBlur: 8,
+          hoverShadowOffsetY: 2,
+          hoverShadowColor: 'rgba(0,0,0,0.3)',
+        },
+      ],
     };
-  }, [analytics.byAssignee]);
+  }, [analytics.byAssignee, chartColors]);
 
   const doughnutChartOptions = useMemo(
     () => ({
-      responsive: false,
+      responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 1000 },
       transitions: { active: { animation: { duration: 800 } } },
-      plugins: { legend: { position: 'bottom' as const } },
+      plugins: {
+        legend: {
+          position: 'right' as const,
+          labels: { boxWidth: 14, padding: 12, usePointStyle: true },
+        },
+      },
     }),
     []
   );
@@ -71,10 +118,9 @@ export const NovaDashboard = () => {
   if (loading && analytics.totalOpen === 0 && analytics.totalToday === 0) {
     return (
       <div className="nova-dashboard-loading">
-        <Skeleton width="10rem" height="1.5rem" className="mb-2" />
         <div className="grid mb-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="col-12 md:col-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="col-6 md:col-3">
               <Card className="p-2">
                 <div className="flex flex-column align-items-center gap-1">
                   <Skeleton width="3rem" height="2rem" />
@@ -117,33 +163,36 @@ export const NovaDashboard = () => {
 
   return (
     <div className="nova-dashboard-content">
-      <div className="nova-dashboard-header flex align-items-center gap-2 mb-2">
-        <h1 className="text-xl font-bold m-0">NOVA – Dev Corner Two</h1>
-        <span className="text-color-secondary text-sm">Open / today / late (cached 5 min)</span>
-      </div>
-
       <div className="nova-dashboard-stats grid mb-2">
-        <div className="col-12 md:col-4">
+        <div className="col-6 md:col-3">
           <Card className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{analytics.totalOpen}</div>
+              <div className="nova-stat-value text-2xl font-bold">{analytics.totalOpen}</div>
               <div className="text-color-secondary text-sm mt-0">Open</div>
             </div>
           </Card>
         </div>
-        <div className="col-12 md:col-4">
+        <div className="col-6 md:col-3">
           <Card className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{analytics.totalToday}</div>
+              <div className="nova-stat-value text-2xl font-bold">{analytics.totalToday}</div>
               <div className="text-color-secondary text-sm mt-0">Today</div>
             </div>
           </Card>
         </div>
-        <div className="col-12 md:col-4">
+        <div className="col-6 md:col-3">
           <Card className="p-2">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{analytics.totalOverdue}</div>
+              <div className="nova-stat-value text-2xl font-bold">{analytics.totalOverdue}</div>
               <div className="text-color-secondary text-sm mt-0">Late</div>
+            </div>
+          </Card>
+        </div>
+        <div className="col-6 md:col-3">
+          <Card className="p-2">
+            <div className="text-center">
+              <div className="nova-stat-value text-2xl font-bold">{analytics.totalDone}</div>
+              <div className="text-color-secondary text-sm mt-0">Done</div>
             </div>
           </Card>
         </div>
@@ -152,31 +201,21 @@ export const NovaDashboard = () => {
       <div className="nova-dashboard-charts grid mb-2">
         <div className="col-12 lg:col-8">
           <Card title="Open by assignee" className="p-2">
-            <div style={{ height: '160px' }}>
+            <div style={{ height: '200px' }}>
               <Chart type="bar" data={barChartData} options={barChartOptions} />
             </div>
           </Card>
         </div>
         <div className="col-12 lg:col-4">
-          <Card title="Distribution" className="p-2">
-            <div
-              className="flex align-items-center justify-content-center overflow-hidden"
-              style={{ height: '160px' }}
-            >
+          <Card title="Distribution" className="p-2 nova-dashboard-doughnut-card">
+            <div className="nova-dashboard-doughnut-wrap" style={{ height: '200px' }}>
               <Chart
                 type="doughnut"
                 data={doughnutChartData}
                 options={doughnutChartOptions}
-                width="160"
-                height="160"
                 pt={{
-                  root: {
-                    style: { maxWidth: '100%', maxHeight: '100%', flexShrink: 0 },
-                    className: 'nova-doughnut-root',
-                  },
-                  canvas: {
-                    style: { display: 'block', maxWidth: '100%', maxHeight: '100%' },
-                  },
+                  root: { className: 'nova-doughnut-root' },
+                  canvas: { style: { display: 'block' } },
                 }}
               />
             </div>
@@ -200,13 +239,17 @@ export const NovaDashboard = () => {
             field="openCount"
             header="Open"
             sortable
-            body={(row) => <Tag value={String(row.openCount)} />}
+            body={(row) => (
+              <Tag value={String(row.openCount)} severity="info" />
+            )}
           />
           <Column
             field="todayCount"
             header="Today"
             sortable
-            body={(row) => <Tag value={String(row.todayCount)} severity="info" />}
+            body={(row) => (
+              <Tag value={String(row.todayCount)} className="nova-tag-today" />
+            )}
           />
           <Column
             field="overdueCount"
@@ -215,6 +258,30 @@ export const NovaDashboard = () => {
             body={(row) =>
               row.overdueCount > 0 ? (
                 <Tag value={String(row.overdueCount)} severity="danger" />
+              ) : (
+                <span className="text-color-secondary">0</span>
+              )
+            }
+          />
+          <Column
+            field="bugCount"
+            header="Bugs"
+            sortable
+            body={(row) =>
+              row.bugCount > 0 ? (
+                <Tag value={String(row.bugCount)} severity="danger" />
+              ) : (
+                <span className="text-color-secondary">0</span>
+              )
+            }
+          />
+          <Column
+            field="doneCount"
+            header="Done"
+            sortable
+            body={(row) =>
+              row.doneCount > 0 ? (
+                <Tag value={String(row.doneCount)} severity="success" />
               ) : (
                 <span className="text-color-secondary">0</span>
               )

@@ -12,6 +12,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.27] - 2026-01-30
+
+### Changed
+
+- NOVA dashboard charts: chart fill opacity reduced (0.88 → 0.78) for a bit more transparency and floating look
+
+## [0.1.26] - 2026-01-30
+
+### Added
+
+- NOVA dashboard: chart colors restored with vibrant per-assignee palette and opacity for a modern floating look (bar + doughnut)
+- By assignee table: Bugs and Done columns; conditional formatting: Open=blue (info), Today=purple (custom), Late/Bugs=red (danger), Done=green (success)
+- Top stats: fourth card for Done; JQL and store support for completed (Done) tickets and bug count per assignee
+
+### Changed
+
+- NOVA analytics: NovaAssigneeStats now include bugCount (from open issues where issuetype=Bug) and doneCount (from Done JQL); totalDone in NovaAnalytics
+- Stat numbers use .nova-stat-value for theme primary contrast; stats grid is 4 columns (Open, Today, Late, Done)
+
+## [0.1.25] - 2026-01-30
+
+### Fixed
+
+- Hydration mismatch on Dev Corner Two: NovaDashboard loaded with `next/dynamic` and `ssr: false` so DataTable and charts are client-only, avoiding extension-injected attributes (e.g. `data-cursor-ref`) that differ from server HTML
+
+### Changed
+
+- NOVA TV dashboard UI: cards get elevation (box-shadow, border-radius, subtle border); chart containers get inner highlight and doughnut gets drop-shadow; bar and doughnut datasets get border/hover border and hover shadow for less flat, more glossy look
+
+## [0.1.24] - 2026-01-30
+
+### Changed
+
+- Dev Corner Two (NOVA) TV dashboard: removed top header/title section; room is known from URL
+- Docs: do-donts updated so we always check browser console for errors and never ship with console errors or stray console.log
+
+## [0.1.23] - 2026-01-30
+
+### Changed
+
+- Distribution card uses full width: doughnut chart responsive, legend positioned right of chart so chart + legend fill the card and reduce empty horizontal space
+
 ## [0.1.22] - 2026-01-30
 
 ### Changed
