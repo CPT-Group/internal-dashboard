@@ -8,6 +8,7 @@ import { Message } from 'primereact/message';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
+import { Skeleton } from 'primereact/skeleton';
 import { useJiraNovaStore } from '@/stores';
 
 export const NovaDashboard = () => {
@@ -37,6 +38,8 @@ export const NovaDashboard = () => {
       indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 1000 },
+      transitions: { active: { animation: { duration: 800 } } },
       plugins: { legend: { display: false } },
       scales: {
         x: { beginAtZero: true },
@@ -58,6 +61,8 @@ export const NovaDashboard = () => {
     () => ({
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 1000 },
+      transitions: { active: { animation: { duration: 800 } } },
       plugins: { legend: { position: 'bottom' as const } },
     }),
     []
@@ -65,8 +70,40 @@ export const NovaDashboard = () => {
 
   if (loading && analytics.totalOpen === 0 && analytics.totalToday === 0) {
     return (
-      <div className="flex align-items-center justify-content-center min-h-screen">
-        <ProgressSpinner />
+      <div className="p-4 nova-dashboard-loading">
+        <Skeleton width="12rem" height="2rem" className="mb-4" />
+        <Skeleton width="24rem" height="1rem" className="mb-4" />
+        <div className="grid mb-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="col-12 md:col-4">
+              <Card>
+                <div className="flex flex-column align-items-center gap-2">
+                  <Skeleton width="4rem" height="3rem" />
+                  <Skeleton width="6rem" height="1rem" />
+                </div>
+              </Card>
+            </div>
+          ))}
+        </div>
+        <div className="grid mb-4">
+          <div className="col-12 lg:col-8">
+            <Card title="Open tickets by assignee">
+              <Skeleton width="100%" height="280px" />
+            </Card>
+          </div>
+          <div className="col-12 lg:col-4">
+            <Card title="Distribution">
+              <Skeleton width="100%" height="280px" shape="circle" className="mx-auto" />
+            </Card>
+          </div>
+        </div>
+        <Card title="By assignee">
+          <Skeleton width="100%" height="200px" />
+        </Card>
+        <div className="flex align-items-center gap-2 mt-2">
+          <ProgressSpinner style={{ width: '24px', height: '24px' }} />
+          <span className="text-color-secondary text-sm">Loading…</span>
+        </div>
       </div>
     );
   }
@@ -80,7 +117,7 @@ export const NovaDashboard = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 nova-dashboard-content">
       <h1 className="text-3xl font-bold m-0 mb-4">NOVA – Dev Corner Two</h1>
       <p className="text-color-secondary m-0 mb-4">
         Live view of active tickets (cached 5 min). Focus: today’s activity, open by assignee, late tickets.

@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.20] - 2026-01-30
+
+### Added
+
+- TV-friendly smooth transitions: Chart.js animation (1s duration, 800ms on update), content fade-in
+- PrimeReact Skeleton for initial load (cards, chart placeholders, table) for stable layout and smoother transition to data
+
+### Changed
+
+- Nova dashboard uses Skeleton during first load instead of spinner-only; charts animate in smoothly
+
 ## [0.1.19] - 2026-01-30
 
 ### Added
