@@ -59,7 +59,7 @@ export const NovaDashboard = () => {
 
   const doughnutChartOptions = useMemo(
     () => ({
-      responsive: true,
+      responsive: false,
       maintainAspectRatio: false,
       animation: { duration: 1000 },
       transitions: { active: { animation: { duration: 800 } } },
@@ -159,8 +159,26 @@ export const NovaDashboard = () => {
         </div>
         <div className="col-12 lg:col-4">
           <Card title="Distribution" className="p-2">
-            <div style={{ height: '160px' }}>
-              <Chart type="doughnut" data={doughnutChartData} options={doughnutChartOptions} />
+            <div
+              className="flex align-items-center justify-content-center overflow-hidden"
+              style={{ height: '160px' }}
+            >
+              <Chart
+                type="doughnut"
+                data={doughnutChartData}
+                options={doughnutChartOptions}
+                width="160"
+                height="160"
+                pt={{
+                  root: {
+                    style: { maxWidth: '100%', maxHeight: '100%', flexShrink: 0 },
+                    className: 'nova-doughnut-root',
+                  },
+                  canvas: {
+                    style: { display: 'block', maxWidth: '100%', maxHeight: '100%' },
+                  },
+                }}
+              />
             </div>
           </Card>
         </div>
