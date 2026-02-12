@@ -1,0 +1,28 @@
+/* TextScroller – component-scoped only; bold, slightly larger text */
+.root {
+  width: 100%;
+  overflow: hidden;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: textScrollerMove var(--text-scroller-duration, 30s) linear infinite;
+}
+
+.content {
+  display: inline-block;
+  padding-right: 2em;
+}
+
+@keyframes textScrollerMove {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

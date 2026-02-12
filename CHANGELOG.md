@@ -12,6 +12,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.40] - 2026-02-12
+
+### Changed
+
+- **Trevor JQL confined to 4 users**: JIRA_TREVOR JQL now builds `assignee IN (...)` from `TREVOR_TEAM_ACCOUNT_IDS_ARRAY` so the same 4 user IDs are the single source of truth; no other users are included in the query or on the board.
+
+### Fixed
+
+- **TREVOR_TEAM_ACCOUNT_IDS**: Typed as `Set<string>` so `Set.has(id)` accepts Jira assignee `accountId` (string) and build passes.
+
+## [0.1.39] - 2026-02-12
+
+### Added
+
+- **Shared Jira layer**: `JIRA_CACHE_TTL_MS` (30 min) and `jiraSearchClient` for all dev-corner dashboards; single refresh interval so boards stay real-time without excess API calls.
+- **Shared analytics**: `buildAnalyticsFromNovaQueries` and `buildAnalyticsFromIssueList` in `utils/jiraAnalytics` with optional `byProject` and `byType` for grouping by board (NOVA, CM, OPRD) and by issue type (Bug, Story, Task).
+- **useJiraDashboard hook**: Unified hook for `nova` | `trevor` returning analytics, allIssues, loading, error, refresh, isStale (Dev1/Julie can be added later).
+- **JiraMeterChart**: Meter-style doughnut (ring only) with main number in the center; used for Distribution on Nova and Trevor.
+- **By board / By type charts**: Trevor shows "By board" horizontal bar (NOVA, CM, OPRD); Nova shows "By type" horizontal bar when multiple types exist.
+- **JIRA_DEV1** and **JIRA_JULIE** stub constants for future dashboards.
+
+### Changed
+
+- **Cache TTL**: Nova and Trevor both use 30 min cache (was 5 min); refetch only when stale.
+- **Stores**: `jiraNovaStore` and `trevorJiraStore` use `jiraSearchClient` and shared `buildAnalytics*` from `utils/jiraAnalytics`.
+- **NovaAnalytics**: Extended with optional `byProject` and `byType` for chart data.
+- **Nova dashboard**: Distribution is now meter-style (center = total open); added "By type" bar chart.
+- **Trevor dashboard**: Distribution is now meter-style (center = total open); added "By board" bar chart.
+
+## [0.1.38] - 2026-02-12
+
+### Fixed
+
+- **Trevor Open count**: Open total now comes from Jira via a dedicated count request (`JIRA_TREVOR_JQL_OPEN` with `maxResults=1`); response `total` gives the exact open count (Jira requires maxResults between 1 and 5000).
+
+### Changed
+
+- **Trevor charts**: Cleaner bar and doughnut charts – theme-aware axis/legend colors, subtle grid, tuned bar/doughnut proportions, chart height 120px, cutout 58% on doughnut.
+
+## [0.1.37] - 2026-02-12
+
+### Added
+
+- **Conference room background slideshow**: Looping slideshow using all images in `public/background/background-conf-room/` (bg1.jpg, cpr-art-dark-1.jpg, cpt-art-1.jpg). Fade in/out (1.5s) between image swaps; 6s per slide. Config in `CONFERENCE_BACKGROUND_SLIDES`; content and scroller unchanged.
+
+### Changed
+
+- Conference room: single static background replaced by rotating slideshow layer; scroller remains on top (z-index).
+
+## [0.1.36] - 2026-02-12
+
+### Fixed
+
+- **Trevor JQL**: Switched from `assignee WAS IN` to `assignee IN` so only issues **currently** assigned to the 4 (Kyle, James, Roy, Thomas) are fetched. Open/Today/Late/Done counts now match Jira.
+
+## [0.1.35] - 2026-02-12
+
+### Changed
+
+- **Trevor's dashboard**: Filter to only the 4 dev team members (Kyle, James, Roy, Thomas) by current assignee account ID; stats, charts, and Gantt now show only these four.
+- **Trevor's dashboard**: Compact, futuristic layout – tighter padding and gaps, smaller stat cards and chart area, subtle blue border glow and box-shadow on cards, single-row stats on larger screens, chart height 100px.
+
+### Added
+
+- **TREVOR_TEAM_ACCOUNT_IDS** in constants: set of 4 Jira account IDs used to filter Trevor data to current assignee only.
+
 ## [0.1.34] - 2026-02-12
 
 ### Added
@@ -29,6 +95,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Trevor dashboard: uses trevorJiraStore with new JQL; Gantt chart for Dev Team Timeline; compact mobile-first layout.
+
+## [0.1.34] - 2026-01-30
+
+### Changed
+
+- **TextScroller**: Styles moved into component-scoped `TextScroller.module.css`; text is bold (`font-weight: 700`) and slightly larger (`1.125rem`). All sizing/weight edits apply only to this component.
 
 ## [0.1.33] - 2026-01-30
 

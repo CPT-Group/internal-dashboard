@@ -9,6 +9,7 @@ import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 import type { JiraIssue } from '@/types';
 import { useTrevorJiraStore } from '@/stores';
+import { JiraMeterChart } from '@/components/ui';
 
 import '@/styles/frappe-gantt.css';
 
@@ -75,13 +76,8 @@ export const TrevorDashboard = () => {
           backgroundColor: colors,
           borderColor: colors.map((c) => c.replace('0.82', '1')),
           borderWidth: 1,
-          borderRadius: 6,
+          borderRadius: 4,
           borderSkipped: false,
-          hoverBorderWidth: 2,
-          hoverShadowBlur: 12,
-          hoverShadowOffsetY: 2,
-          hoverShadowColor: 'rgba(0,0,0,0.3)',
-          hoverBackgroundColor: colors.map((c) => c.replace('0.82', '0.95')),
         },
       ],
     };
@@ -92,47 +88,40 @@ export const TrevorDashboard = () => {
       indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 1000 },
-      transitions: { active: { animation: { duration: 800 } } },
       plugins: { legend: { display: false } },
       scales: { x: { beginAtZero: true } },
     }),
     []
   );
 
-  const doughnutChartData = useMemo(() => {
-    const labels = analytics.byAssignee.map((a) => a.displayName);
-    const data = analytics.byAssignee.map((a) => a.openCount);
-    const colors = analytics.byAssignee.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
+  const byProjectChartData = useMemo(() => {
+    const byProject = analytics.byProject ?? {};
+    const labels = Object.keys(byProject).sort();
+    const data = labels.map((k) => byProject[k]);
+    const colors = labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
     return {
       labels,
       datasets: [
         {
+          label: 'Open by board',
           data,
           backgroundColor: colors,
           borderColor: colors.map((c) => c.replace('0.82', '1')),
-          borderWidth: 2,
-          hoverBorderWidth: 3,
-          hoverShadowBlur: 8,
-          hoverShadowOffsetY: 2,
-          hoverShadowColor: 'rgba(0,0,0,0.35)',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
         },
       ],
     };
-  }, [analytics.byAssignee]);
+  }, [analytics.byProject]);
 
-  const doughnutChartOptions = useMemo(
+  const byProjectChartOptions = useMemo(
     () => ({
+      indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 1000 },
-      transitions: { active: { animation: { duration: 800 } } },
-      plugins: {
-        legend: {
-          position: 'right' as const,
-          labels: { boxWidth: 12, padding: 8, usePointStyle: true },
-        },
-      },
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
     }),
     []
   );
@@ -140,18 +129,20 @@ export const TrevorDashboard = () => {
   const ganttTasks = useMemo(() => {
     const today = toYyyyMmDd(new Date().toISOString());
     return allIssues
+      .filter((issue) => issue.fields?.created != null && String(issue.fields.created).length >= 10)
       .map((issue) => {
-        const start = toYyyyMmDd(issue.fields.created);
-        const duedate = issue.fields.duedate
-          ? toYyyyMmDd(issue.fields.duedate)
-          : addDays(issue.fields.created, 14);
+        const created = String(issue.fields.created).slice(0, 10);
+        const start = created;
+        const duedate = issue.fields?.duedate != null && String(issue.fields.duedate).length >= 10
+          ? String(issue.fields.duedate).slice(0, 10)
+          : addDays(created, 14);
         const end = duedate > today ? duedate : today;
         const progress = isDone(issue) ? 100 : 0;
         const assignee = getAssigneeName(issue);
         const summary =
-          issue.fields.summary.length > 40
-            ? issue.fields.summary.slice(0, 37) + '...'
-            : issue.fields.summary;
+          (issue.fields?.summary ?? '').length > 40
+            ? (issue.fields.summary as string).slice(0, 37) + '...'
+            : (issue.fields?.summary ?? issue.key);
         return {
           id: issue.key,
           name: `[${assignee}] ${issue.key}: ${summary}`,
@@ -166,24 +157,24 @@ export const TrevorDashboard = () => {
   if (loading && analytics.totalOpen === 0 && analytics.totalDone === 0) {
     return (
       <div className="trevor-dashboard-content">
-        <div className="trevor-stats grid mb-2">
+        <div className="trevor-stats grid">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="col-6">
-              <Card className="p-2">
+            <div key={i} className="col-6 col-md-3">
+              <Card className="trevor-stat-card">
                 <div className="flex flex-column align-items-center gap-1">
-                  <Skeleton width="2.5rem" height="1.5rem" />
-                  <Skeleton width="3rem" height="0.75rem" />
+                  <Skeleton width="2rem" height="1.25rem" />
+                  <Skeleton width="2.5rem" height="0.65rem" />
                 </div>
               </Card>
             </div>
           ))}
         </div>
-        <Card className="p-2 flex-1">
-          <Skeleton width="100%" height="160px" />
+        <Card className="trevor-gantt-card flex-1">
+          <Skeleton width="100%" height="140px" />
         </Card>
         <div className="flex align-items-center gap-2 mt-1">
-          <ProgressSpinner style={{ width: '16px', height: '16px' }} />
-          <span className="text-color-secondary text-sm">Loading…</span>
+          <ProgressSpinner style={{ width: '14px', height: '14px' }} />
+          <span className="text-color-secondary text-xs">Loading…</span>
         </div>
       </div>
     );
@@ -199,61 +190,82 @@ export const TrevorDashboard = () => {
 
   return (
     <div className="trevor-dashboard-content">
-      <div className="trevor-stats grid mb-2">
-        <div className="col-6">
-          <Card className="p-2">
+      <div className="trevor-stats grid">
+        <div className="col-6 col-md-3">
+          <Card className="trevor-stat-card">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">{analytics.totalOpen}</div>
+              <div className="trevor-stat-value font-bold">{analytics.totalOpen}</div>
               <div className="text-color-secondary text-xs">Open</div>
             </div>
           </Card>
         </div>
-        <div className="col-6">
-          <Card className="p-2">
+        <div className="col-6 col-md-3">
+          <Card className="trevor-stat-card">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">{analytics.totalToday}</div>
+              <div className="trevor-stat-value font-bold">{analytics.totalToday}</div>
               <div className="text-color-secondary text-xs">Today</div>
             </div>
           </Card>
         </div>
-        <div className="col-6">
-          <Card className="p-2">
+        <div className="col-6 col-md-3">
+          <Card className="trevor-stat-card">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">
-                {analytics.totalOverdue}
-              </div>
+              <div className="trevor-stat-value font-bold">{analytics.totalOverdue}</div>
               <div className="text-color-secondary text-xs">Late</div>
             </div>
           </Card>
         </div>
-        <div className="col-6">
-          <Card className="p-2">
+        <div className="col-6 col-md-3">
+          <Card className="trevor-stat-card">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">{analytics.totalDone}</div>
+              <div className="trevor-stat-value font-bold">{analytics.totalDone}</div>
               <div className="text-color-secondary text-xs">Done</div>
             </div>
           </Card>
         </div>
       </div>
 
-      <div className="grid mb-2">
-        <div className="col-12 md:col-3">
-          <Card title="Open by assignee" className="p-2 trevor-chart-card">
-            <div style={{ height: '140px' }}>
+      <div className="grid trevor-charts-row">
+        <div className="col-12 md:col-6">
+          <Card title="Open by assignee" className="trevor-chart-card">
+            <div className="trevor-chart-inner">
               <Chart type="bar" data={barChartData} options={barChartOptions} />
             </div>
           </Card>
         </div>
-        <div className="col-12 md:col-3">
-          <Card title="Distribution" className="p-2 trevor-chart-card">
-            <div style={{ height: '140px' }}>
-              <Chart type="doughnut" data={doughnutChartData} options={doughnutChartOptions} />
+        <div className="col-12 md:col-6">
+          <Card title="Distribution" className="trevor-chart-card">
+            <div className="trevor-chart-inner" style={{ minHeight: '200px' }}>
+              <JiraMeterChart
+                centerValue={analytics.totalOpen}
+                centerLabel="Open"
+                labels={analytics.byAssignee.map((a) => a.displayName)}
+                data={analytics.byAssignee.map((a) => a.openCount)}
+                colors={CHART_COLORS}
+                height={200}
+              />
             </div>
           </Card>
         </div>
       </div>
 
-      <Card title="Dev Team Timeline" className="p-2 trevor-gantt-card flex-1">
+      {analytics.byProject != null && Object.keys(analytics.byProject).length > 0 && (
+        <div className="grid mt-2">
+          <div className="col-12">
+            <Card title="By board" className="trevor-chart-card">
+              <div className="trevor-chart-inner" style={{ height: '160px' }}>
+                <Chart
+                  type="bar"
+                  data={byProjectChartData}
+                  options={byProjectChartOptions}
+                />
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      <Card title="Dev Team Timeline" className="trevor-gantt-card flex-1">
         <div className="trevor-gantt-wrap">
           <GanttChart tasks={ganttTasks} />
         </div>
@@ -261,8 +273,8 @@ export const TrevorDashboard = () => {
 
       {loading && (
         <div className="flex align-items-center gap-2 mt-1 flex-shrink-0">
-          <ProgressSpinner style={{ width: '16px', height: '16px' }} />
-          <span className="text-color-secondary text-sm">Refreshing…</span>
+          <ProgressSpinner style={{ width: '14px', height: '14px' }} />
+          <span className="text-color-secondary text-xs">Refreshing…</span>
         </div>
       )}
     </div>

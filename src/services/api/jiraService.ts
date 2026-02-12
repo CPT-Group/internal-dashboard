@@ -21,6 +21,8 @@ const DEFAULT_JIRA_FIELDS = [
   'issuetype',
   'priority',
   'duedate',
+  'resolutiondate',
+  'components',
 ] as const;
 
 function getJiraConfig(): { baseUrl: string; authHeader: string } {
@@ -91,15 +93,16 @@ export async function searchIssues(
   };
   if (expand) body.expand = expand;
 
-  const raw = await jiraFetch<{ isLast?: boolean; issues?: JiraSearchResponse['issues'] }>(
-    '/search/jql',
-    { method: 'POST', body: JSON.stringify(body) }
-  );
+  const raw = await jiraFetch<{
+    issues?: JiraSearchResponse['issues'];
+    total?: number;
+    startAt?: number;
+  }>('/search/jql', { method: 'POST', body: JSON.stringify(body) });
   const issues = raw.issues ?? [];
   return {
-    startAt: 0,
+    startAt: raw.startAt ?? 0,
     maxResults,
-    total: issues.length,
+    total: raw.total ?? issues.length,
     issues,
   };
 }

@@ -10,6 +10,7 @@ import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { Skeleton } from 'primereact/skeleton';
 import { useJiraNovaStore } from '@/stores';
+import { JiraMeterChart } from '@/components/ui';
 
 export const NovaDashboard = () => {
   const { fetchNovaData, isStale, loading, error, getAnalytics } = useJiraNovaStore();
@@ -78,39 +79,35 @@ export const NovaDashboard = () => {
     []
   );
 
-  const doughnutChartData = useMemo(() => {
-    const labels = analytics.byAssignee.map((a) => a.displayName);
-    const data = analytics.byAssignee.map((a) => a.openCount);
-    const colors = analytics.byAssignee.map((_, i) => chartColors[i % chartColors.length]);
+  const byTypeChartData = useMemo(() => {
+    const byType = analytics.byType ?? {};
+    const labels = Object.keys(byType).sort();
+    const data = labels.map((k) => byType[k]);
+    const colors = labels.map((_, i) => chartColors[i % chartColors.length]);
     return {
       labels,
       datasets: [
         {
+          label: 'Open by type',
           data,
           backgroundColor: colors,
           borderColor: colors.map((c) => c.replace('0.78', '1')),
-          borderWidth: 2,
-          hoverBorderWidth: 3,
-          hoverShadowBlur: 8,
-          hoverShadowOffsetY: 2,
-          hoverShadowColor: 'rgba(0,0,0,0.3)',
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
         },
       ],
     };
-  }, [analytics.byAssignee, chartColors]);
+  }, [analytics.byType, chartColors]);
 
-  const doughnutChartOptions = useMemo(
+  const byTypeChartOptions = useMemo(
     () => ({
+      indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 1000 },
-      transitions: { active: { animation: { duration: 800 } } },
-      plugins: {
-        legend: {
-          position: 'right' as const,
-          labels: { boxWidth: 14, padding: 12, usePointStyle: true },
-        },
-      },
+      animation: { duration: 800 },
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
     }),
     []
   );
@@ -209,19 +206,34 @@ export const NovaDashboard = () => {
         <div className="col-12 lg:col-4">
           <Card title="Distribution" className="p-2 nova-dashboard-doughnut-card">
             <div className="nova-dashboard-doughnut-wrap" style={{ height: '200px' }}>
-              <Chart
-                type="doughnut"
-                data={doughnutChartData}
-                options={doughnutChartOptions}
-                pt={{
-                  root: { className: 'nova-doughnut-root' },
-                  canvas: { style: { display: 'block' } },
-                }}
+              <JiraMeterChart
+                centerValue={analytics.totalOpen}
+                centerLabel="Open"
+                labels={analytics.byAssignee.map((a) => a.displayName)}
+                data={analytics.byAssignee.map((a) => a.openCount)}
+                colors={chartColors}
+                height={200}
               />
             </div>
           </Card>
         </div>
       </div>
+
+      {analytics.byType != null && Object.keys(analytics.byType).length > 0 && (
+        <div className="grid mb-2">
+          <div className="col-12">
+            <Card title="By type" className="p-2">
+              <div style={{ height: '160px' }}>
+                <Chart
+                  type="bar"
+                  data={byTypeChartData}
+                  options={byTypeChartOptions}
+                />
+              </div>
+            </Card>
+          </div>
+        </div>
+      )}
 
       <div className="nova-dashboard-table-wrap flex flex-column min-h-0 flex-1">
         <Card title="By assignee" className="p-2 flex flex-column min-h-0 flex-1">

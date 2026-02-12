@@ -1,2 +1,1 @@
-export * from './TextScroller';
 export * from './JiraMeterChart';

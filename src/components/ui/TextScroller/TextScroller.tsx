@@ -1,9 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import styles from './TextScroller.module.css';
 
 export interface TextScrollerProps {
-  /** Content to scroll (e.g. text, spans). Rendered at paragraph size; duplicated for seamless infinite loop—when one copy scrolls out, the other follows so it never stops. */
+  /** Content to scroll (e.g. text, spans). Bold, slightly larger than body; duplicated for seamless infinite loop. */
   children: ReactNode;
   /** Optional class for the outer wrapper. */
   className?: string;
@@ -18,12 +19,12 @@ export const TextScroller = ({
 }: TextScrollerProps) => {
   return (
     <div
-      className={`text-scroller ${className}`.trim()}
+      className={[styles.root, className].filter(Boolean).join(' ')}
       style={{ '--text-scroller-duration': `${duration}s` } as React.CSSProperties}
     >
-      <div className="text-scroller-track">
-        <span className="text-scroller-content">{children}</span>
-        <span className="text-scroller-content" aria-hidden="true">
+      <div className={styles.track}>
+        <span className={styles.content}>{children}</span>
+        <span className={styles.content} aria-hidden="true">
           {children}
         </span>
       </div>

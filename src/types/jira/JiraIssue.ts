@@ -41,6 +41,10 @@ export interface JiraIssueFields {
   };
   /** ISO date string; used for overdue (late) tickets. */
   duedate?: string | null;
+  /** When the issue was resolved (done). ISO datetime. */
+  resolutiondate?: string | null;
+  /** Jira components (e.g. Backend, Frontend). */
+  components?: Array<{ id: string; name: string }> | null;
 }
 
 export interface JiraIssue {
