@@ -9,7 +9,7 @@ import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 import type { JiraIssue } from '@/types';
 import { useTrevorJiraStore } from '@/stores';
-import { JiraMeterChart } from '@/components/ui';
+import { JiraMeterChart, TextScroller } from '@/components/ui';
 
 import '@/styles/frappe-gantt.css';
 
@@ -63,33 +63,69 @@ export const TrevorDashboard = () => {
   const analytics = getAnalytics();
   const allIssues = getAllIssues();
 
-  const barChartData = useMemo(() => {
+  const assigneeComboChartData = useMemo(() => {
     const labels = analytics.byAssignee.map((a) => a.displayName);
-    const data = analytics.byAssignee.map((a) => a.openCount);
+    const openData = analytics.byAssignee.map((a) => a.openCount);
+    const avgDaysData = analytics.byAssignee.map((a) => a.avgDaysToClose ?? 0);
     const colors = analytics.byAssignee.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
     return {
       labels,
       datasets: [
         {
-          label: 'Open by assignee',
-          data,
+          type: 'bar' as const,
+          label: 'Open',
+          data: openData,
           backgroundColor: colors,
           borderColor: colors.map((c) => c.replace('0.82', '1')),
           borderWidth: 1,
           borderRadius: 4,
           borderSkipped: false,
+          order: 2,
+        },
+        {
+          type: 'line' as const,
+          label: 'Avg days to close',
+          data: avgDaysData,
+          borderColor: 'rgba(234, 179, 8, 0.9)',
+          backgroundColor: 'rgba(234, 179, 8, 0.1)',
+          fill: false,
+          tension: 0.2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          xAxisID: 'x1',
+          order: 1,
         },
       ],
     };
   }, [analytics.byAssignee]);
 
-  const barChartOptions = useMemo(
+  const assigneeComboChartOptions = useMemo(
     () => ({
       indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true } },
+      interaction: { mode: 'index' as const, intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top' as const },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          position: 'bottom' as const,
+          title: { display: true, text: 'Open count' },
+          grid: { drawOnChartArea: true },
+        },
+        x1: {
+          beginAtZero: true,
+          position: 'top' as const,
+          title: { display: true, text: 'Avg days to close' },
+          grid: { drawOnChartArea: false },
+        },
+        y: {
+          grid: { display: false },
+        },
+      },
     }),
     []
   );
@@ -116,6 +152,38 @@ export const TrevorDashboard = () => {
   }, [analytics.byProject]);
 
   const byProjectChartOptions = useMemo(
+    () => ({
+      indexAxis: 'y' as const,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
+    }),
+    []
+  );
+
+  const byComponentChartData = useMemo(() => {
+    const byComponent = analytics.byComponent ?? {};
+    const labels = Object.keys(byComponent).sort();
+    const data = labels.map((k) => byComponent[k]);
+    const colors = labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Open by component',
+          data,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.82', '1')),
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+      ],
+    };
+  }, [analytics.byComponent]);
+
+  const byComponentChartOptions = useMemo(
     () => ({
       indexAxis: 'y' as const,
       responsive: true,
@@ -157,17 +225,10 @@ export const TrevorDashboard = () => {
   if (loading && analytics.totalOpen === 0 && analytics.totalDone === 0) {
     return (
       <div className="trevor-dashboard-content">
-        <div className="trevor-stats grid">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="col-6 col-md-3">
-              <Card className="trevor-stat-card">
-                <div className="flex flex-column align-items-center gap-1">
-                  <Skeleton width="2rem" height="1.25rem" />
-                  <Skeleton width="2.5rem" height="0.65rem" />
-                </div>
-              </Card>
-            </div>
-          ))}
+        <div className="trevor-stats-strip">
+          <div className="trevor-stats-strip-inner">
+            <Skeleton width="100%" height="1.5rem" />
+          </div>
         </div>
         <Card className="trevor-gantt-card flex-1">
           <Skeleton width="100%" height="140px" />
@@ -188,48 +249,43 @@ export const TrevorDashboard = () => {
     );
   }
 
+  const statsScrollerContent = (
+    <>
+      <span className="trevor-stat-item">
+        <i className="pi pi-inbox" aria-hidden />
+        <strong>{analytics.totalOpen}</strong> Open
+      </span>
+      <span className="trevor-stat-sep" aria-hidden> · </span>
+      <span className="trevor-stat-item">
+        <i className="pi pi-calendar" aria-hidden />
+        <strong>{analytics.totalToday}</strong> Today
+      </span>
+      <span className="trevor-stat-sep" aria-hidden> · </span>
+      <span className="trevor-stat-item trevor-stat-late">
+        <i className="pi pi-exclamation-triangle" aria-hidden />
+        <strong>{analytics.totalOverdue}</strong> Late
+      </span>
+      <span className="trevor-stat-sep" aria-hidden> · </span>
+      <span className="trevor-stat-item trevor-stat-done">
+        <i className="pi pi-check-circle" aria-hidden />
+        <strong>{analytics.totalDone}</strong> Done
+      </span>
+    </>
+  );
+
   return (
     <div className="trevor-dashboard-content">
-      <div className="trevor-stats grid">
-        <div className="col-6 col-md-3">
-          <Card className="trevor-stat-card">
-            <div className="text-center">
-              <div className="trevor-stat-value font-bold">{analytics.totalOpen}</div>
-              <div className="text-color-secondary text-xs">Open</div>
-            </div>
-          </Card>
-        </div>
-        <div className="col-6 col-md-3">
-          <Card className="trevor-stat-card">
-            <div className="text-center">
-              <div className="trevor-stat-value font-bold">{analytics.totalToday}</div>
-              <div className="text-color-secondary text-xs">Today</div>
-            </div>
-          </Card>
-        </div>
-        <div className="col-6 col-md-3">
-          <Card className="trevor-stat-card">
-            <div className="text-center">
-              <div className="trevor-stat-value font-bold">{analytics.totalOverdue}</div>
-              <div className="text-color-secondary text-xs">Late</div>
-            </div>
-          </Card>
-        </div>
-        <div className="col-6 col-md-3">
-          <Card className="trevor-stat-card">
-            <div className="text-center">
-              <div className="trevor-stat-value font-bold">{analytics.totalDone}</div>
-              <div className="text-color-secondary text-xs">Done</div>
-            </div>
-          </Card>
-        </div>
+      <div className="trevor-stats-strip">
+        <TextScroller className="trevor-stats-scroller" duration={25}>
+          {statsScrollerContent}
+        </TextScroller>
       </div>
 
       <div className="grid trevor-charts-row">
         <div className="col-12 md:col-6">
           <Card title="Open by assignee" className="trevor-chart-card">
             <div className="trevor-chart-inner">
-              <Chart type="bar" data={barChartData} options={barChartOptions} />
+              <Chart type="bar" data={assigneeComboChartData} options={assigneeComboChartOptions} />
             </div>
           </Card>
         </div>

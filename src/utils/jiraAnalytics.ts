@@ -22,6 +22,23 @@ function getIssueTypeName(issue: JiraIssue): string {
   return issue.fields?.issuetype?.name ?? 'Unknown';
 }
 
+function getComponentNames(issue: JiraIssue): string[] {
+  const comps = issue.fields?.components;
+  if (!Array.isArray(comps) || comps.length === 0) return ['No component'];
+  return comps.map((c) => (c && typeof c === 'object' && 'name' in c ? (c as { name: string }).name : 'Unknown')).filter(Boolean);
+}
+
+/** Days from created to resolution (or updated if no resolutiondate). Returns null if dates missing. */
+function getDaysToClose(issue: JiraIssue): number | null {
+  const created = issue.fields?.created;
+  const resolved = issue.fields?.resolutiondate ?? issue.fields?.updated;
+  if (!created || !resolved) return null;
+  const a = new Date(created).getTime();
+  const b = new Date(resolved).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  return Math.round((b - a) / (24 * 60 * 60 * 1000));
+}
+
 function isAssigned(issue: JiraIssue): boolean {
   return Boolean(issue.fields?.assignee);
 }
@@ -58,6 +75,8 @@ export function buildAnalyticsFromNovaQueries(
   const byAssigneeMap = new Map<string, NovaAssigneeStats>();
   const byProject: Record<string, number> = {};
   const byType: Record<string, number> = {};
+  const byComponent: Record<string, number> = {};
+  const daysToCloseByAssignee = new Map<string, number[]>();
 
   const upsert = (issue: JiraIssue) => {
     if (!isAssigned(issue)) return;
@@ -82,9 +101,26 @@ export function buildAnalyticsFromNovaQueries(
     byProject[proj] = (byProject[proj] ?? 0) + 1;
     const typeName = getIssueTypeName(issue);
     byType[typeName] = (byType[typeName] ?? 0) + 1;
+    getComponentNames(issue).forEach((compName) => {
+      byComponent[compName] = (byComponent[compName] ?? 0) + 1;
+    });
   };
 
   assignedOpen.forEach(upsert);
+  doneIssues.filter(isAssigned).forEach((issue) => {
+    const days = getDaysToClose(issue);
+    if (days == null) return;
+    const id = getAssigneeKey(issue);
+    const arr = daysToCloseByAssignee.get(id) ?? [];
+    arr.push(days);
+    daysToCloseByAssignee.set(id, arr);
+  });
+  daysToCloseByAssignee.forEach((daysArr, id) => {
+    const cur = byAssigneeMap.get(id);
+    if (!cur) return;
+    const sum = daysArr.reduce((a, b) => a + b, 0);
+    cur.avgDaysToClose = Math.round((sum / daysArr.length) * 10) / 10;
+  });
   doneByAssignee.forEach((count, id) => {
     if (!byAssigneeMap.has(id)) {
       const issue = doneIssues.find((i) => getAssigneeKey(i) === id);
@@ -114,6 +150,7 @@ export function buildAnalyticsFromNovaQueries(
     byAssignee,
     byProject: Object.keys(byProject).length > 0 ? byProject : undefined,
     byType: Object.keys(byType).length > 0 ? byType : undefined,
+    byComponent: Object.keys(byComponent).length > 0 ? byComponent : undefined,
   };
 }
 
@@ -165,6 +202,8 @@ export function buildAnalyticsFromIssueList(
   const byAssigneeMap = new Map<string, NovaAssigneeStats>();
   const byProject: Record<string, number> = {};
   const byType: Record<string, number> = {};
+  const byComponent: Record<string, number> = {};
+  const daysToCloseByAssignee = new Map<string, number[]>();
 
   openIssues.forEach((issue) => {
     const id = getAssigneeKey(issue);
@@ -188,6 +227,25 @@ export function buildAnalyticsFromIssueList(
     byProject[proj] = (byProject[proj] ?? 0) + 1;
     const typeName = getIssueTypeName(issue);
     byType[typeName] = (byType[typeName] ?? 0) + 1;
+    getComponentNames(issue).forEach((compName) => {
+      byComponent[compName] = (byComponent[compName] ?? 0) + 1;
+    });
+  });
+
+  doneIssues.forEach((issue) => {
+    const days = getDaysToClose(issue);
+    if (days == null) return;
+    const id = getAssigneeKey(issue);
+    const arr = daysToCloseByAssignee.get(id) ?? [];
+    arr.push(days);
+    daysToCloseByAssignee.set(id, arr);
+  });
+
+  daysToCloseByAssignee.forEach((daysArr, id) => {
+    const cur = byAssigneeMap.get(id);
+    if (!cur) return;
+    const sum = daysArr.reduce((a, b) => a + b, 0);
+    cur.avgDaysToClose = Math.round((sum / daysArr.length) * 10) / 10;
   });
 
   doneByAssignee.forEach((count, id) => {
@@ -219,5 +277,6 @@ export function buildAnalyticsFromIssueList(
     byAssignee,
     byProject: Object.keys(byProject).length > 0 ? byProject : undefined,
     byType: Object.keys(byType).length > 0 ? byType : undefined,
+    byComponent: Object.keys(byComponent).length > 0 ? byComponent : undefined,
   };
 }

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.41] - 2026-02-12
+
+### Changed
+
+- **Trevor stats strip**: Replaced the four large stat cards (Open, Today, Late, Done) with a compact single-line strip using the reusable `TextScroller`. Stats scroll with icons (inbox, calendar, exclamation-triangle for Late in red, check-circle for Done in green) and separators for a space-efficient, elegant header.
+
 ## [0.1.40] - 2026-02-12
 
 ### Changed

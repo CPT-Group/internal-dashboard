@@ -239,6 +239,60 @@ html {
   font-size: 1.1rem;
 }
 
+/* Compact stats strip: single line, TextScroller, icons + green/red cues */
+.trevor-dashboard-content .trevor-stats-strip {
+  flex-shrink: 0;
+  width: 100%;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trevor-dashboard-content .trevor-stats-strip .trevor-stats-scroller {
+  font-size: 0.95rem;
+  font-weight: 600;
+  max-width: 100%;
+}
+
+.trevor-dashboard-content .trevor-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.trevor-dashboard-content .trevor-stat-item i {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.trevor-dashboard-content .trevor-stat-item strong {
+  color: var(--p-primary-color);
+}
+
+.trevor-dashboard-content .trevor-stat-late {
+  color: var(--p-red-500, #ef4444);
+}
+
+.trevor-dashboard-content .trevor-stat-late strong {
+  color: var(--p-red-400, #f87171);
+}
+
+.trevor-dashboard-content .trevor-stat-done {
+  color: var(--p-green-500, #22c55e);
+}
+
+.trevor-dashboard-content .trevor-stat-done strong {
+  color: var(--p-green-400, #4ade80);
+}
+
+.trevor-dashboard-content .trevor-stat-sep {
+  opacity: 0.5;
+  margin: 0 0.5rem;
+  user-select: none;
+}
+
 .trevor-dashboard-content .trevor-gantt-card {
   flex: 1;
   min-height: 0;
