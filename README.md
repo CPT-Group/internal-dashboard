@@ -148,14 +148,17 @@ This project follows semantic versioning with custom increment rules:
 - **Major (1.0.0)**: Major releases, production-ready
 - **Current Version**: 0.1.2
 
-See `CHANGELOG.md` for version history.
+See `package.json` for current version and `CHANGELOG.md` for version history.
 
 ## Documentation
 
+- **`docs/app-overview.md`** – **Start here.** What the app is for, who it’s for, routes, data, and current implementation (TV dashboards, Jira NOVA, conference room, etc.).
+- `docs/dashboard-planning.md` - Route structure, home design, dev dashboard layout
 - `docs/coding-style.md` - Comprehensive coding style guidelines with examples
 - `docs/pet-peeves.md` - Code smells and anti-patterns
 - `docs/do-donts.md` - Best practices reference
 - `docs/data-architecture.md` - Data-driven JSON approach
+- `docs/jira-ticket-schema.md` - Jira issue shape for NOVA
 - `docs/versioning.md` - Version control and changelog guidelines
 - `docs/import-organization.md` - Import order and hierarchical exports
 - `docs/style-guide-summary.md` - Quick reference summary
@@ -164,11 +167,11 @@ See `CHANGELOG.md` for version history.
 
 ## Current Status
 
-- **Version**: 0.1.2
-- **Theme**: Dark mode (default)
-- **Foundation**: Complete - ready for main content development
-- **Components**: Empty placeholders - no UI implemented yet
-- **Data Architecture**: JSON-driven system ready for API, cron, and static data sources
+- **Version**: See `package.json` (e.g. 0.1.x)
+- **Theme**: Dark mode (default), light/dark switch via theme CSS in `public/themes/`
+- **Home**: Card-based TV dashboard selector; links to `/tv/{roomName}`
+- **TV dashboards**: Dev Corner Two (NOVA Jira – stats, charts, table); Conference Room (custom background, placeholder content); dev-corner-one, lobby, break-room stubbed
+- **Data**: Jira NOVA via API + Zustand store (5‑min cache); JSON-driven architecture for future sources
 
 ## License
 

@@ -1,3 +1,5 @@
+import { TVDashboard } from '@/components';
+
 export default function ConferenceRoomPage() {
-  return null;
+  return <TVDashboard roomName="conference-room" />;
 }

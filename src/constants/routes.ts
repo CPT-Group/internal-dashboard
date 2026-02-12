@@ -4,6 +4,7 @@ export const TV_ROOM_NAMES = [
   'dev-corner-one',
   'dev-corner-two',
   'conference-room',
+  'trevor',
   'lobby',
   'break-room',
 ] as const;
@@ -27,6 +28,12 @@ export const TV_ROUTE_CONFIGS: Record<string, TVRouteConfig> = {
     roomName: 'conference-room',
     displayName: 'Conference Room',
     description: 'Main conference room dashboard',
+    enabled: true,
+  },
+  trevor: {
+    roomName: 'trevor',
+    displayName: "Trevor's Screen",
+    description: 'Dev team totals & Gantt – mobile-friendly',
     enabled: true,
   },
   lobby: {

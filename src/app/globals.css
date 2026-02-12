@@ -133,6 +133,67 @@ html {
   border: 1px solid rgba(168, 85, 247, 0.5);
 }
 
+/* Conference room TV dashboard – full viewport, no scroll, custom background */
+.conference-dashboard-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 0.5rem;
+  animation: nova-dashboard-fade-in 0.5s ease-out;
+  box-sizing: border-box;
+  background-image: url('/background/Untitled%20design.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.conference-dashboard-content .p-card {
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.conference-dashboard-scroller-wrap {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 0.5rem 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Text scroller – 100% width, p-sized text, scrolls left (news/stocks reel style) */
+.text-scroller {
+  width: 100%;
+  overflow: hidden;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.text-scroller-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: text-scroller-move var(--text-scroller-duration, 30s) linear infinite;
+}
+
+.text-scroller-content {
+  display: inline-block;
+  padding-right: 2em;
+}
+
+@keyframes text-scroller-move {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .nova-dashboard-loading {
   min-height: 100vh;
   max-height: 100vh;
@@ -149,4 +210,55 @@ html {
   to {
     opacity: 1;
   }
+}
+
+/* Trevor's dashboard – mobile-first, compact for TV-as-mobile */
+.trevor-dashboard-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: auto;
+  padding: 0.5rem;
+  animation: nova-dashboard-fade-in 0.5s ease-out;
+  box-sizing: border-box;
+  gap: 0.5rem;
+}
+
+.trevor-dashboard-content .p-card {
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.trevor-dashboard-content .p-card .p-card-body,
+.trevor-dashboard-content .p-card .p-card-content {
+  padding: 0.5rem;
+}
+
+.trevor-dashboard-content .trevor-stats .p-card .p-card-body,
+.trevor-dashboard-content .trevor-stats .p-card .p-card-content {
+  padding: 0.35rem 0.5rem;
+}
+
+.trevor-dashboard-content .trevor-stat-value {
+  color: var(--p-primary-color);
+}
+
+.trevor-dashboard-content .trevor-gantt-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.trevor-dashboard-content .trevor-gantt-card .p-card-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.trevor-gantt-wrap {
+  min-height: 200px;
+  width: 100%;
 }

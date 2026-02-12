@@ -12,6 +12,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.33] - 2026-01-30
+
+### Changed
+
+- Conference room: scroller strip moved up from bottom by 2.5rem.
+
+## [0.1.32] - 2026-01-30
+
+### Added
+
+- **`docs/cpt-group-website-info.md`**: Reference doc with info from [CPT Group](https://www.cptgroup.com/) (company overview, 30 years / cases / settlement stats, contact, service areas, value props) for reels and future dashboard content.
+- **`CONFERENCE_REEL`** constants: `CONFERENCE_REEL_PHRASES` and `CONFERENCE_REEL_TEXT` (CPT filler for the conference reel); conference room reel now uses this copy instead of placeholder.
+
+### Changed
+
+- TextScroller: JSDoc clarified that content is duplicated for a **seamless infinite loop** (repeats when one copy scrolls out).
+- Conference room reel: filler text from CPT Group website (stats, contact, taglines).
+- `docs/app-overview.md`: added link to `cpt-group-website-info.md` in Supporting Docs.
+
+## [0.1.31] - 2026-01-30
+
+### Added
+
+- **TextScroller** UI component: 100% width, paragraph-sized text, scrolls left in an infinite loop (news/stocks reel style). Accepts `children`, optional `className`, and `duration` (seconds). Intended for Jira & stats reel on conference room.
+- Conference room: scroller strip at bottom with placeholder “Jira & stats reel” text; background remains the focal point.
+
+### Changed
+
+- Conference room: center card removed; page is background-only with scroller at bottom.
+
+## [0.1.30] - 2026-01-30
+
+### Added
+
+- **`docs/app-overview.md`**: Single doc describing what the web app is for (CPT Group internal TV dashboards, 24/7 office TVs), audience, routes, current screens (Dev Corner Two NOVA, Conference Room), data (Jira NOVA), tech stack, design conventions, and pointers to supporting docs
+- README: link to `app-overview.md` as the starting doc; refreshed Current Status and Documentation list; version note points to `package.json` and CHANGELOG
+
+## [0.1.29] - 2026-01-30
+
+### Changed
+
+- Conference room: custom background image (`public/background/Untitled design.png`) applied; centered, covers full screen, `background-size: cover` to avoid stretching
+
+## [0.1.28] - 2026-01-30
+
+### Added
+
+- Conference room TV dashboard: `ConferenceRoomDashboard` component with full-viewport layout; wired for `/tv/conference-room` and `TVDashboard` when `roomName === 'conference-room'`; placeholder content ready for future widgets
+
 ## [0.1.27] - 2026-01-30
 
 ### Changed

@@ -29,6 +29,13 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     enabled: true,
   },
   {
+    title: "Trevor's Screen",
+    description: 'Dev team totals & Gantt – mobile-friendly',
+    route: '/tv/trevor',
+    icon: 'pi pi-chart-bar',
+    enabled: true,
+  },
+  {
     title: 'Lobby',
     description: 'Lobby dashboard - Case analytics & system metrics',
     route: '/tv/lobby',

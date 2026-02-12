@@ -117,6 +117,8 @@ interface JiraNovaState {
   error: string | null;
   fetchNovaData: (force?: boolean) => Promise<void>;
   getAnalytics: () => NovaAnalytics;
+  /** All unique issues (for Gantt, filtering, etc.) */
+  getAllIssues: () => JiraIssue[];
   isStale: () => boolean;
 }
 
@@ -164,5 +166,14 @@ export const useJiraNovaStore = create<JiraNovaState>((set, get) => ({
   getAnalytics: () => {
     const { openIssues, todayIssues, overdueIssues, doneIssues } = get();
     return buildAnalytics(openIssues, todayIssues, overdueIssues, doneIssues);
+  },
+
+  getAllIssues: () => {
+    const { openIssues, todayIssues, overdueIssues, doneIssues } = get();
+    const byId = new Map<string, JiraIssue>();
+    [...openIssues, ...todayIssues, ...overdueIssues, ...doneIssues].forEach(
+      (i) => byId.set(i.id, i)
+    );
+    return Array.from(byId.values());
   },
 }));
