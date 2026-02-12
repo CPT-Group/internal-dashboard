@@ -8,14 +8,14 @@ export interface TextScrollerProps {
   children: ReactNode;
   /** Optional class for the outer wrapper. */
   className?: string;
-  /** Scroll duration in seconds for one full cycle (default 30). */
+  /** Scroll duration in seconds for one full cycle (default 26). */
   duration?: number;
 }
 
 export const TextScroller = ({
   children,
   className = '',
-  duration = 30,
+  duration = 26,
 }: TextScrollerProps) => {
   return (
     <div

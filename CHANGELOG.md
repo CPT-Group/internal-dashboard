@@ -12,6 +12,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.44] - 2026-02-12
+
+### Changed
+
+- **Trevor assignee chart**: Replaced separate "Open by assignee" and "Avg days to close" charts with one combo/multi-axis chart: horizontal bars for Open count (bottom axis) and a line for Avg days to close (top axis, 0–15 days) so both dimensions are readable in a single view. Legend and axis labels use theme colors.
+- **Trevor By component**: "By component" bar chart is now shown when data exists; uses theme-colored axes. Layout: combo + Distribution in first row; By component + By board in second row.
+
+## [0.1.43] - 2026-02-12
+
+### Changed
+
+- **TextScroller**: Animation now starts from the true right (content enters from off-screen at 100vw and scrolls left). Slightly faster: default duration 26s (was 30s); Trevor stats strip 22s (was 25s).
+
+## [0.1.42] - 2026-02-12
+
+### Added
+
+- **Dev Corner One** (`/tv/dev-corner-one`): New dashboard with Trevor-style JQL and multi-dimensional charts. JIRA_DEV1: NOVA project, last 6 months, no assignee filter (all devs). Charts: Open &amp; avg days to close by assignee (combo bar + line), Distribution meter, By type, By component.
+- **dev1JiraStore**: Fetches from JIRA_DEV1_JQL / JIRA_DEV1_JQL_OPEN; uses shared `buildAnalyticsFromIssueList` (no team filter) for byAssignee, byType, byComponent, avgDaysToClose.
+
+### Changed
+
+- **buildAnalyticsFromNovaQueries**: Now computes `byComponent` (open count per Jira component) and `avgDaysToClose` per assignee (from done issues), so Dev 2 and any Nova-based view get the same dimensions as Trevor.
+- **Dev Corner Two (Nova)**: Replaced simple “Open by assignee” bar with combo chart (Open + Avg days to close); added “By component” bar chart and “Avg days” column in the assignee table.
+- **TVDashboard**: Routes `dev-corner-one` to `DevCornerOneDashboard`.
+
+## [0.1.42] - 2026-02-12
+
+### Changed
+
+- **Trevor theme colors**: Stats strip and charts now use theme variables only (no hardcoded hex overrides). Stats strip uses `--text-color`, `--primary-color`, `--red-*` / `--green-*`, `--text-color-secondary` (with `--p-*` fallbacks for Prime). Chart axis ticks and titles use resolved theme colors via a small hook so contrast follows the active theme.
+- **Trevor charts readability**: Replaced the combo (bar + line, two x-axes) with two separate horizontal bar charts: "Open by assignee" and "Avg days to close (by assignee)", each with a single clear scale and theme-colored axis labels. "By board" chart also uses theme colors for axes. JiraMeterChart legend and center label use theme text color.
+
 ## [0.1.41] - 2026-02-12
 
 ### Changed

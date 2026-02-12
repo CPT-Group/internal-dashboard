@@ -253,6 +253,7 @@ html {
   font-size: 0.95rem;
   font-weight: 600;
   max-width: 100%;
+  color: var(--text-color, var(--p-text-color));
 }
 
 .trevor-dashboard-content .trevor-stat-item {
@@ -260,35 +261,36 @@ html {
   align-items: center;
   gap: 0.35rem;
   white-space: nowrap;
+  color: inherit;
 }
 
 .trevor-dashboard-content .trevor-stat-item i {
   font-size: 0.85rem;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .trevor-dashboard-content .trevor-stat-item strong {
-  color: var(--p-primary-color);
+  color: var(--primary-color, var(--p-primary-color));
 }
 
 .trevor-dashboard-content .trevor-stat-late {
-  color: var(--p-red-500, #ef4444);
+  color: var(--red-500, var(--p-red-500));
 }
 
 .trevor-dashboard-content .trevor-stat-late strong {
-  color: var(--p-red-400, #f87171);
+  color: var(--red-400, var(--p-red-400));
 }
 
 .trevor-dashboard-content .trevor-stat-done {
-  color: var(--p-green-500, #22c55e);
+  color: var(--green-500, var(--p-green-500));
 }
 
 .trevor-dashboard-content .trevor-stat-done strong {
-  color: var(--p-green-400, #4ade80);
+  color: var(--green-400, var(--p-green-400));
 }
 
 .trevor-dashboard-content .trevor-stat-sep {
-  opacity: 0.5;
+  color: var(--text-color-secondary, var(--p-text-muted-color));
   margin: 0 0.5rem;
   user-select: none;
 }

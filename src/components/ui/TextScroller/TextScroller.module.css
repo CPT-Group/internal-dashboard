@@ -10,7 +10,7 @@
 .track {
   display: inline-flex;
   white-space: nowrap;
-  animation: textScrollerMove var(--text-scroller-duration, 30s) linear infinite;
+  animation: textScrollerMove var(--text-scroller-duration, 26s) linear infinite;
 }
 
 .content {
@@ -18,11 +18,12 @@
   padding-right: 2em;
 }
 
+/* Start with content at the right (entering from off-screen), scroll left by one full copy, then loop */
 @keyframes textScrollerMove {
   from {
-    transform: translateX(0);
+    transform: translateX(100vw);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(calc(100vw - 50%));
   }
 }

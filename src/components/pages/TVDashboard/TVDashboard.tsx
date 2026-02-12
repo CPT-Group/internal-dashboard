@@ -4,6 +4,11 @@ import dynamic from 'next/dynamic';
 import type { DashboardProps } from '@/types';
 import { ConferenceRoomDashboard } from '@/components/pages/ConferenceRoomDashboard';
 
+const DevCornerOneDashboard = dynamic(
+  () => import('@/components/pages/DevCornerOneDashboard').then((m) => m.DevCornerOneDashboard),
+  { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
+);
+
 const NovaDashboard = dynamic(
   () => import('@/components/pages/DevCornerTwoDashboard').then((m) => m.NovaDashboard),
   { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
@@ -15,6 +20,9 @@ const TrevorDashboard = dynamic(
 );
 
 export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
+  if (roomName === 'dev-corner-one') {
+    return <DevCornerOneDashboard />;
+  }
   if (roomName === 'dev-corner-two') {
     return <NovaDashboard />;
   }

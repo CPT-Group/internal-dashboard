@@ -73,7 +73,7 @@ export function JiraMeterChart({
             boxWidth: 12,
             padding: 6,
             font: { size: 11 },
-            color: 'var(--p-text-color)',
+            color: 'var(--text-color, var(--p-text-color))',
             usePointStyle: true,
           },
         },
@@ -103,7 +103,7 @@ export function JiraMeterChart({
           pointerEvents: 'none',
         }}
       >
-        <span style={{ fontSize: '1.75rem', fontWeight: 700, lineHeight: 1 }}>
+        <span className="text-color" style={{ fontSize: '1.75rem', fontWeight: 700, lineHeight: 1 }}>
           {centerValue}
         </span>
         {centerLabel != null && centerLabel !== '' && (

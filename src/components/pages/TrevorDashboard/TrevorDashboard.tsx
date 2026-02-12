@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Card } from 'primereact/card';
 import { Chart } from 'primereact/chart';
@@ -48,9 +48,22 @@ const CHART_COLORS = [
   'rgba(99, 102, 241, 0.82)',
 ];
 
+function useThemeChartColors(): { text: string; muted: string } {
+  const [colors, setColors] = useState({ text: 'rgba(255,255,255,0.9)', muted: 'rgba(255,255,255,0.6)' });
+  useEffect(() => {
+    const root = document.documentElement;
+    const style = getComputedStyle(root);
+    const text = (style.getPropertyValue('--text-color').trim() || style.getPropertyValue('--p-text-color').trim()) || 'rgba(255,255,255,0.9)';
+    const muted = (style.getPropertyValue('--text-color-secondary').trim() || style.getPropertyValue('--p-text-muted-color').trim()) || 'rgba(255,255,255,0.6)';
+    setColors({ text, muted });
+  }, []);
+  return colors;
+}
+
 export const TrevorDashboard = () => {
   const { fetchTrevorData, isStale, loading, error, getAnalytics, getAllIssues } =
     useTrevorJiraStore();
+  const themeColors = useThemeChartColors();
 
   useEffect(() => {
     if (isStale()) void fetchTrevorData();
@@ -63,6 +76,7 @@ export const TrevorDashboard = () => {
   const analytics = getAnalytics();
   const allIssues = getAllIssues();
 
+  /* Combo: Open (bars, bottom axis) + Avg days to close (line, top axis) – one chart, two dimensions */
   const assigneeComboChartData = useMemo(() => {
     const labels = analytics.byAssignee.map((a) => a.displayName);
     const openData = analytics.byAssignee.map((a) => a.openCount);
@@ -86,12 +100,13 @@ export const TrevorDashboard = () => {
           type: 'line' as const,
           label: 'Avg days to close',
           data: avgDaysData,
-          borderColor: 'rgba(234, 179, 8, 0.9)',
-          backgroundColor: 'rgba(234, 179, 8, 0.1)',
+          borderColor: 'rgba(234, 179, 8, 0.95)',
+          backgroundColor: 'rgba(234, 179, 8, 0.15)',
           fill: false,
           tension: 0.2,
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointBackgroundColor: 'rgba(234, 179, 8, 0.95)',
           xAxisID: 'x1',
           order: 1,
         },
@@ -106,28 +121,39 @@ export const TrevorDashboard = () => {
       maintainAspectRatio: false,
       interaction: { mode: 'index' as const, intersect: false },
       plugins: {
-        legend: { display: true, position: 'top' as const },
+        legend: {
+          display: true,
+          position: 'top' as const,
+          labels: {
+            color: themeColors.text,
+            usePointStyle: true,
+          },
+        },
         tooltip: { enabled: true },
       },
       scales: {
         x: {
           beginAtZero: true,
           position: 'bottom' as const,
-          title: { display: true, text: 'Open count' },
-          grid: { drawOnChartArea: true },
+          title: { display: true, text: 'Open count', color: themeColors.muted },
+          ticks: { color: themeColors.muted },
+          grid: { color: themeColors.muted, drawBorder: false },
         },
         x1: {
           beginAtZero: true,
           position: 'top' as const,
-          title: { display: true, text: 'Avg days to close' },
+          title: { display: true, text: 'Avg days to close', color: themeColors.muted },
+          ticks: { color: themeColors.muted },
           grid: { drawOnChartArea: false },
+          suggestedMax: 15,
         },
         y: {
           grid: { display: false },
+          ticks: { color: themeColors.text },
         },
       },
     }),
-    []
+    [themeColors.text, themeColors.muted]
   );
 
   const byProjectChartData = useMemo(() => {
@@ -156,10 +182,21 @@ export const TrevorDashboard = () => {
       indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true } },
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { color: themeColors.muted },
+          title: { display: true, text: 'Open count', color: themeColors.muted },
+          grid: { color: themeColors.muted, drawBorder: false },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: themeColors.text },
+        },
+      },
     }),
-    []
+    [themeColors.text, themeColors.muted]
   );
 
   const byComponentChartData = useMemo(() => {
@@ -188,10 +225,21 @@ export const TrevorDashboard = () => {
       indexAxis: 'y' as const,
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true } },
+      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { color: themeColors.muted },
+          title: { display: true, text: 'Open count', color: themeColors.muted },
+          grid: { color: themeColors.muted, drawBorder: false },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: themeColors.text },
+        },
+      },
     }),
-    []
+    [themeColors.text, themeColors.muted]
   );
 
   const ganttTasks = useMemo(() => {
@@ -276,20 +324,20 @@ export const TrevorDashboard = () => {
   return (
     <div className="trevor-dashboard-content">
       <div className="trevor-stats-strip">
-        <TextScroller className="trevor-stats-scroller" duration={25}>
+        <TextScroller className="trevor-stats-scroller" duration={22}>
           {statsScrollerContent}
         </TextScroller>
       </div>
 
       <div className="grid trevor-charts-row">
-        <div className="col-12 md:col-6">
-          <Card title="Open by assignee" className="trevor-chart-card">
-            <div className="trevor-chart-inner">
+        <div className="col-12 md:col-7">
+          <Card title="Open & avg days by assignee" className="trevor-chart-card">
+            <div className="trevor-chart-inner" style={{ minHeight: '180px' }}>
               <Chart type="bar" data={assigneeComboChartData} options={assigneeComboChartOptions} />
             </div>
           </Card>
         </div>
-        <div className="col-12 md:col-6">
+        <div className="col-12 md:col-5">
           <Card title="Distribution" className="trevor-chart-card">
             <div className="trevor-chart-inner" style={{ minHeight: '200px' }}>
               <JiraMeterChart
@@ -305,11 +353,24 @@ export const TrevorDashboard = () => {
         </div>
       </div>
 
-      {analytics.byProject != null && Object.keys(analytics.byProject).length > 0 && (
-        <div className="grid mt-2">
-          <div className="col-12">
+      <div className="grid mt-2">
+        {analytics.byComponent != null && Object.keys(analytics.byComponent).length > 0 && (
+          <div className="col-12 md:col-6">
+            <Card title="By component" className="trevor-chart-card">
+              <div className="trevor-chart-inner">
+                <Chart
+                  type="bar"
+                  data={byComponentChartData}
+                  options={byComponentChartOptions}
+                />
+              </div>
+            </Card>
+          </div>
+        )}
+        {analytics.byProject != null && Object.keys(analytics.byProject).length > 0 && (
+          <div className="col-12 md:col-6">
             <Card title="By board" className="trevor-chart-card">
-              <div className="trevor-chart-inner" style={{ height: '160px' }}>
+              <div className="trevor-chart-inner" style={{ height: '140px' }}>
                 <Chart
                   type="bar"
                   data={byProjectChartData}
@@ -318,8 +379,8 @@ export const TrevorDashboard = () => {
               </div>
             </Card>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <Card title="Dev Team Timeline" className="trevor-gantt-card flex-1">
         <div className="trevor-gantt-wrap">

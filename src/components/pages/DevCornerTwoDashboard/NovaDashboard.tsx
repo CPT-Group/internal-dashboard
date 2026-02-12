@@ -40,44 +40,88 @@ export const NovaDashboard = () => {
     []
   );
 
-  const barChartData = useMemo(() => {
+  const assigneeComboChartData = useMemo(() => {
     const labels = analytics.byAssignee.map((a) => a.displayName);
-    const data = analytics.byAssignee.map((a) => a.openCount);
+    const openData = analytics.byAssignee.map((a) => a.openCount);
+    const avgDaysData = analytics.byAssignee.map((a) => a.avgDaysToClose ?? 0);
     const colors = analytics.byAssignee.map((_, i) => chartColors[i % chartColors.length]);
     return {
       labels,
       datasets: [
         {
-          label: 'Open tickets',
+          type: 'bar' as const,
+          label: 'Open',
+          data: openData,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.78', '1')),
+          borderWidth: 1,
+          borderRadius: 4,
+          borderSkipped: false,
+          order: 2,
+        },
+        {
+          type: 'line' as const,
+          label: 'Avg days to close',
+          data: avgDaysData,
+          borderColor: 'rgba(234, 179, 8, 0.9)',
+          backgroundColor: 'rgba(234, 179, 8, 0.1)',
+          fill: false,
+          tension: 0.2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          xAxisID: 'x1',
+          order: 1,
+        },
+      ],
+    };
+  }, [analytics.byAssignee, chartColors]);
+
+  const assigneeComboChartOptions = useMemo(
+    () => ({
+      indexAxis: 'y' as const,
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index' as const, intersect: false },
+      plugins: { legend: { display: true, position: 'top' as const }, tooltip: { enabled: true } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          position: 'bottom' as const,
+          title: { display: true, text: 'Open count' },
+          grid: { drawOnChartArea: true },
+        },
+        x1: {
+          beginAtZero: true,
+          position: 'top' as const,
+          title: { display: true, text: 'Avg days to close' },
+          grid: { drawOnChartArea: false },
+        },
+        y: { grid: { display: false } },
+      },
+    }),
+    []
+  );
+
+  const byComponentChartData = useMemo(() => {
+    const byComponent = analytics.byComponent ?? {};
+    const labels = Object.keys(byComponent).sort();
+    const data = labels.map((k) => byComponent[k]);
+    const colors = labels.map((_, i) => chartColors[i % chartColors.length]);
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Open by component',
           data,
           backgroundColor: colors,
           borderColor: colors.map((c) => c.replace('0.78', '1')),
           borderWidth: 1,
           borderRadius: 4,
           borderSkipped: false,
-          hoverBorderWidth: 2,
-          hoverShadowBlur: 6,
-          hoverShadowOffsetY: 2,
-          hoverShadowColor: 'rgba(0,0,0,0.25)',
         },
       ],
     };
-  }, [analytics.byAssignee, chartColors]);
-
-  const barChartOptions = useMemo(
-    () => ({
-      indexAxis: 'y' as const,
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 1000 },
-      transitions: { active: { animation: { duration: 800 } } },
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { beginAtZero: true },
-      },
-    }),
-    []
-  );
+  }, [analytics.byComponent, chartColors]);
 
   const byTypeChartData = useMemo(() => {
     const byType = analytics.byType ?? {};
@@ -197,9 +241,13 @@ export const NovaDashboard = () => {
 
       <div className="nova-dashboard-charts grid mb-2">
         <div className="col-12 lg:col-8">
-          <Card title="Open by assignee" className="p-2">
-            <div style={{ height: '200px' }}>
-              <Chart type="bar" data={barChartData} options={barChartOptions} />
+          <Card title="Open &amp; avg days to close by assignee" className="p-2">
+            <div style={{ height: '220px' }}>
+              <Chart
+                type="bar"
+                data={assigneeComboChartData}
+                options={assigneeComboChartOptions}
+              />
             </div>
           </Card>
         </div>
@@ -219,9 +267,9 @@ export const NovaDashboard = () => {
         </div>
       </div>
 
-      {analytics.byType != null && Object.keys(analytics.byType).length > 0 && (
-        <div className="grid mb-2">
-          <div className="col-12">
+      <div className="grid mb-2">
+        {analytics.byType != null && Object.keys(analytics.byType).length > 0 && (
+          <div className="col-12 md:col-6">
             <Card title="By type" className="p-2">
               <div style={{ height: '160px' }}>
                 <Chart
@@ -232,8 +280,21 @@ export const NovaDashboard = () => {
               </div>
             </Card>
           </div>
-        </div>
-      )}
+        )}
+        {analytics.byComponent != null && Object.keys(analytics.byComponent).length > 0 && (
+          <div className="col-12 md:col-6">
+            <Card title="By component" className="p-2">
+              <div style={{ height: '160px' }}>
+                <Chart
+                  type="bar"
+                  data={byComponentChartData}
+                  options={byTypeChartOptions}
+                />
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
 
       <div className="nova-dashboard-table-wrap flex flex-column min-h-0 flex-1">
         <Card title="By assignee" className="p-2 flex flex-column min-h-0 flex-1">
@@ -296,6 +357,18 @@ export const NovaDashboard = () => {
                 <Tag value={String(row.doneCount)} severity="success" />
               ) : (
                 <span className="text-color-secondary">0</span>
+              )
+            }
+          />
+          <Column
+            field="avgDaysToClose"
+            header="Avg days"
+            sortable
+            body={(row) =>
+              row.avgDaysToClose != null ? (
+                <span>{row.avgDaysToClose}</span>
+              ) : (
+                <span className="text-color-secondary">–</span>
               )
             }
           />
