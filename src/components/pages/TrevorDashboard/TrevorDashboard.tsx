@@ -3,11 +3,12 @@
 import { useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card } from 'primereact/card';
+import { Chart } from 'primereact/chart';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
-import { useJiraNovaStore } from '@/stores';
-import { isTrevorTeamMember } from '@/constants';
+import type { JiraIssue } from '@/types';
+import { useTrevorJiraStore } from '@/stores';
 
 import '@/styles/frappe-gantt.css';
 
@@ -16,7 +17,7 @@ const GanttChart = dynamic(
   { ssr: false, loading: () => <Skeleton width="100%" height="180px" /> }
 );
 
-function getAssigneeName(issue: { fields?: { assignee?: { displayName?: string } } }): string {
+function getAssigneeName(issue: JiraIssue): string {
   return issue.fields?.assignee?.displayName ?? 'Unassigned';
 }
 
@@ -34,38 +35,111 @@ function isDone(issue: { fields?: { status?: { statusCategory?: { key?: string }
   return issue.fields?.status?.statusCategory?.key === 'done';
 }
 
+/* Glossy chart palette: opacity + glow for modern sleek look */
+const CHART_COLORS = [
+  'rgba(59, 130, 246, 0.82)',
+  'rgba(168, 85, 247, 0.82)',
+  'rgba(34, 197, 94, 0.82)',
+  'rgba(234, 179, 8, 0.82)',
+  'rgba(236, 72, 153, 0.82)',
+  'rgba(20, 184, 166, 0.82)',
+  'rgba(249, 115, 22, 0.82)',
+  'rgba(99, 102, 241, 0.82)',
+];
+
 export const TrevorDashboard = () => {
-  const { fetchNovaData, isStale, loading, error, getAnalytics, getAllIssues } = useJiraNovaStore();
+  const { fetchTrevorData, isStale, loading, error, getAnalytics, getAllIssues } =
+    useTrevorJiraStore();
 
   useEffect(() => {
-    if (isStale()) void fetchNovaData();
+    if (isStale()) void fetchTrevorData();
     const interval = setInterval(() => {
-      if (isStale()) void fetchNovaData();
+      if (isStale()) void fetchTrevorData();
     }, 60 * 1000);
     return () => clearInterval(interval);
-  }, [fetchNovaData, isStale]);
+  }, [fetchTrevorData, isStale]);
 
   const analytics = getAnalytics();
   const allIssues = getAllIssues();
 
-  const teamFiltered = useMemo(() => {
-    const filter = (name: string) => isTrevorTeamMember(name);
-    const byAssignee = analytics.byAssignee.filter((a) => filter(a.displayName));
-    const totalOpen = byAssignee.reduce((s, a) => s + a.openCount, 0);
-    const totalToday = byAssignee.reduce((s, a) => s + a.todayCount, 0);
-    const totalOverdue = byAssignee.reduce((s, a) => s + a.overdueCount, 0);
-    const totalDone = byAssignee.reduce((s, a) => s + a.doneCount, 0);
-    return { byAssignee, totalOpen, totalToday, totalOverdue, totalDone };
+  const barChartData = useMemo(() => {
+    const labels = analytics.byAssignee.map((a) => a.displayName);
+    const data = analytics.byAssignee.map((a) => a.openCount);
+    const colors = analytics.byAssignee.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Open by assignee',
+          data,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.82', '1')),
+          borderWidth: 1,
+          borderRadius: 6,
+          borderSkipped: false,
+          hoverBorderWidth: 2,
+          hoverShadowBlur: 12,
+          hoverShadowOffsetY: 2,
+          hoverShadowColor: 'rgba(0,0,0,0.3)',
+          hoverBackgroundColor: colors.map((c) => c.replace('0.82', '0.95')),
+        },
+      ],
+    };
   }, [analytics.byAssignee]);
+
+  const barChartOptions = useMemo(
+    () => ({
+      indexAxis: 'y' as const,
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1000 },
+      transitions: { active: { animation: { duration: 800 } } },
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } },
+    }),
+    []
+  );
+
+  const doughnutChartData = useMemo(() => {
+    const labels = analytics.byAssignee.map((a) => a.displayName);
+    const data = analytics.byAssignee.map((a) => a.openCount);
+    const colors = analytics.byAssignee.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: colors,
+          borderColor: colors.map((c) => c.replace('0.82', '1')),
+          borderWidth: 2,
+          hoverBorderWidth: 3,
+          hoverShadowBlur: 8,
+          hoverShadowOffsetY: 2,
+          hoverShadowColor: 'rgba(0,0,0,0.35)',
+        },
+      ],
+    };
+  }, [analytics.byAssignee]);
+
+  const doughnutChartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 1000 },
+      transitions: { active: { animation: { duration: 800 } } },
+      plugins: {
+        legend: {
+          position: 'right' as const,
+          labels: { boxWidth: 12, padding: 8, usePointStyle: true },
+        },
+      },
+    }),
+    []
+  );
 
   const ganttTasks = useMemo(() => {
     const today = toYyyyMmDd(new Date().toISOString());
-    const teamIssues = allIssues.filter((i) => {
-      const name = getAssigneeName(i);
-      return isTrevorTeamMember(name);
-    });
-
-    return teamIssues
+    return allIssues
       .map((issue) => {
         const start = toYyyyMmDd(issue.fields.created);
         const duedate = issue.fields.duedate
@@ -89,7 +163,7 @@ export const TrevorDashboard = () => {
       .sort((a, b) => a.start.localeCompare(b.start));
   }, [allIssues]);
 
-  if (loading && teamFiltered.totalOpen === 0 && teamFiltered.totalDone === 0) {
+  if (loading && analytics.totalOpen === 0 && analytics.totalDone === 0) {
     return (
       <div className="trevor-dashboard-content">
         <div className="trevor-stats grid mb-2">
@@ -129,7 +203,7 @@ export const TrevorDashboard = () => {
         <div className="col-6">
           <Card className="p-2">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">{teamFiltered.totalOpen}</div>
+              <div className="trevor-stat-value text-xl font-bold">{analytics.totalOpen}</div>
               <div className="text-color-secondary text-xs">Open</div>
             </div>
           </Card>
@@ -137,7 +211,7 @@ export const TrevorDashboard = () => {
         <div className="col-6">
           <Card className="p-2">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">{teamFiltered.totalToday}</div>
+              <div className="trevor-stat-value text-xl font-bold">{analytics.totalToday}</div>
               <div className="text-color-secondary text-xs">Today</div>
             </div>
           </Card>
@@ -146,7 +220,7 @@ export const TrevorDashboard = () => {
           <Card className="p-2">
             <div className="text-center">
               <div className="trevor-stat-value text-xl font-bold">
-                {teamFiltered.totalOverdue}
+                {analytics.totalOverdue}
               </div>
               <div className="text-color-secondary text-xs">Late</div>
             </div>
@@ -155,8 +229,25 @@ export const TrevorDashboard = () => {
         <div className="col-6">
           <Card className="p-2">
             <div className="text-center">
-              <div className="trevor-stat-value text-xl font-bold">{teamFiltered.totalDone}</div>
+              <div className="trevor-stat-value text-xl font-bold">{analytics.totalDone}</div>
               <div className="text-color-secondary text-xs">Done</div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <div className="grid mb-2">
+        <div className="col-12 md:col-3">
+          <Card title="Open by assignee" className="p-2 trevor-chart-card">
+            <div style={{ height: '140px' }}>
+              <Chart type="bar" data={barChartData} options={barChartOptions} />
+            </div>
+          </Card>
+        </div>
+        <div className="col-12 md:col-3">
+          <Card title="Distribution" className="p-2 trevor-chart-card">
+            <div style={{ height: '140px' }}>
+              <Chart type="doughnut" data={doughnutChartData} options={doughnutChartOptions} />
             </div>
           </Card>
         </div>

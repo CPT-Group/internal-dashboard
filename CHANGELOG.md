@@ -12,6 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Major (1.0.0)**: Major releases, production-ready milestones, breaking changes
 - Version increments max at 9 (e.g., 0.9.9 → 1.0.0)
 
+## [0.1.34] - 2026-02-12
+
+### Added
+
+- **Trevor's dashboard** (`/tv/trevor`): Dev team totals & Gantt – mobile-friendly. Uses JQL for OPRD, CM, NOVA projects with assignee WAS IN (4 team members), last 6 months, excludes case phase/Epic/Sub-task.
+- **JIRA_TREVOR** constants and **trevorJiraStore**: Trevor-specific JQL and data fetching.
+- **src/styles/frappe-gantt.css**: Local copy of frappe-gantt CSS for reliable module resolution.
+- **react-frappe-gantt** type declarations (`src/types/react-frappe-gantt.d.ts`).
+- PrimeReact charts on Trevor dashboard: Open by assignee (bar), Distribution (doughnut) with glossy opacity and hover glow.
+
+### Fixed
+
+- frappe-gantt CSS: resolved module-not-found by importing from `@/styles/frappe-gantt.css` instead of package path.
+
+### Changed
+
+- Trevor dashboard: uses trevorJiraStore with new JQL; Gantt chart for Dev Team Timeline; compact mobile-first layout.
+
 ## [0.1.33] - 2026-01-30
 
 ### Changed
