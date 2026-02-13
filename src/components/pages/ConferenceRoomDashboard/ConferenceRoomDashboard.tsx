@@ -9,7 +9,6 @@ import {
 import styles from './ConferenceRoomDashboard.module.css';
 
 const SLIDE_INTERVAL_MS = 6000;
-const FADE_DURATION_MS = 1500;
 
 export const ConferenceRoomDashboard = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,16 +27,13 @@ export const ConferenceRoomDashboard = () => {
           <div
             key={src}
             className={`${styles.bgSlide} ${index === currentIndex ? styles.active : ''}`}
-            style={{
-              backgroundImage: `url(${src})`,
-              transition: `opacity ${FADE_DURATION_MS}ms ease-in-out`,
-            }}
+            style={{ backgroundImage: `url(${src})` }}
           />
         ))}
       </div>
       <div className={styles.scrollerWrap}>
-        <TextScroller duration={40}>
-          <span className="text-color-secondary">{CONFERENCE_REEL_TEXT}</span>
+        <TextScroller duration={40} textColor="white" backgroundColor="black">
+          {CONFERENCE_REEL_TEXT}
         </TextScroller>
       </div>
     </div>

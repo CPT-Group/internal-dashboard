@@ -11,6 +11,7 @@ import { Tag } from 'primereact/tag';
 import { Skeleton } from 'primereact/skeleton';
 import { useJiraNovaStore } from '@/stores';
 import { JiraMeterChart } from '@/components/ui';
+import styles from './NovaDashboard.module.scss';
 
 export const NovaDashboard = () => {
   const { fetchNovaData, isStale, loading, error, getAnalytics } = useJiraNovaStore();
@@ -187,7 +188,7 @@ export const NovaDashboard = () => {
           <Skeleton width="100%" height="120px" />
         </Card>
         <div className="flex align-items-center gap-2 mt-1">
-          <ProgressSpinner style={{ width: '18px', height: '18px' }} />
+          <ProgressSpinner className="progress-spinner-md" />
           <span className="text-color-secondary text-sm">Loading…</span>
         </div>
       </div>
@@ -242,7 +243,7 @@ export const NovaDashboard = () => {
       <div className="nova-dashboard-charts grid mb-2">
         <div className="col-12 lg:col-8">
           <Card title="Open &amp; avg days to close by assignee" className="p-2">
-            <div style={{ height: '220px' }}>
+            <div className={styles.chartXl}>
               <Chart
                 type="bar"
                 data={assigneeComboChartData}
@@ -253,7 +254,7 @@ export const NovaDashboard = () => {
         </div>
         <div className="col-12 lg:col-4">
           <Card title="Distribution" className="p-2 nova-dashboard-doughnut-card">
-            <div className="nova-dashboard-doughnut-wrap" style={{ height: '200px' }}>
+            <div className={`nova-dashboard-doughnut-wrap ${styles.chartLg}`}>
               <JiraMeterChart
                 centerValue={analytics.totalOpen}
                 centerLabel="Open"
@@ -271,7 +272,7 @@ export const NovaDashboard = () => {
         {analytics.byType != null && Object.keys(analytics.byType).length > 0 && (
           <div className="col-12 md:col-6">
             <Card title="By type" className="p-2">
-              <div style={{ height: '160px' }}>
+              <div className={styles.chartMd}>
                 <Chart
                   type="bar"
                   data={byTypeChartData}
@@ -284,7 +285,7 @@ export const NovaDashboard = () => {
         {analytics.byComponent != null && Object.keys(analytics.byComponent).length > 0 && (
           <div className="col-12 md:col-6">
             <Card title="By component" className="p-2">
-              <div style={{ height: '160px' }}>
+              <div className={styles.chartMd}>
                 <Chart
                   type="bar"
                   data={byComponentChartData}
@@ -378,7 +379,7 @@ export const NovaDashboard = () => {
 
       {loading && (
         <div className="flex align-items-center gap-2 mt-1 flex-shrink-0">
-          <ProgressSpinner style={{ width: '18px', height: '18px' }} />
+          <ProgressSpinner className="progress-spinner-md" />
           <span className="text-color-secondary text-sm">Refreshing…</span>
         </div>
       )}

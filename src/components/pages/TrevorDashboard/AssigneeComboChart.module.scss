@@ -1,0 +1,23 @@
+/* Assignee radar: rem-based so it scales with Trevor layout. */
+.wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 8rem;
+  max-height: 14rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}

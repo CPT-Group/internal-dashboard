@@ -1,8 +1,8 @@
 # PrimeReact Theming Guide
 
-Based on [PrimeReact Theming Documentation](https://primereact.org/theming/)
+**→ For how themes work in this app and how to use/update them, see [theme-system.md](./theme-system.md).**
 
-**⚠️ IMPORTANT**: See `theme-implementation-notes.md` for the working solution and what NOT to do.
+Based on [PrimeReact Theming Documentation](https://primereact.org/theming/). The sections below describe concepts and our **previous** implementation; the **current** implementation is documented in **theme-system.md** (SCSS, data-theme, dark-synth default, four themes, no dynamic theme link).
 
 ## Overview
 

@@ -2,6 +2,17 @@
 
 import { useMemo } from 'react';
 import { Chart } from 'primereact/chart';
+import styles from './JiraMeterChart.module.scss';
+
+function getThemeTextColor(): string {
+  if (typeof document === 'undefined') return '#e5e7eb';
+  const s = getComputedStyle(document.documentElement);
+  return (
+    s.getPropertyValue('--p-text-color').trim() ||
+    s.getPropertyValue('--text-color').trim() ||
+    '#e5e7eb'
+  );
+}
 
 const DEFAULT_COLORS = [
   'rgba(59, 130, 246, 0.82)',
@@ -27,6 +38,8 @@ export interface JiraMeterChartProps {
   colors?: string[];
   /** Chart height in px. */
   height?: number;
+  /** Legend position: 'right' (default) or 'bottom'. Use 'bottom' when center text must sit in the donut (e.g. Trevor Distribution). */
+  legendPosition?: 'right' | 'bottom';
   /** Optional class for the wrapper. */
   className?: string;
 }
@@ -42,6 +55,7 @@ export function JiraMeterChart({
   data,
   colors = DEFAULT_COLORS,
   height = 200,
+  legendPosition = 'right',
   className,
 }: JiraMeterChartProps) {
   const chartData = useMemo(() => {
@@ -60,59 +74,46 @@ export function JiraMeterChart({
     };
   }, [labels, data, colors]);
 
+  const legendColor = useMemo(() => getThemeTextColor(), []);
+
   const options = useMemo(
     () => ({
       responsive: true,
       maintainAspectRatio: false,
       cutout: '78%',
       animation: { duration: 600 },
+      layout: { padding: 0 },
       plugins: {
         legend: {
-          position: 'right' as const,
+          position: legendPosition as 'right' | 'bottom',
           labels: {
             boxWidth: 12,
             padding: 6,
             font: { size: 11 },
-            color: 'var(--text-color, var(--p-text-color))',
+            color: legendColor,
             usePointStyle: true,
           },
         },
         tooltip: { enabled: true },
       },
     }),
-    []
+    [legendColor, legendPosition]
   );
 
+  const containerStyle =
+    height !== 200
+      ? ({ ['--chart-meter-height' as string]: `${height}px` } as React.CSSProperties)
+      : undefined;
+
+  const containerClass = [styles.container, className ?? ''].filter(Boolean).join(' ');
+
   return (
-    <div
-      className={className}
-      style={{ position: 'relative', width: '100%', height: `${height}px` }}
-    >
-      <Chart type="doughnut" data={chartData} options={options} style={{ height: `${height}px` }} />
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 0,
-          bottom: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <span className="text-color" style={{ fontSize: '1.75rem', fontWeight: 700, lineHeight: 1 }}>
-          {centerValue}
-        </span>
+    <div className={containerClass} style={containerStyle}>
+      <Chart type="doughnut" data={chartData} options={options} />
+      <div className={[styles.center, legendPosition === 'bottom' && styles.legendBottom].filter(Boolean).join(' ')}>
+        <span className={styles.centerValue}>{centerValue}</span>
         {centerLabel != null && centerLabel !== '' && (
-          <span
-            className="text-color-secondary"
-            style={{ fontSize: '0.75rem', marginTop: '2px' }}
-          >
-            {centerLabel}
-          </span>
+          <span className={styles.centerLabel}>{centerLabel}</span>
         )}
       </div>
     </div>

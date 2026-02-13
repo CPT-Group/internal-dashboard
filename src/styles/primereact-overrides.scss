@@ -1,0 +1,281 @@
+// PrimeReact component overrides – lara-dark-blue uses hardcoded colors for several components.
+// This file uses theme variables only so it works for all themes. Load after theme files in main.scss.
+
+// --- Card ---
+.p-card {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--surface-border) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.2)) !important;
+}
+.p-card .p-card-subtitle {
+  color: var(--text-color-secondary) !important;
+}
+
+// --- Accordion ---
+.p-accordion .p-accordion-header .p-accordion-header-link {
+  padding: var(--content-padding, 1rem) !important;
+  border: 1px solid var(--surface-border) !important;
+  color: var(--text-color) !important;
+  background: var(--surface-card) !important;
+  border-radius: var(--border-radius) !important;
+}
+.p-accordion .p-accordion-header:not(.p-disabled) .p-accordion-header-link:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+.p-accordion .p-accordion-header:not(.p-highlight):not(.p-disabled):hover .p-accordion-header-link {
+  background: var(--surface-hover) !important;
+  border-color: var(--surface-border) !important;
+  color: var(--text-color) !important;
+}
+.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link {
+  background: var(--surface-card) !important;
+  border-color: var(--surface-border) !important;
+  color: var(--text-color) !important;
+}
+.p-accordion .p-accordion-header:not(.p-disabled).p-highlight:hover .p-accordion-header-link {
+  background: var(--surface-hover) !important;
+  border-color: var(--surface-border) !important;
+  color: var(--text-color) !important;
+}
+.p-accordion .p-accordion-content {
+  padding: var(--content-padding, 1rem) !important;
+  border: 1px solid var(--surface-border) !important;
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+}
+.p-accordion .p-accordion-tab {
+  margin-bottom: 2px !important;
+}
+
+// --- Panel ---
+.p-panel .p-panel-header {
+  border: 1px solid var(--surface-border) !important;
+  padding: var(--content-padding, 1rem) !important;
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+}
+.p-panel .p-panel-header .p-panel-title {
+  font-weight: 700;
+}
+.p-panel .p-panel-header .p-panel-header-icon {
+  color: var(--text-color-secondary) !important;
+  background: transparent !important;
+  border: 0 none !important;
+}
+.p-panel .p-panel-header .p-panel-header-icon:enabled:hover {
+  color: var(--text-color) !important;
+  background: var(--surface-hover) !important;
+}
+.p-panel .p-panel-header .p-panel-header-icon:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+.p-panel .p-panel-content {
+  padding: var(--content-padding, 1rem) !important;
+  border: 1px solid var(--surface-border) !important;
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-top: 0 none !important;
+  border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
+}
+.p-panel .p-panel-footer {
+  padding: var(--content-padding, 1rem) !important;
+  border: 1px solid var(--surface-border) !important;
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-top: 0 none !important;
+}
+
+// --- DataTable ---
+.p-datatable .p-datatable-header,
+.p-datatable .p-datatable-footer {
+  background: var(--surface-card) !important;
+  color: var(--text-color-secondary) !important;
+  border-color: var(--surface-border) !important;
+}
+.p-datatable .p-datatable-thead > tr > th,
+.p-datatable .p-datatable-tfoot > tr > td {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-color: var(--surface-border) !important;
+}
+.p-datatable .p-sortable-column .p-sortable-column-icon {
+  color: var(--text-color-secondary) !important;
+}
+.p-datatable .p-sortable-column .p-sortable-column-badge {
+  color: var(--text-color) !important;
+  background: var(--highlight-bg) !important;
+}
+.p-datatable .p-sortable-column:not(.p-highlight):not(.p-sortable-disabled):hover,
+.p-datatable .p-sortable-column:not(.p-highlight):not(.p-sortable-disabled):hover .p-sortable-column-icon {
+  background: var(--surface-hover) !important;
+  color: var(--text-color) !important;
+}
+.p-datatable .p-sortable-column.p-highlight,
+.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon,
+.p-datatable .p-sortable-column.p-highlight:not(.p-sortable-disabled):hover,
+.p-datatable .p-sortable-column.p-highlight:not(.p-sortable-disabled):hover .p-sortable-column-icon {
+  background: var(--highlight-bg) !important;
+  color: var(--text-color) !important;
+}
+.p-datatable .p-sortable-column:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+.p-datatable .p-datatable-tbody > tr {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+}
+.p-datatable .p-datatable-tbody > tr > td {
+  border-color: var(--surface-border) !important;
+}
+.p-datatable .p-datatable-tbody > tr > td.p-highlight,
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+  background: var(--highlight-bg) !important;
+  color: var(--text-color) !important;
+}
+.p-datatable.p-datatable-selectable .p-datatable-tbody > tr.p-selectable-row:not(.p-highlight):not(.p-datatable-emptymessage):hover,
+.p-datatable.p-datatable-selectable-cell .p-datatable-tbody > tr.p-selectable-row > td.p-selectable-cell:not(.p-highlight):hover,
+.p-datatable.p-datatable-hoverable-rows .p-datatable-tbody > tr:not(.p-highlight):not(.p-datatable-emptymessage):hover {
+  background: var(--surface-hover) !important;
+  color: var(--text-color) !important;
+}
+.p-datatable .p-column-resizer-helper {
+  background: var(--primary-color) !important;
+}
+.p-datatable .p-datatable-scrollable-header,
+.p-datatable .p-datatable-scrollable-footer,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-virtualscroller > .p-datatable-table > .p-datatable-thead,
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-virtualscroller > .p-datatable-table > .p-datatable-tfoot {
+  background: var(--surface-card) !important;
+  background-color: var(--surface-card) !important;
+}
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd {
+  background: var(--surface-e) !important;
+}
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd.p-highlight {
+  background: var(--highlight-bg) !important;
+}
+
+// --- Message ---
+.p-message.p-message-info {
+  background: color-mix(in srgb, var(--primary-color) 20%, transparent) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--text-color) !important;
+}
+.p-message.p-message-info .p-message-icon,
+.p-message.p-message-info .p-message-close {
+  color: var(--primary-color) !important;
+}
+.p-message.p-message-success {
+  background: color-mix(in srgb, var(--green-500) 20%, transparent) !important;
+  border-color: var(--green-500) !important;
+  color: var(--text-color) !important;
+}
+.p-message.p-message-success .p-message-icon,
+.p-message.p-message-success .p-message-close {
+  color: var(--green-500) !important;
+}
+.p-message.p-message-warn {
+  background: color-mix(in srgb, var(--yellow-500) 20%, transparent) !important;
+  border-color: var(--yellow-500) !important;
+  color: var(--text-color) !important;
+}
+.p-message.p-message-warn .p-message-icon,
+.p-message.p-message-warn .p-message-close {
+  color: var(--yellow-500) !important;
+}
+.p-message.p-message-error {
+  background: color-mix(in srgb, var(--red-500) 20%, transparent) !important;
+  border-color: var(--red-500) !important;
+  color: var(--text-color) !important;
+}
+.p-message.p-message-error .p-message-icon,
+.p-message.p-message-error .p-message-close {
+  color: var(--red-500) !important;
+}
+.p-message .p-message-close:hover {
+  background: var(--surface-hover) !important;
+}
+.p-message .p-message-close:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+
+// --- Tag ---
+.p-tag {
+  background: var(--primary-color) !important;
+  color: var(--primary-color-text) !important;
+}
+.p-tag.p-tag-success {
+  background: var(--green-500) !important;
+  color: var(--green-50) !important;
+}
+.p-tag.p-tag-info {
+  background: var(--primary-color) !important;
+  color: var(--primary-color-text) !important;
+}
+.p-tag.p-tag-warning {
+  background: var(--yellow-500) !important;
+  color: var(--yellow-900) !important;
+}
+.p-tag.p-tag-danger {
+  background: var(--red-500) !important;
+  color: var(--red-50) !important;
+}
+
+// --- Button (primary / outlined / text) ---
+.p-button {
+  background: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--primary-color-text) !important;
+}
+.p-button:not(:disabled):hover {
+  background: var(--button-primary-background-hover, var(--primary-color)) !important;
+  border-color: var(--button-primary-background-hover, var(--primary-color)) !important;
+  color: var(--primary-color-text) !important;
+}
+.p-button:not(:disabled):active {
+  background: var(--surface-400) !important;
+  border-color: var(--surface-400) !important;
+  color: var(--primary-color-text) !important;
+}
+.p-button.p-button-outlined {
+  background: transparent !important;
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+.p-button.p-button-outlined:not(:disabled):hover {
+  background: var(--surface-hover) !important;
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+.p-button.p-button-text {
+  background: transparent !important;
+  color: var(--primary-color) !important;
+  border-color: transparent !important;
+}
+.p-button.p-button-text:not(:disabled):hover {
+  background: var(--surface-hover) !important;
+  color: var(--primary-color) !important;
+}
+.p-button:focus {
+  box-shadow: var(--focus-ring) !important;
+}
+
+// --- Skeleton ---
+.p-skeleton {
+  background-color: var(--surface-c) !important;
+}
+.p-skeleton:after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--surface-d),
+    transparent
+  ) !important;
+}

@@ -1,5 +1,7 @@
 # Theme Setup Investigation: interactive-site-manager & cpt-internal-tools
 
+**→ For how to use and update the dashboard theme in this repo, see [theme-system.md](./theme-system.md).**
+
 Investigation of how **base** (structure / main setup) and **themes** (color overrides) are split in two codebases, for use when reworking internal-dashboard theming.
 
 ---

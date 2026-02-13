@@ -20,6 +20,12 @@ export const TREVOR_TEAM_DISPLAY_NAMES = [
   'Kyle Dilbeck',
 ] as const;
 
+/** Ordered list of team members (id + displayName) for charts so all 4 always show. */
+export const TREVOR_TEAM_ORDERED = TREVOR_TEAM_ACCOUNT_IDS_ARRAY.map((id, i) => ({
+  accountId: id,
+  displayName: TREVOR_TEAM_DISPLAY_NAMES[i],
+})) as { accountId: string; displayName: string }[];
+
 export type TrevorTeamMember = (typeof TREVOR_TEAM_DISPLAY_NAMES)[number];
 
 /**

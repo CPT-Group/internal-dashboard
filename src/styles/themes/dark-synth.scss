@@ -1,0 +1,133 @@
+// Dark Synth Theme – matches cpt-internal-tools (synthwave purple/cyan)
+// Explicit html/body rules ensure background and text apply even if variable order is wrong.
+
+html[data-theme='dark-synth'] {
+  background-color: #0c0020 !important;
+}
+html[data-theme='dark-synth'] body {
+  background-color: #0c0020 !important;
+  color: #dbd4fa !important;
+}
+
+html[data-theme='dark-synth'],
+[data-theme='dark-synth'] {
+  --header-bg: #07071b !important;
+  --header-fg: #dbd4fa !important;
+  --header-border: 1px solid #2a1f4e !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  --window-bg: #0c0020 !important;
+  --window-fg: #dbd4fa !important;
+  --window-border: 1px solid #2a1f4e !important;
+  --window-surface-bg: #1a0a2e !important;
+  --window-surface-fg: #dbd4fa !important;
+  --window-surface-border: 1px solid #3d2a5c !important;
+  --input-bg: #07071b !important;
+  --input-fg: #dbd4fa !important;
+  --input-border: 1px solid #2a1f4e !important;
+  --button-bg: var(--window-surface-bg) !important;
+  --button-fg: #dbd4fa !important;
+  --button-hover-bg: var(--surface-hover) !important;
+  --menu-item-hover-bg: #2a1f4e !important;
+  --status-icon-fill: #24cdc5 !important;
+  --status-icon-stroke: #24cdc5 !important;
+  --status-icon-stroke-offline: #5c4d7a !important;
+  --page-background: #0c0020 !important;
+  --text-primary: #dbd4fa !important;
+  --button-primary-background: #24cdc5 !important;
+  --button-primary-background-hover: #3dd9d2 !important;
+  --button-primary-text: #07071b !important;
+  --maskbg: rgba(7, 0, 27, 0.75) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(36, 205, 197, 0.35) !important;
+  --highlight-bg: rgba(36, 205, 197, 0.15) !important;
+  --highlight-text-color: #dbd4fa !important;
+  --color-danger: #f472b6 !important;
+  --surface-ground: #0c0020 !important;
+  --surface-section: #0c0020 !important;
+  --surface-card: #1a0a2e !important;
+  --surface-overlay: #1a0a2e !important;
+  --surface-border: #2a1f4e !important;
+  --surface-hover: rgba(184, 114, 249, 0.12) !important;
+  --surface-0: #07071b !important;
+  --surface-50: #0c0020 !important;
+  --surface-100: #1a0a2e !important;
+  --surface-200: #2a1f4e !important;
+  --surface-300: #3d2a5c !important;
+  --surface-400: #5c4d7a !important;
+  --surface-500: #7a6b98 !important;
+  --surface-600: #9d8fbd !important;
+  --surface-700: #c89cff !important;
+  --surface-800: #dbd4fa !important;
+  --surface-900: #ede9fe !important;
+  --surface-a: #1a0a2e !important;
+  --surface-b: #0c0020 !important;
+  --surface-c: rgba(184, 114, 249, 0.08) !important;
+  --surface-d: #2a1f4e !important;
+  --surface-e: #1a0a2e !important;
+  --surface-f: #1a0a2e !important;
+  --gray-50: #ede9fe !important;
+  --gray-100: #dbd4fa !important;
+  --gray-200: #c89cff !important;
+  --gray-300: #9d8fbd !important;
+  --gray-400: #7a6b98 !important;
+  --gray-500: #5c4d7a !important;
+  --gray-600: #3d2a5c !important;
+  --gray-700: #2a1f4e !important;
+  --gray-800: #1a0a2e !important;
+  --gray-900: #0c0020 !important;
+  --text-color: #dbd4fa !important;
+  --text-color-secondary: #9d8fbd !important;
+  --primary-color: #24cdc5 !important;
+  --primary-color-text: #07071b !important;
+  --scrollbar-track-bg: #1a0a2e !important;
+  --scrollbar-thumb-bg: #2a1f4e !important;
+  --scrollbar-thumb-hover-bg: #3d2a5c !important;
+  --card-border: rgba(184, 114, 249, 0.2) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 12px rgba(184, 114, 249, 0.08) !important;
+  --tag-today-bg: rgba(184, 114, 249, 0.25) !important;
+  --tag-today-text: #c89cff !important;
+  --tag-today-border: rgba(184, 114, 249, 0.5) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --data-quality-valid: rgba(36, 205, 197, 0.5) !important;
+  --data-quality-warning: rgba(209, 134, 22, 0.5) !important;
+  --data-quality-error: rgba(244, 114, 182, 0.55) !important;
+  --data-quality-empty: rgba(122, 107, 152, 0.3) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+}
+
+// Dialog – theme colors (from cpt-internal-tools)
+html[data-theme='dark-synth'] .p-dialog,
+[data-theme='dark-synth'] .p-dialog {
+  background: var(--window-surface-bg) !important;
+  border: var(--window-surface-border) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='dark-synth'] .p-dialog .p-dialog-header,
+[data-theme='dark-synth'] .p-dialog .p-dialog-header {
+  background: var(--header-bg) !important;
+  color: var(--header-fg) !important;
+  border-bottom: var(--header-border) !important;
+}
+html[data-theme='dark-synth'] .p-dialog .p-dialog-title,
+[data-theme='dark-synth'] .p-dialog .p-dialog-title {
+  color: var(--header-fg) !important;
+}
+html[data-theme='dark-synth'] .p-dialog .p-dialog-content,
+[data-theme='dark-synth'] .p-dialog .p-dialog-content {
+  background: var(--window-surface-bg) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='dark-synth'] .p-dialog .p-dialog-footer,
+[data-theme='dark-synth'] .p-dialog .p-dialog-footer {
+  background: var(--window-surface-bg) !important;
+  border-top: var(--window-surface-border) !important;
+}
+html[data-theme='dark-synth'] .p-dialog .p-dialog-header-icon,
+[data-theme='dark-synth'] .p-dialog .p-dialog-header-icon {
+  color: var(--header-fg) !important;
+}
+html[data-theme='dark-synth'] .p-dialog .p-dialog-header-icon:hover,
+[data-theme='dark-synth'] .p-dialog .p-dialog-header-icon:hover {
+  color: var(--text-color-secondary) !important;
+  background: var(--surface-hover) !important;
+}

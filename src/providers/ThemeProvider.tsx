@@ -2,11 +2,14 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'dark' | 'light' | 'dark-synth' | 'ms-access-2010';
+
+const THEME_ORDER: Theme[] = ['dark-synth', 'dark', 'light', 'ms-access-2010'];
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
+  cycleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -23,67 +26,43 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+function parseStoredTheme(stored: string | null): Theme {
+  if (stored === 'dark' || stored === 'light' || stored === 'dark-synth' || stored === 'ms-access-2010') {
+    return stored;
+  }
+  return 'dark-synth';
+}
+
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('dark-synth');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Get theme from localStorage or default to dark
-    const savedTheme = (localStorage.getItem('cpt-theme') as Theme) || 'dark';
-    setTheme(savedTheme);
-    
-    // Create initial theme link element
-    const linkId = 'theme-stylesheet';
-    let linkElement = document.getElementById(linkId) as HTMLLinkElement;
-    
-    if (!linkElement) {
-      linkElement = document.createElement('link');
-      linkElement.id = linkId;
-      linkElement.rel = 'stylesheet';
-      document.head.appendChild(linkElement);
-    }
-    
-    // Set initial theme
-    const themePath = savedTheme === 'light' 
-      ? '/themes/cpt-legacy-light/theme.css'
-      : '/themes/cpt-legacy-dark/theme.css';
-    linkElement.href = themePath;
+    const savedTheme = parseStoredTheme(localStorage.getItem('cpt-theme'));
+    setThemeState(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
-    
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-
-    // Find or create the theme stylesheet link element
-    const linkId = 'theme-stylesheet';
-    let linkElement = document.getElementById(linkId) as HTMLLinkElement;
-
-    if (!linkElement) {
-      linkElement = document.createElement('link');
-      linkElement.id = linkId;
-      linkElement.rel = 'stylesheet';
-      document.head.appendChild(linkElement);
-    }
-
-    // Update the href to point to the selected theme
-    const themePath = theme === 'light' 
-      ? '/themes/cpt-legacy-light/theme.css'
-      : '/themes/cpt-legacy-dark/theme.css';
-    
-    linkElement.href = themePath;
-
-    // Set data-theme attribute
     document.documentElement.setAttribute('data-theme', theme);
-
-    // Save to localStorage
     localStorage.setItem('cpt-theme', theme);
   }, [theme, mounted]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  const setTheme = (next: Theme) => {
+    setThemeState(next);
   };
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+  const cycleTheme = () => {
+    const idx = THEME_ORDER.indexOf(theme);
+    const next = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+    setThemeState(next);
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, cycleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 };

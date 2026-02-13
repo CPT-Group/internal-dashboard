@@ -8,8 +8,8 @@ import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 
-// Theme CSS will be loaded dynamically via link element in ThemeProvider
-// Themes are in public/themes folder (cpt-legacy-light and cpt-legacy-dark - customized CPT brand themes)
+// Theme: PrimeReact lara-dark-blue + app SCSS (variables, base, theme overrides).
+// ThemeProvider sets data-theme on <html>; dark-synth is default.
 
 interface PrimeReactProviderProps {
   children: ReactNode;

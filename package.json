@@ -1,6 +1,6 @@
 {
   "name": "internal-dashboard",
-  "version": "0.1.44",
+  "version": "0.1.47",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3333",
@@ -10,15 +10,14 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^4.1.0",
-    "frappe-gantt": "^1.0.4",
     "next": "16.1.6",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-frappe-gantt": "^0.2.3",
     "react-hook-form": "^7.71.1",
     "zustand": "^5.0.10"
   },
@@ -30,6 +29,7 @@
     "@typescript-eslint/parser": "^8.54.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "sass": "^1.97.3",
     "typescript": "^5",
     "typescript-eslint": "^8.54.0"
   }

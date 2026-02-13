@@ -1,0 +1,13 @@
+/* Nova dashboard: chart heights scoped to this dashboard only (not global). */
+
+.chartXl {
+  height: var(--chart-height-xl);
+}
+
+.chartLg {
+  height: var(--chart-height-lg);
+}
+
+.chartMd {
+  height: var(--chart-height-md);
+}

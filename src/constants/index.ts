@@ -8,3 +8,4 @@ export * from './TREVOR_TEAM';
 export * from './JIRA_TREVOR';
 export * from './JIRA_DEV1';
 export * from './JIRA_JULIE';
+export * from './JIRA_OPERATIONAL';

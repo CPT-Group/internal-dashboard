@@ -1,6 +1,14 @@
-# Theme Implementation - Working Solution
+# Theme Implementation Notes (Legacy)
 
-## ✅ What Works (DO THIS)
+**→ For current theme behavior and how to use/update themes, see [theme-system.md](./theme-system.md).**
+
+This file describes the **old** link-based theme loading (cpt-legacy-dark/light). The app now uses **SCSS + data-theme** (one bundle, no dynamic `<link>`). Kept for historical context.
+
+---
+
+# Theme Implementation - Working Solution (Legacy)
+
+## ✅ What Works (DO THIS) – *replaced by theme-system.md*
 
 ### Correct Implementation Pattern
 

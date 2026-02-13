@@ -203,6 +203,8 @@ export function buildAnalyticsFromIssueList(
   const byProject: Record<string, number> = {};
   const byType: Record<string, number> = {};
   const byComponent: Record<string, number> = {};
+  const byAssigneeByComponent: Record<string, Record<string, number>> = {};
+  const byBoardByComponent: Record<string, Record<string, number>> = {};
   const daysToCloseByAssignee = new Map<string, number[]>();
 
   openIssues.forEach((issue) => {
@@ -229,6 +231,10 @@ export function buildAnalyticsFromIssueList(
     byType[typeName] = (byType[typeName] ?? 0) + 1;
     getComponentNames(issue).forEach((compName) => {
       byComponent[compName] = (byComponent[compName] ?? 0) + 1;
+      if (!byAssigneeByComponent[id]) byAssigneeByComponent[id] = {};
+      byAssigneeByComponent[id][compName] = (byAssigneeByComponent[id][compName] ?? 0) + 1;
+      if (!byBoardByComponent[proj]) byBoardByComponent[proj] = {};
+      byBoardByComponent[proj][compName] = (byBoardByComponent[proj][compName] ?? 0) + 1;
     });
   });
 
@@ -269,6 +275,14 @@ export function buildAnalyticsFromIssueList(
     (a, b) => b.openCount - a.openCount
   );
 
+  const assigneeByCompKeys = Object.keys(byAssigneeByComponent);
+  const hasAssigneeByComponent = assigneeByCompKeys.some(
+    (id) => Object.keys(byAssigneeByComponent[id]).length > 0
+  );
+  const hasBoardByComponent = Object.keys(byBoardByComponent).some(
+    (board) => Object.keys(byBoardByComponent[board]).length > 0
+  );
+
   return {
     totalOpen: openCountOverride != null ? openCountOverride : openIssues.length,
     totalToday: todayIssues.length,
@@ -278,5 +292,7 @@ export function buildAnalyticsFromIssueList(
     byProject: Object.keys(byProject).length > 0 ? byProject : undefined,
     byType: Object.keys(byType).length > 0 ? byType : undefined,
     byComponent: Object.keys(byComponent).length > 0 ? byComponent : undefined,
+    byAssigneeByComponent: hasAssigneeByComponent ? byAssigneeByComponent : undefined,
+    byBoardByComponent: hasBoardByComponent ? byBoardByComponent : undefined,
   };
 }

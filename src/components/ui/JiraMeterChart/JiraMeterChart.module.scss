@@ -1,0 +1,46 @@
+/* JiraMeterChart: heights and layout scoped to this component only (no global overrides). */
+
+.container {
+  position: relative;
+  width: 100%;
+  height: var(--chart-meter-height);
+}
+
+.container > div:first-child {
+  height: 100% !important;
+  min-height: 100%;
+}
+
+.center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.legendBottom.center {
+  top: 0;
+  bottom: auto;
+  height: 50%;
+  left: 0;
+  right: 0;
+}
+
+.centerValue {
+  font-size: var(--chart-meter-center-value-font-size);
+  font-weight: var(--chart-meter-center-value-font-weight);
+  line-height: 1;
+  color: var(--text-color, var(--p-text-color));
+}
+
+.centerLabel {
+  font-size: var(--chart-meter-center-label-font-size);
+  margin-top: var(--chart-meter-center-label-margin-top);
+  color: var(--text-color-secondary, var(--p-text-muted-color));
+}

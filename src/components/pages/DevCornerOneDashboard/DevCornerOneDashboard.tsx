@@ -8,6 +8,7 @@ import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 import { useDev1JiraStore } from '@/stores';
 import { JiraMeterChart } from '@/components/ui';
+import styles from './DevCornerOneDashboard.module.scss';
 
 const CHART_COLORS = [
   'rgba(59, 130, 246, 0.82)',
@@ -167,7 +168,7 @@ export const DevCornerOneDashboard = () => {
           <Skeleton width="100%" height="200px" />
         </Card>
         <div className="flex align-items-center gap-2 mt-1">
-          <ProgressSpinner style={{ width: '18px', height: '18px' }} />
+          <ProgressSpinner className="progress-spinner-md" />
           <span className="text-color-secondary text-sm">Loading…</span>
         </div>
       </div>
@@ -222,7 +223,7 @@ export const DevCornerOneDashboard = () => {
       <div className="grid mb-2">
         <div className="col-12 lg:col-8">
           <Card title="Open &amp; avg days to close by assignee" className="p-2">
-            <div style={{ height: '220px' }}>
+            <div className={styles.chartXl}>
               <Chart
                 type="bar"
                 data={assigneeComboChartData}
@@ -233,7 +234,7 @@ export const DevCornerOneDashboard = () => {
         </div>
         <div className="col-12 lg:col-4">
           <Card title="Distribution" className="p-2">
-            <div style={{ minHeight: '200px' }}>
+            <div className={styles.chartLg}>
               <JiraMeterChart
                 centerValue={analytics.totalOpen}
                 centerLabel="Open"
@@ -251,7 +252,7 @@ export const DevCornerOneDashboard = () => {
         <div className="grid mb-2">
           <div className="col-12 md:col-6">
             <Card title="By type" className="p-2">
-              <div style={{ height: '160px' }}>
+              <div className={styles.chartMd}>
                 <Chart type="bar" data={byTypeChartData} options={barChartOptions} />
               </div>
             </Card>
@@ -259,7 +260,7 @@ export const DevCornerOneDashboard = () => {
           {analytics.byComponent != null && Object.keys(analytics.byComponent).length > 0 ? (
             <div className="col-12 md:col-6">
               <Card title="By component" className="p-2">
-                <div style={{ height: '160px' }}>
+                <div className={styles.chartMd}>
                   <Chart type="bar" data={byComponentChartData} options={barChartOptions} />
                 </div>
               </Card>
@@ -274,7 +275,7 @@ export const DevCornerOneDashboard = () => {
           <div className="grid mb-2">
             <div className="col-12">
               <Card title="By component" className="p-2">
-                <div style={{ height: '160px' }}>
+                <div className={styles.chartMd}>
                   <Chart type="bar" data={byComponentChartData} options={barChartOptions} />
                 </div>
               </Card>
@@ -284,7 +285,7 @@ export const DevCornerOneDashboard = () => {
 
       {loading && (
         <div className="flex align-items-center gap-2 mt-1">
-          <ProgressSpinner style={{ width: '18px', height: '18px' }} />
+          <ProgressSpinner className="progress-spinner-md" />
           <span className="text-color-secondary text-sm">Refreshing…</span>
         </div>
       )}

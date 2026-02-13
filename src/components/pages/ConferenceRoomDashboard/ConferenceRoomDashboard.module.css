@@ -12,6 +12,7 @@
   background-position: center;
   background-repeat: no-repeat;
   opacity: 0;
+  transition: opacity 1500ms ease-in-out;
 }
 
 .bgSlide.active {
@@ -26,5 +27,5 @@
   width: 100%;
   z-index: 1;
   padding: 0.5rem 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: black;
 }

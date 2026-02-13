@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Providers } from '@/providers';
-import './globals.css';
+// Order matters: PrimeReact theme first, then our overrides so dark-synth wins
+import 'primereact/resources/themes/lara-dark-blue/theme.css';
+import './main.scss';
 
 export const metadata: Metadata = {
   title: 'CPT Group Internal',
@@ -36,13 +38,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-theme="dark-synth">
       <body>
-        <link
-          id="theme-stylesheet"
-          rel="stylesheet"
-          href="/themes/cpt-legacy-dark/theme.css"
-        />
         <Script
           id="theme-init"
           strategy="beforeInteractive"
@@ -50,14 +47,11 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('cpt-theme') || 'dark';
-                  var link = document.getElementById('theme-stylesheet');
-                  if (link) {
-                    link.href = theme === 'light' 
-                      ? '/themes/cpt-legacy-light/theme.css'
-                      : '/themes/cpt-legacy-dark/theme.css';
-                  }
+                  var valid = ['dark', 'light', 'dark-synth', 'ms-access-2010'];
+                  var stored = localStorage.getItem('cpt-theme');
+                  var theme = (stored && valid.indexOf(stored) >= 0) ? stored : 'dark-synth';
                   document.documentElement.setAttribute('data-theme', theme);
+                  if (stored !== theme) { localStorage.setItem('cpt-theme', theme); }
                 } catch (e) {}
               })();
             `,

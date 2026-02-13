@@ -1,0 +1,27 @@
+/* Distribution: combo bar + line chart fills the card; bars = Open, line = Avg days to close. */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  max-width: 100%;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Chart + legend block; height drives chart size. */
+.chart {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}

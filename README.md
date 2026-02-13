@@ -23,7 +23,7 @@ src/
 ├── app/                    # Next.js App Router pages
 │   ├── layout.tsx          # Root layout with Providers
 │   ├── page.tsx            # Home page
-│   ├── globals.css         # Global styles (empty - clean slate)
+│   ├── main.scss           # Global style entry (variables → base → utilities → themes)
 │   └── tv/                 # TV dashboard routes
 │       ├── page.tsx        # TV route index/landing
 │       ├── [roomName]/     # Dynamic room routes
@@ -45,6 +45,7 @@ src/
 ├── utils/                 # Utility functions
 ├── constants/             # Application constants
 ├── config/                # Configuration
+├── styles/                # Global SCSS (variables, base, utilities, themes)
 └── providers/             # React context providers
 ```
 
@@ -95,13 +96,12 @@ All data sources return consistent JSON structures, making components source-agn
 
 ### Theme System
 
-Dynamic light/dark theme system:
-- **Default theme**: Dark mode
-- Themes loaded from `public/themes/` folder
-- Theme preference stored in localStorage
-- Uses `data-theme` attribute on HTML element
-- Theme CSS dynamically loaded via ThemeProvider
-- PrimeReact components styled with CPT legacy themes
+SCSS-based theme system (aligned with cpt-internal-tools):
+- **Default theme**: **dark-synth** (synthwave purple/cyan). Also available: dark, light, ms-access-2010.
+- Theme is applied via `data-theme` on `<html>`; one CSS bundle (no dynamic theme link).
+- Theme preference stored in `localStorage` under `cpt-theme`. Invalid or missing value falls back to dark-synth.
+- **Theme switcher**: Home page only (sticky button at top cycles themes). Other routes have no switcher.
+- **Full details**: See **`docs/theme-system.md`** for usage, file structure, and how to add or update themes.
 
 ### TV Routes
 
@@ -162,13 +162,14 @@ See `package.json` for current version and `CHANGELOG.md` for version history.
 - `docs/versioning.md` - Version control and changelog guidelines
 - `docs/import-organization.md` - Import order and hierarchical exports
 - `docs/style-guide-summary.md` - Quick reference summary
-- `docs/primereact-theming.md` - PrimeReact theming implementation guide
+- **`docs/theme-system.md`** – **Theme reference.** How the theme system works, how to use it, and how to add/update themes (for developers and agents).
+- `docs/primereact-theming.md` - PrimeReact theming (legacy; see theme-system.md for current behavior)
 - `CHANGELOG.md` - Version history and changes
 
 ## Current Status
 
 - **Version**: See `package.json` (e.g. 0.1.x)
-- **Theme**: Dark mode (default), light/dark switch via theme CSS in `public/themes/`
+- **Theme**: dark-synth (default), dark, light, ms-access-2010; switch on home page only. See `docs/theme-system.md`.
 - **Home**: Card-based TV dashboard selector; links to `/tv/{roomName}`
 - **TV dashboards**: Dev Corner Two (NOVA Jira – stats, charts, table); Conference Room (custom background, placeholder content); dev-corner-one, lobby, break-room stubbed
 - **Data**: Jira NOVA via API + Zustand store (5‑min cache); JSON-driven architecture for future sources

@@ -1,0 +1,545 @@
+// Base: resets, document, fonts, layout. No hardcoded colors – use var(--...) only.
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  padding: 0;
+}
+
+html {
+  background-color: var(--page-background, #0c0020);
+  overflow-x: hidden;
+  font-size: 75%;
+}
+
+body {
+  background-color: var(--page-background, #0c0020);
+  color: var(--text-primary, #dbd4fa);
+  font-family: var(--font-family);
+  overflow-x: hidden;
+}
+
+// Lato – served from public theme folder (shared by dark/light)
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 300;
+  src: local('Lato Light'), local('Lato-Light'),
+    url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-300.woff2') format('woff2'),
+    url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-300.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lato Regular'), local('Lato-Regular'),
+    url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-regular.woff2') format('woff2'),
+    url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-regular.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Lato Bold'), local('Lato-Bold'),
+    url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-700.woff2') format('woff2'),
+    url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-700.woff') format('woff');
+}
+
+// Scrollbars (variable-based)
+:root {
+  --scrollbar-size: 8px;
+  --scrollbar-border-radius: 4px;
+}
+
+// Progress spinner sizes (theme-driven; no inline styles)
+.progress-spinner-sm {
+  width: var(--progress-spinner-size-sm) !important;
+  height: var(--progress-spinner-size-sm) !important;
+}
+.progress-spinner-md {
+  width: var(--progress-spinner-size-md) !important;
+  height: var(--progress-spinner-size-md) !important;
+}
+
+// Chart heights/sizes live in each chart or dashboard module (not global). Colors from theme vars.
+
+// --- Layout / page styles (migrated from globals.css) ---
+
+.home-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  max-height: 100vh;
+  padding: 2rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.theme-switcher-sticky {
+  position: sticky;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  color: var(--text-color);
+  cursor: pointer;
+  box-shadow: var(--card-shadow);
+}
+.theme-switcher-sticky:hover {
+  background: var(--surface-hover);
+}
+.theme-switcher-sticky:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.dashboard-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  min-height: 20rem;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.nova-dashboard-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 0.5rem;
+  animation: nova-dashboard-fade-in 0.5s ease-out;
+  box-sizing: border-box;
+  gap: 0.5rem;
+}
+
+.nova-dashboard-content .p-card {
+  border-radius: 0.5rem;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+}
+
+.nova-dashboard-content .p-card .p-card-body,
+.nova-dashboard-content .p-card .p-card-content {
+  padding: 0.5rem;
+}
+
+.nova-dashboard-content .nova-dashboard-stats .p-card .p-card-body,
+.nova-dashboard-content .nova-dashboard-stats .p-card .p-card-content {
+  padding: 0.35rem 0.5rem;
+}
+
+.nova-dashboard-content .nova-dashboard-stats {
+  flex-shrink: 0;
+}
+
+.nova-dashboard-content .nova-stat-value {
+  color: var(--p-primary-color);
+}
+
+.nova-dashboard-content .nova-dashboard-charts {
+  flex-shrink: 0;
+}
+
+.nova-dashboard-content .nova-dashboard-doughnut-card .p-card-content {
+  width: 100%;
+}
+
+.nova-dashboard-doughnut-wrap {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.nova-dashboard-doughnut-wrap .nova-doughnut-root {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.nova-dashboard-content .nova-dashboard-charts .p-card .p-card-content > div {
+  border-radius: 0.35rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.nova-dashboard-content .nova-dashboard-table-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nova-dashboard-content .nova-dashboard-table-wrap .p-card-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nova-dashboard-content .nova-dashboard-table-wrap .p-datatable-wrapper {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.nova-dashboard-content .nova-tag-today {
+  background: var(--tag-today-bg);
+  color: var(--tag-today-text);
+  border: 1px solid var(--tag-today-border);
+}
+
+.conference-dashboard-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 0.5rem;
+  animation: nova-dashboard-fade-in 0.5s ease-out;
+  box-sizing: border-box;
+}
+
+.conference-dashboard-bg-slideshow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.conference-dashboard-bg-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+}
+
+.conference-dashboard-bg-slide.active {
+  opacity: 1;
+}
+
+.conference-dashboard-content .p-card {
+  border-radius: 0.5rem;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+}
+
+.conference-dashboard-scroller-wrap {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1;
+  padding: 0.5rem 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.nova-dashboard-loading {
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 0.5rem;
+  animation: nova-dashboard-fade-in 0.3s ease-out;
+  box-sizing: border-box;
+}
+
+@keyframes nova-dashboard-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Operational Jira dashboard: TV-friendly layout, no scrolling */
+.operational-dashboard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+.operational-dashboard .operational-kpi-strip {
+  flex-shrink: 0;
+  gap: 0.2rem;
+  margin-bottom: 0.35rem;
+}
+.operational-dashboard .operational-kpi-strip .p-card .p-card-body,
+.operational-dashboard .operational-kpi-strip .p-card .p-card-content {
+  padding: 0.25rem 0.35rem;
+}
+.operational-dashboard .operational-kpi-strip .operational-kpi-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.operational-dashboard .operational-kpi-strip .operational-kpi-label {
+  font-size: 0.7rem;
+  margin-top: 0.15rem;
+  color: var(--text-color-secondary);
+}
+/* Auto-rotating carousel area below KPI strip */
+.operational-carousel {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+.operational-carousel__slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+  transform: translateX(100%);
+  opacity: 0;
+}
+.operational-carousel__slide.active {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.operational-carousel__slide.leaving {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.operational-carousel__slide-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.operational-carousel__indicators {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+}
+.operational-carousel__indicator {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--surface-border);
+  transition: background 0.2s;
+}
+.operational-carousel__indicator.active {
+  background: var(--p-primary-color);
+}
+.operational-carousel__countdown {
+  font-weight: normal;
+  opacity: 0.85;
+  font-size: 0.9em;
+}
+
+/* Trevor dashboard: single-screen fit for TV/small viewports; no page scroll */
+.trevor-dashboard-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: var(--trevor-padding);
+  animation: nova-dashboard-fade-in 0.5s ease-out;
+  box-sizing: border-box;
+  gap: var(--trevor-gap);
+}
+
+.trevor-dashboard-content .grid {
+  min-width: 0;
+}
+
+.trevor-dashboard-content .p-card {
+  min-width: 0;
+}
+
+.trevor-dashboard-content .p-card {
+  border-radius: 0.4rem;
+  border: 1px solid rgba(100, 180, 255, 0.12);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.15), 0 0 12px rgba(100, 180, 255, 0.06);
+}
+
+.trevor-dashboard-content .p-card .p-card-body,
+.trevor-dashboard-content .p-card .p-card-content {
+  padding: 0.4rem;
+}
+
+.trevor-dashboard-content .p-card .p-card-title {
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.trevor-dashboard-content .trevor-stats .p-card .p-card-body,
+.trevor-dashboard-content .trevor-stats .p-card .p-card-content {
+  padding: 0.25rem 0.4rem;
+}
+
+.trevor-dashboard-content .trevor-stat-value {
+  color: var(--p-primary-color);
+  font-size: 1.1rem;
+}
+
+.trevor-dashboard-content .trevor-stats-strip {
+  flex-shrink: 0;
+  width: 100%;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trevor-dashboard-content .trevor-stats-strip .trevor-stats-scroller {
+  font-size: 0.95rem;
+  font-weight: 600;
+  max-width: 100%;
+  color: var(--text-color, var(--p-text-color));
+}
+
+.trevor-dashboard-content .trevor-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  color: inherit;
+}
+
+.trevor-dashboard-content .trevor-stat-item i {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.trevor-dashboard-content .trevor-stat-item strong {
+  color: var(--primary-color, var(--p-primary-color));
+}
+
+.trevor-dashboard-content .trevor-stat-late {
+  color: var(--red-500, var(--p-red-500));
+}
+
+.trevor-dashboard-content .trevor-stat-late strong {
+  color: var(--red-400, var(--p-red-400));
+}
+
+.trevor-dashboard-content .trevor-stat-done {
+  color: var(--green-500, var(--p-green-500));
+}
+
+.trevor-dashboard-content .trevor-stat-done strong {
+  color: var(--green-400, var(--p-green-400));
+}
+
+.trevor-dashboard-content .trevor-stat-sep {
+  color: var(--text-color-secondary, var(--p-text-muted-color));
+  margin: 0 0.5rem;
+  user-select: none;
+}
+
+.trevor-dashboard-content .trevor-gantt-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* When timeline has no tasks, keep section compact */
+.trevor-dashboard-content .trevor-gantt-card.trevor-gantt-empty {
+  flex: 0 0 auto;
+  max-height: 4.5rem;
+}
+
+.trevor-dashboard-content .trevor-gantt-card.trevor-gantt-empty .p-card-body,
+.trevor-dashboard-content .trevor-gantt-card.trevor-gantt-empty .p-card-content {
+  flex: 0 0 auto;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.trevor-dashboard-content .trevor-gantt-card.trevor-gantt-empty .trevor-gantt-wrap {
+  min-height: 0;
+  padding: 0;
+}
+
+.trevor-gantt-empty-msg {
+  margin: 0;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+  color: var(--text-color-secondary, var(--p-text-muted-color));
+}
+
+.trevor-dashboard-content .trevor-gantt-card .p-card-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.trevor-dashboard-content .grid.trevor-board-row {
+  flex-shrink: 0;
+  min-height: 0;
+  max-height: var(--trevor-board-card-max-h);
+  width: 100%;
+  overflow: hidden;
+}
+
+.trevor-dashboard-content .grid.trevor-board-row .p-card {
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.trevor-dashboard-content .grid.trevor-board-row .p-card .p-card-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.trevor-gantt-wrap {
+  width: 100%;
+  min-height: 10rem;
+}
+
+/* When timeline has tasks: rem-based min/max so it scales and stays readable */
+.trevor-dashboard-content .trevor-gantt-card:not(.trevor-gantt-empty) .trevor-gantt-wrap {
+  min-height: var(--trevor-timeline-min-h);
+  max-height: var(--trevor-timeline-max-h);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.trevor-dashboard-content .trevor-gantt-card.trevor-gantt-empty .trevor-gantt-wrap {
+  min-height: 0;
+}
+
+.trevor-dashboard-content .trevor-stat-card .p-card-body,
+.trevor-dashboard-content .trevor-stat-card .p-card-content {
+  padding: 0.25rem 0.35rem;
+}

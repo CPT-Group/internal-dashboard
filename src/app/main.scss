@@ -1,0 +1,11 @@
+// Global style orchestration. Load order: variables → base → utilities → theme overrides.
+// PrimeReact theme CSS is imported in layout.tsx before this file.
+
+@use '../styles/variables.scss' as *;
+@use '../styles/base.scss' as *;
+@use '../styles/utilities.scss' as *;
+@use '../styles/themes/dark.scss';
+@use '../styles/themes/light.scss';
+@use '../styles/themes/dark-synth.scss';
+@use '../styles/themes/ms-access-2010.scss';
+@use '../styles/primereact-overrides.scss';

@@ -22,4 +22,8 @@ export interface NovaAnalytics {
   byType?: Record<string, number>;
   /** Open count by Jira component (e.g. Backend, Frontend). */
   byComponent?: Record<string, number>;
+  /** Open count by assignee then component (for stacked bars: assigneeId -> componentName -> count). */
+  byAssigneeByComponent?: Record<string, Record<string, number>>;
+  /** Open count by board then component (for stacked bars: projectKey -> componentName -> count). */
+  byBoardByComponent?: Record<string, Record<string, number>>;
 }
