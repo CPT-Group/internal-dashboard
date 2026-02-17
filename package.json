@@ -1,10 +1,10 @@
 {
   "name": "internal-dashboard",
-  "version": "0.1.47",
+  "version": "0.1.52",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3333",
-    "build": "next build",
+    "dev": "node scripts/generate-conference-slides.js && next dev -p 3333",
+    "build": "node scripts/generate-conference-slides.js && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -16,13 +16,13 @@
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.7",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
     "react-hook-form": "^7.71.1",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
@@ -32,5 +32,8 @@
     "sass": "^1.97.3",
     "typescript": "^5",
     "typescript-eslint": "^8.54.0"
+  },
+  "overrides": {
+    "ajv": "^8.18.0"
   }
 }

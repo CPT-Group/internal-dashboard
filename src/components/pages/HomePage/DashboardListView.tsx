@@ -19,6 +19,7 @@ export const DashboardListView = ({ data }: DashboardListViewProps) => {
             description={dashboard.description}
             route={dashboard.route}
             icon={dashboard.icon}
+            variant={dashboard.variant}
           />
         </div>
       ))}

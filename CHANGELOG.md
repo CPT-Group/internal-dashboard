@@ -26,7 +26,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Theme switcher only on home page**: Theme can be changed only from the main home page via a sticky button at the top that cycles dark-synth → dark → light → ms-access-2010. TV and other routes have no theme switcher. ThemeProvider exposes `theme`, `setTheme`, and `cycleTheme` (replacing `toggleTheme`).
 - **No inline styles for theme-driven UI**: Removed inline styles from components so theme variables control appearance. Progress spinners use classes `progress-spinner-sm` / `progress-spinner-md`; chart containers use `chart-height-sm|md|lg|xl` and `chart-meter-container` with theme vars `--progress-spinner-size-*`, `--chart-height-*`, `--chart-meter-*` (all themes define these). JiraMeterChart center value/label use `chart-meter-center-value` and `chart-meter-center-label`. Conference room slideshow transition moved to CSS module; only dynamic `backgroundImage` remains inline. TextScroller keeps inline `--text-scroller-duration` (prop-driven). Spinner and chart variables added to every theme file.
 
+## [0.1.49] - 2026-02-13
+
+### Changed
+
+- **Julie's Office icon: Font Awesome removed, local unicorn SVG**: Removed all Font Awesome packages (`@fortawesome/fontawesome-free`, `@fortawesome/fontawesome-svg-core`, `@fortawesome/free-solid-svg-icons`, `@fortawesome/react-fontawesome`, `fontawesome`). Julie's Office card now uses a local unicorn SVG (from `public/icons/emoji-unicorn.svg`), inlined in `DashboardCard` as `UnicornIcon` with `stroke="currentColor"` so it follows the theme primary color.
+
+## [0.1.48] - 2026-02-13
+
+### Changed
+
+- **Home screen: Julie's Office and Jackie's Office cards**: Renamed **Lobby** to **Jackie's Office** (briefcase icon, `pi pi-briefcase`) and **Break Room** to **Julie's Office** (unicorn icon). Julie's card uses a local unicorn SVG (from `public/icons/emoji-unicorn.svg`, inlined in `DashboardCard` as `UnicornIcon` with `currentColor` for theme) and a subtle unicorn-style accent (pastel purple/pink gradient border and hover glow). Font Awesome removed; `DashboardItem` supports optional `variant: 'unicorn'`; `DashboardCard` accepts `variant` and applies `.dashboard-card-unicorn` for Julie's card.
+
 ## [Unreleased]
+
+### Added
+
+- **Conference room slideshow: auto-use all folder images**: The conference room background slideshow now uses every image in `public/background/background-conf-room/` with no manual list. A build-time script (`scripts/generate-conference-slides.js`) runs before `dev` and `build` (no API, no third-party deps), reads the folder (recursively, including subfolders), shuffles the order, and writes `conferenceBackgroundSlides.generated.ts`. Supported extensions: jpg, jpeg, jfif, png, gif, webp, svg, bmp, avif. Add or remove images in that folder; they are picked up on next `npm run dev` or `npm run build` (works on Netlify). Order is randomized each time the script runs. Generated file is gitignored.
+
+### Fixed
+
+- **npm audit: 0 vulnerabilities**: Resolved 10 moderate (ReDoS in ajv) by adding `overrides.ajv` to `^8.18.0` in `package.json`. All dependencies now use a patched ajv.
+
+### Changed
+
+- **Dependencies**: React and React-DOM set to 19.2.4; `@types/node` to ^22. Next.js and eslint-config-next remain at latest stable 16.1.6.
 
 ### Added
 

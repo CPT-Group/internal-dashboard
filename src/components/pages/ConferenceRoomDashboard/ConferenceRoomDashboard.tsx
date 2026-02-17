@@ -10,6 +10,7 @@ import styles from './ConferenceRoomDashboard.module.css';
 
 const SLIDE_INTERVAL_MS = 6000;
 
+/** Cycles through CONFERENCE_BACKGROUND_SLIDES in order (0→1→…→0). Each image shown exactly once per loop; order is randomized at build time. */
 export const ConferenceRoomDashboard = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 

@@ -118,6 +118,17 @@ body {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
+// Julie's Office – subtle unicorn flair (pastel purple/pink accent)
+.dashboard-card-unicorn {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--surface-card), var(--surface-card)) padding-box,
+    linear-gradient(135deg, rgba(192, 132, 252, 0.4), rgba(244, 114, 182, 0.35), rgba(192, 132, 252, 0.3)) border-box;
+  box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.15);
+}
+.dashboard-card-unicorn:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 0 12px rgba(192, 132, 252, 0.2);
+}
+
 .nova-dashboard-content {
   display: flex;
   flex-direction: column;

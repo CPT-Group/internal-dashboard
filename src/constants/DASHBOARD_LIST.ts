@@ -3,6 +3,8 @@ export interface DashboardItem {
   description: string;
   route: string;
   icon: string;
+  /** Optional card variant for special styling (e.g. 'unicorn' for Julie's Office). */
+  variant?: 'unicorn';
   enabled: boolean;
 }
 
@@ -36,17 +38,18 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     enabled: true,
   },
   {
-    title: 'Lobby',
-    description: 'Lobby dashboard - Case analytics & system metrics',
+    title: "Jackie's Office",
+    description: 'Dashboard for case manager operations',
     route: '/tv/lobby',
-    icon: 'pi pi-building',
+    icon: 'pi pi-briefcase',
     enabled: true,
   },
   {
-    title: 'Break Room',
-    description: 'Break room dashboard',
+    title: "Julie's Office",
+    description: 'President’s dashboard',
     route: '/tv/break-room',
-    icon: 'pi pi-home',
+    icon: 'pi pi-star',
+    variant: 'unicorn',
     enabled: true,
   },
 ];

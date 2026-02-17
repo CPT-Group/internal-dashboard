@@ -43,3 +43,6 @@ next-env.d.ts
 # cursor
 .cursor/*
 !.cursor/.gitkeep
+
+# generated at build/dev from public/background/background-conf-room/
+src/constants/conferenceBackgroundSlides.generated.ts

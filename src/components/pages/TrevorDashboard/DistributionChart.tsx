@@ -104,14 +104,18 @@ export const DistributionChart = ({ analytics }: DistributionChartProps) => {
           callbacks: {
             afterBody(
               _: unknown,
-              items: { datasetIndex: number; dataIndex: number }[]
+              items: { datasetIndex: number; dataIndex: number }[] | undefined
             ) {
-              const i = items[0]?.dataIndex ?? 0;
-              const open = openData[i];
-              const days = avgDaysData[i];
+              const i = items?.[0]?.dataIndex ?? 0;
+              const openArr = openData ?? [];
+              const daysArr = avgDaysData ?? [];
+              const open = openArr[i];
+              const days = daysArr[i];
               return [
-                `Open: ${open}`,
-                days != null ? `Avg days to close: ${days.toFixed(1)}` : '',
+                `Open: ${open ?? 0}`,
+                days != null && Number.isFinite(days)
+                  ? `Avg days to close: ${Number(days).toFixed(1)}`
+                  : '',
               ].filter(Boolean);
             },
           },
