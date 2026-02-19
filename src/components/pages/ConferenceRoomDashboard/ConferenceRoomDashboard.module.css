@@ -1,24 +1,4 @@
-/* Conference room slideshow – component-scoped so it can be committed without globals.css */
-.bgSlideshow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.bgSlide {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0;
-  transition: opacity 1500ms ease-in-out;
-}
-
-.bgSlide.active {
-  opacity: 1;
-}
-
+/* Conference room – scroller over BackgroundSlideshow (slideshow is reusable ui) */
 .scrollerWrap {
   position: absolute;
   bottom: 2.5rem;

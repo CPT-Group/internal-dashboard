@@ -1,37 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { TextScroller } from '@/components/ui';
-import {
-  CONFERENCE_REEL_TEXT,
-  CONFERENCE_BACKGROUND_SLIDES,
-} from '@/constants';
+import { TextScroller, BackgroundSlideshow } from '@/components/ui';
+import { CONFERENCE_REEL_TEXT, CONFERENCE_BACKGROUND_SLIDES } from '@/constants';
 import styles from './ConferenceRoomDashboard.module.css';
 
-const SLIDE_INTERVAL_MS = 6000;
-
-/** Cycles through CONFERENCE_BACKGROUND_SLIDES in order (0→1→…→0). Each image shown exactly once per loop; order is randomized at build time. */
 export const ConferenceRoomDashboard = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % CONFERENCE_BACKGROUND_SLIDES.length);
-    }, SLIDE_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="conference-dashboard-content">
-      <div className={styles.bgSlideshow} aria-hidden>
-        {CONFERENCE_BACKGROUND_SLIDES.map((src, index) => (
-          <div
-            key={src}
-            className={`${styles.bgSlide} ${index === currentIndex ? styles.active : ''}`}
-            style={{ backgroundImage: `url(${src})` }}
-          />
-        ))}
-      </div>
+      <BackgroundSlideshow
+        slides={CONFERENCE_BACKGROUND_SLIDES}
+        intervalMs={6000}
+        transitionDurationMs={1500}
+        transition="fade"
+      />
       <div className={styles.scrollerWrap}>
         <TextScroller duration={40} textColor="white" backgroundColor="black">
           {CONFERENCE_REEL_TEXT}

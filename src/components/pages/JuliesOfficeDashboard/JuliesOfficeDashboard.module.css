@@ -1,24 +1,4 @@
-/* Julie's Office – unicorn rotating background (same pattern as conference room) */
-.juliesSlideshow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.juliesSlide {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0;
-  transition: opacity 1500ms ease-in-out;
-}
-
-.juliesSlide.active {
-  opacity: 1;
-}
-
+/* Julie's Office – full viewport wrapper; BackgroundSlideshow fills it (reusable ui) */
 .juliesDashboardContent {
   position: relative;
   width: 100%;
@@ -26,12 +6,4 @@
   min-height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-}
-
-/* Fallback when no images in folder yet */
-.juliesFallback {
-  position: absolute;
-  inset: 0;
-  background: var(--page-background, #1a0a2e);
-  z-index: 0;
 }

@@ -1,0 +1,90 @@
+/**
+ * Reusable background slideshow – transition variants via data-transition.
+ * All transitions use ease-in-out for smooth, clean motion.
+ */
+
+.wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.slideshow {
+  position: absolute;
+  inset: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition-duration: var(--slideshow-duration, 1500ms);
+  transition-timing-function: ease-in-out;
+}
+
+/* ---- Fade (default) ---- */
+.wrapper[data-transition='fade'] .slide {
+  opacity: 0;
+  transition-property: opacity;
+}
+
+.wrapper[data-transition='fade'] .slide.active {
+  opacity: 1;
+}
+
+/* ---- Slide up: incoming from bottom, outgoing to top ---- */
+.wrapper[data-transition='slideUp'] .slide {
+  opacity: 0;
+  transform: translateY(100%);
+  transition-property: opacity, transform;
+}
+
+.wrapper[data-transition='slideUp'] .slide.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- Slide down: incoming from top, outgoing to bottom ---- */
+.wrapper[data-transition='slideDown'] .slide {
+  opacity: 0;
+  transform: translateY(-100%);
+  transition-property: opacity, transform;
+}
+
+.wrapper[data-transition='slideDown'] .slide.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- Slide left: incoming from right, outgoing to left ---- */
+.wrapper[data-transition='slideLeft'] .slide {
+  opacity: 0;
+  transform: translateX(100%);
+  transition-property: opacity, transform;
+}
+
+.wrapper[data-transition='slideLeft'] .slide.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---- Slide right: incoming from left, outgoing to right ---- */
+.wrapper[data-transition='slideRight'] .slide {
+  opacity: 0;
+  transform: translateX(-100%);
+  transition-property: opacity, transform;
+}
+
+.wrapper[data-transition='slideRight'] .slide.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Fallback when no slides (e.g. empty folder) */
+.fallback {
+  position: absolute;
+  inset: 0;
+  background: var(--page-background, #1a0a2e);
+}

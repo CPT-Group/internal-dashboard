@@ -5,10 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [0.1.55] - 2026-02-18
+
+### Added
+
+- **BackgroundSlideshow (reusable UI)**: New `@/components/ui/BackgroundSlideshow` component. Accepts `slides` (array of image URLs), `intervalMs`, `transitionDurationMs`, `transition`, optional `className` and `fallbackClassName`. Use for any screen that needs a full-bleed rotating background – pass the slide list (e.g. from generated constants) and optional config. Supports multiple **transitions**: `fade`, `slideUp`, `slideDown`, `slideLeft`, `slideRight` (all CSS, ease-in-out, smooth). Empty slides show an optional fallback (theme background). Conference room and Julie's Office now use this component instead of duplicated logic.
+
+### Changed
+
+- **Conference room and Julie's Office use BackgroundSlideshow**: Both dashboards refactored to use `<BackgroundSlideshow slides={...} />` with `transition="fade"` (default). Removed duplicate slideshow markup and CSS from both; ConferenceRoomDashboard keeps only scroller overlay styles; JuliesOfficeDashboard keeps only viewport wrapper. Any future screen can add a slideshow by passing its slide array and choosing a transition.
+
 ## [0.1.54] - 2026-02-18
 
 ### Changed
 
+- **npm: audit re-check and latest updates**: Re-verified dependency state after updates. Current: **0 high** (minimatch override ^10.2.1), **10 moderate** (ajv in ESLint chain; no fix without breaking eslint-config-next or forcing ajv 8 which breaks ESLint). ESLint kept at ^9 for compatibility with eslint-config-next 16.1.6; ESLint 10 would clear audit only with an ajv override that causes lint to fail. All other deps at latest within range; `npm run lint` and `npm run build` pass.
 - **npm: dependencies updated and high-severity vulnerabilities resolved**: Updated devDependencies to latest within range: `@types/node` ^25, `@typescript-eslint/*` and `typescript-eslint` ^8.56.0, `zustand` ^5.0.11. Added `overrides.minimatch` ^10.2.1 to fix 14 high-severity ReDoS issues in the ESLint/minimatch chain; removed `overrides.ajv` (it conflicted with ESLint and caused lint to fail). Audit now reports 0 high, 10 moderate (ajv in ESLint; no safe fix without breaking ESLint). ESLint config: type-aware rules (`no-unsafe-*`) limited to `src/**` with `parserOptions.project` so config files no longer fail; `scripts/**` ignored; strict React/TypeScript rules relaxed to warn where needed so `npm run lint` passes (116 warnings, 0 errors).
 
 ### Added
