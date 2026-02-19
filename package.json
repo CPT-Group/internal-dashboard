@@ -1,10 +1,10 @@
 {
   "name": "internal-dashboard",
-  "version": "0.1.52",
+  "version": "0.1.54",
   "private": true,
   "scripts": {
-    "dev": "node scripts/generate-conference-slides.js && next dev -p 3333",
-    "build": "node scripts/generate-conference-slides.js && next build",
+    "dev": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && next dev -p 3333",
+    "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -19,21 +19,21 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.71.1",
-    "zustand": "^5.0.10"
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "sass": "^1.97.3",
     "typescript": "^5",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.56.0"
   },
   "overrides": {
-    "ajv": "^8.18.0"
+    "minimatch": "^10.2.1"
   }
 }

@@ -5,3 +5,4 @@ export * from './DevCornerTwoDashboard';
 export * from './ConferenceRoomDashboard';
 export * from './TrevorDashboard';
 export * from './OperationalJiraDashboard';
+export * from './JuliesOfficeDashboard';
