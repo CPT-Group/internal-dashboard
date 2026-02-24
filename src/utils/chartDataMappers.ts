@@ -11,7 +11,9 @@ import type {
   ByBoardByComponentChartData,
   OpenedClosedFlowChartData,
   HorizontalBarChartData,
+  WorkloadByAssigneeChartData,
 } from '@/types/charts';
+import type { AgingHotspot } from '@/types';
 
 const HOURS_PER_DAY = 24;
 
@@ -135,5 +137,36 @@ export function toAgingBucketsBarChartData(
     labels: buckets.map((b) => b.label),
     values: buckets.map((b) => b.count),
     colors: buckets.map((_, i) => colors[i % colors.length]),
+  };
+}
+
+/**
+ * Build workload-by-assignee chart data (sorted desc by count, with % of total open).
+ */
+export function toWorkloadByAssigneeChartData(
+  analytics: OperationalAnalytics
+): WorkloadByAssigneeChartData {
+  const sorted = [...analytics.backlogByAssignee].sort(
+    (a, b) => b.openCount - a.openCount
+  );
+  const total = sorted.reduce((sum, item) => sum + item.openCount, 0);
+  return {
+    labels: sorted.map((a) => a.assigneeName),
+    counts: sorted.map((a) => a.openCount),
+    percentOfTotal: sorted.map((a) =>
+      total > 0 ? Math.round((a.openCount / total) * 1000) / 10 : 0
+    ),
+  };
+}
+
+/**
+ * Flatten aging hotspots for presentation: "Component – Assignee" label, avgAgeDays value.
+ */
+export function toAgingHotspotsBarChartData(
+  hotspots: AgingHotspot[]
+): HorizontalBarChartData {
+  return {
+    labels: hotspots.map((h) => `${h.component} – ${h.assignee}`),
+    values: hotspots.map((h) => h.avgAgeDays),
   };
 }

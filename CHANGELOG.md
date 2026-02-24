@@ -9,10 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dev Corner One – single-view health dashboard**: New `DevCornerOneDashboard` replaces the carousel for Dev Corner One (`/tv/dev-corner-one`). Single-screen layout with KPI strip, throughput panel (flow chart + ratio + trend badge), risk panel (aging buckets + risk score + hotspots list), workload panel (per-assignee horizontal bars with % of total), and action queue table (oldest 10 with severity coloring). Dev Corner Two keeps the carousel (`OperationalJiraDashboard`).
+- **TrendBadge UI component**: Inline trend indicator with directional arrow and semantic color (green/red). Props: `value`, `invertColor`, `label`. Reusable for any KPI delta display.
+- **KpiStrip UI component**: Data-driven row of KPI cards. Props: `items: KpiItem[]` (label, value, optional severity and badge). Replaces duplicated KPI card patterns across dashboards.
+- **OperationalAnalytics extended**: New derived indicators — `throughputRatio` (closed/opened ratio over 14d), `riskScore` (0–100 weighted from aging buckets), `agingHotspots` (top 5 component+assignee by worst avg age), `trendVsPrevious14d` (current vs previous 14d comparison). Risk weights defined in `DEV1_CONFIG.ts`.
+- **28-day JQL for trend comparison**: New `JIRA_OPERATIONAL_JQL_CREATED_PREV_14` and `JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14` for the previous 14-day window (days -28 to -14). Store now fetches 7 parallel queries.
+- **Workload chart data type and mappers**: `WorkloadByAssigneeChartData` type in `src/types/charts/workloadCharts.ts`. New mappers: `toWorkloadByAssigneeChartData` (sorted desc with % of total) and `toAgingHotspotsBarChartData` (hotspot labels + avg age values).
 - **Jackie's Office Dashboard**: New `JackiesOfficeDashboard` page (`/tv/jackie`) with rotating background slideshow from `public/backgrounds/jackies-cute-backgrounds/` and a `CornerInfoCard` showing "Jackie – Vice President, Operations". Follows same pattern as Julie's Office: `BackgroundSlideshow` + `CornerInfoCard`, full-viewport layout, corner badge bottom-right. Build-time script `scripts/generate-jackies-background-slides.js` generates `jackiesBackgroundSlides.generated.ts`. Currently no images in the folder (shows fallback); drop images in and re-run `npm run dev` to populate.
 
 ### Changed
 
+- **Dev Corner One routing**: `dev-corner-one` now routes to `DevCornerOneDashboard` (single-view health dashboard); `dev-corner-two` continues to use `OperationalJiraDashboard` (carousel). Both share the same `operationalJiraStore`.
 - **Routes renamed to match dashboard names**: Julie's Office route changed from `/tv/break-room` to `/tv/julie`; Jackie's Office from `/tv/lobby` to `/tv/jackie`. Router `roomName` values updated to match (`julie`, `jackie`). Route slugs now consistently reflect the dashboard/person name.
 - **Backgrounds consolidated**: Moved all background image folders under `public/backgrounds/`: conference room from `public/background/background-conf-room/` to `public/backgrounds/conference-room/`, Julie's unicorns from `public/JuliesUnicorns/backgrounds/` to `public/backgrounds/julies-unicorns/`. Removed old `public/background/` folder entirely. Updated all generation scripts, constants, and docs.
 - **Build scripts**: `npm run dev` and `npm run build` now also run `generate-jackies-background-slides.js`.

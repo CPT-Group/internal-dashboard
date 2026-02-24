@@ -16,8 +16,16 @@ const OperationalJiraDashboard = dynamic(
   { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
 );
 
+const DevCornerOneDashboard = dynamic(
+  () => import('@/components/pages/DevCornerOneDashboard').then((m) => m.DevCornerOneDashboard),
+  { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
+);
+
 export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
-  if (roomName === 'dev-corner-one' || roomName === 'dev-corner-two') {
+  if (roomName === 'dev-corner-one') {
+    return <DevCornerOneDashboard />;
+  }
+  if (roomName === 'dev-corner-two') {
     return <OperationalJiraDashboard />;
   }
   if (roomName === 'conference-room') {

@@ -12,7 +12,14 @@ import type {
   DevLoadMatrixCell,
   AgingBucket,
   OldestTicketRow,
+  AgingHotspot,
+  TrendComparison,
 } from '@/types';
+import {
+  DEV1_RISK_BUCKET_WEIGHTS,
+  DEV1_RISK_MAX_RAW,
+  DEV1_HOTSPOT_LIMIT,
+} from '@/constants';
 
 const AGING_DAYS_THRESHOLD = 7;
 
@@ -54,6 +61,8 @@ export interface BuildOperationalAnalyticsInput {
   closedTodayIssues: JiraIssue[];
   createdLast14: JiraIssue[];
   resolvedLast14: JiraIssue[];
+  createdPrev14?: JiraIssue[];
+  resolvedPrev14?: JiraIssue[];
 }
 
 export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput): OperationalAnalytics {
@@ -63,6 +72,8 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     closedTodayIssues,
     createdLast14,
     resolvedLast14,
+    createdPrev14,
+    resolvedPrev14,
   } = input;
 
   const open = openIssues.filter((i) => !isDone(i));
@@ -217,6 +228,29 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
       status: issue.fields?.status?.name ?? '',
     }));
 
+  const throughputRatio =
+    createdLast14.length > 0
+      ? Math.round((resolvedLast14.length / createdLast14.length) * 100) / 100
+      : 0;
+
+  const riskRawScore = agingBuckets.reduce(
+    (sum, bucket, idx) => sum + bucket.count * (DEV1_RISK_BUCKET_WEIGHTS[idx] ?? 0),
+    0
+  );
+  const riskScore = Math.min(
+    100,
+    Math.round((riskRawScore / DEV1_RISK_MAX_RAW) * 100)
+  );
+
+  const agingHotspots = buildAgingHotspots(open);
+
+  const trendVsPrevious14d = buildTrendComparison(
+    createdLast14,
+    resolvedLast14,
+    createdPrev14,
+    resolvedPrev14
+  );
+
   return {
     kpis,
     flowData,
@@ -228,5 +262,53 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     components,
     agingBuckets,
     oldest10,
+    throughputRatio,
+    riskScore,
+    agingHotspots,
+    trendVsPrevious14d,
+  };
+}
+
+function buildAgingHotspots(open: JiraIssue[]): AgingHotspot[] {
+  const grouped = new Map<string, { totalAge: number; count: number; component: string; assignee: string }>();
+  for (const issue of open) {
+    const assignee = getAssigneeName(issue);
+    const age = getAgeDays(issue);
+    for (const comp of getComponentNames(issue)) {
+      const key = `${comp}|${assignee}`;
+      const entry = grouped.get(key);
+      if (entry) {
+        entry.totalAge += age;
+        entry.count++;
+      } else {
+        grouped.set(key, { totalAge: age, count: 1, component: comp, assignee });
+      }
+    }
+  }
+  return Array.from(grouped.values())
+    .map(({ totalAge, count, component, assignee }) => ({
+      component,
+      assignee,
+      avgAgeDays: Math.round((totalAge / count) * 10) / 10,
+      count,
+    }))
+    .sort((a, b) => b.avgAgeDays - a.avgAgeDays)
+    .slice(0, DEV1_HOTSPOT_LIMIT);
+}
+
+function buildTrendComparison(
+  createdLast14: JiraIssue[],
+  resolvedLast14: JiraIssue[],
+  createdPrev14?: JiraIssue[],
+  resolvedPrev14?: JiraIssue[]
+): TrendComparison | null {
+  if (!createdPrev14 || !resolvedPrev14) return null;
+  const prevOpened = createdPrev14.length;
+  const prevClosed = resolvedPrev14.length;
+  return {
+    openedDelta: createdLast14.length - prevOpened,
+    closedDelta: resolvedLast14.length - prevClosed,
+    prevOpened,
+    prevClosed,
   };
 }

@@ -1,1 +1,1 @@
-export * from './DevCornerOneDashboard';
+export { DevCornerOneDashboard } from './DevCornerOneDashboard';

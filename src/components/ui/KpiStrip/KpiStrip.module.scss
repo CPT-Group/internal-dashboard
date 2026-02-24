@@ -1,0 +1,55 @@
+.strip {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.kpiCard {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+
+  :global(.p-card-body) {
+    padding: 0.6rem 0.5rem;
+  }
+
+  :global(.p-card-content) {
+    padding: 0;
+  }
+}
+
+.label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.15rem;
+}
+
+.value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.badge {
+  margin-top: 0.2rem;
+}
+
+.success .value {
+  color: var(--green-500);
+}
+
+.danger .value {
+  color: var(--red-500);
+}
+
+.warning .value {
+  color: var(--yellow-500);
+}
+
+.info .value {
+  color: var(--blue-500);
+}

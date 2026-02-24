@@ -31,7 +31,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 
 - **Paths**: Use `@/` for `src/` (e.g. `@/components/ui/...`, `@/styles/...`).
 - **App**: `src/app/` (Next.js App Router), `src/app/layout.tsx`, routes under `src/app/tv/...`.
-- **UI**: `src/components/pages/` (page-level dashboards), `src/components/ui/` (reusable pieces e.g. `BackgroundSlideshow`, `JiraMeterChart`, `TextScroller`).
+- **UI**: `src/components/pages/` (page-level dashboards), `src/components/ui/` (reusable pieces e.g. `BackgroundSlideshow`, `JiraMeterChart`, `TextScroller`, `CornerInfoCard`, `TrendBadge`, `KpiStrip`).
 - **Charts**: `src/components/charts/` — **presentation-only** chart components named by **purpose** (e.g. `OpenClosedAvgHoursByAssigneeRadarChart`, `OpenAndAvgDaysByAssigneeBarLineChart`, `ByBoardByComponentStackedBarChart`, `OpenedClosedFlowBarChart`, `HorizontalBarChart`, `GanttChart`). Each accepts only a typed `data` prop (and optional props like `noData` for Gantt); no store, no JQL, no wrappers (Card/Panel). Chart data types live in `src/types/charts/`. Mappers in `src/utils/chartDataMappers.ts` convert analytics (NovaAnalytics, OperationalAnalytics) into these types. Pages get analytics from the store → call the mapper → pass result to the chart; **wrappers and layout stay on the page**. Use these shared charts for any dashboard that needs the same visualization; add new chart components and types when a new purpose appears.
 - **State**: Zustand stores (e.g. operational Jira, Trevor, Nova, Dev1) under `src/stores/`. Data fetching and JQL live at API/store level; chart components never fetch or transform raw analytics.
 - **API**: Client calls go through `src/services/api/` – `apiClient` (fetch wrapper), `jiraSearchClient` (Jira search via `/api/jira/search`). Fine-tuned Jira calls live in `src/services/api/endpoints/jira/` (e.g. `getTicketsTransitionedToday`, `fetchUpdates(since)`); JQL for these in `jira/jql.ts`. Use `useJiraUpdatesPolling` for 30‑min polling of updated tickets. **Salesforce**: read-only server-side `salesforceService.ts` (OAuth2 password flow, describeGlobal, describeSObject, query); discovery routes `GET /api/salesforce/discover` and `GET /api/salesforce/query?q=SOQL`. **CPT TV OAuth (GET only)**: `salesforceOAuth.ts` – Authorization Code + PKCE; `GET /oauth/start`, `GET /oauth/callback` (tokens in `.sf_tokens.json`); `GET /api/sf/whoami`, `GET /api/sf/describe/support-channel`. No POST in this app; Support Portal (cpt-support-portal repo) has OAuth + POST /api/support-request for Support_Channel__c. See `docs/salesforce-oauth-and-support.md` and `docs/salesforce-discovery.md`.
@@ -39,7 +39,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 
 ## TV routes and dashboards
 
-- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` and `dev-corner-two` → `OperationalJiraDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; others → `null`. Route slugs should match the dashboard/person name (e.g. `/tv/julie`, `/tv/jackie`, `/tv/trevor`). Home page titles and card labels (e.g. "Dev Corner One", "Julie's Office", "Jackie's Office") are **user-facing and stay as-is**; chart and component names in code are purpose-based.
+- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard` (single-view health dashboard); `dev-corner-two` → `OperationalJiraDashboard` (carousel); `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; others → `null`. Route slugs should match the dashboard/person name (e.g. `/tv/julie`, `/tv/jackie`, `/tv/trevor`). Home page titles and card labels (e.g. "Dev Corner One", "Julie's Office", "Jackie's Office") are **user-facing and stay as-is**; chart and component names in code are purpose-based.
 
 ### Analytics dashboards (Dev Corner, Trevor)
 
@@ -50,7 +50,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 ```
 
 **Stores** (`src/stores/`):
-- `operationalJiraStore` — Dev Corner One/Two. Fetches 5 parallel JQL queries (open, opened today, closed today, created last 14d, resolved last 14d). Builds `OperationalAnalytics`. Polls every 60s if stale; cache TTL 30 min.
+- `operationalJiraStore` — Dev Corner One/Two. Fetches 7 parallel JQL queries (open, opened today, closed today, created last 14d, resolved last 14d, created prev 14d, resolved prev 14d). Builds `OperationalAnalytics` with derived indicators: `throughputRatio`, `riskScore`, `agingHotspots`, `trendVsPrevious14d`. Polls every 60s if stale; cache TTL 30 min.
 - `trevorJiraStore` — Trevor's Screen. Fetches team-scoped tickets (4-person dev team across OPRD/CM/NOVA, last 6 months). Builds `NovaAnalytics`.
 - `jiraNovaStore` — NOVA project analytics (open/today/overdue/done).
 - `dev1JiraStore` — Dev Corner One extended analytics (NOVA, last 6 months).
@@ -68,6 +68,8 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 - `toOpenedClosedFlowChartData` — 14-day opened vs closed flow.
 - `toBacklogByComponentBarChartData` — backlog by component horizontal bars.
 - `toAgingBucketsBarChartData` — aging bucket horizontal bars.
+- `toWorkloadByAssigneeChartData` — workload bars per assignee with % of total.
+- `toAgingHotspotsBarChartData` — aging hotspot labels + avg age values.
 - `toOpenClosedAvgHoursByAssigneeRadarChartData` — radar chart (open/closed/avg hours per assignee).
 - `toOpenAndAvgDaysByAssigneeChartData` — bar+line (open count + avg days per assignee).
 - `toByBoardByComponentChartData` — stacked bar (by project × component).
@@ -81,7 +83,8 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 - `GanttChart` — timeline (start/end dates, progress).
 
 **Current dashboard layouts**:
-- `OperationalJiraDashboard` (Dev Corner One/Two) — auto-rotating carousel (25s/slide, 4 slides): KPI strip always visible (open, opened today, closed today, net, avg age, oldest); Slide 0: flow chart; Slide 1: backlog + aging side-by-side; Slide 2: developer load matrix (assignee × component DataTable); Slide 3: oldest 10 open tickets.
+- `DevCornerOneDashboard` (Dev Corner One) — single-view "health at a glance" with no carousel. Top: KpiStrip (open, opened today, closed today, net, avg age, oldest). Middle row: ThroughputPanel (flow chart + throughput ratio + trend badge) | RiskPanel (aging buckets + risk score tag + hotspots list). Bottom row: WorkloadPanel (horizontal bars per assignee with %) | ActionQueueTable (oldest 10 with severity tags). Sub-components co-located in the page folder; uses shared chart components.
+- `OperationalJiraDashboard` (Dev Corner Two) — auto-rotating carousel (25s/slide, 4 slides): KPI strip always visible (open, opened today, closed today, net, avg age, oldest); Slide 0: flow chart; Slide 1: backlog + aging side-by-side; Slide 2: developer load matrix (assignee × component DataTable); Slide 3: oldest 10 open tickets.
 - `TrevorDashboard` — single-screen: stats scroller (open/today/late/done), radar chart + distribution bar-line side-by-side, board/component stacked bars, Gantt timeline (flex-grows to fill).
 
 ### Slideshow dashboards (Conference, Julie, Jackie)

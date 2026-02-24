@@ -11,6 +11,8 @@ import {
   JIRA_OPERATIONAL_JQL_CLOSED_TODAY,
   JIRA_OPERATIONAL_JQL_CREATED_LAST_14,
   JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14,
+  JIRA_OPERATIONAL_JQL_CREATED_PREV_14,
+  JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14,
 } from '@/constants';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
@@ -20,6 +22,8 @@ interface OperationalJiraState {
   closedToday: JiraIssue[];
   createdLast14: JiraIssue[];
   resolvedLast14: JiraIssue[];
+  createdPrev14: JiraIssue[];
+  resolvedPrev14: JiraIssue[];
   analytics: OperationalAnalytics;
   loading: boolean;
   error: string | null;
@@ -43,6 +47,8 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
   closedToday: [],
   createdLast14: [],
   resolvedLast14: [],
+  createdPrev14: [],
+  resolvedPrev14: [],
   analytics: emptyAnalytics,
   loading: false,
   error: null,
@@ -59,12 +65,14 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
     if (!force && !get().isStale()) return;
     set({ loading: true, error: null });
     try {
-      const [open, openedToday, closedToday, createdLast14, resolvedLast14] = await Promise.all([
+      const [open, openedToday, closedToday, createdLast14, resolvedLast14, createdPrev14, resolvedPrev14] = await Promise.all([
         jiraSearch(JIRA_OPERATIONAL_JQL_OPEN, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_OPENED_TODAY, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_CLOSED_TODAY, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_CREATED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch(JIRA_OPERATIONAL_JQL_CREATED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch(JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
       ]);
       const filterNova = (issues: JiraIssue[]) => filterIssuesNovaMinKey(issues);
       const openFiltered = filterNova(open.issues);
@@ -72,12 +80,16 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
       const closedTodayFiltered = filterNova(closedToday.issues);
       const createdLast14Filtered = filterNova(createdLast14.issues);
       const resolvedLast14Filtered = filterNova(resolvedLast14.issues);
+      const createdPrev14Filtered = filterNova(createdPrev14.issues);
+      const resolvedPrev14Filtered = filterNova(resolvedPrev14.issues);
       const analytics = buildOperationalAnalytics({
         openIssues: openFiltered,
         openedTodayIssues: openedTodayFiltered,
         closedTodayIssues: closedTodayFiltered,
         createdLast14: createdLast14Filtered,
         resolvedLast14: resolvedLast14Filtered,
+        createdPrev14: createdPrev14Filtered,
+        resolvedPrev14: resolvedPrev14Filtered,
       });
       set({
         openIssues: openFiltered,
@@ -85,6 +97,8 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
         closedToday: closedTodayFiltered,
         createdLast14: createdLast14Filtered,
         resolvedLast14: resolvedLast14Filtered,
+        createdPrev14: createdPrev14Filtered,
+        resolvedPrev14: resolvedPrev14Filtered,
         analytics,
         lastFetched: Date.now(),
         loading: false,

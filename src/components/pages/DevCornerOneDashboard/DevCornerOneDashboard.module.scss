@@ -1,13 +1,135 @@
-/* Dev Corner One: chart heights scoped to this dashboard only (not global). */
-
-.chartXl {
-  height: var(--chart-height-xl);
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100vh;
+  padding: 0.75rem;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-.chartLg {
-  height: var(--chart-height-lg);
+.loadingWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--text-color-secondary);
 }
 
-.chartMd {
-  height: var(--chart-height-md);
+.kpiRow {
+  flex-shrink: 0;
+}
+
+.mainGrid {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.leftCol,
+.rightCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.panelCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  :global(.p-card-body) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    min-height: 0;
+  }
+
+  :global(.p-card-content) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    min-height: 0;
+  }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.panelBadges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ratioLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+}
+
+.chartWrap {
+  flex: 1;
+  min-height: 120px;
+  position: relative;
+}
+
+.chartWrapSmall {
+  min-height: 80px;
+  position: relative;
+}
+
+.hotspotList {
+  margin-top: 0.4rem;
+  border-top: 1px solid var(--surface-border);
+  padding-top: 0.3rem;
+}
+
+.hotspotTitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.2rem;
+}
+
+.hotspotRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding: 0.1rem 0;
+}
+
+.hotspotLabel {
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.hotspotValue {
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+  margin-left: 0.5rem;
+}
+
+.actionTable {
+  font-size: 0.8rem;
+  flex: 1;
 }

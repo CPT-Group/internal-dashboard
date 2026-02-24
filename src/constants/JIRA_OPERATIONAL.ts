@@ -27,3 +27,11 @@ export const JIRA_OPERATIONAL_JQL_CREATED_LAST_14 =
 /** Resolved in last 14 days (for flow chart closed-by-day). */
 export const JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14 =
   BASE + ` AND resolutiondate >= startOfDay(-14) ORDER BY resolutiondate DESC`;
+
+/** Created in previous 14-day window (days -28 to -14) for trend comparison. */
+export const JIRA_OPERATIONAL_JQL_CREATED_PREV_14 =
+  BASE + ` AND created >= startOfDay(-28) AND created < startOfDay(-14) ORDER BY created DESC`;
+
+/** Resolved in previous 14-day window (days -28 to -14) for trend comparison. */
+export const JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14 =
+  BASE + ` AND resolutiondate >= startOfDay(-28) AND resolutiondate < startOfDay(-14) ORDER BY resolutiondate DESC`;

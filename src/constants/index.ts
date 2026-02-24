@@ -11,3 +11,4 @@ export * from './JIRA_JULIE';
 export * from './JIRA_OPERATIONAL';
 export * from './JULIES_BACKGROUND';
 export * from './JACKIES_BACKGROUND';
+export * from './DEV1_CONFIG';

@@ -9,3 +9,4 @@ export * from './boardComponentCharts';
 export * from './flowCharts';
 export * from './horizontalBarCharts';
 export * from './ganttCharts';
+export * from './workloadCharts';
