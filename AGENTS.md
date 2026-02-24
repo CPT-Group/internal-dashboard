@@ -21,11 +21,11 @@ Do **not** run `next dev` (or `next build`) directly without the scripts; slide 
 
 These run automatically before `dev` and `build`:
 
-- `scripts/generate-conference-slides.js` — reads `public/background/background-conf-room/`, writes `conferenceBackgroundSlides.generated.ts`.
+- `scripts/generate-conference-slides.js` — reads `public/backgrounds/conference-room/`, writes `conferenceBackgroundSlides.generated.ts`.
 - `scripts/generate-julies-background-slides.js` — reads `public/backgrounds/julies-unicorns/`, writes `juliesBackgroundSlides.generated.ts`.
 - `scripts/generate-jackies-background-slides.js` — reads `public/backgrounds/jackies-cute-backgrounds/`, writes `jackiesBackgroundSlides.generated.ts`.
 
-Add/remove images in those folders and re-run `npm run dev` or `npm run build` to refresh. Generated `.generated.ts` files are committed. All background image folders live under `public/backgrounds/` (except conference room which is under `public/background/background-conf-room/`).
+Add/remove images in those folders and re-run `npm run dev` or `npm run build` to refresh. Generated `.generated.ts` files are committed. All background image folders live under `public/backgrounds/`.
 
 ## Code layout
 

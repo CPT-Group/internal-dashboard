@@ -1,5 +1,5 @@
 /**
- * Build-time script: reads public/background/background-conf-room/ and writes
+ * Build-time script: reads public/backgrounds/conference-room/ and writes
  * src/constants/conferenceBackgroundSlides.generated.ts so the conference room
  * slideshow uses every image in that folder. No API, no third-party deps.
  * Runs before dev/build (Netlify, local).
@@ -9,10 +9,10 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const FOLDER = path.join(ROOT, 'public', 'background', 'background-conf-room');
+const FOLDER = path.join(ROOT, 'public', 'backgrounds', 'conference-room');
 const OUT_FILE = path.join(ROOT, 'src', 'constants', 'conferenceBackgroundSlides.generated.ts');
 
-const BASE_URL = '/background/background-conf-room';
+const BASE_URL = '/backgrounds/conference-room';
 const IMAGE_EXT = new Set([
   '.jpg', '.jpeg', '.jfif', '.png', '.gif', '.webp', '.svg', '.bmp', '.avif',
 ]);
@@ -57,6 +57,6 @@ function getSlides() {
 }
 
 const slides = getSlides();
-const content = `/** Auto-generated from public/background/background-conf-room/ – do not edit manually */\n\nexport const CONFERENCE_BACKGROUND_SLIDES = [\n${slides.map((s) => `  '${s}',`).join('\n')}\n] as const;\n`;
+const content = `/** Auto-generated from public/backgrounds/conference-room/ – do not edit manually */\n\nexport const CONFERENCE_BACKGROUND_SLIDES = [\n${slides.map((s) => `  '${s}',`).join('\n')}\n] as const;\n`;
 
 fs.writeFileSync(OUT_FILE, content, 'utf8');
