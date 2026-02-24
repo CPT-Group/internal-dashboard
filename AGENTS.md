@@ -48,10 +48,19 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 - **Components**: Prefer functional components and clear, focused components; reuse shared UI from `src/components/ui/` where it fits. For **charts**: name by purpose (e.g. `OpenClosedAvgHoursByAssigneeRadarChart`), not by dashboard; accept only typed data props; put types in `src/types/charts/`, mappers in `src/utils/chartDataMappers.ts`; pages own Card/Panel and layout.
 - **Types**: Keep TypeScript strict; use proper types for props and store state.
 
-## Testing and quality
+## Pre-commit checklist
 
-- Run `npm run lint` before considering a task done.
-- Ensure `npm run build` succeeds when touching code that affects the build or generated files.
+Before every commit and push:
+
+1. **Regenerate background slide lists** — run all three scripts (or just `npm run dev` / `npm run build` which runs them automatically). Images may have been added/removed since last generation.
+   ```bash
+   node scripts/generate-conference-slides.js
+   node scripts/generate-julies-background-slides.js
+   node scripts/generate-jackies-background-slides.js
+   ```
+   Stage the updated `.generated.ts` files along with any new/removed images.
+2. **Run `npm run lint`** before considering a task done.
+3. **Ensure `npm run build` succeeds** when touching code that affects the build or generated files.
 
 ## Versioning
 

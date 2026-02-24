@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Routes renamed to match dashboard names**: Julie's Office route changed from `/tv/break-room` to `/tv/julie`; Jackie's Office from `/tv/lobby` to `/tv/jackie`. Router `roomName` values updated to match (`julie`, `jackie`). Route slugs now consistently reflect the dashboard/person name.
 - **Backgrounds consolidated**: Moved all background image folders under `public/backgrounds/`: conference room from `public/background/background-conf-room/` to `public/backgrounds/conference-room/`, Julie's unicorns from `public/JuliesUnicorns/backgrounds/` to `public/backgrounds/julies-unicorns/`. Removed old `public/background/` folder entirely. Updated all generation scripts, constants, and docs.
 - **Build scripts**: `npm run dev` and `npm run build` now also run `generate-jackies-background-slides.js`.
+- **AGENTS.md pre-commit checklist**: Added convention to always regenerate background slide lists before committing/pushing, so new/removed images are reflected in the generated `.ts` files.
 
 ### Added
 
