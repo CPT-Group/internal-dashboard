@@ -22,23 +22,25 @@ const CM_OPRD_COMPONENTS = [
 ].map((c) => `"${c}"`).join(', ');
 
 /**
- * Scoped filter: items in our dev scope regardless of status.
- * Used as a base for both open and time-based (created/resolved) queries.
+ * Scoped filter: items in our dev scope regardless of Done/not-Done.
+ * Excludes "New" from CM/OPRD (case manager prep, not dev work).
+ * Used as a base for time-based (created/resolved) queries.
  */
 const SCOPED_FILTER = [
-  `( project = CM AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
-  `( project = OPRD AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
+  `( project = CM AND status != New AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
+  `( project = OPRD AND status != New AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
   `( project = NOVA AND issuetype NOT IN ("Epic", "Sub-task") )`,
 ].join(' OR ');
 
 /**
  * Open/active items only (adds status exclusions per project).
- * - CM: not Done (case management items in workflow)
+ * - CM: not New, not Done. "New" = case managers still prepping (Alejandra etc.);
+ *   dev team work starts at To Do / Data Team New / Requested.
  * - OPRD: not New, not Done (operational dev work in progress)
  * - NOVA: not Done (software development)
  */
 const BOARD_FILTER = [
-  `( project = CM AND statusCategory != Done AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
+  `( project = CM AND status != New AND statusCategory != Done AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
   `( project = OPRD AND status != New AND statusCategory != Done AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
   `( project = NOVA AND issuetype NOT IN ("Epic", "Sub-task") AND statusCategory != Done )`,
 ].join(' OR ');

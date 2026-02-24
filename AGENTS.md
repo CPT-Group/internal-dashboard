@@ -59,7 +59,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 
 **JQL constants** (`src/constants/`):
 - `JIRA_SHARED.ts` — cache TTL (30 min), max results (1000).
-- `JIRA_OPERATIONAL.ts` — operational dashboard queries spanning **CM + OPRD + NOVA** (modeled after Case Management Data Team Board filter V.3). Open query uses board-matching component filter per project; time-based queries (created/resolved) use scoped filter with dev components. CM and OPRD filtered by dev-relevant components (Interactive Website, Case Database, etc.); NOVA excludes Epics/Sub-tasks.
+- `JIRA_OPERATIONAL.ts` — operational dashboard queries spanning **CM + OPRD + NOVA** (modeled after Case Management Data Team Board filter V.3). CM and OPRD filtered by dev-relevant components (Interactive Website, Case Database, etc.) and **exclude "New" status** (case manager prep, not dev work — dev team starts at To Do / Data Team New / Requested). NOVA excludes Epics/Sub-tasks. Time-based queries (created/resolved) use same scoped filter.
 - `JIRA_TREVOR.ts` — Trevor team queries (OPRD/CM/NOVA, assignee-scoped to 4 devs).
 - `JIRA_NOVA.ts` — NOVA project queries (min key 661).
 - `JIRA_DEV1.ts` — Dev Corner One queries.
