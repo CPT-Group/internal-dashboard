@@ -41,6 +41,53 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 
 - **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` and `dev-corner-two` → `OperationalJiraDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; others → `null`. Route slugs should match the dashboard/person name (e.g. `/tv/julie`, `/tv/jackie`, `/tv/trevor`). Home page titles and card labels (e.g. "Dev Corner One", "Julie's Office", "Jackie's Office") are **user-facing and stay as-is**; chart and component names in code are purpose-based.
 
+### Analytics dashboards (Dev Corner, Trevor)
+
+These dashboards display Jira-driven analytics with charts, KPIs, and tables. The data flow is:
+
+```
+JQL constants → Zustand store (fetch + cache) → analytics builder → chart data mapper → chart component
+```
+
+**Stores** (`src/stores/`):
+- `operationalJiraStore` — Dev Corner One/Two. Fetches 5 parallel JQL queries (open, opened today, closed today, created last 14d, resolved last 14d). Builds `OperationalAnalytics`. Polls every 60s if stale; cache TTL 30 min.
+- `trevorJiraStore` — Trevor's Screen. Fetches team-scoped tickets (4-person dev team across OPRD/CM/NOVA, last 6 months). Builds `NovaAnalytics`.
+- `jiraNovaStore` — NOVA project analytics (open/today/overdue/done).
+- `dev1JiraStore` — Dev Corner One extended analytics (NOVA, last 6 months).
+- All stores filter with `filterIssuesNovaMinKey` (NOVA-661+) to exclude legacy issues.
+
+**JQL constants** (`src/constants/`):
+- `JIRA_SHARED.ts` — cache TTL (30 min), max results (100).
+- `JIRA_OPERATIONAL.ts` — operational dashboard queries (NOVA, excludes Epics/Sub-tasks).
+- `JIRA_TREVOR.ts` — Trevor team queries (OPRD/CM/NOVA, assignee-scoped to 4 devs).
+- `JIRA_NOVA.ts` — NOVA project queries (min key 661).
+- `JIRA_DEV1.ts` — Dev Corner One queries.
+- `TREVOR_TEAM.ts` — team member IDs, display names, ordered list for charts.
+
+**Chart data mappers** (`src/utils/chartDataMappers.ts`):
+- `toOpenedClosedFlowChartData` — 14-day opened vs closed flow.
+- `toBacklogByComponentBarChartData` — backlog by component horizontal bars.
+- `toAgingBucketsBarChartData` — aging bucket horizontal bars.
+- `toOpenClosedAvgHoursByAssigneeRadarChartData` — radar chart (open/closed/avg hours per assignee).
+- `toOpenAndAvgDaysByAssigneeChartData` — bar+line (open count + avg days per assignee).
+- `toByBoardByComponentChartData` — stacked bar (by project × component).
+
+**Chart components** (`src/components/charts/`) — all presentation-only, typed data prop:
+- `OpenedClosedFlowBarChart` — vertical bar (opened vs closed by day).
+- `HorizontalBarChart` — horizontal bars with optional per-bar colors.
+- `OpenClosedAvgHoursByAssigneeRadarChart` — radar (3 datasets: open, closed, avg hours).
+- `OpenAndAvgDaysByAssigneeBarLineChart` — combo bar+line (open count + avg days).
+- `ByBoardByComponentStackedBarChart` — stacked horizontal (project × component).
+- `GanttChart` — timeline (start/end dates, progress).
+
+**Current dashboard layouts**:
+- `OperationalJiraDashboard` (Dev Corner One/Two) — auto-rotating carousel (25s/slide, 4 slides): KPI strip always visible (open, opened today, closed today, net, avg age, oldest); Slide 0: flow chart; Slide 1: backlog + aging side-by-side; Slide 2: developer load matrix (assignee × component DataTable); Slide 3: oldest 10 open tickets.
+- `TrevorDashboard` — single-screen: stats scroller (open/today/late/done), radar chart + distribution bar-line side-by-side, board/component stacked bars, Gantt timeline (flex-grows to fill).
+
+### Slideshow dashboards (Conference, Julie, Jackie)
+
+These dashboards display rotating background images with optional overlays. See "Build-time scripts" for image generation. They use `BackgroundSlideshow` (reusable UI) and `CornerInfoCard` (name badge). Layout: full viewport, no scroll, position-absolute overlays.
+
 ## Conventions and rules
 
 - **Theme and global styles**: Do **not** change theme, color, or global styles unless the user explicitly asks for it.
