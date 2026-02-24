@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const jql = searchParams.get('jql');
     const maxResults = searchParams.get('maxResults');
-    const startAt = searchParams.get('startAt');
     const fieldsParam = searchParams.get('fields');
 
     if (!jql?.trim()) {
@@ -24,8 +23,7 @@ export async function GET(request: NextRequest) {
 
     const result = await searchIssues({
       jql: jql.trim(),
-      maxResults: maxResults ? Math.min(Number(maxResults), 100) : 50,
-      startAt: startAt ? Number(startAt) : 0,
+      maxResults: maxResults ? Math.min(Number(maxResults), 500) : 100,
       fields: fields?.length ? fields : undefined,
     });
 

@@ -6,7 +6,7 @@
  * @see https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#about
  */
 
-import type { JiraSearchParams, JiraSearchResponse } from '@/types';
+import type { JiraSearchParams, JiraSearchV3Raw, JiraSearchResponse } from '@/types';
 
 const JIRA_REST_PREFIX = '/rest/api/3';
 
@@ -79,32 +79,66 @@ async function jiraFetch<T>(
 }
 
 /**
- * Search issues using JQL (server-side only).
- * Uses POST /rest/api/3/search/jql (legacy GET /search was removed).
+ * Fetch a single page from POST /rest/api/3/search/jql (v3 cursor-based pagination).
+ */
+async function searchPage(
+  jql: string,
+  maxResults: number,
+  fields: string[],
+  nextPageToken?: string,
+  expand?: string
+): Promise<JiraSearchV3Raw> {
+  const body: Record<string, string | number | string[] | undefined> = {
+    jql,
+    maxResults,
+    fields,
+  };
+  if (nextPageToken) body.nextPageToken = nextPageToken;
+  if (expand) body.expand = expand;
+
+  return jiraFetch<JiraSearchV3Raw>('/search/jql', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+const MAX_PAGES = 10;
+const PAGE_SIZE = 100;
+
+/**
+ * Search issues using JQL with auto-pagination (server-side only).
+ * Fetches up to maxResults issues, paginating with nextPageToken.
+ * V3 /search/jql does not return a total count; total = fetched count.
  */
 export async function searchIssues(
   params: JiraSearchParams
 ): Promise<JiraSearchResponse> {
-  const { jql, maxResults = 50, fields, expand } = params;
-  const body: Record<string, string | number | string[] | undefined> = {
-    jql,
-    maxResults,
-    fields: fields?.length ? fields : [...DEFAULT_JIRA_FIELDS],
-  };
-  if (expand) body.expand = expand;
+  const { jql, maxResults = 100, fields, expand } = params;
+  const fieldList = fields?.length ? fields : [...DEFAULT_JIRA_FIELDS];
+  const perPage = Math.min(maxResults, PAGE_SIZE);
 
-  const raw = await jiraFetch<{
-    issues?: JiraSearchResponse['issues'];
-    total?: number;
-    startAt?: number;
-  }>('/search/jql', { method: 'POST', body: JSON.stringify(body) });
-  const issues = raw.issues ?? [];
-  return {
-    startAt: raw.startAt ?? 0,
-    maxResults,
-    total: raw.total ?? issues.length,
-    issues,
-  };
+  const allIssues: JiraSearchResponse['issues'] = [];
+  let token: string | undefined;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const remaining = maxResults - allIssues.length;
+    if (remaining <= 0) break;
+
+    const raw = await searchPage(
+      jql,
+      Math.min(perPage, remaining),
+      fieldList,
+      token,
+      expand
+    );
+
+    allIssues.push(...(raw.issues ?? []));
+
+    if (raw.isLast || !raw.nextPageToken) break;
+    token = raw.nextPageToken;
+  }
+
+  return { total: allIssues.length, issues: allIssues };
 }
 
 /**

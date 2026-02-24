@@ -45,7 +45,6 @@ export function useJira(): UseJiraReturn {
       const q = new URLSearchParams();
       q.set('jql', params.jql);
       if (params.maxResults != null) q.set('maxResults', String(params.maxResults));
-      if (params.startAt != null) q.set('startAt', String(params.startAt));
       const res = await fetch(`/api/jira/search?${q.toString()}`);
       const json = await res.json();
       if (!res.ok) {
@@ -55,8 +54,6 @@ export function useJira(): UseJiraReturn {
       }
       const data = json as JiraSearchResponse & { success: boolean };
       const result: JiraSearchResponse = {
-        startAt: data.startAt,
-        maxResults: data.maxResults,
         total: data.total,
         issues: data.issues ?? [],
       };

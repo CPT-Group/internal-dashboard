@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workload chart data type and mappers**: `WorkloadByAssigneeChartData` type in `src/types/charts/workloadCharts.ts`. New mappers: `toWorkloadByAssigneeChartData` (sorted desc with % of total) and `toAgingHotspotsBarChartData` (hotspot labels + avg age values).
 - **Jackie's Office Dashboard**: New `JackiesOfficeDashboard` page (`/tv/jackie`) with rotating background slideshow from `public/backgrounds/jackies-cute-backgrounds/` and a `CornerInfoCard` showing "Jackie – Vice President, Operations". Follows same pattern as Julie's Office: `BackgroundSlideshow` + `CornerInfoCard`, full-viewport layout, corner badge bottom-right. Build-time script `scripts/generate-jackies-background-slides.js` generates `jackiesBackgroundSlides.generated.ts`. Currently no images in the folder (shows fallback); drop images in and re-run `npm run dev` to populate.
 
+### Fixed
+
+- **Jira API v3 pagination**: `jiraService.ts` now handles v3 cursor-based pagination (`nextPageToken`/`isLast`) instead of expecting the deprecated `total`/`startAt`/`maxResults` response fields. Auto-paginates up to 1000 results (10 pages × 100). `JiraSearchResponse` type updated to match.
+- **Operational JQL: multi-project (CM + OPRD + NOVA)**: `JIRA_OPERATIONAL.ts` rewritten from NOVA-only to match the Case Management Data Team Board filter. Open query scopes CM and OPRD by dev-relevant components (Interactive Website, Case Database, etc.); NOVA excludes Epics/Sub-tasks. Time-based queries (created/resolved today/14d) also scoped by components so flow data reflects dev work, not all project activity. Max results bumped from 100 to 1000.
+
 ### Changed
 
 - **Dev Corner One routing**: `dev-corner-one` now routes to `DevCornerOneDashboard` (single-view health dashboard); `dev-corner-two` continues to use `OperationalJiraDashboard` (carousel). Both share the same `operationalJiraStore`.

@@ -4,4 +4,4 @@
  */
 export const JIRA_CACHE_TTL_MS = 30 * 60 * 1000;
 
-export const JIRA_SEARCH_MAX_RESULTS = 100;
+export const JIRA_SEARCH_MAX_RESULTS = 1000;
