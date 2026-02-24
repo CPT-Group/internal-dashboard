@@ -9,13 +9,21 @@ import { Skeleton } from 'primereact/skeleton';
 import type { JiraIssue } from '@/types';
 import { useTrevorJiraStore } from '@/stores';
 import { TextScroller } from '@/components/ui';
-import { AssigneeComboChart } from './AssigneeComboChart';
-import { DistributionChart } from './DistributionChart';
-import { ByBoardComponentChart } from './ByBoardComponentChart';
+import {
+  OpenClosedAvgHoursByAssigneeRadarChart,
+  OpenAndAvgDaysByAssigneeBarLineChart,
+  ByBoardByComponentStackedBarChart,
+} from '@/components/charts';
+import {
+  toOpenClosedAvgHoursByAssigneeRadarChartData,
+  toOpenAndAvgDaysByAssigneeChartData,
+  toByBoardByComponentChartData,
+} from '@/utils/chartDataMappers';
+import { TREVOR_TEAM_ORDERED } from '@/constants';
 import './TrevorDashboard.module.scss';
 
-const GanttChart = dynamic(
-  () => import('./GanttChart').then((m) => m.GanttChart),
+const GanttChartDynamic = dynamic(
+  () => import('@/components/charts').then((m) => m.GanttChart),
   { ssr: false, loading: () => <Skeleton width="100%" height="180px" /> }
 );
 
@@ -53,6 +61,19 @@ export const TrevorDashboard = () => {
 
   const analytics = getAnalytics();
   const allIssues = getAllIssues();
+
+  const radarChartData = useMemo(
+    () => toOpenClosedAvgHoursByAssigneeRadarChartData(analytics, TREVOR_TEAM_ORDERED),
+    [analytics]
+  );
+  const barLineChartData = useMemo(
+    () => toOpenAndAvgDaysByAssigneeChartData(analytics, TREVOR_TEAM_ORDERED),
+    [analytics]
+  );
+  const byBoardChartData = useMemo(
+    () => toByBoardByComponentChartData(analytics),
+    [analytics]
+  );
 
   const ganttTasks = useMemo(() => {
     const today = toYyyyMmDd(new Date().toISOString());
@@ -162,12 +183,12 @@ export const TrevorDashboard = () => {
             subTitle="CM, NOVA, OPRD"
             className="trevor-chart-card"
           >
-            <AssigneeComboChart analytics={analytics} />
+            <OpenClosedAvgHoursByAssigneeRadarChart data={radarChartData} />
           </Card>
         </div>
         <div className="col-12 md:col-5">
           <Card title="Distribution" className="trevor-chart-card trevor-chart-card-distribution">
-            <DistributionChart analytics={analytics} />
+            <OpenAndAvgDaysByAssigneeBarLineChart data={barLineChartData} />
           </Card>
         </div>
       </div>
@@ -176,7 +197,7 @@ export const TrevorDashboard = () => {
         <div className="grid trevor-board-row">
           <div className="col-12">
             <Card title="By board & component" className="trevor-chart-card">
-              <ByBoardComponentChart analytics={analytics} />
+              <ByBoardByComponentStackedBarChart data={byBoardChartData} />
             </Card>
           </div>
         </div>
@@ -187,7 +208,7 @@ export const TrevorDashboard = () => {
         className={`trevor-gantt-card ${ganttTasks.length > 0 ? 'flex-1' : 'trevor-gantt-empty'}`}
       >
         <div className="trevor-gantt-wrap">
-          <GanttChart tasks={ganttTasks} noData={allIssues.length === 0} />
+          <GanttChartDynamic tasks={ganttTasks} noData={allIssues.length === 0} />
         </div>
       </Card>
 

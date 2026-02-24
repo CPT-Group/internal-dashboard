@@ -1,5 +1,5 @@
 /**
- * Build-time script: reads public/JuliesUnicorns/backgrounds/ and writes
+ * Build-time script: reads public/backgrounds/julies-unicorns/ and writes
  * src/constants/juliesBackgroundSlides.generated.ts for Julie's Office dashboard
  * rotating background. No API, no third-party deps.
  * Runs before dev/build. Add/remove images in that folder; re-run dev/build to refresh.
@@ -9,10 +9,10 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const FOLDER = path.join(ROOT, 'public', 'JuliesUnicorns', 'backgrounds');
+const FOLDER = path.join(ROOT, 'public', 'backgrounds', 'julies-unicorns');
 const OUT_FILE = path.join(ROOT, 'src', 'constants', 'juliesBackgroundSlides.generated.ts');
 
-const BASE_URL = '/JuliesUnicorns/backgrounds';
+const BASE_URL = '/backgrounds/julies-unicorns';
 const IMAGE_EXT = new Set([
   '.jpg', '.jpeg', '.jfif', '.png', '.gif', '.webp', '.svg', '.bmp', '.avif',
 ]);
@@ -51,6 +51,6 @@ function getSlides() {
 }
 
 const slides = getSlides();
-const content = `/** Auto-generated from public/JuliesUnicorns/backgrounds/ – do not edit manually */\n\nexport const JULIES_BACKGROUND_SLIDES = [\n${slides.map((s) => `  '${s}',`).join('\n')}\n] as const;\n`;
+const content = `/** Auto-generated from public/backgrounds/julies-unicorns/ – do not edit manually */\n\nexport const JULIES_BACKGROUND_SLIDES = [\n${slides.map((s) => `  '${s}',`).join('\n')}\n] as const;\n`;
 
 fs.writeFileSync(OUT_FILE, content, 'utf8');

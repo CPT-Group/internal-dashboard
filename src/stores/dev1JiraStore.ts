@@ -9,6 +9,7 @@ import {
   JIRA_DEV1_JQL,
   JIRA_DEV1_JQL_OPEN,
 } from '@/constants';
+import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
 interface Dev1JiraState {
   issues: JiraIssue[];
@@ -44,9 +45,10 @@ export const useDev1JiraStore = create<Dev1JiraState>((set, get) => ({
         jiraSearch(JIRA_DEV1_JQL, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_DEV1_JQL_OPEN, 1),
       ]);
+      const issuesFiltered = filterIssuesNovaMinKey(listResult.issues);
       set({
-        issues: listResult.issues,
-        openCountFromJira: openResult.total,
+        issues: issuesFiltered,
+        openCountFromJira: null,
         lastFetched: Date.now(),
         loading: false,
         error: null,
@@ -58,10 +60,10 @@ export const useDev1JiraStore = create<Dev1JiraState>((set, get) => ({
   },
 
   getAnalytics: () => {
-    const { issues, openCountFromJira } = get();
+    const { issues } = get();
     return buildAnalyticsFromIssueList({
       issues,
-      openCountOverride: openCountFromJira,
+      openCountOverride: null,
     });
   },
 

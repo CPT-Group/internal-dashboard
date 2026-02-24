@@ -5,8 +5,8 @@ export const TV_ROOM_NAMES = [
   'dev-corner-two',
   'conference-room',
   'trevor',
-  'lobby',
-  'break-room',
+  'jackie',
+  'julie',
 ] as const;
 
 export type TVRoomName = (typeof TV_ROOM_NAMES)[number];
@@ -36,16 +36,16 @@ export const TV_ROUTE_CONFIGS: Record<string, TVRouteConfig> = {
     description: 'Dev team totals & Gantt – mobile-friendly',
     enabled: true,
   },
-  lobby: {
-    roomName: 'lobby',
-    displayName: 'Lobby',
-    description: 'Lobby dashboard - Case analytics & system metrics',
+  jackie: {
+    roomName: 'jackie',
+    displayName: "Jackie's Office",
+    description: 'Dashboard for case manager operations',
     enabled: true,
   },
-  'break-room': {
-    roomName: 'break-room',
-    displayName: 'Break Room',
-    description: 'Break room dashboard',
+  julie: {
+    roomName: 'julie',
+    displayName: "Julie's Office",
+    description: "President's dashboard",
     enabled: true,
   },
 };

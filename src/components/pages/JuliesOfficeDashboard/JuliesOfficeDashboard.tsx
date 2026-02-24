@@ -1,12 +1,12 @@
 'use client';
 
-import { BackgroundSlideshow } from '@/components/ui';
+import { BackgroundSlideshow, CornerInfoCard } from '@/components/ui';
 import { JULIES_BACKGROUND_SLIDES } from '@/constants';
 import styles from './JuliesOfficeDashboard.module.css';
 
 /**
  * Julie's Office dashboard – rotating unicorn-themed background from
- * public/JuliesUnicorns/backgrounds/. Content (scroller, widgets) can be added later.
+ * public/backgrounds/julies-unicorns/. Floating corner card with name/title; widgetType supports weather/cpt later.
  */
 export const JuliesOfficeDashboard = () => {
   return (
@@ -17,6 +17,13 @@ export const JuliesOfficeDashboard = () => {
         transitionDurationMs={1500}
         transition="fade"
       />
+      <div className={styles.cornerWrap}>
+        <CornerInfoCard
+          name="Julie Green"
+          title="CPT President & Unicorn Expert"
+          widgetType="none"
+        />
+      </div>
     </div>
   );
 };

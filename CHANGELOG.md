@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [Unreleased]
+
+### Added
+
+- **Jackie's Office Dashboard**: New `JackiesOfficeDashboard` page (`/tv/jackie`) with rotating background slideshow from `public/backgrounds/jackies-cute-backgrounds/` and a `CornerInfoCard` showing "Jackie – Vice President, Operations". Follows same pattern as Julie's Office: `BackgroundSlideshow` + `CornerInfoCard`, full-viewport layout, corner badge bottom-right. Build-time script `scripts/generate-jackies-background-slides.js` generates `jackiesBackgroundSlides.generated.ts`. Currently no images in the folder (shows fallback); drop images in and re-run `npm run dev` to populate.
+
+### Changed
+
+- **Routes renamed to match dashboard names**: Julie's Office route changed from `/tv/break-room` to `/tv/julie`; Jackie's Office from `/tv/lobby` to `/tv/jackie`. Router `roomName` values updated to match (`julie`, `jackie`). Route slugs now consistently reflect the dashboard/person name.
+- **Backgrounds consolidated**: Moved Julie's unicorn backgrounds from `public/JuliesUnicorns/backgrounds/` to `public/backgrounds/julies-unicorns/`. Updated generation script, constants, and dashboard comment. All dashboard background folders now live under `public/backgrounds/` for consistency.
+- **Build scripts**: `npm run dev` and `npm run build` now also run `generate-jackies-background-slides.js`.
+
+### Added
+
+- **CornerInfoCard (reusable UI)**: Small horizontal glassy card for corner placement. Props: `name` (main title), `title` (subtitle/position), `widgetType`: `'weather' | 'cpt' | 'none'`. Background ~30% transparent (theme surface), solid border; name and title use theme text colors. `widgetType="none"` shows only name/title; `weather` and `cpt` render a reserved slot for future content (no API hookup yet). Parent positions the card (e.g. absolute with top/left inset).
+- **Docs: Julie's dashboard dynamic card colors**: New `docs/julies-dashboard-dynamic-card-colors.md` – future idea for adapting corner card background/text to the current slide (light/dark or palette per image); no implementation yet.
+- **Julie's Office corner card**: JuliesOfficeDashboard now shows a subtle floating card in the bottom-right (3.5rem inset) with "Julie Green" and "CPT President & Unicorn Expert", `widgetType="none"`. Image remains the main focal point; card is responsive and stays in the same corner on all screen sizes.
+
+- **GET /api/sf/projects** – Returns Project__c records as the case list (same shape as support portal: id, label, name, projectName, caseID). Source of truth for cases; cached 5 min. Not yet consumed by any dashboard UI. **Docs**: `docs/salesforce-oauth-and-support.md` updated with route and curl example.
+- **GET /api/sf/support-channel** – Returns Support_Channel__c records (support requests from the support portal) for future charts/tables. Fields: Id, Name, CreatedDate, Type__c, Case_No__c, Case_Email__c, Stage__c, Project__c, Website_Detail_Summary__c; ordered by CreatedDate DESC, limit 200; cached 5 min. No UI yet.
+
+## [0.1.56] - 2026-02-19
+
+### Added
+
+- **Reusable chart components (purpose-named)**: New `@/components/charts/` with presentation-only chart components that accept only typed data (no JQL, no store). Components: `OpenClosedAvgHoursByAssigneeRadarChart`, `OpenAndAvgDaysByAssigneeBarLineChart`, `ByBoardByComponentStackedBarChart`, `OpenedClosedFlowBarChart`, `HorizontalBarChart`, `GanttChart`. Chart data types live in `@/types/charts/` (assignee, board/component, flow, horizontal bar, gantt). Mappers in `@/utils/chartDataMappers.ts` convert analytics (NovaAnalytics, OperationalAnalytics) into these types so dashboards stay thin: get analytics from store → map to chart data → pass to chart. Wrappers (Card, Panel, layout) stay on the page; charts have no hardcoded wrappers.
+
+### Changed
+
+- **TrevorDashboard uses shared charts**: Replaced `AssigneeComboChart`, `DistributionChart`, `ByBoardComponentChart`, and local `GanttChart` with shared components from `@/components/charts` and mappers from `@/utils/chartDataMappers`. Page-level Cards and layout unchanged; home page and screen titles unchanged.
+- **OperationalJiraDashboard uses shared charts**: Replaced inline `FlowChartMemo`, `BacklogChartMemo`, and `AgingChartMemo` with `OpenedClosedFlowBarChart` and `HorizontalBarChart` plus mappers `toOpenedClosedFlowChartData`, `toBacklogByComponentBarChartData`, `toAgingBucketsBarChartData`. Carousel and KPI strip unchanged.
+- **Removed Trevor-specific chart components**: Deleted `TrevorDashboard/AssigneeComboChart.*`, `DistributionChart.*`, `ByBoardComponentChart.*`, and `GanttChart.tsx`; shared `GanttChart` now lives under `@/components/charts/GanttChart`.
+
+### Changed
+
+- **AGENTS.md**: Updated for shared chart architecture — added Charts and TV routes/dashboards sections, chart naming and data-only convention, and pointer to mappers and types.
+
+### Fixed
+
+- **Chart.js tooltip callbacks**: `OpenClosedAvgHoursByAssigneeRadarChart` and `OpenAndAvgDaysByAssigneeBarLineChart` now use the correct Chart.js callback signatures: `afterLabel(tooltipItem)` (single item) and `afterBody(tooltipItems)` (array), per Chart.js TooltipCallbacks API.
+
 ## [0.1.55] - 2026-02-18
 
 ### Added
@@ -62,6 +103,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- **AGENTS.md**: Project root file for AI coding agents. Describes stack (Next.js 16, React 19, TypeScript, PrimeReact, Zustand, etc.), dev setup and scripts, build-time slide generation, code layout and `@/` paths, conventions (no theme/global style changes unless asked; always update CHANGELOG after completed tasks), and lint/build expectations. **Continual learning** section: capture new conventions and user preferences in AGENTS.md or `.cursor/rules/`; keep AGENTS.md current when stack or layout changes.
+
+- **NOVA dashboards: only NOVA-661+**: All NOVA data (Dev Corner Two, Operational, Dev1, Trevor) is filtered client-side to **NOVA-661 and above**. Legacy issues (NOVA-1 through NOVA-660) are excluded from counts, charts, and tables. Constant `JIRA_NOVA_MIN_ISSUE_NUM = 661` in `src/constants/JIRA_NOVA.ts`; shared filter in `src/utils/jiraNovaFilter.ts` used by `jiraNovaStore`, `operationalJiraStore`, `dev1JiraStore`, and `trevorJiraStore`. Open counts for Dev1 and Trevor are now derived from the filtered list (no separate Jira open-count request).
+
+- **Docs: closing legacy NOVA (NOVA-1–660)**: New `docs/jira-close-nova-legacy.md` with JQL and steps to close/resolve legacy NOVA issues via Atlassian CLI (or bulk in Jira). Notes that Jira compares `key` as string so strict numeric range 1–660 may require export + filter then bulk transition.
+
+- **Jira API layer for widgets**: New `src/services/api/endpoints/jira/` with fine-tuned, typed API functions: **tickets** – `getTicketsTransitionedToday()` (resolved today, not created), `getTicketsCreatedToday()`; **updates** – `fetchUpdates(since)` for incremental “updated since” polling. JQL for these in `jira/jql.ts`; all NOVA results filtered to key ≥ 661. **Hook** `useJiraUpdatesPolling({ intervalMs, onUpdates })` runs `fetchUpdates` every 30 minutes (configurable), tracks last check timestamp, and optionally calls `onUpdates(issues, fetchedAt)` for widgets. Exported from `@/services` and `@/hooks`.
+
+- **Salesforce API (read-only) and discovery**: New server-side `src/services/api/salesforceService.ts` – OAuth2 password flow (env: SF_LOGIN_URL, SF_CLIENT_ID, SF_CLIENT_SECRET, SALESFORCE_EMAIL_KYLE, SALESFORCE_PASSWORD_KYLE, SALESFORCE_SECURITY_TOKEN_KYLE), `describeGlobal()`, `describeSObject(name)`, `query(soql)`. **Routes**: `GET /api/salesforce/discover` (list sobjects; `?sobject=Account` returns describe for one object), `GET /api/salesforce/query?q=SOQL` for read-only SOQL. **Docs**: `docs/salesforce-discovery.md` – setup, discovery log template, and tables to track objects/fields and chart ideas as we learn what data we have.
+
+- **Salesforce OAuth (CPT TV) and Support Portal**: **OAuth2 Authorization Code + PKCE** for Connected App “CPT TV”. Env: `SALESFORCE_CONSUMER_KEY` / `SALESFORCE_CONSUMER_SECRET` (or `SF_CLIENT_ID` / `SF_CLIENT_SECRET`), `SF_LOGIN_URL` (default login.salesforce.com), `SF_API_VERSION` (default v60.0). **Routes**: `GET /oauth/start` → redirects to Salesforce authorize; `GET /oauth/callback` → exchanges code for tokens, writes `.sf_tokens.json` (dev), shows “Connected”; `GET /api/sf/whoami` → userinfo (verify token); `GET /api/sf/describe/support-channel` → Support_Channel__c describe (required + createable fields); `GET only in this app; Support Portal (cpt-support-portal repo) has OAuth + POST /api/support-request. **Docs**: `docs/salesforce-oauth-and-support.md`. `.sf_tokens.json` in .gitignore.
 
 - **Conference room slideshow: auto-use all folder images**: The conference room background slideshow now uses every image in `public/background/background-conf-room/` with no manual list. A build-time script (`scripts/generate-conference-slides.js`) runs before `dev` and `build` (no API, no third-party deps), reads the folder (recursively, including subfolders), shuffles the order, and writes `conferenceBackgroundSlides.generated.ts`. Supported extensions: jpg, jpeg, jfif, png, gif, webp, svg, bmp, avif. Add or remove images in that folder; run `npm run dev` or `npm run build` so the list updates (do not run `next dev` directly or the list can be stale). **Generated file is now committed** so the full list is in the repo and all slides (e.g. bg-13, bg-17, bg-20+) are included; script still runs before dev/build to refresh when new images are added.
 

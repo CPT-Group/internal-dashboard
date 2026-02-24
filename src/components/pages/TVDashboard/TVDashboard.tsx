@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import type { DashboardProps } from '@/types';
 import { ConferenceRoomDashboard } from '@/components/pages/ConferenceRoomDashboard';
+import { JackiesOfficeDashboard } from '@/components/pages/JackiesOfficeDashboard';
 import { JuliesOfficeDashboard } from '@/components/pages/JuliesOfficeDashboard';
 
 const TrevorDashboard = dynamic(
@@ -25,7 +26,10 @@ export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
   if (roomName === 'trevor') {
     return <TrevorDashboard />;
   }
-  if (roomName === 'break-room') {
+  if (roomName === 'jackie') {
+    return <JackiesOfficeDashboard />;
+  }
+  if (roomName === 'julie') {
     return <JuliesOfficeDashboard />;
   }
   return null;

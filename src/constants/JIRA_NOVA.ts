@@ -1,6 +1,12 @@
 /** Jira project key for NOVA (Dev Corner Two dashboard). */
 export const JIRA_NOVA_PROJECT = 'NOVA';
 
+/**
+ * Minimum NOVA issue number to include in dashboards (e.g. 661 = NOVA-661 and above).
+ * Issues below this (NOVA-1 through NOVA-660) are legacy; close/resolve via CLI and exclude from app.
+ */
+export const JIRA_NOVA_MIN_ISSUE_NUM = 661;
+
 /** JQL: tickets updated today (NOVA). */
 export const JIRA_NOVA_JQL_TODAY =
   `project = ${JIRA_NOVA_PROJECT} AND updated >= startOfDay(-0) order by updated DESC`;

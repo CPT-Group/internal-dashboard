@@ -171,7 +171,7 @@ See `package.json` for current version and `CHANGELOG.md` for version history.
 - **Version**: See `package.json` (e.g. 0.1.x)
 - **Theme**: dark-synth (default), dark, light, ms-access-2010; switch on home page only. See `docs/theme-system.md`.
 - **Home**: Card-based TV dashboard selector; links to `/tv/{roomName}`
-- **TV dashboards**: Dev Corner Two (NOVA Jira – stats, charts, table); Conference Room (custom background, placeholder content); dev-corner-one, lobby, break-room stubbed
+- **TV dashboards**: Dev Corner Two (NOVA Jira – stats, charts, table); Conference Room (custom background); Jackie's Office (`/tv/jackie`) and Julie's Office (`/tv/julie`) with rotating background slideshows and corner name badges; dev-corner-one shares Operational Jira dashboard
 - **Data**: Jira NOVA via API + Zustand store (5‑min cache); JSON-driven architecture for future sources
 
 ## License

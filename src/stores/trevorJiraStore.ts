@@ -10,6 +10,7 @@ import {
   JIRA_TREVOR_JQL_OPEN,
   TREVOR_TEAM_ACCOUNT_IDS,
 } from '@/constants';
+import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
 function isTrevorTeamIssue(issue: JiraIssue): boolean {
   const id = issue.fields?.assignee?.accountId;
@@ -50,9 +51,10 @@ export const useTrevorJiraStore = create<TrevorJiraState>((set, get) => ({
         jiraSearch(JIRA_TREVOR_JQL, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_TREVOR_JQL_OPEN, 1),
       ]);
+      const issuesFiltered = filterIssuesNovaMinKey(listResult.issues);
       set({
-        issues: listResult.issues,
-        openCountFromJira: openResult.total,
+        issues: issuesFiltered,
+        openCountFromJira: null,
         lastFetched: Date.now(),
         loading: false,
         error: null,
@@ -64,11 +66,11 @@ export const useTrevorJiraStore = create<TrevorJiraState>((set, get) => ({
   },
 
   getAnalytics: () => {
-    const { issues, openCountFromJira } = get();
+    const { issues } = get();
     return buildAnalyticsFromIssueList({
       issues,
       filterByAccountIds: TREVOR_TEAM_ACCOUNT_IDS,
-      openCountOverride: openCountFromJira,
+      openCountOverride: null,
     });
   },
 

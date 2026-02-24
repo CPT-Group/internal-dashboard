@@ -1,10 +1,10 @@
 {
   "name": "internal-dashboard",
-  "version": "0.1.55",
+  "version": "0.1.56",
   "private": true,
   "scripts": {
-    "dev": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && next dev -p 3333",
-    "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && next build",
+    "dev": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next dev -p 3333",
+    "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next build",
     "start": "next start",
     "lint": "eslint"
   },

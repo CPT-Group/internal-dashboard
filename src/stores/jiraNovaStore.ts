@@ -11,6 +11,7 @@ import {
   JIRA_NOVA_JQL_OVERDUE,
   JIRA_NOVA_JQL_DONE,
 } from '@/constants';
+import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
 interface JiraNovaState {
   todayIssues: JiraIssue[];
@@ -52,11 +53,12 @@ export const useJiraNovaStore = create<JiraNovaState>((set, get) => ({
         jiraSearch(JIRA_NOVA_JQL_OVERDUE, JIRA_SEARCH_MAX_RESULTS).catch(() => ({ issues: [] as JiraIssue[], total: 0 })),
         jiraSearch(JIRA_NOVA_JQL_DONE, JIRA_SEARCH_MAX_RESULTS).catch(() => ({ issues: [] as JiraIssue[], total: 0 })),
       ]);
+      const filterNova = (issues: JiraIssue[]) => filterIssuesNovaMinKey(issues);
       set({
-        todayIssues: todayRes.issues,
-        openIssues: openRes.issues,
-        overdueIssues: overdueRes.issues,
-        doneIssues: doneRes.issues,
+        todayIssues: filterNova(todayRes.issues),
+        openIssues: filterNova(openRes.issues),
+        overdueIssues: filterNova(overdueRes.issues),
+        doneIssues: filterNova(doneRes.issues),
         lastFetched: Date.now(),
         loading: false,
         error: null,

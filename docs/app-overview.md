@@ -18,7 +18,9 @@
 | **TV routes (`/tv/...`)** | One dashboard per room. Each TV is pointed at a specific route. |
 | **Dev Corner Two (`/tv/dev-corner-two`)** | **NOVA** Jira dashboard: open/today/late/done counts, bar chart by assignee, doughnut distribution, “By assignee” table with Open, Today, Late, Bugs, Done and conditional formatting. Data from Jira API (project NOVA), 5‑min cache, 1‑min refresh when stale. Client-only (dynamic import, no SSR) to avoid hydration issues. |
 | **Conference Room (`/tv/conference-room`)** | Full-viewport dashboard with custom background image; placeholder content ready for future widgets (e.g. calendar, meetings). |
-| **Other rooms** | `dev-corner-one`, `lobby`, `break-room` are defined in routes and on the home cards but currently render nothing (TVDashboard returns null). Ready for future dashboards. |
+| **Jackie's Office (`/tv/jackie`)** | Full-viewport dashboard with rotating background slideshow and corner name badge ("Jackie – Vice President, Operations"). Background images from `public/backgrounds/jackies-cute-backgrounds/`. |
+| **Julie's Office (`/tv/julie`)** | Full-viewport dashboard with rotating unicorn-themed background and corner name badge ("Julie Green – CPT President & Unicorn Expert"). Background images from `public/backgrounds/julies-unicorns/`. |
+| **Other rooms** | `dev-corner-one` is defined in routes and on the home cards but currently shares the same Operational Jira dashboard as dev-corner-two. |
 
 ## Route Structure
 

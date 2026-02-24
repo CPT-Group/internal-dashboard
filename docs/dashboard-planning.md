@@ -18,9 +18,9 @@ Internal TV dashboard application for displaying team analytics, metrics, and da
 - `/tv/dev-corner-two` - Dev team dashboard #2
 
 ### Generic Routes (Shared Content)
-- `/tv/lobby` - Lobby dashboard
+- `/tv/jackie` - Jackie's Office dashboard
 - `/tv/conference-room` - Conference room dashboard
-- `/tv/break-room` - Break room dashboard
+- `/tv/julie` - Julie's Office dashboard
 
 ### Home Route
 - `/` - Dashboard selector (card-based navigation)

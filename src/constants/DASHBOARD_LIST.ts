@@ -40,14 +40,14 @@ export const DASHBOARD_LIST: DashboardItem[] = [
   {
     title: "Jackie's Office",
     description: 'Dashboard for case manager operations',
-    route: '/tv/lobby',
+    route: '/tv/jackie',
     icon: 'pi pi-briefcase',
     enabled: true,
   },
   {
     title: "Julie's Office",
     description: 'President’s dashboard',
-    route: '/tv/break-room',
+    route: '/tv/julie',
     icon: 'pi pi-star',
     variant: 'unicorn',
     enabled: true,

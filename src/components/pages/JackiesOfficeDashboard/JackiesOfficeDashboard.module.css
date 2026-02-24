@@ -1,0 +1,21 @@
+/* Jackie's Office – full viewport wrapper; BackgroundSlideshow fills it (reusable ui) */
+.jackiesDashboardContent {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Corner card: bottom-right on all screen sizes, ~3–4rem inset */
+.cornerWrap {
+  position: absolute;
+  bottom: 3.5rem;
+  right: 3.5rem;
+  z-index: 1;
+  pointer-events: none;
+}
+.cornerWrap > * {
+  pointer-events: auto;
+}

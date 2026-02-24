@@ -2,7 +2,6 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from 'primereact/card';
-import { Chart } from 'primereact/chart';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { ProgressSpinner } from 'primereact/progressspinner';
@@ -11,6 +10,15 @@ import { Skeleton } from 'primereact/skeleton';
 import { Tag } from 'primereact/tag';
 import { Panel } from 'primereact/panel';
 import { useOperationalJiraStore } from '@/stores';
+import {
+  OpenedClosedFlowBarChart,
+  HorizontalBarChart,
+} from '@/components/charts';
+import {
+  toOpenedClosedFlowChartData,
+  toBacklogByComponentBarChartData,
+  toAgingBucketsBarChartData,
+} from '@/utils/chartDataMappers';
 
 const KPI_LABEL_CLASS = 'operational-kpi-label';
 const KPI_VALUE_CLASS = 'operational-kpi-value';
@@ -50,39 +58,8 @@ const SlideTitleWithCountdown = memo(function SlideTitleWithCountdown({
   );
 });
 
-const FlowChartMemo = memo(function FlowChartMemo({
-  data,
-  options,
-}: {
-  data: object;
-  options: object;
-}) {
-  return <Chart type="bar" data={data} options={options} />;
-});
-
-const BacklogChartMemo = memo(function BacklogChartMemo({
-  data,
-  options,
-}: {
-  data: object;
-  options: object;
-}) {
-  return <Chart type="bar" data={data} options={options} />;
-});
-
-const AgingChartMemo = memo(function AgingChartMemo({
-  data,
-  options,
-}: {
-  data: object;
-  options: object;
-}) {
-  return <Chart type="bar" data={data} options={options} />;
-});
-
 export const OperationalJiraDashboard = () => {
   const { fetchOperationalData, isStale, loading, error, getAnalytics } = useOperationalJiraStore();
-  const [chartColors, setChartColors] = useState({ text: '#e2e8f0', grid: 'rgba(255,255,255,0.1)' });
   const [activeSlide, setActiveSlide] = useState(0);
   const [leavingSlide, setLeavingSlide] = useState<number | null>(null);
   const [slideStartTime, setSlideStartTime] = useState(() => Date.now());
@@ -96,13 +73,6 @@ export const OperationalJiraDashboard = () => {
     }, 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchOperationalData, isStale]);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const text = getComputedStyle(root).getPropertyValue('--text-color').trim() || '#e2e8f0';
-    const grid = getComputedStyle(root).getPropertyValue('--surface-border').trim() || 'rgba(255,255,255,0.1)';
-    setChartColors({ text, grid });
-  }, []);
 
   useEffect(() => {
     setSlideStartTime(Date.now());
@@ -123,123 +93,19 @@ export const OperationalJiraDashboard = () => {
   }, [leavingSlide]);
 
   const analytics = getAnalytics();
-  const { kpis, flowData, backlogByComponent, backlogByAssignee, backlogByDueDate, devLoadMatrix, assignees, components, agingBuckets, oldest10 } = analytics;
+  const { kpis, devLoadMatrix, assignees, components, oldest10 } = analytics;
 
-  const flowChartData = useMemo(() => {
-    const labels = flowData.map((d) => d.date.slice(5));
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Opened',
-          data: flowData.map((d) => d.opened),
-          backgroundColor: 'rgba(34, 197, 94, 0.7)',
-          borderColor: 'rgb(34, 197, 94)',
-          borderWidth: 1,
-        },
-        {
-          label: 'Closed',
-          data: flowData.map((d) => d.closed),
-          backgroundColor: 'rgba(239, 68, 68, 0.7)',
-          borderColor: 'rgb(239, 68, 68)',
-          borderWidth: 1,
-        },
-      ],
-    };
-  }, [flowData]);
-
-  const flowChartOptions = useMemo(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index' as const, intersect: false },
-      plugins: {
-        legend: { display: true, position: 'top' as const, labels: { color: chartColors.text } },
-      },
-      scales: {
-        x: {
-          grid: { color: chartColors.grid },
-          ticks: { color: chartColors.text, maxRotation: 45 },
-        },
-        y: {
-          beginAtZero: true,
-          grid: { color: chartColors.grid },
-          ticks: { color: chartColors.text },
-        },
-      },
-    }),
-    [chartColors]
+  const flowChartData = useMemo(
+    () => toOpenedClosedFlowChartData(analytics),
+    [analytics]
   );
-
-  const backlogChartData = useMemo(() => {
-    const labels = backlogByComponent.map((b) => b.component);
-    const data = backlogByComponent.map((b) => b.openCount);
-    const colors = backlogByComponent.map((b) => (b.hasAging ? 'rgba(234, 179, 8, 0.8)' : 'rgba(59, 130, 246, 0.7)'));
-    return {
-      labels,
-      datasets: [{ label: 'Open', data, backgroundColor: colors, borderColor: colors.map((c) => c.replace('0.7', '1').replace('0.8', '1')), borderWidth: 1 }],
-    };
-  }, [backlogByComponent]);
-
-  const horizontalBarChartOptions = useMemo(
-    () => ({
-      indexAxis: 'y' as const,
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { beginAtZero: true, grid: { color: chartColors.grid }, ticks: { color: chartColors.text } },
-        y: { grid: { display: false }, ticks: { color: chartColors.text } },
-      },
-    }),
-    [chartColors]
+  const backlogBarChartData = useMemo(
+    () => toBacklogByComponentBarChartData(analytics),
+    [analytics]
   );
-
-  const agingChartData = useMemo(() => {
-    return {
-      labels: agingBuckets.map((b) => b.label),
-      datasets: [
-        {
-          label: 'Tickets',
-          data: agingBuckets.map((b) => b.count),
-          backgroundColor: ['rgba(34, 197, 94, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(234, 179, 8, 0.7)', 'rgba(249, 115, 22, 0.7)', 'rgba(239, 68, 68, 0.7)'],
-          borderWidth: 1,
-        },
-      ],
-    };
-  }, [agingBuckets]);
-
-  const backlogByAssigneeChartData = useMemo(() => {
-    const labels = backlogByAssignee.map((b) => b.assigneeName);
-    const data = backlogByAssignee.map((b) => b.openCount);
-    return {
-      labels,
-      datasets: [{ label: 'Open', data, backgroundColor: 'rgba(59, 130, 246, 0.7)', borderColor: 'rgb(59, 130, 246)', borderWidth: 1 }],
-    };
-  }, [backlogByAssignee]);
-
-  const backlogByDueDateChartData = useMemo(() => {
-    const labels = backlogByDueDate.map((b) => b.label);
-    const data = backlogByDueDate.map((b) => b.openCount);
-    const colors = ['rgba(239, 68, 68, 0.7)', 'rgba(234, 179, 8, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(34, 197, 94, 0.7)', 'rgba(148, 163, 184, 0.7)'];
-    return {
-      labels,
-      datasets: [{ label: 'Open', data, backgroundColor: colors.slice(0, data.length), borderWidth: 1 }],
-    };
-  }, [backlogByDueDate]);
-
-  const agingChartOptions = useMemo(
-    () => ({
-      indexAxis: 'y' as const,
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { beginAtZero: true, grid: { color: chartColors.grid }, ticks: { color: chartColors.text } },
-        y: { grid: { display: false }, ticks: { color: chartColors.text } },
-      },
-    }),
-    [chartColors]
+  const agingBarChartData = useMemo(
+    () => toAgingBucketsBarChartData(analytics),
+    [analytics]
   );
 
   const maxLoad = useMemo(() => {
@@ -257,7 +123,7 @@ export const OperationalJiraDashboard = () => {
     []
   );
 
-  if (loading && kpis.openCount === 0 && flowData.length === 0) {
+  if (loading && kpis.openCount === 0 && flowChartData.labels.length === 0) {
     return (
       <div className="operational-dashboard">
         <div className="grid operational-kpi-strip">
@@ -353,7 +219,7 @@ export const OperationalJiraDashboard = () => {
               className="flex-1 flex flex-column min-h-0"
             >
               <div className="flex-1 min-h-0" style={{ minHeight: '180px' }}>
-                <FlowChartMemo data={flowChartData} options={flowChartOptions} />
+                <OpenedClosedFlowBarChart data={flowChartData} />
               </div>
             </Panel>
           </div>
@@ -381,14 +247,14 @@ export const OperationalJiraDashboard = () => {
                   className="flex-1 flex flex-column min-h-0"
                 >
                   <div className="flex-1 min-h-0" style={{ minHeight: '140px' }}>
-                    <BacklogChartMemo data={backlogChartData} options={horizontalBarChartOptions} />
+                    <HorizontalBarChart data={backlogBarChartData} />
                   </div>
                 </Card>
               </div>
               <div className="col-12 md:col-6 flex flex-column min-h-0">
                 <Card title="Aging buckets" className="flex-1 flex flex-column min-h-0">
                   <div className="flex-1 min-h-0" style={{ minHeight: '140px' }}>
-                    <AgingChartMemo data={agingChartData} options={agingChartOptions} />
+                    <HorizontalBarChart data={agingBarChartData} />
                   </div>
                 </Card>
               </div>
