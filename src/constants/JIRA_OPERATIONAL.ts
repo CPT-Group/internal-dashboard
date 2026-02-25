@@ -7,6 +7,8 @@
  * visible to the dev team, not when the Jira ticket was first created by CMs.
  */
 
+import { NOVA_TEAM_ACCOUNT_IDS_ARRAY } from './NOVA_TEAM';
+
 export const JIRA_OPERATIONAL_PROJECTS = ['CM', 'OPRD', 'NOVA'] as const;
 
 /** Components tracked on the dev board (shared by CM and OPRD). */
@@ -28,17 +30,25 @@ const CM_OPRD_COMPONENTS = [
 /** CM/OPRD base: dev components, no Epics. */
 const CM_OPRD_BASE = `component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic`;
 
-/** NOVA base: no Epics/Sub-tasks. */
-const NOVA_BASE = `project = NOVA AND issuetype NOT IN ("Epic", "Sub-task")`;
+/** NOVA team assignees for JQL IN clause. */
+const NOVA_ASSIGNEES = NOVA_TEAM_ACCOUNT_IDS_ARRAY.map((id) => `"${id}"`).join(', ');
 
 /**
- * Open/active items only.
- * - CM: not New, not Done (dev work starts at To Do / Data Team New / Requested)
- * - OPRD: not New, not Done
- * - NOVA: not Done
+ * NOVA base: team members in open sprints only (matches actual board filter).
+ * The board uses: project = "Software Development" AND assignee IN (...) AND sprint in openSprints()
+ */
+const NOVA_BASE = `project = NOVA AND assignee IN (${NOVA_ASSIGNEES}) AND sprint in openSprints()`;
+
+/**
+ * Open/active items — mirrors the Case Management Data Team Board filter (V.3).
+ *
+ * CM:   not "New", not Done, dev components, no Epics
+ * OPRD: (labels linked-to-CM, no Epics) OR (not New, not Done, dev components, no Epics)
+ * NOVA: team assignees in open sprints
  */
 const BOARD_FILTER = [
   `( project = CM AND status != New AND statusCategory != Done AND ${CM_OPRD_BASE} )`,
+  `( project = OPRD AND labels IN ("linked-to-CM") AND issuetype != Epic )`,
   `( project = OPRD AND status != New AND statusCategory != Done AND ${CM_OPRD_BASE} )`,
   `( ${NOVA_BASE} AND statusCategory != Done )`,
 ].join(' OR ');
@@ -51,7 +61,7 @@ const LANDED_CM_OPRD = (after: string) =>
   `project IN (CM, OPRD) AND status changed FROM "New" AFTER ${after} AND ${CM_OPRD_BASE}`;
 
 const NOVA_CREATED = (after: string) =>
-  `${NOVA_BASE} AND created >= ${after}`;
+  `project = NOVA AND created >= ${after}`;
 
 const LANDED_COMBINED = (after: string) =>
   `(${LANDED_CM_OPRD(after)}) OR (${NOVA_CREATED(after)})`;
@@ -63,7 +73,7 @@ const LANDED_COMBINED = (after: string) =>
 const SCOPED_FILTER = [
   `( project = CM AND status != New AND ${CM_OPRD_BASE} )`,
   `( project = OPRD AND status != New AND ${CM_OPRD_BASE} )`,
-  `( ${NOVA_BASE} )`,
+  `( project = NOVA )`,
 ].join(' OR ');
 
 // ── Open issues ──
@@ -84,7 +94,7 @@ export const JIRA_OPERATIONAL_JQL_LANDED_LAST_14 =
 
 /** Landed on team in previous 14-day window (days -28 to -14) for trend comparison. */
 export const JIRA_OPERATIONAL_JQL_LANDED_PREV_14 =
-  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR (${NOVA_BASE} AND created >= startOfDay(-28) AND created < startOfDay(-14)) ORDER BY updated DESC`;
+  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR (project = NOVA AND created >= startOfDay(-28) AND created < startOfDay(-14)) ORDER BY updated DESC`;
 
 // ── Resolved ──
 

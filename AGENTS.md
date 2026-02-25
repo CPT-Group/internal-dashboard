@@ -42,12 +42,17 @@ These status mappings drive the `isRequestedNotStarted()` helper in `operational
 
 ### JQL scoping rules
 
-All operational JQL (Dev Corner dashboards) follows these rules:
+All operational JQL (Dev Corner dashboards) mirrors the "Case Management Data Team Board" filter (V.3). The board filter JQL lives in `src/constants/JIRA_OPERATIONAL.ts`.
+
 - **CM**: `status != New`, `statusCategory != Done`, component IN dev-relevant list (Interactive Website, Case Database, NCOA/ACS, Static Website, Web Database, Downloader, Weekly Reports, SCP, Shut Down Service, Data Analysis, Database Migration, Website). No Epics.
-- **OPRD**: `status != New`, `statusCategory != Done`, same component list. No Epics.
-- **NOVA**: `statusCategory != Done`, no Epics/Sub-tasks. Client-side filter: key >= NOVA-661.
+- **OPRD**: Two clauses OR'd: (1) `labels IN ("linked-to-CM")` no Epics, (2) `status != New`, `statusCategory != Done`, same component list, no Epics.
+- **NOVA**: `assignee IN (NOVA_TEAM)`, `sprint in openSprints()`, `statusCategory != Done`. Only shows team members' tickets in active sprints — not the entire project backlog.
 
 Time-based queries (created/resolved today/14d) use the same scoped filter so flow data reflects dev work only, not all project activity.
+
+### NOVA ticket hygiene
+
+NOVA tickets older than 14 days with no recent updates should be closed periodically to keep metrics accurate (avg age, oldest, open count). A cleanup was performed 2026-02-24 closing 36 stale tickets. If counts drift again, run a similar JQL: `project = NOVA AND statusCategory != Done AND updated < "-14d"` and transition to Done.
 
 ## Dev environment
 
