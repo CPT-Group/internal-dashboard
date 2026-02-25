@@ -12,8 +12,8 @@ const TrevorDashboard = dynamic(
   { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
 );
 
-const OperationalJiraDashboard = dynamic(
-  () => import('@/components/pages/OperationalJiraDashboard').then((m) => m.OperationalJiraDashboard),
+const DevCornerTwoDashboard = dynamic(
+  () => import('@/components/pages/DevCornerTwoDashboard').then((m) => m.DevCornerTwoDashboard),
   { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
 );
 
@@ -31,7 +31,7 @@ export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
     return <DevCornerOneDashboard />;
   }
   if (roomName === 'dev-corner-two') {
-    return <OperationalJiraDashboard />;
+    return <DevCornerTwoDashboard />;
   }
   if (roomName === 'conference-room') {
     return <ConferenceRoomDashboard />;

@@ -1,1 +1,1 @@
-export * from './NovaDashboard';
+export * from './DevCornerTwoDashboard';

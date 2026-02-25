@@ -1,0 +1,204 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.kpiRow {
+  flex-shrink: 0;
+  padding: 0.75rem 0.75rem 0;
+}
+
+.carousel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  &.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.leaving {
+    opacity: 0;
+  }
+}
+
+.slideContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Indicators */
+.indicators {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  z-index: 2;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-border);
+  transition: background 300ms;
+
+  &.activeDot {
+    background: var(--primary-color);
+  }
+}
+
+/* In-progress cards grid */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.6rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 1.5rem;
+}
+
+.ticketCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  :global(.p-card-body) {
+    padding: 0.6rem;
+  }
+
+  :global(.p-card-content) {
+    padding: 0;
+  }
+}
+
+.ticketKey {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--primary-color);
+}
+
+.ticketSummary {
+  font-size: 0.8rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ticketMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.ticketMetaItem {
+  font-size: 0.7rem;
+  color: var(--text-color-secondary);
+}
+
+/* Recently completed table */
+.completedTable {
+  font-size: 0.8rem;
+  flex: 1;
+}
+
+/* Load matrix */
+.matrixWrap {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.matrixTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+
+  th,
+  td {
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--surface-border);
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    font-size: 0.75rem;
+  }
+}
+
+.matrixName {
+  font-weight: 500;
+}
+
+/* Backlog + aging side-by-side */
+.splitRow {
+  display: flex;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.splitCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chartWrap {
+  flex: 1;
+  min-height: 140px;
+  position: relative;
+}
+
+/* Slide title */
+.slideTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.countdown {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-color-secondary);
+}
+
+.loadingWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--text-color-secondary);
+}
