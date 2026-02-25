@@ -203,24 +203,25 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     { label: 'No date', openCount: dueBuckets['No date'] },
   ];
 
-  const assigneeSet = new Set<string>();
   const componentSet = new Set<string>();
   const matrixMap = new Map<string, number>();
+  const nameByAssignee = new Map<string, string>();
   open.forEach((issue) => {
     const aid = getAssigneeKey(issue);
-    const aname = getAssigneeName(issue);
-    assigneeSet.add(aid);
+    if (!NOVA_TEAM_ACCOUNT_IDS.has(aid)) return;
+    nameByAssignee.set(aid, getAssigneeName(issue));
     getComponentNames(issue).forEach((comp) => {
       componentSet.add(comp);
       const key = `${aid}|${comp}`;
       matrixMap.set(key, (matrixMap.get(key) ?? 0) + 1);
     });
   });
-  const assignees = Array.from(assigneeSet);
+  const assignees = NOVA_TEAM_ORDERED.map((m) => m.accountId);
+  NOVA_TEAM_ORDERED.forEach((m) => {
+    if (!nameByAssignee.has(m.accountId)) nameByAssignee.set(m.accountId, m.displayName);
+  });
   const components = Array.from(componentSet).sort();
   const devLoadMatrix: DevLoadMatrixCell[] = [];
-  const nameByAssignee = new Map<string, string>();
-  open.forEach((i) => nameByAssignee.set(getAssigneeKey(i), getAssigneeName(i)));
   assignees.forEach((assigneeId) => {
     components.forEach((component) => {
       const count = matrixMap.get(`${assigneeId}|${component}`) ?? 0;
