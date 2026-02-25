@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Badge } from 'primereact/badge';
 import type { ComponentActivity } from '@/types';
+import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
 
 export interface ComponentActivityPanelProps {
@@ -25,6 +27,16 @@ const nameBody = (row: ComponentActivity) =>
   row.component.length > 18 ? row.component.slice(0, 16) + '…' : row.component;
 
 export const ComponentActivityPanel = ({ components }: ComponentActivityPanelProps) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useAutoScroll<HTMLDivElement>({ speed: 0.4, pauseMs: 3000 });
+
+  useEffect(() => {
+    const el = wrapperRef.current?.querySelector<HTMLDivElement>('.p-datatable-wrapper');
+    if (el) {
+      (scrollRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+    }
+  });
+
   const header = (
     <div className={styles.panelHeader}>
       <span>Component Activity</span>
@@ -33,19 +45,21 @@ export const ComponentActivityPanel = ({ components }: ComponentActivityPanelPro
 
   return (
     <Card header={header} className={styles.panelCard}>
-      <DataTable
-        value={components}
-        size="small"
-        scrollable
-        scrollHeight="flex"
-        stripedRows
-        className={styles.compTable}
-      >
-        <Column header="Component" body={nameBody} style={{ minWidth: '100px' }} />
-        <Column header="Open" body={openBody} style={{ width: '55px' }} />
-        <Column header="Today" body={todayBody} style={{ width: '55px' }} />
-        <Column header="Week" body={weekBody} style={{ width: '55px' }} />
-      </DataTable>
+      <div ref={wrapperRef} className={styles.compTableWrap}>
+        <DataTable
+          value={components}
+          size="small"
+          scrollable
+          scrollHeight="flex"
+          stripedRows
+          className={styles.compTable}
+        >
+          <Column header="Component" body={nameBody} style={{ minWidth: '100px' }} />
+          <Column header="Open" body={openBody} style={{ width: '55px' }} />
+          <Column header="Today" body={todayBody} style={{ width: '55px' }} />
+          <Column header="Week" body={weekBody} style={{ width: '55px' }} />
+        </DataTable>
+      </div>
     </Card>
   );
 };
