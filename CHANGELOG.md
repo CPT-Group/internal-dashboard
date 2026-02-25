@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **NOVA team constant** (`NOVA_TEAM.ts`): Renamed from `TREVOR_TEAM` to reflect the team name — *Nerds Of Vast Automation*. Exports `NOVA_TEAM_ACCOUNT_IDS_ARRAY`, `NOVA_TEAM_ACCOUNT_IDS` (Set), `NOVA_TEAM_DISPLAY_NAMES`, `NOVA_TEAM_ORDERED`, `NovaTeamMember` type, and `isNovaTeamMember` helper. All references across stores, JQL constants, and dashboards updated.
+- **Auto page refresh** (`usePageAutoRefresh` hook): Full `window.location.reload()` every 3 hours on all TV dashboards. Ensures clean state, clears memory leaks, and picks up deployed code changes. Combined with existing soft re-fetch (stores poll every 60s, cache TTL 30 min).
 - **Dev Corner One – single-view health dashboard**: New `DevCornerOneDashboard` replaces the carousel for Dev Corner One (`/tv/dev-corner-one`). Single-screen layout with KPI strip, throughput panel (flow chart + ratio + trend badge), risk panel (aging buckets + risk score + hotspots list), workload panel (per-assignee horizontal bars with % of total), and action queue table (oldest 10 with severity coloring). Dev Corner Two keeps the carousel (`OperationalJiraDashboard`).
 - **TrendBadge UI component**: Inline trend indicator with directional arrow and semantic color (green/red). Props: `value`, `invertColor`, `label`. Reusable for any KPI delta display.
 - **KpiStrip UI component**: Data-driven row of KPI cards. Props: `items: KpiItem[]` (label, value, optional severity and badge). Replaces duplicated KPI card patterns across dashboards.
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AGENTS.md rewrite**: Comprehensive update with NOVA team info, Jira workflow (CM/OPRD/NOVA status meanings), Dev Corner 1/2 physical layout and dashboard philosophy (developer-focused vs company-facing), non-redundancy rule, auto-refresh strategy, JQL scoping rules.
 - **Dev Corner One routing**: `dev-corner-one` now routes to `DevCornerOneDashboard` (single-view health dashboard); `dev-corner-two` continues to use `OperationalJiraDashboard` (carousel). Both share the same `operationalJiraStore`.
 - **Routes renamed to match dashboard names**: Julie's Office route changed from `/tv/break-room` to `/tv/julie`; Jackie's Office from `/tv/lobby` to `/tv/jackie`. Router `roomName` values updated to match (`julie`, `jackie`). Route slugs now consistently reflect the dashboard/person name.
 - **Backgrounds consolidated**: Moved all background image folders under `public/backgrounds/`: conference room from `public/background/background-conf-room/` to `public/backgrounds/conference-room/`, Julie's unicorns from `public/JuliesUnicorns/backgrounds/` to `public/backgrounds/julies-unicorns/`. Removed old `public/background/` folder entirely. Updated all generation scripts, constants, and docs.

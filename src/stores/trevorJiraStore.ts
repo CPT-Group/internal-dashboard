@@ -8,13 +8,13 @@ import {
   JIRA_SEARCH_MAX_RESULTS,
   JIRA_TREVOR_JQL,
   JIRA_TREVOR_JQL_OPEN,
-  TREVOR_TEAM_ACCOUNT_IDS,
+  NOVA_TEAM_ACCOUNT_IDS,
 } from '@/constants';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
-function isTrevorTeamIssue(issue: JiraIssue): boolean {
+function isNovaTeamIssue(issue: JiraIssue): boolean {
   const id = issue.fields?.assignee?.accountId;
-  return id != null && TREVOR_TEAM_ACCOUNT_IDS.has(id);
+  return id != null && NOVA_TEAM_ACCOUNT_IDS.has(id);
 }
 
 interface TrevorJiraState {
@@ -69,10 +69,10 @@ export const useTrevorJiraStore = create<TrevorJiraState>((set, get) => ({
     const { issues } = get();
     return buildAnalyticsFromIssueList({
       issues,
-      filterByAccountIds: TREVOR_TEAM_ACCOUNT_IDS,
+      filterByAccountIds: NOVA_TEAM_ACCOUNT_IDS,
       openCountOverride: null,
     });
   },
 
-  getAllIssues: () => get().issues.filter(isTrevorTeamIssue),
+  getAllIssues: () => get().issues.filter(isNovaTeamIssue),
 }));

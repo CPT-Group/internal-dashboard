@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import type { DashboardProps } from '@/types';
+import { usePageAutoRefresh } from '@/hooks';
 import { ConferenceRoomDashboard } from '@/components/pages/ConferenceRoomDashboard';
 import { JackiesOfficeDashboard } from '@/components/pages/JackiesOfficeDashboard';
 import { JuliesOfficeDashboard } from '@/components/pages/JuliesOfficeDashboard';
@@ -21,7 +22,11 @@ const DevCornerOneDashboard = dynamic(
   { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
 );
 
+const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+
 export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
+  usePageAutoRefresh(THREE_HOURS_MS);
+
   if (roomName === 'dev-corner-one') {
     return <DevCornerOneDashboard />;
   }

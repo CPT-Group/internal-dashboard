@@ -19,7 +19,7 @@ import {
   toOpenAndAvgDaysByAssigneeChartData,
   toByBoardByComponentChartData,
 } from '@/utils/chartDataMappers';
-import { TREVOR_TEAM_ORDERED } from '@/constants';
+import { NOVA_TEAM_ORDERED } from '@/constants';
 import './TrevorDashboard.module.scss';
 
 const GanttChartDynamic = dynamic(
@@ -63,11 +63,11 @@ export const TrevorDashboard = () => {
   const allIssues = getAllIssues();
 
   const radarChartData = useMemo(
-    () => toOpenClosedAvgHoursByAssigneeRadarChartData(analytics, TREVOR_TEAM_ORDERED),
+    () => toOpenClosedAvgHoursByAssigneeRadarChartData(analytics, NOVA_TEAM_ORDERED),
     [analytics]
   );
   const barLineChartData = useMemo(
-    () => toOpenAndAvgDaysByAssigneeChartData(analytics, TREVOR_TEAM_ORDERED),
+    () => toOpenAndAvgDaysByAssigneeChartData(analytics, NOVA_TEAM_ORDERED),
     [analytics]
   );
   const byBoardChartData = useMemo(

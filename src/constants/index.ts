@@ -4,7 +4,7 @@ export * from './JIRA_SHARED';
 export * from './JIRA_NOVA';
 export * from './CONFERENCE_REEL';
 export * from './CONFERENCE_BACKGROUND';
-export * from './TREVOR_TEAM';
+export * from './NOVA_TEAM';
 export * from './JIRA_TREVOR';
 export * from './JIRA_DEV1';
 export * from './JIRA_JULIE';
