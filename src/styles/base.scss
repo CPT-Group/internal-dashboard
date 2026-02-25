@@ -50,10 +50,34 @@ body {
     url('/themes/cpt-legacy-dark/fonts/lato-v17-latin-ext_latin-700.woff') format('woff');
 }
 
-// Scrollbars (variable-based)
+// Scrollbars (variable-based, themed)
 :root {
   --scrollbar-size: 8px;
   --scrollbar-border-radius: 4px;
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-bg);
+  border-radius: var(--scrollbar-border-radius);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
+  border-radius: var(--scrollbar-border-radius);
+
+  &:hover {
+    background: var(--scrollbar-thumb-hover-bg);
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
 }
 
 // Progress spinner sizes (theme-driven; no inline styles)
