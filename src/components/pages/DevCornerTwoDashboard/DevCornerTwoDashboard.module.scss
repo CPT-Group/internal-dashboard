@@ -123,17 +123,39 @@
   color: var(--text-color-secondary);
 }
 
+/* Shared card + scroll wrapper for tables (Recently Completed, Dev Load Matrix) */
+.tableCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  :global(.p-card-body) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    min-height: 0;
+  }
+
+  :global(.p-card-content) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    min-height: 0;
+  }
+}
+
+.tableScrollWrap {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 /* Recently completed table */
 .completedTable {
   font-size: 0.8rem;
-  flex: 1;
-}
-
-/* Load matrix */
-.matrixWrap {
-  overflow: auto;
-  flex: 1;
-  min-height: 0;
 }
 
 .matrixTable {

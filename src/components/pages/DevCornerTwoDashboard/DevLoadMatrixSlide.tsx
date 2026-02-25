@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Card } from 'primereact/card';
 import type { DevLoadMatrixCell } from '@/types';
+import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface DevLoadMatrixSlideProps {
@@ -12,6 +13,8 @@ export interface DevLoadMatrixSlideProps {
 }
 
 export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMatrixSlideProps) => {
+  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 10, pauseMs: 4000 });
+
   const maxLoad = useMemo(
     () => Math.max(1, ...matrix.map((c) => c.count)),
     [matrix]
@@ -31,8 +34,8 @@ export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMat
       <div className={styles.slideTitle}>
         <span>Developer Load Matrix</span>
       </div>
-      <Card className="flex-1 flex flex-column min-h-0">
-        <div className={styles.matrixWrap}>
+      <Card className={styles.tableCard}>
+        <div ref={scrollRef} className={styles.tableScrollWrap}>
           <table className={styles.matrixTable}>
             <thead>
               <tr>

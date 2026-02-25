@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Auto-scroll on Component Activity**: Fixed `useAutoScroll` not activating — removed reliance on PrimeReact internal `.p-datatable-wrapper` class. Now uses our own `overflow-y: auto` wrapper div with the scroll ref attached directly. Additionally rewrote the hook to use `setInterval` with fractional position accumulation; the previous `requestAnimationFrame` approach with sub-pixel `scrollTop += 0.4` was silently rounded to 0 by the browser, preventing any visible scrolling. Slowed to 12 px/sec for comfortable TV reading.
 - **Auto-scroll on NOVA Team ticket lists**: Each team member card now independently auto-scrolls its ticket chip list when it overflows (10 px/sec, 4s pause). Extracted `MemberCard` sub-component to give each card its own scroll ref.
+- **Auto-scroll on Dev Corner Two slides**: Applied `useAutoScroll` to all scrollable carousel slides — Recently Completed table (12 px/sec), In Progress card grid (12 px/sec), and Developer Load Matrix (10 px/sec). Removed PrimeReact `scrollable`/`scrollHeight="flex"` from Recently Completed DataTable (same sub-pixel bug as Dev 1). Added shared `.tableCard`/`.tableScrollWrap` SCSS for consistent flex + overflow layout.
 
 ### Changed
 

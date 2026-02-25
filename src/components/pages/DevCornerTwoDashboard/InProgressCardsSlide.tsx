@@ -3,6 +3,7 @@
 import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import type { InProgressTicket } from '@/types';
+import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface InProgressCardsSlideProps {
@@ -16,27 +17,31 @@ const statusSeverity = (status: string): 'info' | 'warning' | 'success' => {
   return 'info';
 };
 
-export const InProgressCardsSlide = ({ tickets }: InProgressCardsSlideProps) => (
-  <div className={styles.slideContent}>
-    <div className={styles.slideTitle}>
-      <span>In Progress ({tickets.length})</span>
+export const InProgressCardsSlide = ({ tickets }: InProgressCardsSlideProps) => {
+  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
+
+  return (
+    <div className={styles.slideContent}>
+      <div className={styles.slideTitle}>
+        <span>In Progress ({tickets.length})</span>
+      </div>
+      <div ref={scrollRef} className={styles.cardGrid}>
+        {tickets.map((t) => (
+          <Card key={t.key} className={styles.ticketCard}>
+            <div className={styles.ticketKey}>{t.key}</div>
+            <div className={styles.ticketSummary}>{t.summary}</div>
+            <div className={styles.ticketMeta}>
+              <Tag value={t.status} severity={statusSeverity(t.status)} />
+              <span className={styles.ticketMetaItem}>{t.assignee}</span>
+              {t.component && <span className={styles.ticketMetaItem}>{t.component}</span>}
+              <span className={styles.ticketMetaItem}>{t.ageDays}d</span>
+            </div>
+          </Card>
+        ))}
+        {tickets.length === 0 && (
+          <span className={styles.ticketMetaItem}>No tickets in progress</span>
+        )}
+      </div>
     </div>
-    <div className={styles.cardGrid}>
-      {tickets.map((t) => (
-        <Card key={t.key} className={styles.ticketCard}>
-          <div className={styles.ticketKey}>{t.key}</div>
-          <div className={styles.ticketSummary}>{t.summary}</div>
-          <div className={styles.ticketMeta}>
-            <Tag value={t.status} severity={statusSeverity(t.status)} />
-            <span className={styles.ticketMetaItem}>{t.assignee}</span>
-            {t.component && <span className={styles.ticketMetaItem}>{t.component}</span>}
-            <span className={styles.ticketMetaItem}>{t.ageDays}d</span>
-          </div>
-        </Card>
-      ))}
-      {tickets.length === 0 && (
-        <span className={styles.ticketMetaItem}>No tickets in progress</span>
-      )}
-    </div>
-  </div>
-);
+  );
+};
