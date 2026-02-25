@@ -86,6 +86,30 @@ function isRequestedNotStarted(issue: JiraIssue): boolean {
 }
 
 /**
+ * Statuses where the ticket is on the dev team's plate (requested, in progress,
+ * testing by devs). Excludes statuses where the ticket has been handed back to
+ * requesters (UAT, Waiting, Data Team Complete, etc.).
+ */
+const DEV_RESPONSIBLE_STATUSES: Record<string, Set<string>> = {
+  OPRD: new Set(['To Do', 'TO DO', 'Requirement Review', 'Development', 'Peer Testing']),
+  CM:   new Set([
+    'Data Team New', 'DATA TEAM NEW',
+    'Requested', 'REQUESTED',
+    'Data Team In Progress', 'DATA TEAM IN PROGRESS',
+    'Data Team Testing', 'DATA TEAM TESTING',
+  ]),
+  NOVA: new Set(['To Do', 'In Progress', 'Dev Review', 'QA']),
+};
+
+function isDevResponsible(issue: JiraIssue): boolean {
+  const project = getProjectKey(issue);
+  const statusName = issue.fields?.status?.name ?? '';
+  const allowed = DEV_RESPONSIBLE_STATUSES[project];
+  if (!allowed) return statusName !== 'Done';
+  return allowed.has(statusName);
+}
+
+/**
  * Days since the ticket landed on the dev team board.
  *
  * CM/OPRD: uses the transition date FROM "New" (when it was handed to devs).
@@ -470,13 +494,14 @@ function buildComponentActivity(
 
 function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
   return NOVA_TEAM_ORDERED.map(({ accountId, displayName }) => {
-    const myOpen = open.filter((i) => i.fields?.assignee?.accountId === accountId);
-    const myInProgress = myOpen.filter(isInProgress);
+    const myAll = open.filter((i) => i.fields?.assignee?.accountId === accountId);
+    const myDevOpen = myAll.filter(isDevResponsible);
+    const myInProgress = myAll.filter(isInProgress);
     return {
       accountId,
       displayName,
       inProgressCount: myInProgress.length,
-      openCount: myOpen.length,
+      openCount: myDevOpen.length,
       inProgressKeys: myInProgress.map((i) => i.key),
       inProgressSummaries: myInProgress.map((i) => (i.fields?.summary ?? '').slice(0, 50)),
     };
