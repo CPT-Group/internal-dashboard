@@ -96,17 +96,15 @@
   position: relative;
 }
 
-/* Component Activity table */
+/* Component Activity table — our own scrollable wrapper (not PrimeReact's) */
 .compTableWrap {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
   min-height: 0;
 }
 
 .compTable {
   font-size: 0.8rem;
-  flex: 1;
 }
 
 .muted {

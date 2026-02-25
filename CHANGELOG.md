@@ -29,8 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Jira API v3 pagination**: `jiraService.ts` now handles v3 cursor-based pagination (`nextPageToken`/`isLast`) instead of expecting the deprecated `total`/`startAt`/`maxResults` response fields. Auto-paginates up to 1000 results (10 pages × 100). `JiraSearchResponse` type updated to match.
 - **Operational JQL: multi-project (CM + OPRD + NOVA)**: `JIRA_OPERATIONAL.ts` rewritten from NOVA-only to match the Case Management Data Team Board filter. Open query scopes CM and OPRD by dev-relevant components (Interactive Website, Case Database, etc.) and **excludes "New" status** (case manager prep; dev work starts at To Do / Data Team New / Requested). NOVA excludes Epics/Sub-tasks. Time-based queries also scoped by components and exclude "New". Max results bumped from 100 to 1000.
 
+- **Auto-scroll on Component Activity**: Fixed `useAutoScroll` not activating — removed reliance on PrimeReact internal `.p-datatable-wrapper` class. Now uses our own `overflow-y: auto` wrapper div with the scroll ref attached directly.
+
 ### Changed
 
+- **Global font-size: 75% -> 100%**: Base `html` font-size bumped from 75% to 100% (1rem = 16px, browser default). All rem-based sizing scales up ~33% — text, PrimeReact components, spacing, charts. Eliminates the need for extreme browser zoom on TVs.
 - **AGENTS.md rewrite**: Comprehensive update with NOVA team info, Jira workflow (CM/OPRD/NOVA status meanings), Dev Corner 1/2 physical layout and dashboard philosophy (developer-focused vs company-facing), non-redundancy rule, auto-refresh strategy, JQL scoping rules.
 - **Dev Corner routing**: `dev-corner-one` routes to `DevCornerOneDashboard` (single-view developer dashboard); `dev-corner-two` routes to `DevCornerTwoDashboard` (company-facing carousel). Both share `operationalJiraStore`. Old `NovaDashboard` (jiraNovaStore-based) removed from Dev 2.
 - **Routes renamed to match dashboard names**: Julie's Office route changed from `/tv/break-room` to `/tv/julie`; Jackie's Office from `/tv/lobby` to `/tv/jackie`. Router `roomName` values updated to match (`julie`, `jackie`). Route slugs now consistently reflect the dashboard/person name.
