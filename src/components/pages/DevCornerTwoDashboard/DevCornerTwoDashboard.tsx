@@ -13,7 +13,7 @@ import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
-const SLIDE_DURATION_MS = 20_000;
+const SLIDE_DURATION_MS = 120_000;
 const NUM_SLIDES = 4;
 
 export const DevCornerTwoDashboard = () => {
