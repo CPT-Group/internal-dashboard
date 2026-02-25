@@ -21,18 +21,18 @@
   flex-shrink: 0;
 }
 
-/* Middle row: throughput + component activity — 35% of remaining space */
+/* Middle row: throughput + component activity — 40% of remaining space */
 .middleRow {
   display: flex;
   gap: 0.75rem;
-  flex: 35;
+  flex: 40;
   min-height: 0;
 }
 
-/* Bottom row: NOVA team — 65% of remaining space */
+/* Bottom row: NOVA team — 60% of remaining space */
 .bottomRow {
   display: flex;
-  flex: 65;
+  flex: 60;
   min-height: 0;
 }
 
