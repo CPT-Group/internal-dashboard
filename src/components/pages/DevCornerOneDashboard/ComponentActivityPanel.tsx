@@ -26,7 +26,7 @@ const nameBody = (row: ComponentActivity) =>
   row.component.length > 18 ? row.component.slice(0, 16) + '…' : row.component;
 
 export const ComponentActivityPanel = ({ components }: ComponentActivityPanelProps) => {
-  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 20, pauseMs: 3000 });
+  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 
   const header = (
     <div className={styles.panelHeader}>
