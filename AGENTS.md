@@ -70,14 +70,25 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 
 ## TV routes and dashboards
 
-- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `OperationalJiraDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`. Route slugs match the dashboard/person name.
+- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `DevCornerTwoDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`. Route slugs match the dashboard/person name.
 
 ### Dev Corner physical layout and dashboard philosophy
 
 Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near the entrance and break room. Other departments walk by daily.
 
-- **Dev Corner One (LEFT TV)** — **Developer-focused**. Closest to the dev desks. Shows actionable metrics the NOVA team cares about: throughput trends, component analytics (opened today/this week per component), avg close time, team workload. Scoped to NOVA team members only. Single-view, no carousel.
-- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees walking by. Shows what's actively being worked on: in-progress ticket cards, recently completed items, general progress. More visual and accessible to anyone. Carousel format (may switch to single-view later).
+- **Dev Corner One (LEFT TV)** — **Developer-focused**. Closest to the dev desks. Single-view layout:
+  - KPI strip: Open, Landed Today, Closed Today, Net, Avg Close Time, Throughput Ratio.
+  - Middle left: Throughput flow chart (14d opened vs closed) + trend badge.
+  - Middle right: Component Activity table (per-component: open, today, this week).
+  - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).
+  - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
+- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 4-slide carousel (20s per slide):
+  - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age).
+  - Slide 2: Recently Completed table (last 7 days, with resolved date).
+  - Slide 3: Backlog by Component + Aging Buckets (side-by-side horizontal bar charts).
+  - Slide 4: Developer Load Matrix (assignee × component heatmap table).
+  - KPI strip: In Progress, Completed (7d), Open, Avg Age, Oldest.
+  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `BacklogAgingSlide`, `DevLoadMatrixSlide`.
 
 **Non-redundancy rule**: Dev 1 and Dev 2 must NOT show duplicate data. Each dashboard has unique analytics and views. If a metric appears on Dev 1, it should not also appear on Dev 2.
 
@@ -95,7 +106,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 ```
 
 **Stores** (`src/stores/`):
-- `operationalJiraStore` — Dev Corner One/Two. Fetches 7 parallel JQL queries (open, landed today, closed today, landed last 14d, resolved last 14d, landed prev 14d, resolved prev 14d) + batch changelog fetch for CM/OPRD transition dates. "Landed" = transition-based (when work became visible to dev team). Builds `OperationalAnalytics` with derived indicators: `throughputRatio`, `riskScore`, `agingHotspots`, `trendVsPrevious14d`. Polls every 60s if stale; cache TTL 30 min.
+- `operationalJiraStore` — **Shared by Dev Corner One and Two** (both read from same `OperationalAnalytics`). Fetches 7 parallel JQL queries + batch changelog for transition dates. Builds `OperationalAnalytics` with KPIs, flow data, backlog, devLoadMatrix, agingBuckets, oldest10, throughputRatio, riskScore, agingHotspots, trendVsPrevious14d, **plus** `componentActivity` (per-component open/today/week), `teamActivity` (NOVA member in-progress), `inProgressTickets` (cards), `recentlyCompleted` (7d table). Dev 1 reads throughput/component/team data; Dev 2 reads in-progress/completed/backlog/matrix data.
 - `trevorJiraStore` — Trevor's Screen. Fetches team-scoped tickets (NOVA team across OPRD/CM/NOVA, last 6 months). Builds `NovaAnalytics`.
 - `jiraNovaStore` — NOVA project analytics (open/today/overdue/done).
 - `dev1JiraStore` — Dev Corner One extended analytics (NOVA, last 6 months).
