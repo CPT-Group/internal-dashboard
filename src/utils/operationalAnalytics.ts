@@ -85,12 +85,29 @@ function isRequestedNotStarted(issue: JiraIssue): boolean {
   return allowed.has(statusName);
 }
 
-/** Days since created (for open issues). */
-function getAgeDays(issue: JiraIssue): number {
-  const created = issue.fields?.created;
-  if (!created) return 0;
-  const ms = Date.now() - new Date(created).getTime();
-  return Math.floor(ms / (24 * 60 * 60 * 1000));
+/**
+ * Days since the ticket landed on the dev team board.
+ *
+ * CM/OPRD: uses the transition date FROM "New" (when it was handed to devs).
+ * NOVA:    uses the created date (tickets go straight to the team).
+ *
+ * Falls back to created date if no transition date is found.
+ */
+function getDevAgeDays(issue: JiraIssue, transitionDates: Map<string, string>): number {
+  const project = getProjectKey(issue);
+  let anchor: string | undefined;
+
+  if (project === 'CM' || project === 'OPRD') {
+    anchor = transitionDates.get(issue.key);
+  }
+
+  if (!anchor) {
+    anchor = issue.fields?.created;
+  }
+
+  if (!anchor) return 0;
+  const ms = Date.now() - new Date(anchor).getTime();
+  return Math.max(0, Math.floor(ms / (24 * 60 * 60 * 1000)));
 }
 
 function dateStr(d: Date): string {
@@ -127,11 +144,11 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const closedToday = closedTodayIssues.length;
   const netChangeToday = landedToday - closedToday;
 
-  const ages = open.map(getAgeDays).filter((a) => a >= 0);
+  const ages = open.map((i) => getDevAgeDays(i, transitionDates)).filter((a) => a >= 0);
   const avgAgeDays = ages.length ? Math.round((ages.reduce((s, a) => s + a, 0) / ages.length) * 10) / 10 : 0;
   const oldestAgeDays = ages.length ? Math.max(...ages) : 0;
 
-  const avgCloseTimeHours = buildAvgCloseTime(resolvedLast14);
+  const avgCloseTimeHours = buildAvgCloseTime(resolvedLast14, transitionDates);
 
   const kpis: OperationalKpis = {
     openCount: open.length,
@@ -178,7 +195,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const byComponent: Record<string, { count: number; hasAging: boolean }> = {};
   open.forEach((issue) => {
     const comps = getComponentNames(issue);
-    const age = getAgeDays(issue);
+    const age = getDevAgeDays(issue, transitionDates);
     comps.forEach((name) => {
       if (!byComponent[name]) byComponent[name] = { count: 0, hasAging: false };
       byComponent[name].count++;
@@ -272,14 +289,14 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   }));
 
   const oldest10: OldestTicketRow[] = [...open]
-    .sort((a, b) => getAgeDays(b) - getAgeDays(a))
+    .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .slice(0, 10)
     .map((issue) => ({
       key: issue.key,
       summary: issue.fields?.summary ?? '',
       assignee: getAssigneeName(issue),
       component: getComponentNames(issue).join(', '),
-      ageDays: getAgeDays(issue),
+      ageDays: getDevAgeDays(issue, transitionDates),
       status: issue.fields?.status?.name ?? '',
     }));
 
@@ -297,7 +314,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     Math.round((riskRawScore / DEV1_RISK_MAX_RAW) * 100)
   );
 
-  const agingHotspots = buildAgingHotspots(open);
+  const agingHotspots = buildAgingHotspots(open, transitionDates);
 
   const trendVsPrevious14d = buildTrendComparison(
     landedLast14,
@@ -308,9 +325,9 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
 
   const componentActivity = buildComponentActivity(open, openedTodayIssues, landedLast14, transitionDates);
   const teamActivity = buildTeamActivity(open);
-  const inProgressTickets = buildInProgressTickets(open);
+  const inProgressTickets = buildInProgressTickets(open, transitionDates);
   const recentlyCompleted = buildRecentlyCompleted(resolvedLast14);
-  const requestedTickets = buildRequestedTickets(open);
+  const requestedTickets = buildRequestedTickets(open, transitionDates);
 
   return {
     kpis,
@@ -335,11 +352,11 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   };
 }
 
-function buildAgingHotspots(open: JiraIssue[]): AgingHotspot[] {
+function buildAgingHotspots(open: JiraIssue[], transitionDates: Map<string, string>): AgingHotspot[] {
   const grouped = new Map<string, { totalAge: number; count: number; component: string; assignee: string }>();
   for (const issue of open) {
     const assignee = getAssigneeName(issue);
-    const age = getAgeDays(issue);
+    const age = getDevAgeDays(issue, transitionDates);
     for (const comp of getComponentNames(issue)) {
       const key = `${comp}|${assignee}`;
       const entry = grouped.get(key);
@@ -379,13 +396,17 @@ function buildTrendComparison(
   };
 }
 
-function buildAvgCloseTime(resolvedLast14: JiraIssue[]): number | null {
+function buildAvgCloseTime(resolvedLast14: JiraIssue[], transitionDates: Map<string, string>): number | null {
   const closeTimes: number[] = [];
   for (const issue of resolvedLast14) {
-    const created = issue.fields?.created;
+    const project = getProjectKey(issue);
+    let startDate = issue.fields?.created;
+    if (project === 'CM' || project === 'OPRD') {
+      startDate = transitionDates.get(issue.key) ?? startDate;
+    }
     const resolved = issue.fields?.resolutiondate;
-    if (!created || !resolved) continue;
-    const hours = (new Date(resolved).getTime() - new Date(created).getTime()) / (60 * 60 * 1000);
+    if (!startDate || !resolved) continue;
+    const hours = (new Date(resolved).getTime() - new Date(startDate).getTime()) / (60 * 60 * 1000);
     if (hours >= 0) closeTimes.push(hours);
   }
   if (closeTimes.length === 0) return null;
@@ -408,7 +429,7 @@ function buildComponentActivity(
   };
 
   for (const issue of open) {
-    const age = getAgeDays(issue);
+    const age = getDevAgeDays(issue, transitionDates);
     for (const comp of getComponentNames(issue)) {
       const entry = ensureComp(comp);
       entry.openCount++;
@@ -462,10 +483,10 @@ function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
   });
 }
 
-function buildInProgressTickets(open: JiraIssue[]): InProgressTicket[] {
+function buildInProgressTickets(open: JiraIssue[], transitionDates: Map<string, string>): InProgressTicket[] {
   return open
     .filter(isInProgress)
-    .sort((a, b) => getAgeDays(b) - getAgeDays(a))
+    .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .slice(0, 20)
     .map((issue) => ({
       key: issue.key,
@@ -473,7 +494,7 @@ function buildInProgressTickets(open: JiraIssue[]): InProgressTicket[] {
       assignee: getAssigneeName(issue),
       component: getComponentNames(issue).join(', '),
       status: issue.fields?.status?.name ?? '',
-      ageDays: getAgeDays(issue),
+      ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
     }));
 }
@@ -504,17 +525,17 @@ function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedT
     }));
 }
 
-function buildRequestedTickets(open: JiraIssue[]): RequestedTicket[] {
+function buildRequestedTickets(open: JiraIssue[], transitionDates: Map<string, string>): RequestedTicket[] {
   return open
     .filter(isRequestedNotStarted)
-    .sort((a, b) => getAgeDays(b) - getAgeDays(a))
+    .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .map((issue) => ({
       key: issue.key,
       summary: issue.fields?.summary ?? '',
       assignee: getAssigneeName(issue),
       component: getComponentNames(issue).join(', '),
       status: issue.fields?.status?.name ?? '',
-      ageDays: getAgeDays(issue),
+      ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
     }));
 }

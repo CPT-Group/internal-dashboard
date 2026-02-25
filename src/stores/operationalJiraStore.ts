@@ -87,13 +87,19 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
       const landedPrev14Filtered = filterNova(landedPrev14.issues);
       const resolvedPrev14Filtered = filterNova(resolvedPrev14.issues);
 
-      // For CM/OPRD issues in the 14d window, fetch exact transition dates.
-      // NOVA issues use `created` as their "landed" date (no "New" status).
-      const cmOprdKeys = landedLast14Filtered
-        .filter((i) => i.fields?.project?.key !== 'NOVA')
-        .map((i) => i.key);
-      const transitionDates = cmOprdKeys.length > 0
-        ? await jiraTransitionDates(cmOprdKeys)
+      // Fetch transition dates (FROM "New") for ALL open CM/OPRD tickets.
+      // This is needed for accurate age calculation — age starts when the
+      // ticket landed on the dev board, not when it was created by a CM.
+      // Also fetch for landed-last-14 CM/OPRD for the flow chart.
+      const allCmOprdKeys = new Set<string>();
+      for (const i of openFiltered) {
+        if (i.fields?.project?.key !== 'NOVA') allCmOprdKeys.add(i.key);
+      }
+      for (const i of landedLast14Filtered) {
+        if (i.fields?.project?.key !== 'NOVA') allCmOprdKeys.add(i.key);
+      }
+      const transitionDates = allCmOprdKeys.size > 0
+        ? await jiraTransitionDates(Array.from(allCmOprdKeys))
         : new Map<string, string>();
 
       const analytics = buildOperationalAnalytics({
