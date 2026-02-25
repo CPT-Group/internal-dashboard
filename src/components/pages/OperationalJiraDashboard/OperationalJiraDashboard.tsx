@@ -165,8 +165,8 @@ export const OperationalJiraDashboard = () => {
         </div>
         <div className="col-6 md:col-2 lg:col">
           <Card className="text-center">
-            <div className={KPI_VALUE_CLASS}>{kpis.openedToday}</div>
-            <div className={KPI_LABEL_CLASS}>Opened today</div>
+            <div className={KPI_VALUE_CLASS}>{kpis.landedToday}</div>
+            <div className={KPI_LABEL_CLASS}>Landed today</div>
           </Card>
         </div>
         <div className="col-6 md:col-2 lg:col">

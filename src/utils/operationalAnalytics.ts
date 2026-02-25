@@ -14,11 +14,17 @@ import type {
   OldestTicketRow,
   AgingHotspot,
   TrendComparison,
+  ComponentActivity,
+  TeamMemberActivity,
+  InProgressTicket,
+  RecentlyCompletedTicket,
 } from '@/types';
 import {
   DEV1_RISK_BUCKET_WEIGHTS,
   DEV1_RISK_MAX_RAW,
   DEV1_HOTSPOT_LIMIT,
+  NOVA_TEAM_ACCOUNT_IDS,
+  NOVA_TEAM_ORDERED,
 } from '@/constants';
 
 const AGING_DAYS_THRESHOLD = 7;
@@ -41,6 +47,19 @@ function getComponentNames(issue: JiraIssue): string[] {
 
 function isDone(issue: JiraIssue): boolean {
   return issue.fields?.status?.statusCategory?.key === 'done';
+}
+
+function isInProgress(issue: JiraIssue): boolean {
+  return issue.fields?.status?.statusCategory?.key === 'indeterminate';
+}
+
+function isNovaTeam(issue: JiraIssue): boolean {
+  const id = issue.fields?.assignee?.accountId;
+  return id != null && NOVA_TEAM_ACCOUNT_IDS.has(id);
+}
+
+function getProjectKey(issue: JiraIssue): string {
+  return issue.fields?.project?.key ?? '';
 }
 
 /** Days since created (for open issues). */
@@ -81,22 +100,24 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   } = input;
 
   const open = openIssues.filter((i) => !isDone(i));
-  const openedToday = openedTodayIssues.length;
+  const landedToday = openedTodayIssues.length;
   const closedToday = closedTodayIssues.length;
-  const netChangeToday = openedToday - closedToday;
+  const netChangeToday = landedToday - closedToday;
 
   const ages = open.map(getAgeDays).filter((a) => a >= 0);
   const avgAgeDays = ages.length ? Math.round((ages.reduce((s, a) => s + a, 0) / ages.length) * 10) / 10 : 0;
   const oldestAgeDays = ages.length ? Math.max(...ages) : 0;
 
+  const avgCloseTimeHours = buildAvgCloseTime(resolvedLast14);
+
   const kpis: OperationalKpis = {
     openCount: open.length,
-    openedToday,
+    landedToday,
     closedToday,
     netChangeToday,
     avgAgeDays,
     oldestAgeDays,
-    sprintCompletionPercent: null,
+    avgCloseTimeHours,
   };
 
   const dayCountsLanded: Record<string, number> = {};
@@ -261,6 +282,11 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     resolvedPrev14
   );
 
+  const componentActivity = buildComponentActivity(open, openedTodayIssues, landedLast14, transitionDates);
+  const teamActivity = buildTeamActivity(open);
+  const inProgressTickets = buildInProgressTickets(open);
+  const recentlyCompleted = buildRecentlyCompleted(resolvedLast14);
+
   return {
     kpis,
     flowData,
@@ -276,6 +302,10 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     riskScore,
     agingHotspots,
     trendVsPrevious14d,
+    componentActivity,
+    teamActivity,
+    inProgressTickets,
+    recentlyCompleted,
   };
 }
 
@@ -321,4 +351,129 @@ function buildTrendComparison(
     prevOpened,
     prevClosed,
   };
+}
+
+function buildAvgCloseTime(resolvedLast14: JiraIssue[]): number | null {
+  const closeTimes: number[] = [];
+  for (const issue of resolvedLast14) {
+    const created = issue.fields?.created;
+    const resolved = issue.fields?.resolutiondate;
+    if (!created || !resolved) continue;
+    const hours = (new Date(resolved).getTime() - new Date(created).getTime()) / (60 * 60 * 1000);
+    if (hours >= 0) closeTimes.push(hours);
+  }
+  if (closeTimes.length === 0) return null;
+  return Math.round((closeTimes.reduce((s, h) => s + h, 0) / closeTimes.length) * 10) / 10;
+}
+
+function buildComponentActivity(
+  open: JiraIssue[],
+  landedToday: JiraIssue[],
+  landedLast14: JiraIssue[],
+  transitionDates: Map<string, string>
+): ComponentActivity[] {
+  const map = new Map<string, ComponentActivity>();
+
+  const ensureComp = (name: string) => {
+    if (!map.has(name)) {
+      map.set(name, { component: name, openCount: 0, landedToday: 0, landedThisWeek: 0, hasAging: false });
+    }
+    return map.get(name)!;
+  };
+
+  for (const issue of open) {
+    const age = getAgeDays(issue);
+    for (const comp of getComponentNames(issue)) {
+      const entry = ensureComp(comp);
+      entry.openCount++;
+      if (age > AGING_DAYS_THRESHOLD) entry.hasAging = true;
+    }
+  }
+
+  for (const issue of landedToday) {
+    for (const comp of getComponentNames(issue)) {
+      ensureComp(comp).landedToday++;
+    }
+  }
+
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const weekStart = dateStr(startOfWeek);
+
+  for (const issue of landedLast14) {
+    const project = issue.fields?.project?.key;
+    let landedDate: string | undefined;
+    if (project === 'NOVA') {
+      landedDate = issue.fields?.created?.slice(0, 10);
+    } else {
+      const td = transitionDates.get(issue.key);
+      landedDate = td ? td.slice(0, 10) : issue.fields?.created?.slice(0, 10);
+    }
+    if (landedDate && landedDate >= weekStart) {
+      for (const comp of getComponentNames(issue)) {
+        ensureComp(comp).landedThisWeek++;
+      }
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.openCount - a.openCount);
+}
+
+function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
+  return NOVA_TEAM_ORDERED.map(({ accountId, displayName }) => {
+    const myOpen = open.filter((i) => i.fields?.assignee?.accountId === accountId);
+    const myInProgress = myOpen.filter(isInProgress);
+    return {
+      accountId,
+      displayName,
+      inProgressCount: myInProgress.length,
+      openCount: myOpen.length,
+      inProgressKeys: myInProgress.map((i) => i.key),
+      inProgressSummaries: myInProgress.map((i) => (i.fields?.summary ?? '').slice(0, 50)),
+    };
+  });
+}
+
+function buildInProgressTickets(open: JiraIssue[]): InProgressTicket[] {
+  return open
+    .filter(isInProgress)
+    .sort((a, b) => getAgeDays(b) - getAgeDays(a))
+    .slice(0, 20)
+    .map((issue) => ({
+      key: issue.key,
+      summary: issue.fields?.summary ?? '',
+      assignee: getAssigneeName(issue),
+      component: getComponentNames(issue).join(', '),
+      status: issue.fields?.status?.name ?? '',
+      ageDays: getAgeDays(issue),
+      project: getProjectKey(issue),
+    }));
+}
+
+function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedTicket[] {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const cutoff = dateStr(sevenDaysAgo);
+
+  return resolvedLast14
+    .filter((i) => {
+      const rd = i.fields?.resolutiondate?.slice(0, 10);
+      return rd && rd >= cutoff;
+    })
+    .sort((a, b) => {
+      const aDate = a.fields?.resolutiondate ?? '';
+      const bDate = b.fields?.resolutiondate ?? '';
+      return bDate.localeCompare(aDate);
+    })
+    .slice(0, 20)
+    .map((issue) => ({
+      key: issue.key,
+      summary: issue.fields?.summary ?? '',
+      assignee: getAssigneeName(issue),
+      component: getComponentNames(issue).join(', '),
+      resolvedDate: issue.fields?.resolutiondate?.slice(0, 10) ?? '',
+      project: getProjectKey(issue),
+    }));
 }

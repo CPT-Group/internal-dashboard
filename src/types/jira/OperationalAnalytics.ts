@@ -4,12 +4,14 @@
 
 export interface OperationalKpis {
   openCount: number;
-  openedToday: number;
+  /** Tickets that landed on team today (transitioned from New or created for NOVA). */
+  landedToday: number;
   closedToday: number;
   netChangeToday: number;
   avgAgeDays: number;
   oldestAgeDays: number;
-  sprintCompletionPercent: number | null;
+  /** Average hours from created to resolved (last 14d resolved tickets). */
+  avgCloseTimeHours: number | null;
 }
 
 export interface FlowDay {
@@ -57,6 +59,48 @@ export interface OldestTicketRow {
   status: string;
 }
 
+/** Per-component breakdown with time-based activity counts. */
+export interface ComponentActivity {
+  component: string;
+  openCount: number;
+  landedToday: number;
+  landedThisWeek: number;
+  hasAging: boolean;
+}
+
+/** Per-NOVA-team-member activity summary. */
+export interface TeamMemberActivity {
+  accountId: string;
+  displayName: string;
+  inProgressCount: number;
+  openCount: number;
+  /** Issue keys currently in progress for this member. */
+  inProgressKeys: string[];
+  /** Summaries of in-progress tickets (for display). */
+  inProgressSummaries: string[];
+}
+
+/** In-progress ticket for company-facing card display. */
+export interface InProgressTicket {
+  key: string;
+  summary: string;
+  assignee: string;
+  component: string;
+  status: string;
+  ageDays: number;
+  project: string;
+}
+
+/** Recently completed ticket for company-facing display. */
+export interface RecentlyCompletedTicket {
+  key: string;
+  summary: string;
+  assignee: string;
+  component: string;
+  resolvedDate: string;
+  project: string;
+}
+
 export interface AgingHotspot {
   component: string;
   assignee: string;
@@ -90,4 +134,12 @@ export interface OperationalAnalytics {
   agingHotspots: AgingHotspot[];
   /** Current 14d vs previous 14d opened/closed comparison (null until prev-14d data is fetched). */
   trendVsPrevious14d: TrendComparison | null;
+  /** Per-component activity (open + today + this week). */
+  componentActivity: ComponentActivity[];
+  /** NOVA team member activity summaries (Dev 1). */
+  teamActivity: TeamMemberActivity[];
+  /** Tickets currently in progress across all projects (Dev 2 cards). */
+  inProgressTickets: InProgressTicket[];
+  /** Tickets resolved in last 7 days (Dev 2 table). */
+  recentlyCompleted: RecentlyCompletedTicket[];
 }
