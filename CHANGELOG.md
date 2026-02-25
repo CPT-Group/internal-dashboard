@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Jira API v3 pagination**: `jiraService.ts` now handles v3 cursor-based pagination (`nextPageToken`/`isLast`) instead of expecting the deprecated `total`/`startAt`/`maxResults` response fields. Auto-paginates up to 1000 results (10 pages × 100). `JiraSearchResponse` type updated to match.
 - **Operational JQL: multi-project (CM + OPRD + NOVA)**: `JIRA_OPERATIONAL.ts` rewritten from NOVA-only to match the Case Management Data Team Board filter. Open query scopes CM and OPRD by dev-relevant components (Interactive Website, Case Database, etc.) and **excludes "New" status** (case manager prep; dev work starts at To Do / Data Team New / Requested). NOVA excludes Epics/Sub-tasks. Time-based queries also scoped by components and exclude "New". Max results bumped from 100 to 1000.
 
-- **Auto-scroll on Component Activity**: Fixed `useAutoScroll` not activating — removed reliance on PrimeReact internal `.p-datatable-wrapper` class. Now uses our own `overflow-y: auto` wrapper div with the scroll ref attached directly.
+- **Auto-scroll on Component Activity**: Fixed `useAutoScroll` not activating — removed reliance on PrimeReact internal `.p-datatable-wrapper` class. Now uses our own `overflow-y: auto` wrapper div with the scroll ref attached directly. Additionally rewrote the hook to use `setInterval` with fractional position accumulation; the previous `requestAnimationFrame` approach with sub-pixel `scrollTop += 0.4` was silently rounded to 0 by the browser, preventing any visible scrolling.
 
 ### Changed
 

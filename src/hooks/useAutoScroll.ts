@@ -1,93 +1,65 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface AutoScrollOptions {
-  /** Pixels per animation frame (~60fps). Lower = slower scroll. Default 0.5. */
-  speed?: number;
+  /** Pixels per second to scroll. Default 20. */
+  pixelsPerSecond?: number;
   /** Pause at top/bottom in ms before reversing. Default 3000. */
   pauseMs?: number;
-  /** How often to re-check if overflow exists (ms). Default 2000. */
-  checkIntervalMs?: number;
 }
 
 /**
  * Auto-scrolls a container up and down when its content overflows.
  * Designed for always-on TV dashboards with no mouse interaction.
  *
- * Returns a ref callback to attach to the scrollable element.
+ * Returns a ref to attach to the scrollable element.
  * If content fits without scrollbar, does nothing.
  */
 export function useAutoScroll<T extends HTMLElement>(options: AutoScrollOptions = {}) {
-  const { speed = 0.5, pauseMs = 3000, checkIntervalMs = 2000 } = options;
-
-  const containerRef = useRef<T | null>(null);
-  const animRef = useRef<number | null>(null);
-  const directionRef = useRef<'down' | 'up'>('down');
-  const pauseUntilRef = useRef<number>(0);
-
-  const tick = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const maxScroll = el.scrollHeight - el.clientHeight;
-    if (maxScroll <= 0) {
-      animRef.current = requestAnimationFrame(tick);
-      return;
-    }
-
-    const now = Date.now();
-    if (now < pauseUntilRef.current) {
-      animRef.current = requestAnimationFrame(tick);
-      return;
-    }
-
-    if (directionRef.current === 'down') {
-      el.scrollTop += speed;
-      if (el.scrollTop >= maxScroll) {
-        el.scrollTop = maxScroll;
-        directionRef.current = 'up';
-        pauseUntilRef.current = now + pauseMs;
-      }
-    } else {
-      el.scrollTop -= speed;
-      if (el.scrollTop <= 0) {
-        el.scrollTop = 0;
-        directionRef.current = 'down';
-        pauseUntilRef.current = now + pauseMs;
-      }
-    }
-
-    animRef.current = requestAnimationFrame(tick);
-  }, [speed, pauseMs]);
+  const { pixelsPerSecond = 20, pauseMs = 3000 } = options;
+  const ref = useRef<T | null>(null);
 
   useEffect(() => {
-    const startIfNeeded = () => {
-      const el = containerRef.current;
+    let direction: 'down' | 'up' = 'down';
+    let pauseUntil = Date.now() + pauseMs;
+    let fractionalPos = 0;
+
+    const TICK_MS = 50;
+    const pxPerTick = pixelsPerSecond * (TICK_MS / 1000);
+
+    const id = setInterval(() => {
+      const el = ref.current;
       if (!el) return;
 
-      const hasOverflow = el.scrollHeight > el.clientHeight;
-      if (hasOverflow && animRef.current === null) {
-        pauseUntilRef.current = Date.now() + pauseMs;
-        directionRef.current = 'down';
-        animRef.current = requestAnimationFrame(tick);
-      } else if (!hasOverflow && animRef.current !== null) {
-        cancelAnimationFrame(animRef.current);
-        animRef.current = null;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 1) return;
+
+      if (Date.now() < pauseUntil) return;
+
+      if (direction === 'down') {
+        fractionalPos += pxPerTick;
+        const newTop = Math.min(Math.round(fractionalPos), maxScroll);
+        el.scrollTop = newTop;
+        if (newTop >= maxScroll) {
+          direction = 'up';
+          fractionalPos = maxScroll;
+          pauseUntil = Date.now() + pauseMs;
+        }
+      } else {
+        fractionalPos -= pxPerTick;
+        const newTop = Math.max(Math.round(fractionalPos), 0);
+        el.scrollTop = newTop;
+        if (newTop <= 0) {
+          direction = 'down';
+          fractionalPos = 0;
+          pauseUntil = Date.now() + pauseMs;
+        }
       }
-    };
+    }, TICK_MS);
 
-    startIfNeeded();
-    const interval = setInterval(startIfNeeded, checkIntervalMs);
+    return () => clearInterval(id);
+  }, [pixelsPerSecond, pauseMs]);
 
-    return () => {
-      clearInterval(interval);
-      if (animRef.current !== null) {
-        cancelAnimationFrame(animRef.current);
-        animRef.current = null;
-      }
-    };
-  }, [tick, pauseMs, checkIntervalMs]);
-
-  return containerRef;
+  return ref;
 }
