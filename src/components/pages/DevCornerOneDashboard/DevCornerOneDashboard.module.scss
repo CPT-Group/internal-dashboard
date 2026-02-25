@@ -21,17 +21,19 @@
   flex-shrink: 0;
 }
 
+/* Middle row: throughput + component activity — 35% of remaining space */
 .middleRow {
   display: flex;
   gap: 0.75rem;
-  flex: 1;
+  flex: 35;
   min-height: 0;
 }
 
+/* Bottom row: NOVA team — 65% of remaining space */
 .bottomRow {
-  flex: 0 0 auto;
-  min-height: 140px;
-  max-height: 200px;
+  display: flex;
+  flex: 65;
+  min-height: 0;
 }
 
 .leftCol,
@@ -73,6 +75,7 @@
   padding: 0.5rem 0.75rem;
   font-weight: 600;
   font-size: 0.9rem;
+  color: var(--text-color);
 }
 
 .panelBadges {
@@ -89,7 +92,7 @@
 
 .chartWrap {
   flex: 1;
-  min-height: 120px;
+  min-height: 100px;
   position: relative;
 }
 
@@ -109,21 +112,27 @@
   font-weight: 600;
 }
 
-/* Team Activity panel */
+/* ── Team Activity panel ── */
 .teamGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .teamCard {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  padding: 0.4rem;
+  padding: 0.5rem;
   border-radius: var(--border-radius);
-  background: var(--surface-ground);
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  color: var(--text-color);
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .teamCardHeader {
@@ -131,38 +140,47 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 .teamName {
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  color: var(--text-color);
 }
 
 .teamCounts {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  color: var(--text-color-secondary);
 }
 
 .teamTickets {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .ticketChip {
-  font-size: 0.7rem !important;
+  font-size: 0.72rem !important;
+  background: var(--surface-hover) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--surface-border) !important;
 
   :global(.p-chip-text) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 220px;
+    color: var(--text-color);
   }
 }
 
-/* Avg close time formatting */
-.avgCloseLabel {
-  font-size: 0.85rem;
-  font-weight: 500;
+.noTickets {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  font-style: italic;
 }

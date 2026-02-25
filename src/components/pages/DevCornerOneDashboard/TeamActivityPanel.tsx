@@ -13,13 +13,12 @@ export interface TeamActivityPanelProps {
 const firstName = (name: string) => name.split(' ')[0] ?? name;
 
 export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
+  const totalActive = members.reduce((s, m) => s + m.inProgressCount, 0);
+
   const header = (
     <div className={styles.panelHeader}>
       <span>NOVA Team</span>
-      <Badge
-        value={members.reduce((s, m) => s + m.inProgressCount, 0) + ' active'}
-        severity="info"
-      />
+      <Badge value={`${totalActive} active`} severity="info" />
     </div>
   );
 
@@ -32,18 +31,22 @@ export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
               <span className={styles.teamName}>{firstName(m.displayName)}</span>
               <span className={styles.teamCounts}>
                 <Badge value={m.inProgressCount} severity="info" />
-                <span className={styles.muted}>/ {m.openCount} open</span>
+                <span>/ {m.openCount} open</span>
               </span>
             </div>
             <div className={styles.teamTickets}>
               {m.inProgressKeys.length === 0 && (
-                <span className={styles.muted}>No active tickets</span>
+                <span className={styles.noTickets}>No active tickets</span>
               )}
-              {m.inProgressKeys.slice(0, 3).map((key, i) => (
-                <Chip key={key} label={`${key}: ${m.inProgressSummaries[i]?.slice(0, 30) ?? ''}`} className={styles.ticketChip} />
+              {m.inProgressKeys.slice(0, 4).map((key, i) => (
+                <Chip
+                  key={key}
+                  label={`${key}: ${m.inProgressSummaries[i]?.slice(0, 35) ?? ''}`}
+                  className={styles.ticketChip}
+                />
               ))}
-              {m.inProgressKeys.length > 3 && (
-                <span className={styles.muted}>+{m.inProgressKeys.length - 3} more</span>
+              {m.inProgressKeys.length > 4 && (
+                <span className={styles.noTickets}>+{m.inProgressKeys.length - 4} more</span>
               )}
             </div>
           </div>
