@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dev Corner theme compliance**: All custom elements (team cards, ticket chips, matrix cells, slide titles, summaries) now use CSS theme variables (`--text-color`, `--surface-card`, `--surface-border`, `--surface-hover`) instead of implicit/unset colors. Both Dev 1 and Dev 2 switch cleanly with theme changes.
+- **Dev 1 layout proportions**: Throughput + Component Activity (middle row) reduced to 35% of viewport; NOVA Team panel (bottom row) expanded to 65% for better readability of ticket chips. Increased visible tickets per member from 3 to 4.
 - **Jira API v3 pagination**: `jiraService.ts` now handles v3 cursor-based pagination (`nextPageToken`/`isLast`) instead of expecting the deprecated `total`/`startAt`/`maxResults` response fields. Auto-paginates up to 1000 results (10 pages × 100). `JiraSearchResponse` type updated to match.
 - **Operational JQL: multi-project (CM + OPRD + NOVA)**: `JIRA_OPERATIONAL.ts` rewritten from NOVA-only to match the Case Management Data Team Board filter. Open query scopes CM and OPRD by dev-relevant components (Interactive Website, Case Database, etc.) and **excludes "New" status** (case manager prep; dev work starts at To Do / Data Team New / Requested). NOVA excludes Epics/Sub-tasks. Time-based queries also scoped by components and exclude "New". Max results bumped from 100 to 1000.
 
