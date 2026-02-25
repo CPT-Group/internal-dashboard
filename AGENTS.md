@@ -24,9 +24,21 @@ Constant: `NOVA_TEAM.ts` (IDs, display names, ordered list for charts, `isNovaTe
 
 Three Jira projects feed the dashboards:
 
-- **CM (Case Management)** — High-volume; case managers (e.g. Alejandra) create tickets in **"New"** status while prepping info. Dev team doesn't see or touch "New" items. Work becomes visible to devs at **To Do → Data Team New → Requested**. Then: **In Progress → Team Testing → QA → Dev Review → UAT → Done**. Tickets bounce between teams — the "tech owner" field is the actual developer, but assignee can change as work is handed off.
-- **OPRD (Operational/Prod Support)** — Bug fixes, operational tasks. Same status exclusion: **"New"** is skipped. Dev work starts when status moves beyond New.
-- **NOVA (Software Development)** — Internal tools, dashboards, new features. Legacy issues below NOVA-661 are excluded via client-side `filterIssuesNovaMinKey`.
+- **CM (Case Management)** — High-volume; case managers (e.g. Alejandra) create tickets in **"New"** status while prepping info. Dev team doesn't see or touch "New" items. Work becomes visible to devs at **Data Team New** or **Requested**. Then: **Data Team In Progress → Data Team Testing → Data Team Complete** (back to CMs for UAT). Tickets bounce between teams — the "tech owner" field is the actual developer, but assignee can change as work is handed off. When devs complete a ticket they assign it back to the requester for final UAT/approval.
+- **OPRD (Operational/Prod Support)** — Bug fixes, operational tasks. Flow: **TO DO** (requested/waiting) → **Requirement Review** (optional) → **Development** (actively working) → **Peer Testing** → **QA/QC** → **UAT** → **Resolved**. Same "New" exclusion: dev work starts at TO DO.
+- **NOVA (Software Development)** — Internal tools, dashboards, new features. Simple linear flow: **To Do** (requested) → **In Progress** → **Dev Review** → **QA** → **Done**. Legacy issues below NOVA-661 are excluded via client-side `filterIssuesNovaMinKey`.
+
+### Status definitions for analytics
+
+| Concept | OPRD | CM | NOVA |
+|---------|------|-----|------|
+| **Requested / not started** | TO DO, Requirement Review | DATA TEAM NEW, REQUESTED | TO DO |
+| **Actively working** | Development | Data Team In Progress | In Progress |
+| **Dev complete / testing** | Peer Testing, QA/QC | Data Team Testing | Dev Review, QA |
+| **Back to requesters** | UAT | Data Team Complete | — |
+| **Done** | Resolved | Request Complete | Done |
+
+These status mappings drive the `isRequestedNotStarted()` helper in `operationalAnalytics.ts` and the "Requested — Not Yet Started" slide on Dev Corner Two.
 
 ### JQL scoping rules
 

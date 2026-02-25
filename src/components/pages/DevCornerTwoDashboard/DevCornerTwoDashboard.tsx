@@ -6,13 +6,9 @@ import { Message } from 'primereact/message';
 import { useOperationalJiraStore } from '@/stores';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
-import {
-  toBacklogByComponentBarChartData,
-  toAgingBucketsBarChartData,
-} from '@/utils/chartDataMappers';
 import { InProgressCardsSlide } from './InProgressCardsSlide';
 import { RecentlyCompletedSlide } from './RecentlyCompletedSlide';
-import { BacklogAgingSlide } from './BacklogAgingSlide';
+import { RequestedTicketsSlide } from './RequestedTicketsSlide';
 import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
 import styles from './DevCornerTwoDashboard.module.scss';
 
@@ -52,18 +48,15 @@ export const DevCornerTwoDashboard = () => {
   }, [leavingSlide]);
 
   const analytics = getAnalytics();
-  const { kpis, inProgressTickets, recentlyCompleted, devLoadMatrix, assignees, components } = analytics;
-
-  const backlogData = useMemo(() => toBacklogByComponentBarChartData(analytics), [analytics]);
-  const agingData = useMemo(() => toAgingBucketsBarChartData(analytics), [analytics]);
+  const { kpis, inProgressTickets, recentlyCompleted, requestedTickets, devLoadMatrix, assignees, components } = analytics;
 
   const kpiItems: KpiItem[] = useMemo(() => [
     { label: 'In Progress', value: inProgressTickets.length },
     { label: 'Completed (7d)', value: recentlyCompleted.length },
+    { label: 'Requested', value: requestedTickets.length, severity: requestedTickets.length > 10 ? 'warning' : undefined },
     { label: 'Open', value: kpis.openCount },
     { label: 'Avg Age', value: `${kpis.avgAgeDays}d` },
-    { label: 'Oldest', value: `${kpis.oldestAgeDays}d` },
-  ], [kpis, inProgressTickets.length, recentlyCompleted.length]);
+  ], [kpis, inProgressTickets.length, recentlyCompleted.length, requestedTickets.length]);
 
   const slideClass = (idx: number) =>
     `${styles.slide} ${activeSlide === idx ? styles.active : ''} ${leavingSlide === idx ? styles.leaving : ''}`;
@@ -100,7 +93,7 @@ export const DevCornerTwoDashboard = () => {
           <RecentlyCompletedSlide tickets={recentlyCompleted} />
         </div>
         <div className={slideClass(2)}>
-          <BacklogAgingSlide backlogData={backlogData} agingData={agingData} />
+          <RequestedTicketsSlide tickets={requestedTickets} />
         </div>
         <div className={slideClass(3)}>
           <DevLoadMatrixSlide matrix={devLoadMatrix} assignees={assignees} components={components} />

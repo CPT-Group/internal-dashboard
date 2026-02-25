@@ -18,6 +18,7 @@ import type {
   TeamMemberActivity,
   InProgressTicket,
   RecentlyCompletedTicket,
+  RequestedTicket,
 } from '@/types';
 import {
   DEV1_RISK_BUCKET_WEIGHTS,
@@ -60,6 +61,28 @@ function isNovaTeam(issue: JiraIssue): boolean {
 
 function getProjectKey(issue: JiraIssue): string {
   return issue.fields?.project?.key ?? '';
+}
+
+/**
+ * "Requested / not yet started" — tickets that landed on the dev team
+ * but no developer has begun work yet.
+ *
+ * OPRD: TO DO, Requirement Review
+ * CM:   DATA TEAM NEW, REQUESTED
+ * NOVA: TO DO
+ */
+const REQUESTED_STATUSES: Record<string, Set<string>> = {
+  OPRD: new Set(['TO DO', 'To Do', 'Requirement Review']),
+  CM:   new Set(['DATA TEAM NEW', 'Data Team New', 'REQUESTED', 'Requested']),
+  NOVA: new Set(['TO DO', 'To Do']),
+};
+
+function isRequestedNotStarted(issue: JiraIssue): boolean {
+  const project = getProjectKey(issue);
+  const statusName = issue.fields?.status?.name ?? '';
+  const allowed = REQUESTED_STATUSES[project];
+  if (!allowed) return false;
+  return allowed.has(statusName);
 }
 
 /** Days since created (for open issues). */
@@ -287,6 +310,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const teamActivity = buildTeamActivity(open);
   const inProgressTickets = buildInProgressTickets(open);
   const recentlyCompleted = buildRecentlyCompleted(resolvedLast14);
+  const requestedTickets = buildRequestedTickets(open);
 
   return {
     kpis,
@@ -307,6 +331,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     teamActivity,
     inProgressTickets,
     recentlyCompleted,
+    requestedTickets,
   };
 }
 
@@ -475,6 +500,21 @@ function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedT
       assignee: getAssigneeName(issue),
       component: getComponentNames(issue).join(', '),
       resolvedDate: issue.fields?.resolutiondate?.slice(0, 10) ?? '',
+      project: getProjectKey(issue),
+    }));
+}
+
+function buildRequestedTickets(open: JiraIssue[]): RequestedTicket[] {
+  return open
+    .filter(isRequestedNotStarted)
+    .sort((a, b) => getAgeDays(b) - getAgeDays(a))
+    .map((issue) => ({
+      key: issue.key,
+      summary: issue.fields?.summary ?? '',
+      assignee: getAssigneeName(issue),
+      component: getComponentNames(issue).join(', '),
+      status: issue.fields?.status?.name ?? '',
+      ageDays: getAgeDays(issue),
       project: getProjectKey(issue),
     }));
 }

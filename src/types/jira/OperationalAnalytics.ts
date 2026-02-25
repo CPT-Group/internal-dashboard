@@ -101,6 +101,17 @@ export interface RecentlyCompletedTicket {
   project: string;
 }
 
+/** Ticket that has been requested but not yet started by a developer. */
+export interface RequestedTicket {
+  key: string;
+  summary: string;
+  assignee: string;
+  component: string;
+  status: string;
+  ageDays: number;
+  project: string;
+}
+
 export interface AgingHotspot {
   component: string;
   assignee: string;
@@ -142,4 +153,6 @@ export interface OperationalAnalytics {
   inProgressTickets: InProgressTicket[];
   /** Tickets resolved in last 7 days (Dev 2 table). */
   recentlyCompleted: RecentlyCompletedTicket[];
+  /** Tickets requested but not yet started by dev team (Dev 2 slide). */
+  requestedTickets: RequestedTicket[];
 }
