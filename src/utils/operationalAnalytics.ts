@@ -59,10 +59,13 @@ export interface BuildOperationalAnalyticsInput {
   openIssues: JiraIssue[];
   openedTodayIssues: JiraIssue[];
   closedTodayIssues: JiraIssue[];
-  createdLast14: JiraIssue[];
+  /** Issues that "landed on team" in last 14 days (CM/OPRD transitioned from New + NOVA created). */
+  landedLast14: JiraIssue[];
   resolvedLast14: JiraIssue[];
-  createdPrev14?: JiraIssue[];
+  landedPrev14?: JiraIssue[];
   resolvedPrev14?: JiraIssue[];
+  /** Map of issueKey → ISO date for CM/OPRD transition FROM "New". NOVA uses created date. */
+  transitionDates?: Map<string, string>;
 }
 
 export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput): OperationalAnalytics {
@@ -70,10 +73,11 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     openIssues,
     openedTodayIssues,
     closedTodayIssues,
-    createdLast14,
+    landedLast14,
     resolvedLast14,
-    createdPrev14,
+    landedPrev14,
     resolvedPrev14,
+    transitionDates = new Map(),
   } = input;
 
   const open = openIssues.filter((i) => !isDone(i));
@@ -95,29 +99,35 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     sprintCompletionPercent: null,
   };
 
-  const todayStr = dateStr(new Date());
-  const dayCountsCreated: Record<string, number> = {};
+  const dayCountsLanded: Record<string, number> = {};
   const dayCountsResolved: Record<string, number> = {};
   for (let i = 0; i < 14; i++) {
     const d = new Date();
     d.setDate(d.getDate() - (13 - i));
     const key = dateStr(d);
-    dayCountsCreated[key] = 0;
+    dayCountsLanded[key] = 0;
     dayCountsResolved[key] = 0;
   }
-  createdLast14.forEach((issue) => {
-    const key = issue.fields?.created?.slice(0, 10);
-    if (key && key in dayCountsCreated) dayCountsCreated[key]++;
+  landedLast14.forEach((issue) => {
+    const project = issue.fields?.project?.key;
+    let landedDate: string | undefined;
+    if (project === 'NOVA') {
+      landedDate = issue.fields?.created?.slice(0, 10);
+    } else {
+      const transDate = transitionDates.get(issue.key);
+      landedDate = transDate ? transDate.slice(0, 10) : issue.fields?.created?.slice(0, 10);
+    }
+    if (landedDate && landedDate in dayCountsLanded) dayCountsLanded[landedDate]++;
   });
   resolvedLast14.forEach((issue) => {
     const key = issue.fields?.resolutiondate?.slice(0, 10);
     if (key && key in dayCountsResolved) dayCountsResolved[key]++;
   });
-  const flowData: FlowDay[] = Object.keys(dayCountsCreated)
+  const flowData: FlowDay[] = Object.keys(dayCountsLanded)
     .sort()
     .map((date) => ({
       date,
-      opened: dayCountsCreated[date] ?? 0,
+      opened: dayCountsLanded[date] ?? 0,
       closed: dayCountsResolved[date] ?? 0,
     }));
 
@@ -229,8 +239,8 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     }));
 
   const throughputRatio =
-    createdLast14.length > 0
-      ? Math.round((resolvedLast14.length / createdLast14.length) * 100) / 100
+    landedLast14.length > 0
+      ? Math.round((resolvedLast14.length / landedLast14.length) * 100) / 100
       : 0;
 
   const riskRawScore = agingBuckets.reduce(
@@ -245,9 +255,9 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const agingHotspots = buildAgingHotspots(open);
 
   const trendVsPrevious14d = buildTrendComparison(
-    createdLast14,
+    landedLast14,
     resolvedLast14,
-    createdPrev14,
+    landedPrev14,
     resolvedPrev14
   );
 
@@ -297,16 +307,16 @@ function buildAgingHotspots(open: JiraIssue[]): AgingHotspot[] {
 }
 
 function buildTrendComparison(
-  createdLast14: JiraIssue[],
+  landedLast14: JiraIssue[],
   resolvedLast14: JiraIssue[],
-  createdPrev14?: JiraIssue[],
+  landedPrev14?: JiraIssue[],
   resolvedPrev14?: JiraIssue[]
 ): TrendComparison | null {
-  if (!createdPrev14 || !resolvedPrev14) return null;
-  const prevOpened = createdPrev14.length;
+  if (!landedPrev14 || !resolvedPrev14) return null;
+  const prevOpened = landedPrev14.length;
   const prevClosed = resolvedPrev14.length;
   return {
-    openedDelta: createdLast14.length - prevOpened,
+    openedDelta: landedLast14.length - prevOpened,
     closedDelta: resolvedLast14.length - prevClosed,
     prevOpened,
     prevClosed,

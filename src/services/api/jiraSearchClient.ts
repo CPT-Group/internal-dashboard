@@ -11,6 +11,22 @@ export interface JiraSearchClientResult {
   total: number;
 }
 
+/**
+ * Fetch transition dates (FROM "New") for a batch of issue keys.
+ * Returns a map of issueKey → ISO date string.
+ */
+export async function jiraTransitionDates(
+  keys: string[]
+): Promise<Map<string, string>> {
+  if (keys.length === 0) return new Map();
+  const q = new URLSearchParams();
+  q.set('keys', keys.join(','));
+  const res = await fetch(`/api/jira/transitions?${q.toString()}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.message ?? `HTTP ${res.status}`);
+  return new Map(Object.entries(json.transitions ?? {}));
+}
+
 export async function jiraSearch(
   jql: string,
   maxResults: number = JIRA_SEARCH_MAX_RESULTS

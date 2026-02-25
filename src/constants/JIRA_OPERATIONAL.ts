@@ -1,6 +1,10 @@
 /**
  * Operational Jira dashboard: Dev team board spanning CM, OPRD, and NOVA.
  * JQL modeled after the "Case Management Data Team Board" filter (V.3).
+ *
+ * "Opened" / "Landed on team" = when tickets transition OUT of "New" status
+ * (CM/OPRD) or when created (NOVA). This reflects when work actually becomes
+ * visible to the dev team, not when the Jira ticket was first created by CMs.
  */
 
 export const JIRA_OPERATIONAL_PROJECTS = ['CM', 'OPRD', 'NOVA'] as const;
@@ -21,53 +25,76 @@ const CM_OPRD_COMPONENTS = [
   'Website',
 ].map((c) => `"${c}"`).join(', ');
 
+/** CM/OPRD base: dev components, no Epics. */
+const CM_OPRD_BASE = `component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic`;
+
+/** NOVA base: no Epics/Sub-tasks. */
+const NOVA_BASE = `project = NOVA AND issuetype NOT IN ("Epic", "Sub-task")`;
+
 /**
- * Scoped filter: items in our dev scope regardless of Done/not-Done.
- * Excludes "New" from CM/OPRD (case manager prep, not dev work).
- * Used as a base for time-based (created/resolved) queries.
+ * Open/active items only.
+ * - CM: not New, not Done (dev work starts at To Do / Data Team New / Requested)
+ * - OPRD: not New, not Done
+ * - NOVA: not Done
  */
-const SCOPED_FILTER = [
-  `( project = CM AND status != New AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
-  `( project = OPRD AND status != New AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
-  `( project = NOVA AND issuetype NOT IN ("Epic", "Sub-task") )`,
+const BOARD_FILTER = [
+  `( project = CM AND status != New AND statusCategory != Done AND ${CM_OPRD_BASE} )`,
+  `( project = OPRD AND status != New AND statusCategory != Done AND ${CM_OPRD_BASE} )`,
+  `( ${NOVA_BASE} AND statusCategory != Done )`,
 ].join(' OR ');
 
 /**
- * Open/active items only (adds status exclusions per project).
- * - CM: not New, not Done. "New" = case managers still prepping (Alejandra etc.);
- *   dev team work starts at To Do / Data Team New / Requested.
- * - OPRD: not New, not Done (operational dev work in progress)
- * - NOVA: not Done (software development)
+ * "Landed on team" = CM/OPRD tickets that transitioned FROM "New" + NOVA created.
+ * Represents when work actually becomes visible to devs.
  */
-const BOARD_FILTER = [
-  `( project = CM AND status != New AND statusCategory != Done AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
-  `( project = OPRD AND status != New AND statusCategory != Done AND component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic )`,
-  `( project = NOVA AND issuetype NOT IN ("Epic", "Sub-task") AND statusCategory != Done )`,
+const LANDED_CM_OPRD = (after: string) =>
+  `project IN (CM, OPRD) AND status changed FROM "New" AFTER ${after} AND ${CM_OPRD_BASE}`;
+
+const NOVA_CREATED = (after: string) =>
+  `${NOVA_BASE} AND created >= ${after}`;
+
+const LANDED_COMBINED = (after: string) =>
+  `(${LANDED_CM_OPRD(after)}) OR (${NOVA_CREATED(after)})`;
+
+/**
+ * Scoped filter for resolved queries (includes Done items since they're resolved).
+ * Excludes "New" from CM/OPRD since those were never dev work.
+ */
+const SCOPED_FILTER = [
+  `( project = CM AND status != New AND ${CM_OPRD_BASE} )`,
+  `( project = OPRD AND status != New AND ${CM_OPRD_BASE} )`,
+  `( ${NOVA_BASE} )`,
 ].join(' OR ');
+
+// ── Open issues ──
 
 /** All open/active issues matching the dev board (KPIs, backlog, aging, oldest 10). */
 export const JIRA_OPERATIONAL_JQL_OPEN =
   `${BOARD_FILTER} ORDER BY created DESC`;
 
-/** Created today (scoped to dev components). */
-export const JIRA_OPERATIONAL_JQL_OPENED_TODAY =
-  `(${SCOPED_FILTER}) AND created >= startOfDay() ORDER BY created DESC`;
+// ── "Landed on team" (transition-based opened) ──
+
+/** Landed on team today: CM/OPRD transitioned from New + NOVA created. */
+export const JIRA_OPERATIONAL_JQL_LANDED_TODAY =
+  `${LANDED_COMBINED('startOfDay()')} ORDER BY updated DESC`;
+
+/** Landed on team in last 14 days (for flow chart opened side). */
+export const JIRA_OPERATIONAL_JQL_LANDED_LAST_14 =
+  `${LANDED_COMBINED('startOfDay(-14)')} ORDER BY updated DESC`;
+
+/** Landed on team in previous 14-day window (days -28 to -14) for trend comparison. */
+export const JIRA_OPERATIONAL_JQL_LANDED_PREV_14 =
+  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR (${NOVA_BASE} AND created >= startOfDay(-28) AND created < startOfDay(-14)) ORDER BY updated DESC`;
+
+// ── Resolved ──
 
 /** Resolved today (scoped to dev components). */
 export const JIRA_OPERATIONAL_JQL_CLOSED_TODAY =
   `(${SCOPED_FILTER}) AND resolutiondate >= startOfDay() ORDER BY resolutiondate DESC`;
 
-/** Created in last 14 days (flow chart). */
-export const JIRA_OPERATIONAL_JQL_CREATED_LAST_14 =
-  `(${SCOPED_FILTER}) AND created >= startOfDay(-14) ORDER BY created DESC`;
-
-/** Resolved in last 14 days (flow chart). */
+/** Resolved in last 14 days (flow chart closed side). */
 export const JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14 =
   `(${SCOPED_FILTER}) AND resolutiondate >= startOfDay(-14) ORDER BY resolutiondate DESC`;
-
-/** Created in previous 14-day window (days -28 to -14) for trend comparison. */
-export const JIRA_OPERATIONAL_JQL_CREATED_PREV_14 =
-  `(${SCOPED_FILTER}) AND created >= startOfDay(-28) AND created < startOfDay(-14) ORDER BY created DESC`;
 
 /** Resolved in previous 14-day window (days -28 to -14) for trend comparison. */
 export const JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14 =

@@ -141,6 +141,68 @@ export async function searchIssues(
   return { total: allIssues.length, issues: allIssues };
 }
 
+/** Single changelog history entry from Jira. */
+export interface JiraChangelogItem {
+  field: string;
+  fromString: string | null;
+  toString: string | null;
+}
+
+export interface JiraChangelogHistory {
+  created: string;
+  items: JiraChangelogItem[];
+}
+
+/**
+ * Fetch changelog for a single issue. Returns status transitions only.
+ * Uses GET /rest/api/3/issue/{key}/changelog.
+ */
+export async function getIssueChangelog(
+  issueKey: string
+): Promise<JiraChangelogHistory[]> {
+  const raw = await jiraFetch<{
+    values?: JiraChangelogHistory[];
+  }>(`/issue/${issueKey}/changelog?maxResults=100`);
+  return (raw.values ?? []).filter((h) =>
+    h.items.some((item) => item.field === 'status')
+  );
+}
+
+/**
+ * Batch-fetch changelogs for multiple issues. Returns a map of issueKey → transition date
+ * (ISO string) for the FIRST transition FROM "New" status. Concurrency-limited.
+ */
+export async function getTransitionDatesFromNew(
+  issueKeys: string[]
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  const BATCH_SIZE = 10;
+
+  for (let i = 0; i < issueKeys.length; i += BATCH_SIZE) {
+    const batch = issueKeys.slice(i, i + BATCH_SIZE);
+    const settled = await Promise.allSettled(
+      batch.map(async (key) => {
+        const histories = await getIssueChangelog(key);
+        for (const h of histories) {
+          for (const item of h.items) {
+            if (item.field === 'status' && item.fromString === 'New') {
+              return { key, date: h.created };
+            }
+          }
+        }
+        return null;
+      })
+    );
+    for (const s of settled) {
+      if (s.status === 'fulfilled' && s.value) {
+        result.set(s.value.key, s.value.date);
+      }
+    }
+  }
+
+  return result;
+}
+
 /**
  * Get current user (verify credentials, server-side only).
  */

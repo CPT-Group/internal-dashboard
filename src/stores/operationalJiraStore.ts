@@ -2,28 +2,30 @@ import { create } from 'zustand';
 import type { JiraIssue } from '@/types';
 import type { OperationalAnalytics } from '@/types';
 import { buildOperationalAnalytics } from '@/utils/operationalAnalytics';
-import { jiraSearch } from '@/services/api/jiraSearchClient';
+import { jiraSearch, jiraTransitionDates } from '@/services/api/jiraSearchClient';
 import {
   JIRA_CACHE_TTL_MS,
   JIRA_SEARCH_MAX_RESULTS,
   JIRA_OPERATIONAL_JQL_OPEN,
-  JIRA_OPERATIONAL_JQL_OPENED_TODAY,
+  JIRA_OPERATIONAL_JQL_LANDED_TODAY,
   JIRA_OPERATIONAL_JQL_CLOSED_TODAY,
-  JIRA_OPERATIONAL_JQL_CREATED_LAST_14,
+  JIRA_OPERATIONAL_JQL_LANDED_LAST_14,
   JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14,
-  JIRA_OPERATIONAL_JQL_CREATED_PREV_14,
+  JIRA_OPERATIONAL_JQL_LANDED_PREV_14,
   JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14,
 } from '@/constants';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
 interface OperationalJiraState {
   openIssues: JiraIssue[];
-  openedToday: JiraIssue[];
+  landedToday: JiraIssue[];
   closedToday: JiraIssue[];
-  createdLast14: JiraIssue[];
+  landedLast14: JiraIssue[];
   resolvedLast14: JiraIssue[];
-  createdPrev14: JiraIssue[];
+  landedPrev14: JiraIssue[];
   resolvedPrev14: JiraIssue[];
+  /** Map of issueKey → ISO date when the issue transitioned FROM "New". */
+  transitionDates: Map<string, string>;
   analytics: OperationalAnalytics;
   loading: boolean;
   error: string | null;
@@ -37,18 +39,20 @@ const emptyAnalytics = buildOperationalAnalytics({
   openIssues: [],
   openedTodayIssues: [],
   closedTodayIssues: [],
-  createdLast14: [],
+  landedLast14: [],
   resolvedLast14: [],
+  transitionDates: new Map(),
 });
 
 export const useOperationalJiraStore = create<OperationalJiraState>((set, get) => ({
   openIssues: [],
-  openedToday: [],
+  landedToday: [],
   closedToday: [],
-  createdLast14: [],
+  landedLast14: [],
   resolvedLast14: [],
-  createdPrev14: [],
+  landedPrev14: [],
   resolvedPrev14: [],
+  transitionDates: new Map(),
   analytics: emptyAnalytics,
   loading: false,
   error: null,
@@ -65,40 +69,52 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
     if (!force && !get().isStale()) return;
     set({ loading: true, error: null });
     try {
-      const [open, openedToday, closedToday, createdLast14, resolvedLast14, createdPrev14, resolvedPrev14] = await Promise.all([
+      const [open, landedToday, closedToday, landedLast14, resolvedLast14, landedPrev14, resolvedPrev14] = await Promise.all([
         jiraSearch(JIRA_OPERATIONAL_JQL_OPEN, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_OPENED_TODAY, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_TODAY, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_CLOSED_TODAY, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_CREATED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_CREATED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
       ]);
       const filterNova = (issues: JiraIssue[]) => filterIssuesNovaMinKey(issues);
       const openFiltered = filterNova(open.issues);
-      const openedTodayFiltered = filterNova(openedToday.issues);
+      const landedTodayFiltered = filterNova(landedToday.issues);
       const closedTodayFiltered = filterNova(closedToday.issues);
-      const createdLast14Filtered = filterNova(createdLast14.issues);
+      const landedLast14Filtered = filterNova(landedLast14.issues);
       const resolvedLast14Filtered = filterNova(resolvedLast14.issues);
-      const createdPrev14Filtered = filterNova(createdPrev14.issues);
+      const landedPrev14Filtered = filterNova(landedPrev14.issues);
       const resolvedPrev14Filtered = filterNova(resolvedPrev14.issues);
+
+      // For CM/OPRD issues in the 14d window, fetch exact transition dates.
+      // NOVA issues use `created` as their "landed" date (no "New" status).
+      const cmOprdKeys = landedLast14Filtered
+        .filter((i) => i.fields?.project?.key !== 'NOVA')
+        .map((i) => i.key);
+      const transitionDates = cmOprdKeys.length > 0
+        ? await jiraTransitionDates(cmOprdKeys)
+        : new Map<string, string>();
+
       const analytics = buildOperationalAnalytics({
         openIssues: openFiltered,
-        openedTodayIssues: openedTodayFiltered,
+        openedTodayIssues: landedTodayFiltered,
         closedTodayIssues: closedTodayFiltered,
-        createdLast14: createdLast14Filtered,
+        landedLast14: landedLast14Filtered,
         resolvedLast14: resolvedLast14Filtered,
-        createdPrev14: createdPrev14Filtered,
+        landedPrev14: landedPrev14Filtered,
         resolvedPrev14: resolvedPrev14Filtered,
+        transitionDates,
       });
       set({
         openIssues: openFiltered,
-        openedToday: openedTodayFiltered,
+        landedToday: landedTodayFiltered,
         closedToday: closedTodayFiltered,
-        createdLast14: createdLast14Filtered,
+        landedLast14: landedLast14Filtered,
         resolvedLast14: resolvedLast14Filtered,
-        createdPrev14: createdPrev14Filtered,
+        landedPrev14: landedPrev14Filtered,
         resolvedPrev14: resolvedPrev14Filtered,
+        transitionDates,
         analytics,
         lastFetched: Date.now(),
         loading: false,

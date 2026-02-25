@@ -64,8 +64,8 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 - **UI**: `src/components/pages/` (page-level dashboards), `src/components/ui/` (reusable pieces e.g. `BackgroundSlideshow`, `JiraMeterChart`, `TextScroller`, `CornerInfoCard`, `TrendBadge`, `KpiStrip`).
 - **Charts**: `src/components/charts/` — **presentation-only** chart components named by **purpose** (e.g. `OpenClosedAvgHoursByAssigneeRadarChart`, `OpenedClosedFlowBarChart`, `HorizontalBarChart`, `GanttChart`). Each accepts only a typed `data` prop; no store, no JQL, no wrappers (Card/Panel). Chart data types live in `src/types/charts/`. Mappers in `src/utils/chartDataMappers.ts` convert analytics into these types. Pages get analytics from the store → call the mapper → pass result to the chart; **wrappers and layout stay on the page**.
 - **State**: Zustand stores under `src/stores/`. Data fetching and JQL live at API/store level; chart components never fetch or transform raw analytics.
-- **Jira API**: Uses **v3 REST API** (`POST /rest/api/3/search/jql`) with cursor-based pagination (`nextPageToken`, `isLast`). V3 does **not** return `total`; the service auto-paginates up to 1000 results (10 pages × 100). Auth: Basic with `KYLE_EMAIL` + `KYLE_JIRA_TOKEN` from `.env.local`.
-- **API**: Client calls go through `src/services/api/` – `apiClient` (fetch wrapper), `jiraSearchClient` (Jira search via `/api/jira/search`). Fine-tuned Jira calls in `src/services/api/endpoints/jira/`. **Salesforce**: read-only server-side `salesforceService.ts`; see `docs/salesforce-*.md`.
+- **Jira API**: Uses **v3 REST API** (`POST /rest/api/3/search/jql`) with cursor-based pagination (`nextPageToken`, `isLast`). V3 does **not** return `total`; the service auto-paginates up to 1000 results (10 pages × 100). Auth: Basic with `KYLE_EMAIL` + `KYLE_JIRA_TOKEN` from `.env.local`. **Changelog API**: `GET /rest/api/3/issue/{key}/changelog` fetches status transition history; used to extract exact dates when CM/OPRD tickets transitioned FROM "New" (when work landed on dev team). Route: `GET /api/jira/transitions?keys=CM-123,CM-456`.
+- **API**: Client calls go through `src/services/api/` – `apiClient` (fetch wrapper), `jiraSearchClient` (Jira search via `/api/jira/search`, transition dates via `/api/jira/transitions`). Fine-tuned Jira calls in `src/services/api/endpoints/jira/`. **Salesforce**: read-only server-side `salesforceService.ts`; see `docs/salesforce-*.md`.
 - **Styles**: `src/styles/` — `variables.scss`, `base.scss`, `utilities.scss`, `themes/*.scss`, `primereact-overrides.scss`; orchestration in `src/app/main.scss`. Theme is driven by `data-theme` on `<html>` and theme variables; avoid inline styles for theme-driven UI when possible.
 
 ## TV routes and dashboards
@@ -95,7 +95,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 ```
 
 **Stores** (`src/stores/`):
-- `operationalJiraStore` — Dev Corner One/Two. Fetches 7 parallel JQL queries (open, opened today, closed today, created last 14d, resolved last 14d, created prev 14d, resolved prev 14d). Builds `OperationalAnalytics` with derived indicators: `throughputRatio`, `riskScore`, `agingHotspots`, `trendVsPrevious14d`. Polls every 60s if stale; cache TTL 30 min.
+- `operationalJiraStore` — Dev Corner One/Two. Fetches 7 parallel JQL queries (open, landed today, closed today, landed last 14d, resolved last 14d, landed prev 14d, resolved prev 14d) + batch changelog fetch for CM/OPRD transition dates. "Landed" = transition-based (when work became visible to dev team). Builds `OperationalAnalytics` with derived indicators: `throughputRatio`, `riskScore`, `agingHotspots`, `trendVsPrevious14d`. Polls every 60s if stale; cache TTL 30 min.
 - `trevorJiraStore` — Trevor's Screen. Fetches team-scoped tickets (NOVA team across OPRD/CM/NOVA, last 6 months). Builds `NovaAnalytics`.
 - `jiraNovaStore` — NOVA project analytics (open/today/overdue/done).
 - `dev1JiraStore` — Dev Corner One extended analytics (NOVA, last 6 months).
@@ -103,7 +103,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 
 **JQL constants** (`src/constants/`):
 - `JIRA_SHARED.ts` — cache TTL (30 min), max results (1000).
-- `JIRA_OPERATIONAL.ts` — multi-project queries (CM + OPRD + NOVA) with dev-component and status scoping. See "JQL scoping rules" above.
+- `JIRA_OPERATIONAL.ts` — multi-project queries (CM + OPRD + NOVA) with dev-component and status scoping. **"Landed on team"** queries use `status changed FROM "New"` for CM/OPRD and `created` for NOVA. See "JQL scoping rules" above.
 - `JIRA_TREVOR.ts` — NOVA team queries (assignee-scoped).
 - `JIRA_NOVA.ts` — NOVA project queries (min key 661).
 - `JIRA_DEV1.ts` — Dev Corner One queries.
