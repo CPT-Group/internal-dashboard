@@ -38,16 +38,13 @@ export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
               {m.inProgressKeys.length === 0 && (
                 <span className={styles.noTickets}>No active tickets</span>
               )}
-              {m.inProgressKeys.slice(0, 4).map((key, i) => (
+              {m.inProgressKeys.map((key, i) => (
                 <Chip
                   key={key}
                   label={`${key}: ${m.inProgressSummaries[i]?.slice(0, 35) ?? ''}`}
                   className={styles.ticketChip}
                 />
               ))}
-              {m.inProgressKeys.length > 4 && (
-                <span className={styles.noTickets}>+{m.inProgressKeys.length - 4} more</span>
-              )}
             </div>
           </div>
         ))}
