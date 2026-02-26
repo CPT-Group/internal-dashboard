@@ -48,7 +48,9 @@ function getTechOwnerName(issue: JiraIssue): string {
 }
 
 function getTechOwnerAccountId(issue: JiraIssue): string | null {
-  return issue.fields?.customfield_10193?.accountId ?? null;
+  return issue.fields?.customfield_10193?.accountId
+    ?? issue.fields?.assignee?.accountId
+    ?? null;
 }
 
 function isTechOwnerNovaTeam(issue: JiraIssue): boolean {
