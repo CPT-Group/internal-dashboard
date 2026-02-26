@@ -23,6 +23,7 @@ const DEFAULT_JIRA_FIELDS = [
   'duedate',
   'resolutiondate',
   'components',
+  'customfield_10193', // Tech Owner (user who actually does the dev work)
 ] as const;
 
 function getJiraConfig(): { baseUrl: string; authHeader: string } {

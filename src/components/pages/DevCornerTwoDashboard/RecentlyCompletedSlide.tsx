@@ -41,7 +41,7 @@ export const RecentlyCompletedSlide = ({ tickets }: RecentlyCompletedSlideProps)
           >
             <Column field="key" header="Key" style={{ width: '80px' }} />
             <Column field="summary" header="Summary" body={summaryBody} />
-            <Column field="assignee" header="Assignee" style={{ width: '100px' }} />
+            <Column field="techOwner" header="Tech Owner" style={{ width: '100px' }} />
             <Column field="component" header="Component" style={{ width: '100px' }} body={componentBody} />
             <Column field="resolvedDate" header="Resolved" style={{ width: '70px' }} body={dateBody} />
             <Column field="project" header="Project" style={{ width: '60px' }} />

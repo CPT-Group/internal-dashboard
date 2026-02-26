@@ -54,6 +54,17 @@ All operational JQL (Dev Corner dashboards) mirrors the "Case Management Data Te
 
 Time-based queries (created/resolved today/14d) use the same scoped filter so flow data reflects dev work only, not all project activity.
 
+### Tech Owner vs Assignee
+
+Jira custom field `customfield_10193` (**Tech Owner**) identifies the developer who actually does the work. The standard **assignee** changes throughout the ticket lifecycle — devs are assigned while in progress, but when they finish they reassign to the CM for UAT/approval. At resolution time the assignee is typically the CM, **not** the dev who built it.
+
+**Rules for analytics attribution:**
+- **Recently Completed, Closed Today, Avg Close Time, Throughput, Flow chart (resolved side), Trend comparisons** — always use **Tech Owner** (`customfield_10193`). Filter to NOVA team tech owners so metrics only count dev-team work.
+- **In-Progress, Team Activity, Dev Load Matrix, Workload** — use **assignee** (correct because the dev is assigned while actively working).
+- **Requested / Not Started** — use **assignee** (shows who currently has the ticket, may be CM or dev).
+
+The field is fetched as part of `DEFAULT_JIRA_FIELDS` in `jiraService.ts` and typed on `JiraIssueFields` as `customfield_10193: JiraUser | null`. Helpers `getTechOwnerName()`, `getTechOwnerAccountId()`, and `isTechOwnerNovaTeam()` in `operationalAnalytics.ts` centralize access.
+
 ### NOVA ticket hygiene
 
 NOVA tickets older than 14 days with no recent updates should be closed periodically to keep metrics accurate (avg age, oldest, open count). A cleanup was performed 2026-02-24 closing 36 stale tickets. If counts drift again, run a similar JQL: `project = NOVA AND statusCategory != Done AND updated < "-14d"` and transition to Done.
@@ -105,7 +116,7 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
 - **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 4-slide carousel (20s per slide):
   - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age).
-  - Slide 2: Recently Completed table (last 7 days, with resolved date).
+  - Slide 2: Recently Completed table (last 7 days, shows **Tech Owner** not assignee, filtered to NOVA team devs).
   - Slide 3: Backlog by Component + Aging Buckets (side-by-side horizontal bar charts).
   - Slide 4: Developer Load Matrix (assignee × component heatmap table).
   - KPI strip: In Progress, Completed (7d), Open, Avg Age, Oldest.

@@ -45,6 +45,8 @@ export interface JiraIssueFields {
   resolutiondate?: string | null;
   /** Jira components (e.g. Backend, Frontend). */
   components?: Array<{ id: string; name: string }> | null;
+  /** Tech Owner – the dev who actually does the work (customfield_10193). */
+  customfield_10193?: JiraUser | null;
 }
 
 export interface JiraIssue {

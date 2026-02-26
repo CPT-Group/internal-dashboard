@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Tech Owner for completed-ticket attribution**: All "completed" analytics now use Jira custom field `customfield_10193` (Tech Owner) instead of assignee. When devs finish work they reassign to the CM for UAT — so assignee at resolution is the CM, not the dev. Affected metrics: Recently Completed table (column renamed to "Tech Owner"), Closed Today KPI, Avg Close Time, Throughput Ratio, 14-day flow chart (resolved side), and trend comparisons. All filtered to NOVA team tech owners only. New helpers: `getTechOwnerName()`, `getTechOwnerAccountId()`, `isTechOwnerNovaTeam()`. `JiraIssueFields` type extended with `customfield_10193`. `JIRA_FIELD_TECH_OWNER` constant added to `JIRA_SHARED.ts`.
 - **Dev Corner Two slide duration**: Increased carousel slide time from 20 seconds to 2 minutes (120s) for better readability on TVs.
 - **In-progress tickets filtered to NOVA team only**: The Dev 2 "In Progress" card grid now only shows tickets assigned to NOVA team members, not all assignees on the board.
 - **Dev 1 NOVA Team panel: core devs only**: Brandon (scrum master) and Carlos excluded from the Dev 1 NOVA Team panel via `NOVA_CORE_DEVS` constant. They remain in all other charts (dev load matrix, JQL filters, etc.). Easy to re-add later by removing the filter.

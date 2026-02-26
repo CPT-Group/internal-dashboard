@@ -39,6 +39,23 @@ function getAssigneeName(issue: JiraIssue): string {
   return issue.fields?.assignee?.displayName ?? 'Unassigned';
 }
 
+/**
+ * Get the Tech Owner (the dev who actually does the work).
+ * Falls back to assignee if Tech Owner isn't set.
+ */
+function getTechOwnerName(issue: JiraIssue): string {
+  return issue.fields?.customfield_10193?.displayName ?? getAssigneeName(issue);
+}
+
+function getTechOwnerAccountId(issue: JiraIssue): string | null {
+  return issue.fields?.customfield_10193?.accountId ?? null;
+}
+
+function isTechOwnerNovaTeam(issue: JiraIssue): boolean {
+  const id = getTechOwnerAccountId(issue);
+  return id != null && NOVA_TEAM_ACCOUNT_IDS.has(id);
+}
+
 function getComponentNames(issue: JiraIssue): string[] {
   const comps = issue.fields?.components;
   if (!Array.isArray(comps) || comps.length === 0) return ['No component'];
@@ -166,7 +183,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
 
   const open = openIssues.filter((i) => !isDone(i));
   const landedToday = openedTodayIssues.length;
-  const closedToday = closedTodayIssues.length;
+  const closedToday = closedTodayIssues.filter(isTechOwnerNovaTeam).length;
   const netChangeToday = landedToday - closedToday;
 
   const ages = open.map((i) => getDevAgeDays(i, transitionDates)).filter((a) => a >= 0);
@@ -205,7 +222,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     }
     if (landedDate && landedDate in dayCountsLanded) dayCountsLanded[landedDate]++;
   });
-  resolvedLast14.forEach((issue) => {
+  resolvedLast14.filter(isTechOwnerNovaTeam).forEach((issue) => {
     const key = issue.fields?.resolutiondate?.slice(0, 10);
     if (key && key in dayCountsResolved) dayCountsResolved[key]++;
   });
@@ -325,9 +342,10 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
       status: issue.fields?.status?.name ?? '',
     }));
 
+  const resolvedByTeam = resolvedLast14.filter(isTechOwnerNovaTeam);
   const throughputRatio =
     landedLast14.length > 0
-      ? Math.round((resolvedLast14.length / landedLast14.length) * 100) / 100
+      ? Math.round((resolvedByTeam.length / landedLast14.length) * 100) / 100
       : 0;
 
   const riskRawScore = agingBuckets.reduce(
@@ -412,10 +430,11 @@ function buildTrendComparison(
 ): TrendComparison | null {
   if (!landedPrev14 || !resolvedPrev14) return null;
   const prevOpened = landedPrev14.length;
-  const prevClosed = resolvedPrev14.length;
+  const prevClosed = resolvedPrev14.filter(isTechOwnerNovaTeam).length;
+  const currentClosed = resolvedLast14.filter(isTechOwnerNovaTeam).length;
   return {
     openedDelta: landedLast14.length - prevOpened,
-    closedDelta: resolvedLast14.length - prevClosed,
+    closedDelta: currentClosed - prevClosed,
     prevOpened,
     prevClosed,
   };
@@ -424,6 +443,7 @@ function buildTrendComparison(
 function buildAvgCloseTime(resolvedLast14: JiraIssue[], transitionDates: Map<string, string>): number | null {
   const closeTimes: number[] = [];
   for (const issue of resolvedLast14) {
+    if (!isTechOwnerNovaTeam(issue)) continue;
     const project = getProjectKey(issue);
     let startDate = issue.fields?.created;
     if (project === 'CM' || project === 'OPRD') {
@@ -533,18 +553,19 @@ function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedT
   return resolvedLast14
     .filter((i) => {
       const rd = i.fields?.resolutiondate?.slice(0, 10);
-      return rd && rd >= cutoff;
+      if (!rd || rd < cutoff) return false;
+      return isTechOwnerNovaTeam(i);
     })
     .sort((a, b) => {
       const aDate = a.fields?.resolutiondate ?? '';
       const bDate = b.fields?.resolutiondate ?? '';
       return bDate.localeCompare(aDate);
     })
-    .slice(0, 20)
+    .slice(0, 30)
     .map((issue) => ({
       key: issue.key,
       summary: issue.fields?.summary ?? '',
-      assignee: getAssigneeName(issue),
+      techOwner: getTechOwnerName(issue),
       component: getComponentNames(issue).join(', '),
       resolvedDate: issue.fields?.resolutiondate?.slice(0, 10) ?? '',
       project: getProjectKey(issue),

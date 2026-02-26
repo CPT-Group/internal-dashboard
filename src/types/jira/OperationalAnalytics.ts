@@ -91,11 +91,12 @@ export interface InProgressTicket {
   project: string;
 }
 
-/** Recently completed ticket for company-facing display. */
+/** Recently completed ticket for company-facing display. Uses Tech Owner, not assignee. */
 export interface RecentlyCompletedTicket {
   key: string;
   summary: string;
-  assignee: string;
+  /** Tech Owner – the dev who actually did the work (not the CM who approved). */
+  techOwner: string;
   component: string;
   resolvedDate: string;
   project: string;
