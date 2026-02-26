@@ -119,7 +119,7 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Slide 2: Recently Completed table (last 7 days, shows **Tech Owner** not assignee, filtered to NOVA team devs).
   - Slide 3: Backlog by Component + Aging Buckets (side-by-side horizontal bar charts).
   - Slide 4: Developer Load Matrix (assignee × component heatmap table).
-  - KPI strip: In Progress, Completed (7d), Open, Avg Age, Oldest.
+  - KPI strip: In Progress, Completed (7d), Requested, Avg Age, Oldest. **No "Open"** — that's on Dev 1 (non-redundancy rule).
   - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `BacklogAgingSlide`, `DevLoadMatrixSlide`.
 
 **Non-redundancy rule**: Dev 1 and Dev 2 must NOT show duplicate data. Each dashboard has unique analytics and views. If a metric appears on Dev 1, it should not also appear on Dev 2.
