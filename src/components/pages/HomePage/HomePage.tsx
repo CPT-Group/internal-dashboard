@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Ripple } from 'primereact/ripple';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -36,8 +35,6 @@ export const HomePage = () => {
 
   return (
     <div className={styles.container}>
-      <Image src="/cpt-logo.webp" alt="CPT" width={120} height={120} className={styles.logo} priority />
-
       <div className={styles.grid}>
         {enabled.map((d) => (
           <div
