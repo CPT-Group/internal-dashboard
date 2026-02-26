@@ -194,8 +194,13 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
 
   const avgCloseTimeHours = buildAvgCloseTime(resolvedLast14, transitionDates);
 
+  const openNova = open.filter((i) => getProjectKey(i) === 'NOVA').length;
+  const openProd = open.length - openNova;
+
   const kpis: OperationalKpis = {
     openCount: open.length,
+    openNova,
+    openProd,
     landedToday,
     closedToday,
     netChangeToday,

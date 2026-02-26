@@ -54,8 +54,8 @@ export const DevCornerTwoDashboard = () => {
     { label: 'In Progress', value: inProgressTickets.length },
     { label: 'Completed (7d)', value: recentlyCompleted.length },
     { label: 'Requested', value: requestedTickets.length, severity: requestedTickets.length > 10 ? 'warning' : undefined },
-    { label: 'Avg Age', value: `${kpis.avgAgeDays}d` },
-    { label: 'Oldest', value: `${kpis.oldestAgeDays}d`, severity: kpis.oldestAgeDays > 30 ? 'danger' : kpis.oldestAgeDays > 14 ? 'warning' : undefined },
+    { label: 'Open (Prod)', value: kpis.openProd },
+    { label: 'Open (NOVA)', value: kpis.openNova },
   ], [kpis, inProgressTickets.length, recentlyCompleted.length, requestedTickets.length]);
 
   const slideClass = (idx: number) =>

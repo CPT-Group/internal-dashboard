@@ -4,6 +4,10 @@
 
 export interface OperationalKpis {
   openCount: number;
+  /** Open tickets from NOVA project only. */
+  openNova: number;
+  /** Open tickets from CM + OPRD (production/client work). */
+  openProd: number;
   /** Tickets that landed on team today (transitioned from New or created for NOVA). */
   landedToday: number;
   closedToday: number;
