@@ -26,6 +26,7 @@ import {
   DEV1_HOTSPOT_LIMIT,
   NOVA_TEAM_ACCOUNT_IDS,
   NOVA_TEAM_ORDERED,
+  NOVA_CORE_DEVS,
 } from '@/constants';
 
 const AGING_DAYS_THRESHOLD = 7;
@@ -493,7 +494,7 @@ function buildComponentActivity(
 }
 
 function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
-  return NOVA_TEAM_ORDERED.map(({ accountId, displayName }) => {
+  return NOVA_CORE_DEVS.map(({ accountId, displayName }) => {
     const myAll = open.filter((i) => i.fields?.assignee?.accountId === accountId);
     const myDevOpen = myAll.filter(isDevResponsible);
     const myInProgress = myAll.filter(isInProgress);
@@ -510,7 +511,7 @@ function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
 
 function buildInProgressTickets(open: JiraIssue[], transitionDates: Map<string, string>): InProgressTicket[] {
   return open
-    .filter(isInProgress)
+    .filter((i) => isInProgress(i) && isNovaTeam(i))
     .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .slice(0, 20)
     .map((issue) => ({

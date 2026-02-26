@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Dev Corner Two slide duration**: Increased carousel slide time from 20 seconds to 2 minutes (120s) for better readability on TVs.
+- **In-progress tickets filtered to NOVA team only**: The Dev 2 "In Progress" card grid now only shows tickets assigned to NOVA team members, not all assignees on the board.
+- **Dev 1 NOVA Team panel: core devs only**: Brandon (scrum master) and Carlos excluded from the Dev 1 NOVA Team panel via `NOVA_CORE_DEVS` constant. They remain in all other charts (dev load matrix, JQL filters, etc.). Easy to re-add later by removing the filter.
 - **Fixed NOVA team ID-to-name mapping**: The original 4 account IDs were mapped to the wrong display names (Thomas↔James, Kyle↔Roy all swapped). Verified all 6 IDs against Jira REST API and corrected. Added inline comments with Jira display names for future reference.
 - **NOVA Team "open" count filtered to dev-responsible statuses**: The per-member open count in the NOVA Team panel now only counts tickets in statuses where the dev team is responsible (e.g. To Do, In Progress, Dev Review, Data Team New, Development, Peer Testing). Excludes tickets handed back to requesters (UAT, Waiting, Data Team Complete, etc.). New `isDevResponsible` helper with per-project status sets.
 - **Themed scrollbars**: Applied scrollbar theme variables (`--scrollbar-track-bg`, `--scrollbar-thumb-bg`, `--scrollbar-thumb-hover-bg`) to all scrollable elements via WebKit pseudo-elements and `scrollbar-color` for Firefox. Scrollbars now switch with the theme.
