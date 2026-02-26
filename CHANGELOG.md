@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Workflow status documentation**: AGENTS.md updated with detailed per-project workflow diagrams (OPRD, CM, NOVA) including status-to-concept mapping table. Documents which statuses mean "requested", "actively working", "testing", and "done" for each project.
 - **NOVA ticket cleanup**: Closed 36 stale NOVA tickets (not updated in 14+ days) via Jira transitions API. Removed old testing/placeholder tickets (NOVA-1 through NOVA-10) and stale backlog items. Added hygiene guidance to AGENTS.md.
 
+- **Home screen compact tile redesign**: Replaced large card grid with compact clickable tiles (icon + title only). Removed title/subtitle header, "View Dashboard" buttons, and card descriptions. CPT logo at top. Theme switcher moved to bottom-right corner, subtle. 3-column grid, minimal padding. Julie's unicorn variant preserved.
+
 ### Changed
 
 - **Tech Owner for completed-ticket attribution**: All "completed" analytics now use Jira custom field `customfield_10193` (Tech Owner) instead of assignee. When devs finish work they reassign to the CM for UAT — so assignee at resolution is the CM, not the dev. Affected metrics: Recently Completed table (column renamed to "Tech Owner"), Closed Today KPI, Avg Close Time, Throughput Ratio, 14-day flow chart (resolved side), and trend comparisons. All filtered to NOVA team tech owners only. New helpers: `getTechOwnerName()`, `getTechOwnerAccountId()`, `isTechOwnerNovaTeam()`. `JiraIssueFields` type extended with `customfield_10193`. `JIRA_FIELD_TECH_OWNER` constant added to `JIRA_SHARED.ts`. Tech Owner ID falls back to assignee when field is empty (NOVA tickets).

@@ -1,0 +1,97 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  max-height: 100vh;
+  padding: 1.5rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.logo {
+  width: 6rem;
+  height: auto;
+  margin-bottom: 1rem;
+  opacity: 0.85;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 48rem;
+}
+
+.tile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--border-radius);
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.tileUnicorn {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--surface-card), var(--surface-card)) padding-box,
+    linear-gradient(135deg, rgba(192, 132, 252, 0.4), rgba(244, 114, 182, 0.35), rgba(192, 132, 252, 0.3)) border-box;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 8px rgba(192, 132, 252, 0.2);
+  }
+}
+
+.tileIcon {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  flex-shrink: 0;
+  width: 2rem;
+  text-align: center;
+}
+
+.tileTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.themeSwitcher {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--surface-border);
+  font-size: 0.75rem;
+  background: var(--surface-card);
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+    background: var(--surface-hover);
+  }
+}
