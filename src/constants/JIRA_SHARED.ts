@@ -18,9 +18,19 @@ function getPacificHour(): number {
 
 export function getJiraCacheTtl(): number {
   const hour = getPacificHour();
-  return hour >= BUSINESS_START_HOUR && hour < BUSINESS_END_HOUR
-    ? BUSINESS_TTL_MS
-    : OFF_HOURS_TTL_MS;
+  return isBusinessHours(hour) ? BUSINESS_TTL_MS : OFF_HOURS_TTL_MS;
+}
+
+const BUSINESS_RELOAD_MS = 2 * 60 * 60 * 1000;
+const OFF_HOURS_RELOAD_MS = 3 * 60 * 60 * 1000;
+
+export function getPageReloadInterval(): number {
+  const hour = getPacificHour();
+  return isBusinessHours(hour) ? BUSINESS_RELOAD_MS : OFF_HOURS_RELOAD_MS;
+}
+
+function isBusinessHours(hour: number): boolean {
+  return hour >= BUSINESS_START_HOUR && hour < BUSINESS_END_HOUR;
 }
 
 export const JIRA_SEARCH_MAX_RESULTS = 1000;
