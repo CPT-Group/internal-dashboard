@@ -9,16 +9,20 @@ Context for AI coding agents working on this repo. See also README (if present) 
 
 ## The NOVA team
 
-The dev team is called **NOVA** — *Nerds Of Vast Automation*. Four members:
+The dev team is called **NOVA** — *Nerds Of Vast Automation*. Six members:
 
-| Name | Jira accountId |
-|---|---|
-| Kyle Dilbeck | `712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f` |
-| James Cassidy | `712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd` |
-| Roy R | `712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837` |
-| Thomas Williams | `712020:02567f23-bfb1-419b-aadd-9e51f5ed81ef` |
+| Name | Jira accountId | Jira displayName |
+|---|---|---|
+| Roy | `712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f` | royr |
+| Thomas Williams | `712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd` | Thomas Williams |
+| Kyle Dilbeck | `712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837` | Kyle Dilbeck |
+| James Cassidy | `712020:02567f23-bfb1-419b-aadd-9e51f5ed81ef` | James Cassidy |
+| Brandon Fay | `712020:384111d1-8f9d-4155-8420-37ff1888d6c3` | Brandon Fay |
+| Carlos | `712020:47cb6286-8794-44bf-bcb8-6ca1b6aadb79` | Carlos |
 
-Constant: `NOVA_TEAM.ts` (IDs, display names, ordered list for charts, `isNovaTeamMember` helper).
+Verified against Jira REST API (`GET /rest/api/3/user?accountId=...`) on 2026-02-24.
+
+Constant: `NOVA_TEAM.ts` (IDs, display names, ordered list for charts, `isNovaTeamMember` helper). The array order matters — IDs and display names are matched by index.
 
 ## Jira workflow and projects
 
