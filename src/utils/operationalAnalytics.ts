@@ -378,6 +378,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const inProgressTickets = buildInProgressTickets(open, transitionDates);
   const recentlyCompleted = buildRecentlyCompleted(resolvedLast14);
   const requestedTickets = buildRequestedTickets(open, transitionDates);
+  const { byProject, byBoardByComponent } = buildByBoardByComponent(open);
 
   return {
     kpis,
@@ -399,6 +400,8 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     inProgressTickets,
     recentlyCompleted,
     requestedTickets,
+    byProject,
+    byBoardByComponent,
   };
 }
 
@@ -592,4 +595,24 @@ function buildRequestedTickets(open: JiraIssue[], transitionDates: Map<string, s
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
     }));
+}
+
+function buildByBoardByComponent(open: JiraIssue[]): {
+  byProject: Record<string, number>;
+  byBoardByComponent: Record<string, Record<string, number>>;
+} {
+  const byProject: Record<string, number> = {};
+  const byBoardByComponent: Record<string, Record<string, number>> = {};
+
+  for (const issue of open) {
+    const project = getProjectKey(issue);
+    byProject[project] = (byProject[project] ?? 0) + 1;
+
+    if (!byBoardByComponent[project]) byBoardByComponent[project] = {};
+    for (const comp of getComponentNames(issue)) {
+      byBoardByComponent[project][comp] = (byBoardByComponent[project][comp] ?? 0) + 1;
+    }
+  }
+
+  return { byProject, byBoardByComponent };
 }

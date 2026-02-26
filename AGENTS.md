@@ -122,6 +122,12 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - KPI strip: In Progress, Completed (7d), Requested, Open (Prod), Open (NOVA). **No total "Open"** — that's on Dev 1 (non-redundancy rule). Prod = CM + OPRD.
   - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `BacklogAgingSlide`, `DevLoadMatrixSlide`.
 
+- **Trevor's Screen** — **NOVA-focused, mobile-friendly**. Single-view layout:
+  - KPI strip: NOVA Active, In Progress, To Do, Review/QA, Total Open.
+  - Left: By Board & Component stacked bar chart (CM/OPRD/NOVA with component breakdown).
+  - Right: NOVA Tickets table (all active NOVA tickets sorted by status, with auto-scroll).
+  - Uses `operationalJiraStore` (same data as Dev Corner). No Gantt, no radar, no bar+line.
+
 **Non-redundancy rule**: Dev 1 and Dev 2 must NOT show duplicate data. Each dashboard has unique analytics and views. If a metric appears on Dev 1, it should not also appear on Dev 2.
 
 ### Auto-refresh strategy
@@ -138,8 +144,8 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 ```
 
 **Stores** (`src/stores/`):
-- `operationalJiraStore` — **Shared by Dev Corner One and Two** (both read from same `OperationalAnalytics`). Fetches 7 parallel JQL queries + batch changelog for transition dates. Builds `OperationalAnalytics` with KPIs, flow data, backlog, devLoadMatrix, agingBuckets, oldest10, throughputRatio, riskScore, agingHotspots, trendVsPrevious14d, **plus** `componentActivity` (per-component open/today/week), `teamActivity` (NOVA member in-progress), `inProgressTickets` (cards), `recentlyCompleted` (7d table). Dev 1 reads throughput/component/team data; Dev 2 reads in-progress/completed/backlog/matrix data.
-- `trevorJiraStore` — Trevor's Screen. Fetches team-scoped tickets (NOVA team across OPRD/CM/NOVA, last 6 months). Builds `NovaAnalytics`.
+- `operationalJiraStore` — **Shared by Dev Corner One, Two, and Trevor's Screen** (all read from same `OperationalAnalytics`). Fetches 7 parallel JQL queries + batch changelog for transition dates. Builds `OperationalAnalytics` with KPIs, flow data, backlog, devLoadMatrix, agingBuckets, oldest10, throughputRatio, riskScore, agingHotspots, trendVsPrevious14d, **plus** `componentActivity`, `teamActivity`, `inProgressTickets`, `recentlyCompleted`, `requestedTickets`, `byProject`, `byBoardByComponent`. Dev 1 reads throughput/component/team data; Dev 2 reads in-progress/completed/requested/matrix data; Trevor reads NOVA tickets + board-by-component chart.
+- `trevorJiraStore` — Legacy store (still exists but no longer used by Trevor's Screen).
 - `jiraNovaStore` — NOVA project analytics (open/today/overdue/done).
 - `dev1JiraStore` — Dev Corner One extended analytics (NOVA, last 6 months).
 - All stores filter with `filterIssuesNovaMinKey` (NOVA-661+) to exclude legacy issues.

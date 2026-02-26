@@ -77,7 +77,7 @@ export function toOpenAndAvgDaysByAssigneeChartData(
  * Build stacked bar chart data: boards and by-board-by-component counts.
  */
 export function toByBoardByComponentChartData(
-  analytics: NovaAnalytics
+  analytics: NovaAnalytics | OperationalAnalytics
 ): ByBoardByComponentChartData {
   const byProject = analytics.byProject ?? {};
   const byBoardByComponent = analytics.byBoardByComponent ?? {};

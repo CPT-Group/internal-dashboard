@@ -1,223 +1,155 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import dynamic from 'next/dynamic';
 import { Card } from 'primereact/card';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Tag } from 'primereact/tag';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
-import { Skeleton } from 'primereact/skeleton';
-import type { JiraIssue } from '@/types';
-import { useTrevorJiraStore } from '@/stores';
-import { TextScroller } from '@/components/ui';
-import {
-  OpenClosedAvgHoursByAssigneeRadarChart,
-  OpenAndAvgDaysByAssigneeBarLineChart,
-  ByBoardByComponentStackedBarChart,
-} from '@/components/charts';
-import {
-  toOpenClosedAvgHoursByAssigneeRadarChartData,
-  toOpenAndAvgDaysByAssigneeChartData,
-  toByBoardByComponentChartData,
-} from '@/utils/chartDataMappers';
-import { NOVA_TEAM_ORDERED } from '@/constants';
-import './TrevorDashboard.module.scss';
+import type { InProgressTicket } from '@/types';
+import { useOperationalJiraStore } from '@/stores';
+import { KpiStrip } from '@/components/ui';
+import type { KpiItem } from '@/components/ui';
+import { ByBoardByComponentStackedBarChart } from '@/components/charts';
+import { toByBoardByComponentChartData } from '@/utils/chartDataMappers';
+import { useAutoScroll } from '@/hooks';
+import styles from './TrevorDashboard.module.scss';
 
-const GanttChartDynamic = dynamic(
-  () => import('@/components/charts').then((m) => m.GanttChart),
-  { ssr: false, loading: () => <Skeleton width="100%" height="180px" /> }
+const POLL_INTERVAL_MS = 60_000;
+
+const STATUS_ORDER = ['To Do', 'Data Team New', 'Requested', 'In Progress', 'Data Team In Progress',
+  'Development', 'DEVELOPMENT', 'Dev Review', 'Peer Testing', 'PEER TESTING',
+  'Data Team Testing', 'QA', 'QA/QC'];
+
+function statusSeverity(status: string): 'info' | 'success' | 'warning' | 'danger' | undefined {
+  const s = status.toLowerCase();
+  if (s.includes('progress') || s === 'development') return 'info';
+  if (s.includes('review') || s.includes('testing') || s === 'qa' || s === 'qa/qc' || s === 'peer testing') return 'warning';
+  if (s.includes('to do') || s.includes('new') || s === 'requested') return undefined;
+  return undefined;
+}
+
+const summaryBody = (row: InProgressTicket) =>
+  row.summary.length > 55 ? row.summary.slice(0, 52) + '…' : row.summary;
+
+const statusBody = (row: InProgressTicket) => (
+  <Tag value={row.status} severity={statusSeverity(row.status)} />
 );
 
-function getAssigneeName(issue: JiraIssue): string {
-  return issue.fields?.assignee?.displayName ?? 'Unassigned';
-}
-
-function toYyyyMmDd(iso: string): string {
-  return iso.slice(0, 10);
-}
-
-function addDays(iso: string, days: number): string {
-  const d = new Date(iso);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-function isDone(issue: {
-  fields?: { status?: { statusCategory?: { key?: string } } };
-}): boolean {
-  return issue.fields?.status?.statusCategory?.key === 'done';
-}
+const componentBody = (row: InProgressTicket) =>
+  row.component.length > 18 ? row.component.slice(0, 16) + '…' : row.component;
 
 export const TrevorDashboard = () => {
-  const { fetchTrevorData, isStale, loading, error, getAnalytics, getAllIssues } =
-    useTrevorJiraStore();
+  const { fetchOperationalData, isStale, loading, error, getAnalytics } =
+    useOperationalJiraStore();
 
   useEffect(() => {
-    if (isStale()) void fetchTrevorData();
+    if (isStale()) void fetchOperationalData();
     const interval = setInterval(() => {
-      if (isStale()) void fetchTrevorData();
-    }, 60 * 1000);
+      if (isStale()) void fetchOperationalData();
+    }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [fetchTrevorData, isStale]);
+  }, [fetchOperationalData, isStale]);
 
   const analytics = getAnalytics();
-  const allIssues = getAllIssues();
+  const { kpis, inProgressTickets, requestedTickets } = analytics;
 
-  const radarChartData = useMemo(
-    () => toOpenClosedAvgHoursByAssigneeRadarChartData(analytics, NOVA_TEAM_ORDERED),
-    [analytics]
-  );
-  const barLineChartData = useMemo(
-    () => toOpenAndAvgDaysByAssigneeChartData(analytics, NOVA_TEAM_ORDERED),
-    [analytics]
-  );
   const byBoardChartData = useMemo(
     () => toByBoardByComponentChartData(analytics),
     [analytics]
   );
 
-  const ganttTasks = useMemo(() => {
-    const today = toYyyyMmDd(new Date().toISOString());
+  const novaActive = useMemo(() => {
+    const allActive = [...inProgressTickets, ...requestedTickets];
+    return allActive
+      .filter((t) => t.project === 'NOVA')
+      .sort((a, b) => {
+        const ai = STATUS_ORDER.indexOf(a.status);
+        const bi = STATUS_ORDER.indexOf(b.status);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+  }, [inProgressTickets, requestedTickets]);
 
-    function parseDate(value: unknown): string | null {
-      if (value == null) return null;
-      if (typeof value === 'string') {
-        if (value.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-      }
-      if (typeof value === 'number') {
-        const d = new Date(value);
-        return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-      }
-      return null;
-    }
+  const novaInProgress = novaActive.filter((t) => {
+    const s = t.status.toLowerCase();
+    return s.includes('progress') || s === 'development';
+  }).length;
 
-    return allIssues
-      .map((issue) => {
-        const created = parseDate(issue.fields?.created);
-        if (!created) return null;
-        const duedateRaw = parseDate(issue.fields?.duedate);
-        const duedate = duedateRaw ?? addDays(created, 14);
-        const end = duedate > today ? duedate : today;
-        const progress = isDone(issue) ? 100 : 0;
-        const assignee = getAssigneeName(issue);
-        const summary =
-          (issue.fields?.summary ?? '').length > 40
-            ? (issue.fields.summary as string).slice(0, 37) + '...'
-            : (issue.fields?.summary ?? issue.key);
-        return {
-          id: issue.key,
-          name: `[${assignee}] ${issue.key}: ${summary}`,
-          start: created,
-          end,
-          progress,
-        };
-      })
-      .filter((t): t is NonNullable<typeof t> => t != null)
-      .sort((a, b) => a.start.localeCompare(b.start));
-  }, [allIssues]);
+  const novaReview = novaActive.filter((t) => {
+    const s = t.status.toLowerCase();
+    return s.includes('review') || s.includes('testing') || s === 'qa' || s === 'qa/qc';
+  }).length;
 
-  if (loading && analytics.totalOpen === 0 && analytics.totalDone === 0) {
+  const novaToDo = novaActive.filter((t) => {
+    const s = t.status.toLowerCase();
+    return s.includes('to do') || s.includes('new') || s === 'requested';
+  }).length;
+
+  const kpiItems: KpiItem[] = useMemo(() => [
+    { label: 'NOVA Active', value: novaActive.length },
+    { label: 'In Progress', value: novaInProgress },
+    { label: 'To Do', value: novaToDo },
+    { label: 'Review / QA', value: novaReview },
+    { label: 'Total Open', value: kpis.openCount },
+  ], [novaActive.length, novaInProgress, novaToDo, novaReview, kpis.openCount]);
+
+  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
+
+  if (loading && kpis.openCount === 0) {
     return (
-      <div className="trevor-dashboard-content">
-        <div className="trevor-stats-strip">
-          <div className="trevor-stats-strip-inner">
-            <Skeleton width="100%" height="1.5rem" />
-          </div>
-        </div>
-        <Card className="trevor-gantt-card flex-1">
-          <Skeleton width="100%" height="140px" />
-        </Card>
-        <div className="flex align-items-center gap-2 mt-1">
-          <ProgressSpinner className="progress-spinner-sm" />
-          <span className="text-color-secondary text-xs">Loading…</span>
-        </div>
+      <div className={styles.dashboard}>
+        <div className={styles.loadingWrap}><ProgressSpinner /></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="trevor-dashboard-content p-2">
+      <div className={styles.dashboard}>
         <Message severity="error" text={error} className="w-full" />
       </div>
     );
   }
 
-  const statsScrollerContent = (
-    <>
-      <span className="trevor-stat-item">
-        <i className="pi pi-inbox" aria-hidden />
-        <strong>{analytics.totalOpen}</strong> Open
-      </span>
-      <span className="trevor-stat-sep" aria-hidden> · </span>
-      <span className="trevor-stat-item">
-        <i className="pi pi-calendar" aria-hidden />
-        <strong>{analytics.totalToday}</strong> Today
-      </span>
-      <span className="trevor-stat-sep" aria-hidden> · </span>
-      <span className="trevor-stat-item trevor-stat-late">
-        <i className="pi pi-exclamation-triangle" aria-hidden />
-        <strong>{analytics.totalOverdue}</strong> Late
-      </span>
-      <span className="trevor-stat-sep" aria-hidden> · </span>
-      <span className="trevor-stat-item trevor-stat-done">
-        <i className="pi pi-check-circle" aria-hidden />
-        <strong>{analytics.totalDone}</strong> Done
-      </span>
-    </>
-  );
-
   return (
-    <div className="trevor-dashboard-content">
-      <div className="trevor-stats-strip">
-        <TextScroller className="trevor-stats-scroller" duration={22}>
-          {statsScrollerContent}
-        </TextScroller>
+    <div className={styles.dashboard}>
+      <div className={styles.kpiRow}>
+        <KpiStrip items={kpiItems} />
       </div>
 
-      <div className="grid trevor-charts-row">
-        <div className="col-12 md:col-7">
-          <Card
-            title="Open, closed & avg hours by assignee"
-            subTitle="CM, NOVA, OPRD"
-            className="trevor-chart-card"
-          >
-            <OpenClosedAvgHoursByAssigneeRadarChart data={radarChartData} />
+      <div className={styles.mainContent}>
+        <div className={styles.chartCol}>
+          <Card className={styles.chartCard}>
+            <div className={styles.panelHeader}>By Board &amp; Component</div>
+            <ByBoardByComponentStackedBarChart data={byBoardChartData} />
           </Card>
         </div>
-        <div className="col-12 md:col-5">
-          <Card title="Distribution" className="trevor-chart-card trevor-chart-card-distribution">
-            <OpenAndAvgDaysByAssigneeBarLineChart data={barLineChartData} />
+
+        <div className={styles.tableCol}>
+          <Card className={styles.tableCard}>
+            <div className={styles.panelHeader}>
+              NOVA Tickets
+              <Tag value={`${novaActive.length}`} severity="info" className="ml-2" />
+            </div>
+            <div ref={scrollRef} className={styles.tableScrollWrap}>
+              <DataTable
+                value={novaActive}
+                size="small"
+                stripedRows
+                showGridlines
+                emptyMessage="No active NOVA tickets"
+              >
+                <Column field="key" header="Key" style={{ width: '80px' }} />
+                <Column field="summary" header="Summary" body={summaryBody} />
+                <Column field="assignee" header="Assignee" style={{ width: '100px' }} />
+                <Column field="status" header="Status" body={statusBody} style={{ width: '100px' }} />
+                <Column field="component" header="Component" body={componentBody} style={{ width: '110px' }} />
+              </DataTable>
+            </div>
           </Card>
         </div>
       </div>
-
-      {Object.keys(analytics.byProject ?? {}).length > 0 && (
-        <div className="grid trevor-board-row">
-          <div className="col-12">
-            <Card title="By board & component" className="trevor-chart-card">
-              <ByBoardByComponentStackedBarChart data={byBoardChartData} />
-            </Card>
-          </div>
-        </div>
-      )}
-
-      <Card
-        title="Dev Team Timeline"
-        className={`trevor-gantt-card ${ganttTasks.length > 0 ? 'flex-1' : 'trevor-gantt-empty'}`}
-      >
-        <div className="trevor-gantt-wrap">
-          <GanttChartDynamic tasks={ganttTasks} noData={allIssues.length === 0} />
-        </div>
-      </Card>
-
-      {loading && (
-        <div className="flex align-items-center gap-2 mt-1 flex-shrink-0">
-          <ProgressSpinner className="progress-spinner-sm" />
-          <span className="text-color-secondary text-xs">Refreshing…</span>
-        </div>
-      )}
     </div>
   );
 };

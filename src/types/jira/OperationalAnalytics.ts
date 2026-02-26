@@ -160,4 +160,8 @@ export interface OperationalAnalytics {
   recentlyCompleted: RecentlyCompletedTicket[];
   /** Tickets requested but not yet started by dev team (Dev 2 slide). */
   requestedTickets: RequestedTicket[];
+  /** Open count per project key (e.g. { CM: 24, OPRD: 15, NOVA: 19 }). */
+  byProject: Record<string, number>;
+  /** Open count per project per component (e.g. { CM: { 'Weekly Reports': 5, ... }, ... }). */
+  byBoardByComponent: Record<string, Record<string, number>>;
 }

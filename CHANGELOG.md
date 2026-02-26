@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NOVA ticket cleanup**: Closed 36 stale NOVA tickets (not updated in 14+ days) via Jira transitions API. Removed old testing/placeholder tickets (NOVA-1 through NOVA-10) and stale backlog items. Added hygiene guidance to AGENTS.md.
 
 - **Home screen compact tile redesign**: Replaced large card grid with compact clickable tiles (icon + title only). Removed title/subtitle header, "View Dashboard" buttons, and card descriptions. Theme switcher moved to bottom-right corner, subtle. 3-column grid, minimal padding. Julie's unicorn variant preserved.
+- **`byProject` and `byBoardByComponent` on OperationalAnalytics**: New fields computing open ticket counts per project and per project-per-component. Used by Trevor's Screen and the ByBoardByComponent stacked bar chart.
 
 ### Changed
+
+- **Trevor's Screen redesign**: Complete rework — killed radar chart, bar+line chart, Gantt timeline, and scrolling stats bar. All data was inaccurate. Switched from legacy `trevorJiraStore`/`NovaAnalytics` to `operationalJiraStore`/`OperationalAnalytics` for correct, consistent data. New layout: NOVA-focused KPI strip (NOVA Active, In Progress, To Do, Review/QA, Total Open), By Board & Component stacked bar chart (left), NOVA Tickets table sorted by status with auto-scroll (right). Mobile-responsive.
 
 - **Tech Owner for completed-ticket attribution**: All "completed" analytics now use Jira custom field `customfield_10193` (Tech Owner) instead of assignee. When devs finish work they reassign to the CM for UAT — so assignee at resolution is the CM, not the dev. Affected metrics: Recently Completed table (column renamed to "Tech Owner"), Closed Today KPI, Avg Close Time, Throughput Ratio, 14-day flow chart (resolved side), and trend comparisons. All filtered to NOVA team tech owners only. New helpers: `getTechOwnerName()`, `getTechOwnerAccountId()`, `isTechOwnerNovaTeam()`. `JiraIssueFields` type extended with `customfield_10193`. `JIRA_FIELD_TECH_OWNER` constant added to `JIRA_SHARED.ts`. Tech Owner ID falls back to assignee when field is empty (NOVA tickets).
 - **NOVA Tech Owner backfill**: Set `customfield_10193` (Tech Owner) = assignee on all 168 NOVA tickets that had no tech owner. Covers all issue types (Story, Task, Sub-task, Research, Bug) across all statuses.
