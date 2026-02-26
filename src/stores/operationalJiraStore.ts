@@ -4,7 +4,7 @@ import type { OperationalAnalytics } from '@/types';
 import { buildOperationalAnalytics } from '@/utils/operationalAnalytics';
 import { jiraSearch, jiraTransitionDates } from '@/services/api/jiraSearchClient';
 import {
-  JIRA_CACHE_TTL_MS,
+  getJiraCacheTtl,
   JIRA_SEARCH_MAX_RESULTS,
   JIRA_OPERATIONAL_JQL_OPEN,
   JIRA_OPERATIONAL_JQL_LANDED_TODAY,
@@ -61,7 +61,7 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
   isStale: () => {
     const last = get().lastFetched;
     if (last == null) return true;
-    return Date.now() - last > JIRA_CACHE_TTL_MS;
+    return Date.now() - last > getJiraCacheTtl();
   },
 
   fetchOperationalData: async (force = false) => {

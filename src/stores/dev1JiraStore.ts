@@ -4,7 +4,7 @@ import type { NovaAnalytics } from '@/types';
 import { buildAnalyticsFromIssueList } from '@/utils/jiraAnalytics';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
 import {
-  JIRA_CACHE_TTL_MS,
+  getJiraCacheTtl,
   JIRA_SEARCH_MAX_RESULTS,
   JIRA_DEV1_JQL,
   JIRA_DEV1_JQL_OPEN,
@@ -33,7 +33,7 @@ export const useDev1JiraStore = create<Dev1JiraState>((set, get) => ({
   isStale: () => {
     const last = get().lastFetched;
     if (last == null) return true;
-    return Date.now() - last > JIRA_CACHE_TTL_MS;
+    return Date.now() - last > getJiraCacheTtl();
   },
 
   fetchDev1Data: async (force = false) => {

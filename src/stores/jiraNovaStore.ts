@@ -4,7 +4,7 @@ import type { NovaAnalytics } from '@/types';
 import { buildAnalyticsFromNovaQueries } from '@/utils/jiraAnalytics';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
 import {
-  JIRA_CACHE_TTL_MS,
+  getJiraCacheTtl,
   JIRA_SEARCH_MAX_RESULTS,
   JIRA_NOVA_JQL_TODAY,
   JIRA_NOVA_JQL_OPEN,
@@ -39,7 +39,7 @@ export const useJiraNovaStore = create<JiraNovaState>((set, get) => ({
   isStale: () => {
     const last = get().lastFetched;
     if (last == null) return true;
-    return Date.now() - last > JIRA_CACHE_TTL_MS;
+    return Date.now() - last > getJiraCacheTtl();
   },
 
   fetchNovaData: async (force = false) => {

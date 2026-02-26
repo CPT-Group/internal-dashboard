@@ -127,8 +127,8 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
 ### Auto-refresh strategy
 
 All TV dashboards use a dual-refresh approach:
-- **Soft re-fetch**: Zustand stores poll every 60s and re-fetch if stale (cache TTL 30 min). Data updates without page flicker.
-- **Hard page reload**: Full `window.location.reload()` every few hours to ensure clean state, clear memory leaks, and pick up any deployed code changes. Configurable interval.
+- **Soft re-fetch**: Zustand stores poll every 60s and re-fetch if stale. Cache TTL is **time-aware** via `getJiraCacheTtl()` in `JIRA_SHARED.ts`: **20 min during business hours (6 AM–8 PM Pacific)**, **60 min off-hours**. Data updates without page flicker.
+- **Hard page reload**: Full `window.location.reload()` every 3 hours to ensure clean state, clear memory leaks, and pick up any deployed code changes. Via `usePageAutoRefresh` hook.
 
 ### Analytics dashboards (Dev Corner, Trevor)
 
@@ -145,7 +145,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 - All stores filter with `filterIssuesNovaMinKey` (NOVA-661+) to exclude legacy issues.
 
 **JQL constants** (`src/constants/`):
-- `JIRA_SHARED.ts` — cache TTL (30 min), max results (1000).
+- `JIRA_SHARED.ts` — `getJiraCacheTtl()` (20 min business hours / 60 min off-hours, Pacific), max results (1000), Tech Owner field ID.
 - `JIRA_OPERATIONAL.ts` — multi-project queries (CM + OPRD + NOVA) with dev-component and status scoping. **"Landed on team"** queries use `status changed FROM "New"` for CM/OPRD and `created` for NOVA. See "JQL scoping rules" above.
 - `JIRA_TREVOR.ts` — NOVA team queries (assignee-scoped).
 - `JIRA_NOVA.ts` — NOVA project queries (min key 661).
