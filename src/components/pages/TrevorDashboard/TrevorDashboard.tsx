@@ -11,8 +11,10 @@ import type { InProgressTicket } from '@/types';
 import { useOperationalJiraStore } from '@/stores';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
-import { ByBoardByComponentStackedBarChart } from '@/components/charts';
+import { ByBoardByComponentStackedBarChart, HorizontalBarChart } from '@/components/charts';
 import { toByBoardByComponentChartData } from '@/utils/chartDataMappers';
+import type { HorizontalBarChartData } from '@/types/charts';
+import { NOVA_TEAM_ORDERED } from '@/constants';
 import { useAutoScroll } from '@/hooks';
 import styles from './TrevorDashboard.module.scss';
 
@@ -53,12 +55,24 @@ export const TrevorDashboard = () => {
   }, [fetchOperationalData, isStale]);
 
   const analytics = getAnalytics();
-  const { kpis, inProgressTickets, requestedTickets } = analytics;
+  const { kpis, inProgressTickets, requestedTickets, teamActivity } = analytics;
 
   const byBoardChartData = useMemo(
     () => toByBoardByComponentChartData(analytics),
     [analytics]
   );
+
+  const teamLoadData: HorizontalBarChartData = useMemo(() => {
+    const members = NOVA_TEAM_ORDERED.map((m) => {
+      const ta = teamActivity.find((t) => t.accountId === m.accountId);
+      return { name: m.displayName.split(' ')[0], count: ta?.openCount ?? 0 };
+    }).sort((a, b) => b.count - a.count);
+
+    return {
+      labels: members.map((m) => m.name),
+      values: members.map((m) => m.count),
+    };
+  }, [teamActivity]);
 
   const novaActive = useMemo(() => {
     const allActive = [...inProgressTickets, ...requestedTickets];
@@ -123,6 +137,10 @@ export const TrevorDashboard = () => {
           <Card className={styles.chartCard}>
             <div className={styles.panelHeader}>By Board &amp; Component</div>
             <ByBoardByComponentStackedBarChart data={byBoardChartData} />
+          </Card>
+          <Card className={styles.chartCard}>
+            <div className={styles.panelHeader}>NOVA Team Load</div>
+            <HorizontalBarChart data={teamLoadData} />
           </Card>
         </div>
 
