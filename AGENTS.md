@@ -124,7 +124,8 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
 
 - **Trevor's Screen** — **NOVA-focused, mobile-friendly**. Single-view layout:
   - KPI strip: NOVA Active, In Progress, To Do, Review/QA, Total Open.
-  - Left: By Board & Component stacked bar chart (CM/OPRD/NOVA with component breakdown).
+  - Top-left: By Board & Component stacked bar chart (CM/OPRD/NOVA with component breakdown).
+  - Bottom-left: NOVA Team Load horizontal bar chart (open tickets per dev, sorted descending).
   - Right: NOVA Tickets table (all active NOVA tickets sorted by status, with auto-scroll).
   - Uses `operationalJiraStore` (same data as Dev Corner). No Gantt, no radar, no bar+line.
 
