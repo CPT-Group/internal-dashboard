@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **New slideshow background images**: Added 74 new images across all three slideshow dashboards — 26 for Conference Room, 25 for Julie's Unicorns, 23 for Jackie's Cute Backgrounds. Regenerated all three `.generated.ts` slide lists via build-time scripts.
+
 - **NOVA team constant** (`NOVA_TEAM.ts`): Renamed from `TREVOR_TEAM` to reflect the team name — *Nerds Of Vast Automation*. Now includes all 6 dev team members: Kyle, James, Roy, Thomas, Brandon Fay, Carlos. Exports `NOVA_TEAM_ACCOUNT_IDS_ARRAY`, `NOVA_TEAM_ACCOUNT_IDS` (Set), `NOVA_TEAM_DISPLAY_NAMES`, `NOVA_TEAM_ORDERED`, `NovaTeamMember` type, and `isNovaTeamMember` helper. All references across stores, JQL constants, and dashboards updated.
 - **Dev Load Matrix filtered to NOVA team only**: The Developer Load Matrix now only shows NOVA team members (6 devs), not every assignee across all tickets. Matrix builder in `operationalAnalytics.ts` filters by `NOVA_TEAM_ACCOUNT_IDS` and always includes all 6 members even if they have zero tickets.
 - **Requested Tickets slide (Dev Corner Two)**: Replaced Backlog & Aging slide with "Requested — Not Yet Started" table showing tickets waiting for dev pickup. Sorted by age descending with color-coded age tags (info ≤ 3d, warning 4–7d, danger > 7d). Status mapping per project: OPRD → TO DO / Requirement Review, CM → DATA TEAM NEW / REQUESTED, NOVA → TO DO. New `RequestedTicket` type and `isRequestedNotStarted` helper.
