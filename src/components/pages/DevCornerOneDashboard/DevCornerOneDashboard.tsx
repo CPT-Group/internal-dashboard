@@ -6,8 +6,7 @@ import { Message } from 'primereact/message';
 import { useOperationalJiraStore } from '@/stores';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
-import { toOpenedClosedFlowChartData } from '@/utils/chartDataMappers';
-import { ThroughputPanel } from './ThroughputPanel';
+import { WorkHoursTodayPanel } from './WorkHoursTodayPanel';
 import { ComponentActivityPanel } from './ComponentActivityPanel';
 import { TeamActivityPanel } from './TeamActivityPanel';
 import styles from './DevCornerOneDashboard.module.scss';
@@ -33,9 +32,7 @@ export const DevCornerOneDashboard = () => {
   }, [fetchOperationalData, isStale]);
 
   const analytics = getAnalytics();
-  const { kpis, throughputRatio, trendVsPrevious14d, componentActivity, teamActivity } = analytics;
-
-  const flowData = useMemo(() => toOpenedClosedFlowChartData(analytics), [analytics]);
+  const { kpis, throughputRatio, componentActivity, teamActivity } = analytics;
 
   const kpiItems: KpiItem[] = useMemo(() => [
     { label: 'Open', value: kpis.openCount },
@@ -80,11 +77,7 @@ export const DevCornerOneDashboard = () => {
       </div>
       <div className={styles.middleRow}>
         <div className={styles.leftCol}>
-          <ThroughputPanel
-            flowData={flowData}
-            throughputRatio={throughputRatio}
-            trend={trendVsPrevious14d}
-          />
+          <WorkHoursTodayPanel />
         </div>
         <div className={styles.rightCol}>
           <ComponentActivityPanel components={componentActivity} />

@@ -204,6 +204,71 @@ export async function getTransitionDatesFromNew(
   return result;
 }
 
+// ── Worklogs ──
+
+interface JiraWorklog {
+  author: { accountId: string; displayName: string };
+  started: string;
+  timeSpentSeconds: number;
+  timeSpent: string;
+}
+
+interface JiraWorklogResponse {
+  worklogs: JiraWorklog[];
+  total: number;
+}
+
+/**
+ * Fetch total seconds logged *today* (Pacific time) for each account ID.
+ *
+ * 1. JQL `worklogDate >= startOfDay() AND worklogAuthor in (...)` to find issues.
+ * 2. For each issue, GET /issue/{key}/worklog → filter by today + author.
+ * 3. Sum timeSpentSeconds per author.
+ *
+ * Returns Map<accountId, totalSeconds>.
+ */
+export async function getWorklogsToday(
+  accountIds: string[]
+): Promise<Map<string, number>> {
+  const authorList = accountIds.map((id) => `"${id}"`).join(', ');
+  const jql = `worklogDate >= startOfDay() AND worklogAuthor in (${authorList})`;
+
+  const searchResult = await searchIssues({ jql, maxResults: 100, fields: ['key'] });
+
+  const todayPacific = new Date().toLocaleDateString('en-CA', {
+    timeZone: 'America/Los_Angeles',
+  });
+  const accountIdSet = new Set(accountIds);
+  const secondsByAuthor = new Map<string, number>();
+
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < searchResult.issues.length; i += BATCH_SIZE) {
+    const batch = searchResult.issues.slice(i, i + BATCH_SIZE);
+    const settled = await Promise.allSettled(
+      batch.map(async (issue) => {
+        const wl = await jiraFetch<JiraWorklogResponse>(
+          `/issue/${issue.key}/worklog`
+        );
+        return wl.worklogs ?? [];
+      })
+    );
+
+    for (const result of settled) {
+      if (result.status !== 'fulfilled') continue;
+      for (const wl of result.value) {
+        const startedDate = wl.started?.slice(0, 10);
+        const authorId = wl.author?.accountId;
+        if (startedDate === todayPacific && accountIdSet.has(authorId)) {
+          const prev = secondsByAuthor.get(authorId) ?? 0;
+          secondsByAuthor.set(authorId, prev + (wl.timeSpentSeconds ?? 0));
+        }
+      }
+    }
+  }
+
+  return secondsByAuthor;
+}
+
 /**
  * Get current user (verify credentials, server-side only).
  */

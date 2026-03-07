@@ -27,6 +27,23 @@ export async function jiraTransitionDates(
   return new Map(Object.entries(json.transitions ?? {}));
 }
 
+/**
+ * Fetch total seconds logged today per account ID from Jira worklogs.
+ * Returns Map<accountId, totalSeconds>.
+ */
+export async function fetchWorkHoursToday(
+  accountIds: string[]
+): Promise<Map<string, number>> {
+  const q = new URLSearchParams();
+  q.set('accountIds', accountIds.join(','));
+  const res = await fetch(`/api/jira/worklogs-today?${q.toString()}`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`);
+  return new Map(
+    Object.entries(json.hours ?? {}).map(([id, secs]) => [id, Number(secs)])
+  );
+}
+
 export async function jiraSearch(
   jql: string,
   maxResults: number = JIRA_SEARCH_MAX_RESULTS
