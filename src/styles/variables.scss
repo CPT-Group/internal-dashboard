@@ -113,6 +113,11 @@
   --chart-cat-8: rgba(99, 102, 241, 0.82) !important;
   --chart-label-color: #ffffff !important;
 
+  // NOVA accent (used for NOVA-specific rows, badges, ticket chips)
+  --nova-accent: rgba(36, 205, 197, 0.7) !important;
+  --nova-accent-border: rgb(36, 205, 197) !important;
+  --nova-accent-text: #ffffff !important;
+
   // PrimeReact alias (some components use --p-primary-color)
   --p-primary-color: var(--primary-color) !important;
   --p-text-color: var(--text-color) !important;

@@ -70,6 +70,8 @@ export interface ComponentActivity {
   landedToday: number;
   landedThisWeek: number;
   hasAging: boolean;
+  /** True when all contributing tickets are from the NOVA project (no CM/OPRD). */
+  isNova: boolean;
 }
 
 /** Per-NOVA-team-member activity summary. */

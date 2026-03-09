@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **NOVA accent CSS variables**: Added `--nova-accent`, `--nova-accent-border`, `--nova-accent-text` to all 4 themes. Dark-synth uses cyan, dark/light use blue, ms-access uses orange — all matching the theme's primary. Used for NOVA-specific rows, labels, and ticket chips.
+- **NOVA indicator on Component Activity**: Rows where all tickets are from the NOVA project now have a colored left border and the component name rendered in the NOVA accent color. New `isNova` flag on `ComponentActivity` type, set by the analytics builder based on tracked project origin.
 - **Chart color CSS variables**: All chart colors are now theme-aware via CSS variables (`--chart-bar-primary`, `--chart-success`, `--chart-danger`, `--chart-warning`, `--chart-info`, `--chart-orange`, `--chart-cat-1` through `--chart-cat-8`, `--chart-label-color`). Defined in `variables.scss` with per-theme overrides in all 4 theme files (dark-synth, dark, light, ms-access-2010). Default bar color matches each theme's primary color (neo cyan for dark-synth, blue for dark/light, orange for ms-access-2010).
 - **Data labels on horizontal bar charts**: Installed `chartjs-plugin-datalabels` and configured in `HorizontalBarChart` to show exact values on each bar with high-contrast white text. Only shows labels for bars with values > 0. Applies to Work Hours Today, NOVA Team Load, Backlog by Component, and Aging Buckets charts.
 - **New slideshow background images**: Added 74 new images across all three slideshow dashboards — 26 for Conference Room, 25 for Julie's Unicorns, 23 for Jackie's Cute Backgrounds. Regenerated all three `.generated.ts` slide lists via build-time scripts.
@@ -54,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Component Activity badge alignment**: Replaced mixed PrimeReact `<Badge>` (for non-zero) + plain `<span>` (for zero) with uniform custom count badges. All values now render as consistently sized circles: themed info/warning fill for active counts, transparent with subtle border for zeros. Centers are properly aligned regardless of value. Columns set to `textAlign: center`.
+- **NOVA Team ticket chips themed**: Ticket chips in the NOVA Team panel now use `--nova-accent` fill with `--nova-accent-border` instead of generic `--surface-hover`. Gives NOVA chips a distinct, themed look matching the accent color.
 - **Dev Corner theme compliance**: All custom elements (team cards, ticket chips, matrix cells, slide titles, summaries) now use CSS theme variables (`--text-color`, `--surface-card`, `--surface-border`, `--surface-hover`) instead of implicit/unset colors. Both Dev 1 and Dev 2 switch cleanly with theme changes.
 - **Dev 1 layout proportions**: Throughput + Component Activity (middle row) reduced to 35% of viewport; NOVA Team panel (bottom row) expanded to 65% for better readability of ticket chips. Increased visible tickets per member from 3 to 4.
 - **Jira API v3 pagination**: `jiraService.ts` now handles v3 cursor-based pagination (`nextPageToken`/`isLast`) instead of expecting the deprecated `total`/`startAt`/`maxResults` response fields. Auto-paginates up to 1000 results (10 pages × 100). `JiraSearchResponse` type updated to match.

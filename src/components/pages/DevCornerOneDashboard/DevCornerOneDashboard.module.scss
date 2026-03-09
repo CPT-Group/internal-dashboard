@@ -107,9 +107,47 @@
   font-size: 0.8rem;
 }
 
-.muted {
-  color: var(--text-color-secondary);
+/* ── Count badges (consistent size for 0 and non-0) ── */
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
   font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.countBadge.info {
+  background: var(--chart-info);
+  border: 1.5px solid var(--chart-info-border);
+  color: var(--chart-label-color);
+}
+
+.countBadge.warning {
+  background: var(--chart-orange);
+  border: 1.5px solid var(--chart-orange-border);
+  color: var(--chart-label-color);
+}
+
+.countBadge.muted {
+  background: transparent;
+  border: 1.5px solid var(--surface-border);
+  color: var(--text-color-secondary);
+}
+
+/* ── NOVA row accent ── */
+.novaRow {
+  td:first-child {
+    border-left: 3px solid var(--nova-accent-border);
+  }
+}
+
+.novaLabel {
+  color: var(--nova-accent-border);
+  font-weight: 600;
 }
 
 .agingValue {
@@ -172,16 +210,16 @@
 
 .ticketChip {
   font-size: 0.72rem !important;
-  background: var(--surface-hover) !important;
-  color: var(--text-color) !important;
-  border: 1px solid var(--surface-border) !important;
+  background: var(--nova-accent) !important;
+  color: var(--nova-accent-text) !important;
+  border: 1.5px solid var(--nova-accent-border) !important;
 
   :global(.p-chip-text) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 220px;
-    color: var(--text-color);
+    color: var(--nova-accent-text);
   }
 }
 

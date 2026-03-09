@@ -475,12 +475,18 @@ function buildComponentActivity(
   transitionDates: Map<string, string>
 ): ComponentActivity[] {
   const map = new Map<string, ComponentActivity>();
+  const projectsPerComp = new Map<string, Set<string>>();
 
   const ensureComp = (name: string) => {
     if (!map.has(name)) {
-      map.set(name, { component: name, openCount: 0, landedToday: 0, landedThisWeek: 0, hasAging: false });
+      map.set(name, { component: name, openCount: 0, landedToday: 0, landedThisWeek: 0, hasAging: false, isNova: false });
+      projectsPerComp.set(name, new Set());
     }
     return map.get(name)!;
+  };
+
+  const trackProject = (name: string, issue: JiraIssue) => {
+    projectsPerComp.get(name)?.add(getProjectKey(issue));
   };
 
   for (const issue of open) {
@@ -488,6 +494,7 @@ function buildComponentActivity(
     for (const comp of getComponentNames(issue)) {
       const entry = ensureComp(comp);
       entry.openCount++;
+      trackProject(comp, issue);
       if (age > AGING_DAYS_THRESHOLD) entry.hasAging = true;
     }
   }
@@ -520,7 +527,12 @@ function buildComponentActivity(
     }
   }
 
-  return Array.from(map.values()).sort((a, b) => b.openCount - a.openCount);
+  const result = Array.from(map.values());
+  for (const entry of result) {
+    const projects = projectsPerComp.get(entry.component);
+    entry.isNova = projects != null && projects.size === 1 && projects.has('NOVA');
+  }
+  return result.sort((a, b) => b.openCount - a.openCount);
 }
 
 function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
