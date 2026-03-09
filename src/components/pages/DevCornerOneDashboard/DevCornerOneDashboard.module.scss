@@ -210,15 +210,25 @@
 
 .ticketChip {
   font-size: 0.72rem !important;
-  background: var(--nova-accent) !important;
-  color: var(--nova-accent-text) !important;
-  border: 1.5px solid var(--nova-accent-border) !important;
+  background: var(--surface-hover) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--surface-border) !important;
 
   :global(.p-chip-text) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 220px;
+    color: var(--text-color);
+  }
+}
+
+.ticketChipNova {
+  background: var(--nova-accent) !important;
+  color: var(--nova-accent-text) !important;
+  border: 1.5px solid var(--nova-accent-border) !important;
+
+  :global(.p-chip-text) {
     color: var(--nova-accent-text);
   }
 }

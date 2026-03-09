@@ -33,7 +33,7 @@ const MemberCard = ({ m }: { m: TeamMemberActivity }) => {
           <Chip
             key={key}
             label={`${key}: ${m.inProgressSummaries[i]?.slice(0, 35) ?? ''}`}
-            className={styles.ticketChip}
+            className={`${styles.ticketChip} ${key.startsWith('NOVA-') ? styles.ticketChipNova : ''}`}
           />
         ))}
       </div>
