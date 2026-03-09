@@ -38,7 +38,14 @@
   min-height: 0;
 }
 
-.chartCard,
+.chartCard {
+  flex: 1;
+}
+
+.chartCol .chartCard:first-child {
+  flex: 3;
+}
+
 .tableCard {
   flex: 1;
   display: flex;

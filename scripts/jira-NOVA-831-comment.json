@@ -1,0 +1,16 @@
+{
+  "body": {
+    "type": "doc",
+    "version": 1,
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "Adding Work Hours Today chart as a 3rd card in Trevor's dashboard left column (under By Board & Component and NOVA Team Load). Reusing the existing ", "marks": [] },
+          { "type": "text", "text": "WorkHoursTodayPanel", "marks": [{ "type": "code" }] },
+          { "type": "text", "text": " component from Dev Corner One. Adjusting flex proportions so the stacked bar chart gets more height." }
+        ]
+      }
+    ]
+  }
+}

@@ -14,8 +14,8 @@ import type { KpiItem } from '@/components/ui';
 import { ByBoardByComponentStackedBarChart, HorizontalBarChart } from '@/components/charts';
 import { toByBoardByComponentChartData } from '@/utils/chartDataMappers';
 import type { HorizontalBarChartData } from '@/types/charts';
-import { NOVA_TEAM_ORDERED } from '@/constants';
-import { useAutoScroll } from '@/hooks';
+import { NOVA_TEAM_ORDERED, NOVA_CORE_DEVS } from '@/constants';
+import { useAutoScroll, useWorkHoursToday } from '@/hooks';
 import styles from './TrevorDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
@@ -108,6 +108,20 @@ export const TrevorDashboard = () => {
     { label: 'Total Open', value: kpis.openCount },
   ], [novaActive.length, novaInProgress, novaToDo, novaReview, kpis.openCount]);
 
+  const { hours: workHours } = useWorkHoursToday();
+
+  const workHoursData: HorizontalBarChartData = useMemo(() => {
+    const members = NOVA_CORE_DEVS.map((m) => ({
+      name: m.displayName.split(' ')[0],
+      hours: Math.round(((workHours.get(m.accountId) ?? 0) / 3600) * 10) / 10,
+    })).sort((a, b) => b.hours - a.hours);
+
+    return {
+      labels: members.map((m) => m.name),
+      values: members.map((m) => m.hours),
+    };
+  }, [workHours]);
+
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 
   if (loading && kpis.openCount === 0) {
@@ -141,6 +155,10 @@ export const TrevorDashboard = () => {
           <Card className={styles.chartCard}>
             <div className={styles.panelHeader}>NOVA Team Load</div>
             <HorizontalBarChart data={teamLoadData} />
+          </Card>
+          <Card className={styles.chartCard}>
+            <div className={styles.panelHeader}>Work Hours Today</div>
+            <HorizontalBarChart data={workHoursData} />
           </Card>
         </div>
 
