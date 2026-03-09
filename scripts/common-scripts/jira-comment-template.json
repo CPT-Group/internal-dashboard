@@ -1,0 +1,14 @@
+{
+  "body": {
+    "type": "doc",
+    "version": 1,
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "YOUR_COMMENT_TEXT_HERE" }
+        ]
+      }
+    ]
+  }
+}

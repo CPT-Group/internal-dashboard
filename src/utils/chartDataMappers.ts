@@ -110,33 +110,38 @@ export function toBacklogByComponentBarChartData(
   analytics: OperationalAnalytics
 ): HorizontalBarChartData {
   const items = analytics.backlogByComponent;
+  const hasAnyAging = items.some((b) => b.hasAging);
   return {
     labels: items.map((b) => b.component),
     values: items.map((b) => b.openCount),
-    colors: items.map((b) =>
-      b.hasAging ? 'rgba(234, 179, 8, 0.8)' : 'rgba(59, 130, 246, 0.7)'
-    ),
+    colors: hasAnyAging
+      ? items.map((b) =>
+          b.hasAging ? 'rgba(234, 179, 8, 0.82)' : 'rgba(59, 130, 246, 0.75)'
+        )
+      : undefined,
   };
 }
 
 /**
  * Build horizontal bar data for aging buckets.
  */
+/** Aging gradient: green → blue → yellow → orange → red (semantic, universal across themes). */
+const AGING_GRADIENT = [
+  'rgba(34, 197, 94, 0.75)',
+  'rgba(59, 130, 246, 0.75)',
+  'rgba(234, 179, 8, 0.82)',
+  'rgba(249, 115, 22, 0.75)',
+  'rgba(239, 68, 68, 0.75)',
+];
+
 export function toAgingBucketsBarChartData(
   analytics: OperationalAnalytics
 ): HorizontalBarChartData {
   const buckets = analytics.agingBuckets;
-  const colors = [
-    'rgba(34, 197, 94, 0.7)',
-    'rgba(59, 130, 246, 0.7)',
-    'rgba(234, 179, 8, 0.7)',
-    'rgba(249, 115, 22, 0.7)',
-    'rgba(239, 68, 68, 0.7)',
-  ];
   return {
     labels: buckets.map((b) => b.label),
     values: buckets.map((b) => b.count),
-    colors: buckets.map((_, i) => colors[i % colors.length]),
+    colors: buckets.map((_, i) => AGING_GRADIENT[i % AGING_GRADIENT.length]),
   };
 }
 

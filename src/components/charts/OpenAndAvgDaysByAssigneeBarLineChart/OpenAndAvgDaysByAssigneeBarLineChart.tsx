@@ -9,18 +9,24 @@ export interface OpenAndAvgDaysByAssigneeBarLineChartProps {
   data: OpenAndAvgDaysByAssigneeChartData;
 }
 
+interface ChartTheme {
+  textColor: string;
+  textColorSecondary: string;
+  surfaceBorder: string;
+  barPrimary: string;
+  barPrimaryBorder: string;
+  warning: string;
+  warningBorder: string;
+}
+
 /**
  * Vertical bar + line: Open count (bars) and Avg days to close (line) per assignee.
- * Presentation only; receives pre-shaped data.
+ * Bar color from --chart-bar-primary, line from --chart-warning (theme-aware).
  */
 export const OpenAndAvgDaysByAssigneeBarLineChart = ({
   data,
 }: OpenAndAvgDaysByAssigneeBarLineChartProps) => {
-  const [theme, setTheme] = useState<{
-    textColor: string;
-    textColorSecondary: string;
-    surfaceBorder: string;
-  } | null>(null);
+  const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
@@ -36,6 +42,10 @@ export const OpenAndAvgDaysByAssigneeBarLineChart = ({
       surfaceBorder:
         s.getPropertyValue('--surface-border').trim() ||
         'rgba(255,255,255,0.12)',
+      barPrimary: s.getPropertyValue('--chart-bar-primary').trim() || 'rgba(36,205,197,0.82)',
+      barPrimaryBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
+      warning: s.getPropertyValue('--chart-warning').trim() || 'rgba(234,179,8,0.9)',
+      warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
     });
   }, []);
 
@@ -47,8 +57,8 @@ export const OpenAndAvgDaysByAssigneeBarLineChart = ({
           type: 'bar' as const,
           label: 'Open',
           data: data.open,
-          backgroundColor: 'rgba(59, 130, 246, 0.7)',
-          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: theme?.barPrimary ?? 'rgba(36,205,197,0.82)',
+          borderColor: theme?.barPrimaryBorder ?? 'rgb(36,205,197)',
           borderWidth: 1,
           yAxisID: 'y',
           order: 2,
@@ -57,13 +67,13 @@ export const OpenAndAvgDaysByAssigneeBarLineChart = ({
           type: 'line' as const,
           label: 'Avg days to close',
           data: data.avgDays,
-          borderColor: 'rgba(234, 179, 8, 0.95)',
-          backgroundColor: 'rgba(234, 179, 8, 0.1)',
+          borderColor: theme?.warning ?? 'rgba(234,179,8,0.9)',
+          backgroundColor: (theme?.warning ?? 'rgba(234,179,8,0.9)').replace(/0\.\d+\)/, '0.1)'),
           borderWidth: 2,
           borderDash: [6, 4],
           fill: false,
           tension: 0.2,
-          pointBackgroundColor: 'rgba(234, 179, 8, 0.95)',
+          pointBackgroundColor: theme?.warning ?? 'rgba(234,179,8,0.9)',
           pointBorderColor: '#fff',
           pointBorderWidth: 1,
           yAxisID: 'y1',
@@ -71,7 +81,7 @@ export const OpenAndAvgDaysByAssigneeBarLineChart = ({
         },
       ],
     }),
-    [data]
+    [data, theme]
   );
 
   const options = useMemo(() => {
@@ -93,9 +103,7 @@ export const OpenAndAvgDaysByAssigneeBarLineChart = ({
         },
         tooltip: {
           callbacks: {
-            afterBody(
-              tooltipItems: { dataIndex: number }[]
-            ) {
+            afterBody(tooltipItems: { dataIndex: number }[]) {
               const i = tooltipItems[0]?.dataIndex ?? 0;
               const openVal = data.open[i];
               const daysVal = data.avgDays[i];

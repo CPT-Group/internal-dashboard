@@ -24,7 +24,10 @@ export interface GanttChartProps {
  * Presentation only; receives pre-shaped task list.
  */
 export const GanttChart = ({ tasks, noData }: GanttChartProps) => {
-  const [theme, setTheme] = useState<{ textColor: string; gridColor: string } | null>(null);
+  const [theme, setTheme] = useState<{
+    textColor: string; gridColor: string;
+    barPrimary: string; barPrimaryBorder: string;
+  } | null>(null);
 
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
@@ -36,6 +39,12 @@ export const GanttChart = ({ tasks, noData }: GanttChartProps) => {
       gridColor:
         s.getPropertyValue('--surface-border').trim() ||
         'rgba(255,255,255,0.12)',
+      barPrimary:
+        s.getPropertyValue('--chart-bar-primary').trim() ||
+        'rgba(36,205,197,0.82)',
+      barPrimaryBorder:
+        s.getPropertyValue('--chart-bar-primary-border').trim() ||
+        'rgb(36,205,197)',
     });
   }, []);
 
@@ -58,8 +67,8 @@ export const GanttChart = ({ tasks, noData }: GanttChartProps) => {
             new Date(t.start).getTime(),
             new Date(t.end).getTime(),
           ]),
-          backgroundColor: 'rgba(36, 205, 197, 0.5)',
-          borderColor: 'rgba(36, 205, 197, 0.9)',
+          backgroundColor: theme?.barPrimary ?? 'rgba(36,205,197,0.82)',
+          borderColor: theme?.barPrimaryBorder ?? 'rgb(36,205,197)',
           borderWidth: 1,
           barThickness: 32,
           maxBarThickness: 40,

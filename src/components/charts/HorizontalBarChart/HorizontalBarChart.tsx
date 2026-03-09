@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chart } from 'primereact/chart';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import type { HorizontalBarChartData } from '@/types/charts';
 import styles from './HorizontalBarChart.module.scss';
 
@@ -9,47 +10,52 @@ export interface HorizontalBarChartProps {
   data: HorizontalBarChartData;
 }
 
+interface ChartTheme {
+  text: string;
+  grid: string;
+  barPrimary: string;
+  barPrimaryBorder: string;
+  labelColor: string;
+}
+
 /**
  * Horizontal bar chart: one bar per label with optional per-bar colors.
- * Used for backlog by component, aging buckets, etc.
- * Presentation only; receives pre-shaped data.
+ * Default bar color reads from --chart-bar-primary (theme-aware).
+ * Shows data labels on each bar for exact values.
  */
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
-  const [theme, setTheme] = useState<{ text: string; grid: string } | null>(null);
+  const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
+    const s = getComputedStyle(root);
     setTheme({
-      text:
-        getComputedStyle(root).getPropertyValue('--text-color').trim() ||
-        '#e2e8f0',
-      grid:
-        getComputedStyle(root).getPropertyValue('--surface-border').trim() ||
-        'rgba(255,255,255,0.1)',
+      text: s.getPropertyValue('--text-color').trim() || '#e2e8f0',
+      grid: s.getPropertyValue('--surface-border').trim() || 'rgba(255,255,255,0.1)',
+      barPrimary: s.getPropertyValue('--chart-bar-primary').trim() || 'rgba(36,205,197,0.82)',
+      barPrimaryBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
+      labelColor: s.getPropertyValue('--chart-label-color').trim() || '#ffffff',
     });
   }, []);
 
-  const chartData = useMemo(
-    () => ({
+  const chartData = useMemo(() => {
+    const hasCustomColors = data.colors && data.colors.length === data.values.length;
+    return {
       labels: data.labels,
       datasets: [
         {
           label: data.labels.length ? 'Count' : '',
           data: data.values,
-          backgroundColor:
-            data.colors && data.colors.length === data.values.length
-              ? data.colors
-              : 'rgba(59, 130, 246, 0.7)',
-          borderColor:
-            data.colors && data.colors.length === data.values.length
-              ? data.colors.map((c) => c.replace('0.7', '1').replace('0.8', '1'))
-              : 'rgb(59, 130, 246)',
+          backgroundColor: hasCustomColors ? data.colors : theme?.barPrimary ?? 'rgba(36,205,197,0.82)',
+          borderColor: hasCustomColors
+            ? data.colors!.map((c) => c.replace(/0\.\d+\)/, '1)'))
+            : theme?.barPrimaryBorder ?? 'rgb(36,205,197)',
           borderWidth: 1,
+          borderRadius: 3,
         },
       ],
-    }),
-    [data]
-  );
+    };
+  }, [data, theme]);
 
   const options = useMemo(
     () =>
@@ -58,7 +64,19 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
             indexAxis: 'y' as const,
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: {
+              legend: { display: false },
+              datalabels: {
+                display: (ctx: { dataset: { data: number[] }; dataIndex: number }) =>
+                  (ctx.dataset.data[ctx.dataIndex] ?? 0) > 0,
+                anchor: 'end' as const,
+                align: 'start' as const,
+                offset: 4,
+                color: theme.labelColor,
+                font: { weight: 'bold' as const, size: 12 },
+                formatter: (value: number) => (value > 0 ? value : ''),
+              },
+            },
             scales: {
               x: {
                 beginAtZero: true,
@@ -83,6 +101,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         type="bar"
         data={chartData}
         options={options}
+        plugins={[ChartDataLabels]}
         className={styles.chart}
       />
     </div>

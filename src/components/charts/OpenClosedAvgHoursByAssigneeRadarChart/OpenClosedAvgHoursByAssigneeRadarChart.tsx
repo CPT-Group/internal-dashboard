@@ -9,35 +9,51 @@ export interface OpenClosedAvgHoursByAssigneeRadarChartProps {
   data: OpenClosedAvgHoursByAssigneeRadarChartData;
 }
 
+interface ChartTheme {
+  textColor: string;
+  textColorSecondary: string;
+  surfaceBorder: string;
+  info: string;
+  infoBorder: string;
+  success: string;
+  successBorder: string;
+  warning: string;
+  warningBorder: string;
+}
+
 /**
  * Radar chart: Open, Closed, and Avg hours to close per assignee.
- * Presentation only; receives pre-shaped data.
+ * Colors from --chart-info (open), --chart-success (closed), --chart-warning (avg).
  */
 export const OpenClosedAvgHoursByAssigneeRadarChart = ({
   data,
 }: OpenClosedAvgHoursByAssigneeRadarChartProps) => {
-  const [theme, setTheme] = useState<{
-    textColor: string;
-    textColorSecondary: string;
-    surfaceBorder: string;
-  } | null>(null);
+  const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
-    const documentStyle = getComputedStyle(document.documentElement);
+    const s = getComputedStyle(document.documentElement);
     setTheme({
       textColor:
-        documentStyle.getPropertyValue('--text-color').trim() ||
-        documentStyle.getPropertyValue('--p-text-color').trim() ||
+        s.getPropertyValue('--text-color').trim() ||
+        s.getPropertyValue('--p-text-color').trim() ||
         'rgba(255,255,255,0.9)',
       textColorSecondary:
-        documentStyle.getPropertyValue('--text-color-secondary').trim() ||
-        documentStyle.getPropertyValue('--p-text-muted-color').trim() ||
+        s.getPropertyValue('--text-color-secondary').trim() ||
+        s.getPropertyValue('--p-text-muted-color').trim() ||
         'rgba(255,255,255,0.6)',
       surfaceBorder:
-        documentStyle.getPropertyValue('--surface-border').trim() ||
+        s.getPropertyValue('--surface-border').trim() ||
         'rgba(255,255,255,0.12)',
+      info: s.getPropertyValue('--chart-info').trim() || 'rgba(59,130,246,0.75)',
+      infoBorder: s.getPropertyValue('--chart-info-border').trim() || 'rgb(59,130,246)',
+      success: s.getPropertyValue('--chart-success').trim() || 'rgba(34,197,94,0.75)',
+      successBorder: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
+      warning: s.getPropertyValue('--chart-warning').trim() || 'rgba(234,179,8,0.9)',
+      warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
     });
   }, []);
+
+  const toFill = (solid: string) => solid.replace(/0\.\d+\)/, '0.2)');
 
   const chartData = useMemo(
     () => ({
@@ -47,41 +63,41 @@ export const OpenClosedAvgHoursByAssigneeRadarChart = ({
           label: 'Open',
           data: data.open,
           fill: true,
-          borderColor: 'rgba(59, 130, 246, 0.9)',
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
-          pointBackgroundColor: 'rgba(59, 130, 246, 0.9)',
+          borderColor: theme?.infoBorder ?? 'rgb(59,130,246)',
+          backgroundColor: toFill(theme?.info ?? 'rgba(59,130,246,0.75)'),
+          pointBackgroundColor: theme?.infoBorder ?? 'rgb(59,130,246)',
           pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(59, 130, 246, 0.9)',
+          pointHoverBorderColor: theme?.infoBorder ?? 'rgb(59,130,246)',
           tension: 0.3,
         },
         {
           label: 'Closed',
           data: data.closed,
           fill: true,
-          borderColor: 'rgba(34, 197, 94, 0.9)',
-          backgroundColor: 'rgba(34, 197, 94, 0.2)',
-          pointBackgroundColor: 'rgba(34, 197, 94, 0.9)',
+          borderColor: theme?.successBorder ?? 'rgb(34,197,94)',
+          backgroundColor: toFill(theme?.success ?? 'rgba(34,197,94,0.75)'),
+          pointBackgroundColor: theme?.successBorder ?? 'rgb(34,197,94)',
           pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(34, 197, 94, 0.9)',
+          pointHoverBorderColor: theme?.successBorder ?? 'rgb(34,197,94)',
           tension: 0.3,
         },
         {
           label: 'Avg hours to close',
           data: data.avgHours,
           fill: true,
-          borderColor: 'rgba(234, 179, 8, 0.9)',
-          backgroundColor: 'rgba(234, 179, 8, 0.15)',
-          pointBackgroundColor: 'rgba(234, 179, 8, 0.9)',
+          borderColor: theme?.warningBorder ?? 'rgb(234,179,8)',
+          backgroundColor: (theme?.warning ?? 'rgba(234,179,8,0.9)').replace(/0\.\d+\)/, '0.15)'),
+          pointBackgroundColor: theme?.warningBorder ?? 'rgb(234,179,8)',
           pointBorderColor: '#fff',
           pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(234, 179, 8, 0.9)',
+          pointHoverBorderColor: theme?.warningBorder ?? 'rgb(234,179,8)',
           tension: 0.3,
         },
       ],
     }),
-    [data]
+    [data, theme]
   );
 
   const options = useMemo(() => {
@@ -98,14 +114,10 @@ export const OpenClosedAvgHoursByAssigneeRadarChart = ({
         tooltip: {
           enabled: true,
           callbacks: {
-            afterLabel(
-              tooltipItem: { datasetIndex: number; dataIndex: number }
-            ) {
+            afterLabel(tooltipItem: { datasetIndex: number; dataIndex: number }) {
               const i = tooltipItem.dataIndex;
-              if (tooltipItem.datasetIndex === 0)
-                return `Open: ${data.open[i]}`;
-              if (tooltipItem.datasetIndex === 1)
-                return `Closed: ${data.closed[i]}`;
+              if (tooltipItem.datasetIndex === 0) return `Open: ${data.open[i]}`;
+              if (tooltipItem.datasetIndex === 1) return `Closed: ${data.closed[i]}`;
               if (tooltipItem.datasetIndex === 2 && data.avgHours[i] != null) {
                 const hours = data.avgHours[i];
                 const days = data.avgDays[i];
@@ -121,15 +133,9 @@ export const OpenClosedAvgHoursByAssigneeRadarChart = ({
       scales: {
         r: {
           beginAtZero: true,
-          pointLabels: {
-            color: theme.textColor,
-            font: { size: 11 },
-          },
+          pointLabels: { color: theme.textColor, font: { size: 11 } },
           grid: { color: theme.surfaceBorder },
-          ticks: {
-            color: theme.textColorSecondary,
-            backdropColor: 'transparent',
-          },
+          ticks: { color: theme.textColorSecondary, backdropColor: 'transparent' },
         },
       },
     };

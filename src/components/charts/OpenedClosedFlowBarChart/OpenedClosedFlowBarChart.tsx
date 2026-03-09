@@ -9,24 +9,33 @@ export interface OpenedClosedFlowBarChartProps {
   data: OpenedClosedFlowChartData;
 }
 
+interface ChartTheme {
+  text: string;
+  grid: string;
+  success: string;
+  successBorder: string;
+  danger: string;
+  dangerBorder: string;
+}
+
 /**
  * Vertical bar chart: Opened vs Closed per period (e.g. last 14 days).
- * Presentation only; receives pre-shaped data.
+ * Colors read from --chart-success / --chart-danger (theme-aware).
  */
 export const OpenedClosedFlowBarChart = ({
   data,
 }: OpenedClosedFlowBarChartProps) => {
-  const [theme, setTheme] = useState<{ text: string; grid: string } | null>(null);
+  const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
-    const root = document.documentElement;
+    const s = getComputedStyle(document.documentElement);
     setTheme({
-      text:
-        getComputedStyle(root).getPropertyValue('--text-color').trim() ||
-        '#e2e8f0',
-      grid:
-        getComputedStyle(root).getPropertyValue('--surface-border').trim() ||
-        'rgba(255,255,255,0.1)',
+      text: s.getPropertyValue('--text-color').trim() || '#e2e8f0',
+      grid: s.getPropertyValue('--surface-border').trim() || 'rgba(255,255,255,0.1)',
+      success: s.getPropertyValue('--chart-success').trim() || 'rgba(34,197,94,0.75)',
+      successBorder: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
+      danger: s.getPropertyValue('--chart-danger').trim() || 'rgba(239,68,68,0.75)',
+      dangerBorder: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
     });
   }, []);
 
@@ -37,20 +46,20 @@ export const OpenedClosedFlowBarChart = ({
         {
           label: 'Opened',
           data: data.opened,
-          backgroundColor: 'rgba(34, 197, 94, 0.7)',
-          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: theme?.success ?? 'rgba(34,197,94,0.75)',
+          borderColor: theme?.successBorder ?? 'rgb(34,197,94)',
           borderWidth: 1,
         },
         {
           label: 'Closed',
           data: data.closed,
-          backgroundColor: 'rgba(239, 68, 68, 0.7)',
-          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: theme?.danger ?? 'rgba(239,68,68,0.75)',
+          borderColor: theme?.dangerBorder ?? 'rgb(239,68,68)',
           borderWidth: 1,
         },
       ],
     }),
-    [data]
+    [data, theme]
   );
 
   const options = useMemo(

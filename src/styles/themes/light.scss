@@ -78,6 +78,15 @@ html[data-theme='light'],
   --tag-today-text: #6d28d9 !important;
   --tag-today-border: rgba(168, 85, 247, 0.4) !important;
   --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(59, 130, 246, 0.82) !important;
+  --chart-bar-primary-border: rgb(59, 130, 246) !important;
+  --chart-success: rgba(22, 163, 74, 0.78) !important;
+  --chart-success-border: rgb(22, 163, 74) !important;
+  --chart-danger: rgba(220, 38, 38, 0.78) !important;
+  --chart-danger-border: rgb(220, 38, 38) !important;
+  --chart-warning: rgba(202, 138, 4, 0.9) !important;
+  --chart-warning-border: rgb(202, 138, 4) !important;
+  --chart-label-color: #ffffff !important;
   --data-quality-valid: rgba(34, 197, 94, 0.4) !important;
   --data-quality-warning: rgba(234, 179, 8, 0.4) !important;
   --data-quality-error: rgba(239, 68, 68, 0.45) !important;

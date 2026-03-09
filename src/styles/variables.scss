@@ -90,6 +90,29 @@
   --tag-today-text: #c89cff !important;
   --tag-today-border: rgba(184, 114, 249, 0.5) !important;
 
+  // Chart colors (theme-aware; each theme overrides --chart-bar-primary to match its primary)
+  --chart-bar-primary: rgba(36, 205, 197, 0.82) !important;
+  --chart-bar-primary-border: rgb(36, 205, 197) !important;
+  --chart-success: rgba(34, 197, 94, 0.75) !important;
+  --chart-success-border: rgb(34, 197, 94) !important;
+  --chart-danger: rgba(239, 68, 68, 0.75) !important;
+  --chart-danger-border: rgb(239, 68, 68) !important;
+  --chart-warning: rgba(234, 179, 8, 0.9) !important;
+  --chart-warning-border: rgb(234, 179, 8) !important;
+  --chart-info: rgba(59, 130, 246, 0.75) !important;
+  --chart-info-border: rgb(59, 130, 246) !important;
+  --chart-orange: rgba(249, 115, 22, 0.75) !important;
+  --chart-orange-border: rgb(249, 115, 22) !important;
+  --chart-cat-1: rgba(59, 130, 246, 0.82) !important;
+  --chart-cat-2: rgba(168, 85, 247, 0.82) !important;
+  --chart-cat-3: rgba(34, 197, 94, 0.82) !important;
+  --chart-cat-4: rgba(234, 179, 8, 0.82) !important;
+  --chart-cat-5: rgba(236, 72, 153, 0.82) !important;
+  --chart-cat-6: rgba(20, 184, 166, 0.82) !important;
+  --chart-cat-7: rgba(249, 115, 22, 0.82) !important;
+  --chart-cat-8: rgba(99, 102, 241, 0.82) !important;
+  --chart-label-color: #ffffff !important;
+
   // PrimeReact alias (some components use --p-primary-color)
   --p-primary-color: var(--primary-color) !important;
   --p-text-color: var(--text-color) !important;
