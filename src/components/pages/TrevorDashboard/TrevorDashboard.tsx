@@ -144,7 +144,7 @@ export const TrevorDashboard = () => {
       ? members.map((m) => getBorderColor(m.hours)!)
       : undefined;
     const flashIndices = members
-      .map((m, i) => (m.hours > 0 && (m.hours < 4 || m.hours > 9) ? i : -1))
+      .map((m, i) => (m.hours > 0 && (m.hours < 4 || m.hours > 8) ? i : -1))
       .filter((i) => i >= 0);
 
     return {

@@ -33,7 +33,7 @@ function getBarColor(hours: number, t: HourThemeColors): { bg: string; border: s
 }
 
 function shouldFlash(hours: number): boolean {
-  return hours > 0 && (hours < 4 || hours > 9);
+  return hours > 0 && (hours < 4 || hours > 8);
 }
 
 export const WorkHoursTodayPanel = () => {

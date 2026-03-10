@@ -19,17 +19,54 @@ interface ChartTheme {
 }
 
 const FLASH_INTERVAL_MS = 700;
+const BORDER_BASE = 4;
+const BORDER_FLASH_ON = 6;
+const BORDER_FLASH_OFF = 2;
+const GLOW_BLUR = 10;
 
 /**
- * Horizontal bar chart: one bar per label with optional per-bar colors.
- * Supports suffix on data labels, per-bar borderColors, and pulsing
- * flash animation on bars at specified indices.
+ * Chart.js plugin: draws a neon glow (canvas shadow) on bars at flash indices.
+ * Only active on the "on" phase of the flash cycle.
+ */
+function makeGlowPlugin(flashIndicesRef: React.MutableRefObject<number[]>, flashOnRef: React.MutableRefObject<boolean>) {
+  return {
+    id: 'barGlow',
+    beforeDatasetDraw(chart: { ctx: CanvasRenderingContext2D; getDatasetMeta: (i: number) => { data: { x: number; y: number; width: number; height: number; options: { borderColor: string } }[] } }) {
+      const indices = flashIndicesRef.current;
+      if (!indices.length || !flashOnRef.current) return;
+      const ctx = chart.ctx;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      for (const idx of indices) {
+        const bar = meta.data[idx];
+        if (!bar) continue;
+        const color = bar.options?.borderColor ?? 'rgb(239,68,68)';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = GLOW_BLUR;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+    },
+    afterDatasetDraw(chart: { ctx: CanvasRenderingContext2D }) {
+      chart.ctx.restore();
+    },
+  };
+}
+
+/**
+ * Horizontal bar chart with optional per-bar border colors, "h" suffix on
+ * data labels, and pulsing glow animation on flash-index bars.
  */
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
   const chartRef = useRef<Chart>(null);
   const flashOn = useRef(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const flashIndicesRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    flashIndicesRef.current = data.flashIndices ?? [];
+  }, [data.flashIndices]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -50,10 +87,26 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     (on: boolean): number | number[] => {
       if (!hasBorders) return 1;
       return data.values.map((_, i) =>
-        hasFlash && data.flashIndices!.includes(i) ? (on ? 5 : 2) : 3
+        hasFlash && data.flashIndices!.includes(i) ? (on ? BORDER_FLASH_ON : BORDER_FLASH_OFF) : BORDER_BASE
       );
     },
     [data.values, data.flashIndices, hasFlash, hasBorders]
+  );
+
+  const buildBorderColors = useCallback(
+    (on: boolean): string | string[] | undefined => {
+      if (!hasBorders || !data.borderColors) return data.borderColors;
+      if (!hasFlash) return data.borderColors;
+      return data.borderColors.map((c, i) =>
+        data.flashIndices!.includes(i) ? (on ? c : 'transparent') : c
+      );
+    },
+    [data.borderColors, data.flashIndices, hasFlash, hasBorders]
+  );
+
+  const glowPlugin = useMemo(
+    () => makeGlowPlugin(flashIndicesRef, flashOn),
+    []
   );
 
   useEffect(() => {
@@ -69,13 +122,14 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const ds = chart.data.datasets[0];
       if (!ds) return;
       ds.borderWidth = buildBorderWidths(flashOn.current);
+      ds.borderColor = buildBorderColors(flashOn.current);
       chart.update('none');
     }, FLASH_INTERVAL_MS);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [hasFlash, buildBorderWidths]);
+  }, [hasFlash, buildBorderWidths, buildBorderColors]);
 
   const chartData = useMemo(() => {
     const hasCustomColors = data.colors && data.colors.length === data.values.length;
@@ -146,7 +200,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         type="bar"
         data={chartData}
         options={options}
-        plugins={[ChartDataLabels]}
+        plugins={[ChartDataLabels, glowPlugin]}
         className={styles.chart}
       />
     </div>
