@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Chart } from 'primereact/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import type { HorizontalBarChartData } from '@/types/charts';
@@ -18,13 +18,18 @@ interface ChartTheme {
   labelColor: string;
 }
 
+const FLASH_INTERVAL_MS = 700;
+
 /**
  * Horizontal bar chart: one bar per label with optional per-bar colors.
- * Default bar color reads from --chart-bar-primary (theme-aware).
- * Shows data labels on each bar for exact values.
+ * Supports suffix on data labels, per-bar borderColors, and pulsing
+ * flash animation on bars at specified indices.
  */
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
+  const chartRef = useRef<Chart>(null);
+  const flashOn = useRef(true);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -38,8 +43,43 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     });
   }, []);
 
+  const hasFlash = data.flashIndices && data.flashIndices.length > 0;
+  const hasBorders = data.borderColors && data.borderColors.length > 0;
+
+  const buildBorderWidths = useCallback(
+    (on: boolean): number | number[] => {
+      if (!hasBorders) return 1;
+      return data.values.map((_, i) =>
+        hasFlash && data.flashIndices!.includes(i) ? (on ? 5 : 2) : 3
+      );
+    },
+    [data.values, data.flashIndices, hasFlash, hasBorders]
+  );
+
+  useEffect(() => {
+    if (!hasFlash) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+
+    intervalRef.current = setInterval(() => {
+      flashOn.current = !flashOn.current;
+      const chart = chartRef.current?.getChart();
+      if (!chart) return;
+      const ds = chart.data.datasets[0];
+      if (!ds) return;
+      ds.borderWidth = buildBorderWidths(flashOn.current);
+      chart.update('none');
+    }, FLASH_INTERVAL_MS);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [hasFlash, buildBorderWidths]);
+
   const chartData = useMemo(() => {
     const hasCustomColors = data.colors && data.colors.length === data.values.length;
+    const hasCustomBorders = data.borderColors && data.borderColors.length === data.values.length;
     return {
       labels: data.labels,
       datasets: [
@@ -47,15 +87,19 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
           label: data.labels.length ? 'Count' : '',
           data: data.values,
           backgroundColor: hasCustomColors ? data.colors : theme?.barPrimary ?? 'rgba(36,205,197,0.82)',
-          borderColor: hasCustomColors
-            ? data.colors!.map((c) => c.replace(/0\.\d+\)/, '1)'))
-            : theme?.barPrimaryBorder ?? 'rgb(36,205,197)',
-          borderWidth: 1,
+          borderColor: hasCustomBorders
+            ? data.borderColors
+            : hasCustomColors
+              ? data.colors!.map((c) => c.replace(/0\.\d+\)/, '1)'))
+              : theme?.barPrimaryBorder ?? 'rgb(36,205,197)',
+          borderWidth: hasCustomBorders ? buildBorderWidths(true) : 1,
           borderRadius: 3,
         },
       ],
     };
-  }, [data, theme]);
+  }, [data, theme, buildBorderWidths]);
+
+  const suffix = data.suffix ?? '';
 
   const options = useMemo(
     () =>
@@ -74,7 +118,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
                 offset: 4,
                 color: theme.labelColor,
                 font: { weight: 'bold' as const, size: 12 },
-                formatter: (value: number) => (value > 0 ? value : ''),
+                formatter: (value: number) => (value > 0 ? `${value}${suffix}` : ''),
               },
             },
             scales: {
@@ -90,7 +134,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
             },
           }
         : null,
-    [theme]
+    [theme, suffix]
   );
 
   if (!options || data.labels.length === 0) return null;
@@ -98,6 +142,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   return (
     <div className={styles.wrap}>
       <Chart
+        ref={chartRef}
         type="bar"
         data={chartData}
         options={options}

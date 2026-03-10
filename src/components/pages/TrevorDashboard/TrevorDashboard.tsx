@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -110,17 +110,51 @@ export const TrevorDashboard = () => {
 
   const { hours: workHours } = useWorkHoursToday();
 
+  const [hourThemeColors, setHourThemeColors] = useState<{
+    success: string; warning: string; orange: string; danger: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const s = getComputedStyle(document.documentElement);
+    setHourThemeColors({
+      success: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
+      warning: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
+      orange: s.getPropertyValue('--chart-orange-border').trim() || 'rgb(249,115,22)',
+      danger: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
+    });
+  }, []);
+
   const workHoursData: HorizontalBarChartData = useMemo(() => {
     const members = NOVA_CORE_DEVS.map((m) => ({
       name: m.displayName.split(' ')[0],
       hours: Math.round(((workHours.get(m.accountId) ?? 0) / 3600) * 10) / 10,
     })).sort((a, b) => b.hours - a.hours);
 
+    const getBorderColor = (h: number) => {
+      if (!hourThemeColors) return undefined;
+      if (h < 4) return hourThemeColors.danger;
+      if (h < 6) return hourThemeColors.warning;
+      if (h <= 7) return hourThemeColors.success;
+      if (h <= 8) return hourThemeColors.warning;
+      if (h <= 9) return hourThemeColors.orange;
+      return hourThemeColors.danger;
+    };
+
+    const borderColors = hourThemeColors
+      ? members.map((m) => getBorderColor(m.hours)!)
+      : undefined;
+    const flashIndices = members
+      .map((m, i) => (m.hours > 0 && (m.hours < 4 || m.hours > 9) ? i : -1))
+      .filter((i) => i >= 0);
+
     return {
       labels: members.map((m) => m.name),
       values: members.map((m) => m.hours),
+      borderColors,
+      suffix: 'h',
+      flashIndices: flashIndices.length > 0 ? flashIndices : undefined,
     };
-  }, [workHours]);
+  }, [workHours, hourThemeColors]);
 
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 
