@@ -17,7 +17,7 @@ interface HourThemeColors {
 }
 
 const formatHours = (seconds: number): number =>
-  Math.round((seconds / 3600) * 10) / 10;
+  Math.round((seconds / 3600) * 100) / 100;
 
 function getBorderColor(hours: number, t: HourThemeColors): string {
   if (hours < 4) return t.dangerBorder;

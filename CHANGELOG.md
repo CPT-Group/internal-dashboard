@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Work Hours Today precision**: Time tracking display now uses 2 decimal places (e.g. 6.76h instead of 6.8h) in both Dev Corner One and Trevor's Work Hours panels for finer granularity.
 - **All chart components themed (zero hardcoded colors)**: Removed all hardcoded `rgba(...)` / `rgb(...)` colors from chart components. `HorizontalBarChart` reads `--chart-bar-primary` for default bar color. `OpenedClosedFlowBarChart` reads `--chart-success` / `--chart-danger`. `ByBoardByComponentStackedBarChart` reads `--chart-cat-*` categorical palette. `OpenAndAvgDaysByAssigneeBarLineChart` reads `--chart-bar-primary` (bars) + `--chart-warning` (line). `OpenClosedAvgHoursByAssigneeRadarChart` reads `--chart-info` / `--chart-success` / `--chart-warning`. `GanttChart` reads `--chart-bar-primary`. All colors switch cleanly with theme changes.
 - **Trevor's Screen redesign**: Complete rework — killed radar chart, bar+line chart, Gantt timeline, and scrolling stats bar. All data was inaccurate. Switched from legacy `trevorJiraStore`/`NovaAnalytics` to `operationalJiraStore`/`OperationalAnalytics` for correct, consistent data. New layout: NOVA-focused KPI strip (NOVA Active, In Progress, To Do, Review/QA, Total Open), By Board & Component stacked bar chart (top-left), NOVA Team Load horizontal bar chart (bottom-left), NOVA Tickets table sorted by status with auto-scroll (right). Mobile-responsive.
 

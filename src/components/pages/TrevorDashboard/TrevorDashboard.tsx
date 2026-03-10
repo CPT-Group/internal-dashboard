@@ -128,7 +128,7 @@ export const TrevorDashboard = () => {
   const workHoursData: HorizontalBarChartData = useMemo(() => {
     const members = NOVA_CORE_DEVS.map((m) => ({
       name: m.displayName.split(' ')[0],
-      hours: Math.round(((workHours.get(m.accountId) ?? 0) / 3600) * 10) / 10,
+      hours: Math.round(((workHours.get(m.accountId) ?? 0) / 3600) * 100) / 100,
     })).sort((a, b) => b.hours - a.hours);
 
     const getBorderColor = (h: number) => {
