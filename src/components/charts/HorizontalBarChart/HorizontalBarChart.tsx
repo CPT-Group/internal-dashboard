@@ -18,21 +18,19 @@ interface ChartTheme {
   labelColor: string;
 }
 
-const BORDER_WIDTH = 4;
-const CYCLE_SPEED = 0.0025;
-const GLOW_FULL_MAX = 12;
-const GLOW_SUBTLE_MAX = 5;
+const BORDER_WIDTH = 3.5;
+const CYCLE_SPEED = 0.003;
+const GLOW_FULL_BLUR = 14;
+const GLOW_SUBTLE_BLUR = 6;
 
-function lerpColor(color: string, factor: number): string {
-  const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  if (!m) return color;
-  const [r, g, b] = [+m[1], +m[2], +m[3]];
-  return `rgba(${r},${g},${b},${(0.3 + 0.7 * factor).toFixed(2)})`;
+function parseRGB(color: string): [number, number, number] | null {
+  const m = color.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
+  return m ? [+m[1], +m[2], +m[3]] : null;
 }
 
 /**
  * Horizontal bar chart with themed per-bar border colors, smooth pulsing
- * glow animation (per-bar flash levels), and optional "h" suffix labels.
+ * glow animation (per-bar flash levels), and optional suffix on data labels.
  */
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
@@ -64,31 +62,46 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     [data.flashLevels]
   );
 
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const glowPlugin = useMemo(() => ({
     id: 'barGlow',
-    beforeDatasetDraw(chart: { ctx: CanvasRenderingContext2D; getDatasetMeta: (i: number) => { data: { options: { borderColor: string } }[] } }) {
+    afterDatasetDraw(chart: any) {
       const levels = levelsRef.current;
-      if (!levels.length) return;
+      const borders = bordersRef.current;
+      if (!levels.length || !borders.length) return;
       const factor = (Math.sin(phaseRef.current) + 1) / 2;
       const meta = chart.getDatasetMeta(0);
-      const ctx = chart.ctx;
-      ctx.save();
+      const ctx: CanvasRenderingContext2D = chart.ctx;
+
       for (let i = 0; i < levels.length; i++) {
         const level = levels[i];
         if (level === 'none') continue;
         const bar = meta.data[i];
         if (!bar) continue;
-        const color = bar.options?.borderColor ?? bordersRef.current[i] ?? 'transparent';
-        if (color === 'transparent') continue;
-        const maxBlur = level === 'full' ? GLOW_FULL_MAX : GLOW_SUBTLE_MAX;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = maxBlur * factor;
+
+        const rgb = parseRGB(borders[i]);
+        if (!rgb) continue;
+
+        const blur = level === 'full' ? GLOW_FULL_BLUR * factor : GLOW_SUBTLE_BLUR * factor;
+        if (blur < 0.5) continue;
+
+        const { x, y, width, height } = bar as any;
+        ctx.save();
+        ctx.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(0.8 * factor).toFixed(2)})`;
+        ctx.shadowBlur = blur;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = 'rgba(0,0,0,0)';
+        ctx.strokeStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(0.6 * factor).toFixed(2)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x - width, y - height / 2, width, height, 3);
+        ctx.stroke();
+        ctx.restore();
       }
     },
-    afterDatasetDraw(chart: { ctx: CanvasRenderingContext2D }) {
-      chart.ctx.restore();
-    },
   }), []);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   useEffect(() => {
     if (!hasAnimation) return;
@@ -108,8 +121,11 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
           const factor = (Math.sin(phaseRef.current) + 1) / 2;
           ds.borderColor = borders.map((c, i) => {
             const level = levels[i];
-            if (level === 'none' || level === 'subtle') return c;
-            return lerpColor(c, factor);
+            if (level !== 'full') return c;
+            const rgb = parseRGB(c);
+            if (!rgb) return c;
+            const alpha = (0.15 + 0.85 * factor).toFixed(2);
+            return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
           });
         }
         chart.update('none');
