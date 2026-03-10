@@ -46,7 +46,7 @@ export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
 
   const header = (
     <div className={styles.panelHeader}>
-      <span>NOVA Team</span>
+      <span>NOVA: In Progress (Actively Working On)</span>
       <Badge value={`${totalActive} active`} severity="info" />
     </div>
   );
