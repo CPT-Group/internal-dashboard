@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { BarFlashLevel } from '@/types/charts';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -140,19 +141,22 @@ export const TrevorDashboard = () => {
       return hourThemeColors.danger;
     };
 
-    const borderColors = hourThemeColors
-      ? members.map((m) => getBorderColor(m.hours)!)
-      : undefined;
-    const flashIndices = members
-      .map((m, i) => (m.hours > 0 && (m.hours < 4 || m.hours > 8) ? i : -1))
-      .filter((i) => i >= 0);
+    const getFlashLevel = (h: number): BarFlashLevel => {
+      if (h <= 0) return 'none';
+      if (h < 4) return 'full';
+      if (h < 6) return 'subtle';
+      if (h <= 7) return 'none';
+      if (h <= 8) return 'subtle';
+      if (h <= 9) return 'full';
+      return 'full';
+    };
 
     return {
       labels: members.map((m) => m.name),
       values: members.map((m) => m.hours),
-      borderColors,
+      borderColors: hourThemeColors ? members.map((m) => getBorderColor(m.hours)!) : undefined,
       suffix: 'h',
-      flashIndices: flashIndices.length > 0 ? flashIndices : undefined,
+      flashLevels: members.map((m) => getFlashLevel(m.hours)),
     };
   }, [workHours, hourThemeColors]);
 

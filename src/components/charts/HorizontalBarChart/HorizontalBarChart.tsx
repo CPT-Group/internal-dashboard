@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart } from 'primereact/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import type { HorizontalBarChartData } from '@/types/charts';
+import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
 import styles from './HorizontalBarChart.module.scss';
 
 export interface HorizontalBarChartProps {
@@ -18,55 +18,34 @@ interface ChartTheme {
   labelColor: string;
 }
 
-const FLASH_INTERVAL_MS = 700;
-const BORDER_BASE = 4;
-const BORDER_FLASH_ON = 6;
-const BORDER_FLASH_OFF = 2;
-const GLOW_BLUR = 10;
+const BORDER_WIDTH = 4;
+const CYCLE_SPEED = 0.0025;
+const GLOW_FULL_MAX = 12;
+const GLOW_SUBTLE_MAX = 5;
 
-/**
- * Chart.js plugin: draws a neon glow (canvas shadow) on bars at flash indices.
- * Only active on the "on" phase of the flash cycle.
- */
-function makeGlowPlugin(flashIndicesRef: React.MutableRefObject<number[]>, flashOnRef: React.MutableRefObject<boolean>) {
-  return {
-    id: 'barGlow',
-    beforeDatasetDraw(chart: { ctx: CanvasRenderingContext2D; getDatasetMeta: (i: number) => { data: { x: number; y: number; width: number; height: number; options: { borderColor: string } }[] } }) {
-      const indices = flashIndicesRef.current;
-      if (!indices.length || !flashOnRef.current) return;
-      const ctx = chart.ctx;
-      const meta = chart.getDatasetMeta(0);
-      ctx.save();
-      for (const idx of indices) {
-        const bar = meta.data[idx];
-        if (!bar) continue;
-        const color = bar.options?.borderColor ?? 'rgb(239,68,68)';
-        ctx.shadowColor = color;
-        ctx.shadowBlur = GLOW_BLUR;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-      }
-    },
-    afterDatasetDraw(chart: { ctx: CanvasRenderingContext2D }) {
-      chart.ctx.restore();
-    },
-  };
+function lerpColor(color: string, factor: number): string {
+  const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (!m) return color;
+  const [r, g, b] = [+m[1], +m[2], +m[3]];
+  return `rgba(${r},${g},${b},${(0.3 + 0.7 * factor).toFixed(2)})`;
 }
 
 /**
- * Horizontal bar chart with optional per-bar border colors, "h" suffix on
- * data labels, and pulsing glow animation on flash-index bars.
+ * Horizontal bar chart with themed per-bar border colors, smooth pulsing
+ * glow animation (per-bar flash levels), and optional "h" suffix labels.
  */
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
   const chartRef = useRef<Chart>(null);
-  const flashOn = useRef(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const flashIndicesRef = useRef<number[]>([]);
+  const rafRef = useRef<number>(0);
+  const phaseRef = useRef(0);
+  const levelsRef = useRef<BarFlashLevel[]>([]);
+  const bordersRef = useRef<string[]>([]);
 
   useEffect(() => {
-    flashIndicesRef.current = data.flashIndices ?? [];
-  }, [data.flashIndices]);
+    levelsRef.current = data.flashLevels ?? [];
+    bordersRef.current = data.borderColors ?? [];
+  }, [data.flashLevels, data.borderColors]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -80,56 +59,67 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     });
   }, []);
 
-  const hasFlash = data.flashIndices && data.flashIndices.length > 0;
-  const hasBorders = data.borderColors && data.borderColors.length > 0;
+  const hasAnimation = useMemo(
+    () => (data.flashLevels ?? []).some((l) => l !== 'none'),
+    [data.flashLevels]
+  );
 
-  const buildBorderWidths = useCallback(
-    (on: boolean): number | number[] => {
-      if (!hasBorders) return 1;
-      return data.values.map((_, i) =>
-        hasFlash && data.flashIndices!.includes(i) ? (on ? BORDER_FLASH_ON : BORDER_FLASH_OFF) : BORDER_BASE
-      );
+  const glowPlugin = useMemo(() => ({
+    id: 'barGlow',
+    beforeDatasetDraw(chart: { ctx: CanvasRenderingContext2D; getDatasetMeta: (i: number) => { data: { options: { borderColor: string } }[] } }) {
+      const levels = levelsRef.current;
+      if (!levels.length) return;
+      const factor = (Math.sin(phaseRef.current) + 1) / 2;
+      const meta = chart.getDatasetMeta(0);
+      const ctx = chart.ctx;
+      ctx.save();
+      for (let i = 0; i < levels.length; i++) {
+        const level = levels[i];
+        if (level === 'none') continue;
+        const bar = meta.data[i];
+        if (!bar) continue;
+        const color = bar.options?.borderColor ?? bordersRef.current[i] ?? 'transparent';
+        if (color === 'transparent') continue;
+        const maxBlur = level === 'full' ? GLOW_FULL_MAX : GLOW_SUBTLE_MAX;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = maxBlur * factor;
+      }
     },
-    [data.values, data.flashIndices, hasFlash, hasBorders]
-  );
-
-  const buildBorderColors = useCallback(
-    (on: boolean): string | string[] | undefined => {
-      if (!hasBorders || !data.borderColors) return data.borderColors;
-      if (!hasFlash) return data.borderColors;
-      return data.borderColors.map((c, i) =>
-        data.flashIndices!.includes(i) ? (on ? c : 'transparent') : c
-      );
+    afterDatasetDraw(chart: { ctx: CanvasRenderingContext2D }) {
+      chart.ctx.restore();
     },
-    [data.borderColors, data.flashIndices, hasFlash, hasBorders]
-  );
-
-  const glowPlugin = useMemo(
-    () => makeGlowPlugin(flashIndicesRef, flashOn),
-    []
-  );
+  }), []);
 
   useEffect(() => {
-    if (!hasFlash) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
+    if (!hasAnimation) return;
 
-    intervalRef.current = setInterval(() => {
-      flashOn.current = !flashOn.current;
+    let lastTime = performance.now();
+    const tick = (now: number) => {
+      const dt = now - lastTime;
+      lastTime = now;
+      phaseRef.current += dt * CYCLE_SPEED;
+
       const chart = chartRef.current?.getChart();
-      if (!chart) return;
-      const ds = chart.data.datasets[0];
-      if (!ds) return;
-      ds.borderWidth = buildBorderWidths(flashOn.current);
-      ds.borderColor = buildBorderColors(flashOn.current);
-      chart.update('none');
-    }, FLASH_INTERVAL_MS);
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (chart) {
+        const levels = levelsRef.current;
+        const borders = bordersRef.current;
+        const ds = chart.data.datasets[0];
+        if (ds && levels.length && borders.length) {
+          const factor = (Math.sin(phaseRef.current) + 1) / 2;
+          ds.borderColor = borders.map((c, i) => {
+            const level = levels[i];
+            if (level === 'none' || level === 'subtle') return c;
+            return lerpColor(c, factor);
+          });
+        }
+        chart.update('none');
+      }
+      rafRef.current = requestAnimationFrame(tick);
     };
-  }, [hasFlash, buildBorderWidths, buildBorderColors]);
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [hasAnimation]);
 
   const chartData = useMemo(() => {
     const hasCustomColors = data.colors && data.colors.length === data.values.length;
@@ -146,12 +136,12 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
             : hasCustomColors
               ? data.colors!.map((c) => c.replace(/0\.\d+\)/, '1)'))
               : theme?.barPrimaryBorder ?? 'rgb(36,205,197)',
-          borderWidth: hasCustomBorders ? buildBorderWidths(true) : 1,
+          borderWidth: hasCustomBorders ? BORDER_WIDTH : 1,
           borderRadius: 3,
         },
       ],
     };
-  }, [data, theme, buildBorderWidths]);
+  }, [data, theme]);
 
   const suffix = data.suffix ?? '';
 
@@ -162,6 +152,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
             indexAxis: 'y' as const,
             responsive: true,
             maintainAspectRatio: false,
+            animation: false as const,
             plugins: {
               legend: { display: false },
               datalabels: {
@@ -171,7 +162,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
                 align: 'start' as const,
                 offset: 4,
                 color: theme.labelColor,
-                textStrokeColor: 'rgba(30, 0, 50, 0.85)',
+                textStrokeColor: 'rgba(80, 20, 120, 0.75)',
                 textStrokeWidth: 3,
                 font: { weight: 'bold' as const, size: 13 },
                 formatter: (value: number) => (value > 0 ? `${value}${suffix}` : ''),

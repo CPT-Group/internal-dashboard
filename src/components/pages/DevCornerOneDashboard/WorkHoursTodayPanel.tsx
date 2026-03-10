@@ -4,36 +4,38 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from 'primereact/card';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { HorizontalBarChart } from '@/components/charts';
-import type { HorizontalBarChartData } from '@/types/charts';
+import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
 import { NOVA_CORE_DEVS } from '@/constants';
 import { useWorkHoursToday } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
 
 interface HourThemeColors {
-  success: string;
   successBorder: string;
-  warning: string;
   warningBorder: string;
-  orange: string;
   orangeBorder: string;
-  danger: string;
   dangerBorder: string;
 }
 
 const formatHours = (seconds: number): number =>
   Math.round((seconds / 3600) * 10) / 10;
 
-function getBarColor(hours: number, t: HourThemeColors): { bg: string; border: string } {
-  if (hours < 4) return { bg: t.danger, border: t.dangerBorder };
-  if (hours < 6) return { bg: t.warning, border: t.warningBorder };
-  if (hours <= 7) return { bg: t.success, border: t.successBorder };
-  if (hours <= 8) return { bg: t.warning, border: t.warningBorder };
-  if (hours <= 9) return { bg: t.orange, border: t.orangeBorder };
-  return { bg: t.danger, border: t.dangerBorder };
+function getBorderColor(hours: number, t: HourThemeColors): string {
+  if (hours < 4) return t.dangerBorder;
+  if (hours < 6) return t.warningBorder;
+  if (hours <= 7) return t.successBorder;
+  if (hours <= 8) return t.warningBorder;
+  if (hours <= 9) return t.orangeBorder;
+  return t.dangerBorder;
 }
 
-function shouldFlash(hours: number): boolean {
-  return hours > 0 && (hours < 4 || hours > 8);
+function getFlashLevel(hours: number): BarFlashLevel {
+  if (hours <= 0) return 'none';
+  if (hours < 4) return 'full';
+  if (hours < 6) return 'subtle';
+  if (hours <= 7) return 'none';
+  if (hours <= 8) return 'subtle';
+  if (hours <= 9) return 'full';
+  return 'full';
 }
 
 export const WorkHoursTodayPanel = () => {
@@ -43,13 +45,9 @@ export const WorkHoursTodayPanel = () => {
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
     setThemeColors({
-      success: s.getPropertyValue('--chart-success').trim() || 'rgba(34,197,94,0.75)',
       successBorder: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
-      warning: s.getPropertyValue('--chart-warning').trim() || 'rgba(234,179,8,0.75)',
       warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
-      orange: s.getPropertyValue('--chart-orange').trim() || 'rgba(249,115,22,0.75)',
       orangeBorder: s.getPropertyValue('--chart-orange-border').trim() || 'rgb(249,115,22)',
-      danger: s.getPropertyValue('--chart-danger').trim() || 'rgba(239,68,68,0.75)',
       dangerBorder: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
     });
   }, []);
@@ -68,17 +66,12 @@ export const WorkHoursTodayPanel = () => {
       };
     }
 
-    const borderColors = members.map((m) => getBarColor(m.hours, themeColors).border);
-    const flashIndices = members
-      .map((m, i) => (shouldFlash(m.hours) ? i : -1))
-      .filter((i) => i >= 0);
-
     return {
       labels: members.map((m) => m.name),
       values: members.map((m) => m.hours),
-      borderColors,
+      borderColors: members.map((m) => getBorderColor(m.hours, themeColors)),
       suffix: 'h',
-      flashIndices,
+      flashLevels: members.map((m) => getFlashLevel(m.hours)),
     };
   }, [hours, themeColors]);
 
