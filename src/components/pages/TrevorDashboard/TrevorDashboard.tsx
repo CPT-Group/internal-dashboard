@@ -20,6 +20,7 @@ import { useAutoScroll, useWorkHoursToday } from '@/hooks';
 import styles from './TrevorDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
+const SHOW_BY_BOARD_AND_COMPONENT = false;
 
 const STATUS_ORDER = ['To Do', 'Data Team New', 'Requested', 'In Progress', 'Data Team In Progress',
   'Development', 'DEVELOPMENT', 'Dev Review', 'Peer Testing', 'PEER TESTING',
@@ -186,10 +187,12 @@ export const TrevorDashboard = () => {
 
       <div className={styles.mainContent}>
         <div className={styles.chartCol}>
-          <Card className={styles.chartCard}>
-            <div className={styles.panelHeader}>By Board &amp; Component</div>
-            <ByBoardByComponentStackedBarChart data={byBoardChartData} />
-          </Card>
+          {SHOW_BY_BOARD_AND_COMPONENT && (
+            <Card className={styles.chartCard}>
+              <div className={styles.panelHeader}>By Board &amp; Component</div>
+              <ByBoardByComponentStackedBarChart data={byBoardChartData} />
+            </Card>
+          )}
           <Card className={styles.chartCard}>
             <div className={styles.panelHeader}>NOVA Team Load</div>
             <HorizontalBarChart data={teamLoadData} />

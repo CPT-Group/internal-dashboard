@@ -1,0 +1,14 @@
+{
+  "body": {
+    "type": "doc",
+    "version": 1,
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "Jira scripts now use .env.jira.temp for credentials (fallback to .env.local). Updated: check-work-hours-today.ps1, check-work-hours-sprint.ps1, inspect-nova-867.ps1 and common-scripts README." }
+        ]
+      }
+    ]
+  }
+}

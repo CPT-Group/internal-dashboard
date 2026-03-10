@@ -1,0 +1,16 @@
+{
+  "timeSpentSeconds": 600,
+  "started": "2025-02-24T14:00:00.000-0800",
+  "comment": {
+    "type": "doc",
+    "version": 1,
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "Switched Jira scripts to use .env.jira.temp; updated README and error messages. Adjust started/timeSpentSeconds if your actual session differed." }
+        ]
+      }
+    ]
+  }
+}

@@ -32,10 +32,30 @@ curl -X POST -H "Content-Type: application/json" \
 | Script | Purpose |
 |--------|---------|
 | `check-work-hours-today.ps1` | Fetch and display today's work hours for all NOVA core devs |
+| `check-work-hours-sprint.ps1` | Fetch and display work hours for a sprint or custom date range (CM, OPRD, NOVA) |
+
+**Credentials:** All scripts read `KYLE_EMAIL` and `KYLE_JIRA_TOKEN` from **`.env.jira.temp`** in the repo root first, then fall back to **`.env.local`**. Use `.env.jira.temp` for Jira-only scripts (see Jira Workflow doc). Keep both files git-ignored.
+
+### check-work-hours-sprint.ps1
+
+Manually run to see time tracking for the **entire sprint** (or any date range). Uses the same Jira worklog API; sums by author for all 6 NOVA team members. NOVA sprints are 2 weeks starting Tuesday.
+
+**Config (top of script):** Set `$StartDate` and `$EndDate` (YYYY-MM-DD). Example for Sprint 9: `2025-02-18` to `2025-03-03`. Update these for the next sprint or any custom period.
+
+**JQL used:**
+```
+worklogDate >= "StartDate" AND worklogDate <= "EndDate"
+AND worklogAuthor in (all 6 NOVA account IDs)
+AND project in (CM, OPRD, NOVA)
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/common-scripts/check-work-hours-sprint.ps1
+```
 
 ### check-work-hours-today.ps1
 
-Reads credentials from `.env.local`, queries Jira for issues with worklogs today, then sums hours per developer.
+Reads credentials from `.env.jira.temp` (or `.env.local`), queries Jira for issues with worklogs today, then sums hours per developer.
 
 **JQL used:**
 ```
