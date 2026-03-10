@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Chart } from 'primereact/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
@@ -19,13 +19,16 @@ interface ChartTheme {
 }
 
 const BORDER_WIDTH = 3.5;
-const CYCLE_SPEED = 0.003;
-const GLOW_FULL_BLUR = 14;
-const GLOW_SUBTLE_BLUR = 6;
+const TICK_MS = 80;
+const STEP = 0.06;
 
 function parseRGB(color: string): [number, number, number] | null {
   const m = color.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
   return m ? [+m[1], +m[2], +m[3]] : null;
+}
+
+function rgbaStr(rgb: [number, number, number], a: number): string {
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(2)})`;
 }
 
 /**
@@ -35,15 +38,8 @@ function parseRGB(color: string): [number, number, number] | null {
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
   const chartRef = useRef<Chart>(null);
-  const rafRef = useRef<number>(0);
   const phaseRef = useRef(0);
-  const levelsRef = useRef<BarFlashLevel[]>([]);
-  const bordersRef = useRef<string[]>([]);
-
-  useEffect(() => {
-    levelsRef.current = data.flashLevels ?? [];
-    bordersRef.current = data.borderColors ?? [];
-  }, [data.flashLevels, data.borderColors]);
+  const dirRef = useRef(1);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -62,80 +58,83 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     [data.flashLevels]
   );
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const glowPlugin = useMemo(() => ({
-    id: 'barGlow',
-    afterDatasetDraw(chart: any) {
-      const levels = levelsRef.current;
-      const borders = bordersRef.current;
-      if (!levels.length || !borders.length) return;
-      const factor = (Math.sin(phaseRef.current) + 1) / 2;
-      const meta = chart.getDatasetMeta(0);
-      const ctx: CanvasRenderingContext2D = chart.ctx;
+  const applyFlash = useCallback(() => {
+    const chart = chartRef.current?.getChart();
+    if (!chart) return;
+    const ds = chart.data.datasets[0];
+    const levels = data.flashLevels;
+    const borders = data.borderColors;
+    if (!ds || !levels?.length || !borders?.length) return;
 
-      for (let i = 0; i < levels.length; i++) {
-        const level = levels[i];
-        if (level === 'none') continue;
-        const bar = meta.data[i];
-        if (!bar) continue;
+    phaseRef.current += STEP * dirRef.current;
+    if (phaseRef.current >= 1) { phaseRef.current = 1; dirRef.current = -1; }
+    if (phaseRef.current <= 0) { phaseRef.current = 0; dirRef.current = 1; }
+    const f = phaseRef.current;
 
-        const rgb = parseRGB(borders[i]);
-        if (!rgb) continue;
+    const newBorders: string[] = [];
+    const newWidths: number[] = [];
 
-        const blur = level === 'full' ? GLOW_FULL_BLUR * factor : GLOW_SUBTLE_BLUR * factor;
-        if (blur < 0.5) continue;
+    for (let i = 0; i < borders.length; i++) {
+      const level = levels[i];
+      const rgb = parseRGB(borders[i]);
 
-        const { x, y, width, height } = bar as any;
-        ctx.save();
-        ctx.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(0.8 * factor).toFixed(2)})`;
-        ctx.shadowBlur = blur;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.fillStyle = 'rgba(0,0,0,0)';
-        ctx.strokeStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(0.6 * factor).toFixed(2)})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(x - width, y - height / 2, width, height, 3);
-        ctx.stroke();
-        ctx.restore();
+      if (level === 'none' || !rgb) {
+        newBorders.push(borders[i]);
+        newWidths.push(BORDER_WIDTH);
+        continue;
       }
-    },
-  }), []);
-  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+      if (level === 'full') {
+        newBorders.push(rgbaStr(rgb, 0.1 + 0.9 * f));
+        newWidths.push(BORDER_WIDTH);
+      } else {
+        newBorders.push(rgbaStr(rgb, 0.5 + 0.5 * f));
+        newWidths.push(BORDER_WIDTH);
+      }
+    }
+
+    ds.borderColor = newBorders;
+    ds.borderWidth = newWidths;
+
+    const ctx: CanvasRenderingContext2D = chart.ctx;
+    chart.update('none');
+
+    const meta = chart.getDatasetMeta(0);
+    for (let i = 0; i < levels.length; i++) {
+      const level = levels[i];
+      if (level === 'none') continue;
+      const bar = meta.data[i];
+      if (!bar) continue;
+      const rgb = parseRGB(borders[i]);
+      if (!rgb) continue;
+
+      const maxBlur = level === 'full' ? 14 : 5;
+      const blur = maxBlur * f;
+      if (blur < 0.5) continue;
+
+      const props = bar.getProps(['x', 'y', 'width', 'height', 'base'], true);
+      const bx = props.base ?? 0;
+      const bw = (props.x ?? 0) - bx;
+      const by = (props.y ?? 0) - (props.height ?? 0) / 2;
+      const bh = props.height ?? 0;
+
+      ctx.save();
+      ctx.shadowColor = rgbaStr(rgb, 0.7 * f);
+      ctx.shadowBlur = blur;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = rgbaStr(rgb, 0.4 * f);
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 3);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }, [data.flashLevels, data.borderColors]);
 
   useEffect(() => {
     if (!hasAnimation) return;
-
-    let lastTime = performance.now();
-    const tick = (now: number) => {
-      const dt = now - lastTime;
-      lastTime = now;
-      phaseRef.current += dt * CYCLE_SPEED;
-
-      const chart = chartRef.current?.getChart();
-      if (chart) {
-        const levels = levelsRef.current;
-        const borders = bordersRef.current;
-        const ds = chart.data.datasets[0];
-        if (ds && levels.length && borders.length) {
-          const factor = (Math.sin(phaseRef.current) + 1) / 2;
-          ds.borderColor = borders.map((c, i) => {
-            const level = levels[i];
-            if (level !== 'full') return c;
-            const rgb = parseRGB(c);
-            if (!rgb) return c;
-            const alpha = (0.15 + 0.85 * factor).toFixed(2);
-            return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
-          });
-        }
-        chart.update('none');
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [hasAnimation]);
+    const id = setInterval(applyFlash, TICK_MS);
+    return () => clearInterval(id);
+  }, [hasAnimation, applyFlash]);
 
   const chartData = useMemo(() => {
     const hasCustomColors = data.colors && data.colors.length === data.values.length;
@@ -209,7 +208,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         type="bar"
         data={chartData}
         options={options}
-        plugins={[ChartDataLabels, glowPlugin]}
+        plugins={[ChartDataLabels]}
         className={styles.chart}
       />
     </div>
