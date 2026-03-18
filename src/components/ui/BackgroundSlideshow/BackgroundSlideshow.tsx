@@ -13,9 +13,9 @@ export type BackgroundSlideshowTransition =
 export interface BackgroundSlideshowProps {
   /** Image URLs (e.g. from generated constants or any string array). */
   slides: readonly string[];
-  /** Milliseconds between slide changes (default 6000). */
+  /** Milliseconds between slide changes (default 60000 = 1 min). */
   intervalMs?: number;
-  /** Transition duration in ms (default 1500). */
+  /** Transition duration in ms (default 2500). */
   transitionDurationMs?: number;
   /** Transition type (default 'fade'). */
   transition?: BackgroundSlideshowTransition;
@@ -25,8 +25,8 @@ export interface BackgroundSlideshowProps {
   fallbackClassName?: string;
 }
 
-const DEFAULT_INTERVAL_MS = 6000;
-const DEFAULT_DURATION_MS = 1500;
+const DEFAULT_INTERVAL_MS = 60000;
+const DEFAULT_DURATION_MS = 2500;
 
 /**
  * Reusable full-bleed background slideshow. Pass any array of image URLs (e.g. from

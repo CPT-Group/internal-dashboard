@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Slideshow timing (Conference, Julie's, Jackie's)**: Background image rotation increased from 6s to 1 minute; transition duration from 1.5s to 2.5s for a slower, smoother slideshow on all three TV dashboards.
 - **Dev Corner One active tickets**: In-progress ticket chips now show only the title (summary), not the board/key prefix (e.g. "NOVA-842: ..."). Summary truncated at 50 characters.
 - **Jira scripts use `.env.jira.temp`**: All Jira-related PowerShell scripts in `scripts/common-scripts/` (check-work-hours-today.ps1, check-work-hours-sprint.ps1, inspect-nova-867.ps1) now read `KYLE_EMAIL` and `KYLE_JIRA_TOKEN` from **`.env.jira.temp`** in the repo root first, then fall back to `.env.local`. README updated. Use `.env.jira.temp` for Jira-only credentials per Jira Workflow doc. **Jira NOVA-848 updated** – Comment added (scripts now use .env.jira.temp). Payloads: `scripts/jira-NOVA-848-comment.json`, `scripts/jira-NOVA-848-worklog.json`. Post comment/worklog via curl with credentials from `.env.jira.temp` (see Jira Workflow doc).
 - **Work Hours Today precision**: Time tracking display now uses 2 decimal places (e.g. 6.76h instead of 6.8h) in both Dev Corner One and Trevor's Work Hours panels for finer granularity.

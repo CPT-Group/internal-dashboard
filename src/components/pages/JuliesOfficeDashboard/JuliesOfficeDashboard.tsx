@@ -13,8 +13,8 @@ export const JuliesOfficeDashboard = () => {
     <div className={styles.juliesDashboardContent}>
       <BackgroundSlideshow
         slides={JULIES_BACKGROUND_SLIDES}
-        intervalMs={6000}
-        transitionDurationMs={1500}
+        intervalMs={60000}
+        transitionDurationMs={2500}
         transition="fade"
       />
       <div className={styles.cornerWrap}>
