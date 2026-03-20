@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **NOVA roster**: Removed **Thomas Williams** from the active team in `NOVA_TEAM.ts` (five members: Roy, Kyle, James, Brandon, Carlos). Operational and Trevor JQL `assignee IN (...)` no longer include him. **`DASHBOARD_EXCLUDED_ACCOUNT_IDS`** lists his Jira `accountId` so `buildOperationalAnalytics` drops any issue where he is **assignee** or **tech owner** — TV KPIs, lists, and charts ignore his attribution while his user can remain in Jira. Work Hours scripts (`check-work-hours-today.ps1`, `check-work-hours-sprint.ps1`) and `AGENTS.md` updated accordingly.
+
 - **Slideshow timing (Conference, Julie's, Jackie's)**: Background image rotation increased from 6s to 1 minute; transition duration from 1.5s to 2.5s for a slower, smoother slideshow on all three TV dashboards.
 - **Dev Corner One active tickets**: In-progress ticket chips now show only the title (summary), not the board/key prefix (e.g. "NOVA-842: ..."). Summary truncated at 50 characters.
 - **Jira scripts use `.env.jira.temp`**: All Jira-related PowerShell scripts in `scripts/common-scripts/` (check-work-hours-today.ps1, check-work-hours-sprint.ps1, inspect-nova-867.ps1) now read `KYLE_EMAIL` and `KYLE_JIRA_TOKEN` from **`.env.jira.temp`** in the repo root first, then fall back to `.env.local`. README updated. Use `.env.jira.temp` for Jira-only credentials per Jira Workflow doc. **Jira NOVA-848 updated** – Comment added (scripts now use .env.jira.temp). Payloads: `scripts/jira-NOVA-848-comment.json`, `scripts/jira-NOVA-848-worklog.json`. Post comment/worklog via curl with credentials from `.env.jira.temp` (see Jira Workflow doc).

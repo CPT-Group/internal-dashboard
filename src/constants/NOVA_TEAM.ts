@@ -1,15 +1,13 @@
 /**
  * NOVA team — Nerds Of Vast Automation.
- * The dev team: Roy, Thomas, Kyle, James, Brandon, Carlos.
- * Single source of truth for the 6 Jira assignee account IDs.
- * Used for JQL (assignee IN ...) and client-side filtering.
+ * The dev team: Roy, Kyle, James, Brandon, Carlos.
+ * Single source of truth for Jira assignee account IDs used in JQL and client-side filtering.
  *
  * IMPORTANT: IDs were verified against Jira REST API (GET /rest/api/3/user?accountId=...)
  * on 2026-02-24. If names or IDs change, re-verify before updating.
  */
 export const NOVA_TEAM_ACCOUNT_IDS_ARRAY = [
   '712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f', // royr (Roy)
-  '712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd', // Thomas Williams
   '712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837', // Kyle Dilbeck
   '712020:02567f23-bfb1-419b-aadd-9e51f5ed81ef', // James Cassidy
   '712020:384111d1-8f9d-4155-8420-37ff1888d6c3', // Brandon Fay
@@ -21,14 +19,13 @@ export const NOVA_TEAM_ACCOUNT_IDS: Set<string> = new Set(NOVA_TEAM_ACCOUNT_IDS_
 /** Display names for the team (must match NOVA_TEAM_ACCOUNT_IDS_ARRAY order). */
 export const NOVA_TEAM_DISPLAY_NAMES = [
   'Roy',
-  'Thomas Williams',
   'Kyle Dilbeck',
   'James Cassidy',
   'Brandon Fay',
   'Carlos',
 ] as const;
 
-/** Ordered list of ALL team members (id + displayName) for charts so all 6 always show. */
+/** Ordered list of ALL team members (id + displayName) for charts so all members always show. */
 export const NOVA_TEAM_ORDERED = NOVA_TEAM_ACCOUNT_IDS_ARRAY.map((id, i) => ({
   accountId: id,
   displayName: NOVA_TEAM_DISPLAY_NAMES[i],
@@ -47,6 +44,14 @@ export const NOVA_CORE_DEVS = NOVA_TEAM_ORDERED.filter(
 );
 
 export type NovaTeamMember = (typeof NOVA_TEAM_DISPLAY_NAMES)[number];
+
+/**
+ * Former dev team members (or similar): excluded from all TV dashboard metrics.
+ * Their Jira users may still exist; we simply ignore assignee/tech-owner attribution for these IDs.
+ */
+export const DASHBOARD_EXCLUDED_ACCOUNT_IDS: ReadonlySet<string> = new Set([
+  '712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd', // Thomas Williams — left dev team
+]);
 
 /**
  * Alternative display names / usernames (e.g. Jira @mention format).

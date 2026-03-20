@@ -25,7 +25,7 @@ export interface OrderedTeamMember {
 
 /**
  * Build radar chart data: Open, Closed, Avg hours (and avgDays for tooltip) per assignee.
- * Uses orderedTeam so all members appear in the same order (e.g. Roy, James, Thomas, Kyle).
+ * Uses orderedTeam so all members appear in the same order (e.g. NOVA_TEAM_ORDERED).
  */
 export function toOpenClosedAvgHoursByAssigneeRadarChartData(
   analytics: NovaAnalytics,

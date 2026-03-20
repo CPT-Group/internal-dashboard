@@ -30,10 +30,9 @@ $bytes = [System.Text.Encoding]::ASCII.GetBytes($auth)
 $b64 = [Convert]::ToBase64String($bytes)
 $headers = @{ Authorization = "Basic $b64"; "Content-Type" = "application/json" }
 
-# NOVA core dev account IDs (Kyle, James, Roy, Thomas)
+# NOVA core dev account IDs (Kyle, James, Roy) — matches NOVA_CORE_DEVS in NOVA_TEAM.ts
 $devIds = @{
   "712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f" = "Roy"
-  "712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd" = "Thomas"
   "712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837" = "Kyle"
   "712020:02567f23-bfb1-419b-aadd-9e51f5ed81ef" = "James"
 }

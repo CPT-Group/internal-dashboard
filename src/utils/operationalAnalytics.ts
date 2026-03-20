@@ -27,9 +27,23 @@ import {
   NOVA_TEAM_ACCOUNT_IDS,
   NOVA_TEAM_ORDERED,
   NOVA_CORE_DEVS,
+  DASHBOARD_EXCLUDED_ACCOUNT_IDS,
 } from '@/constants';
 
 const AGING_DAYS_THRESHOLD = 7;
+
+/** Drop issues tied to former team members (assignee or tech owner in excluded set). */
+function isExcludedFromDashboard(issue: JiraIssue): boolean {
+  const assigneeId = issue.fields?.assignee?.accountId;
+  if (assigneeId && DASHBOARD_EXCLUDED_ACCOUNT_IDS.has(assigneeId)) return true;
+  const techId = issue.fields?.customfield_10193?.accountId;
+  if (techId && DASHBOARD_EXCLUDED_ACCOUNT_IDS.has(techId)) return true;
+  return false;
+}
+
+function filterDashboardIssues(issues: JiraIssue[]): JiraIssue[] {
+  return issues.filter((i) => !isExcludedFromDashboard(i));
+}
 
 function getAssigneeKey(issue: JiraIssue): string {
   return issue.fields?.assignee?.accountId ?? 'unassigned';
@@ -173,15 +187,16 @@ export interface BuildOperationalAnalyticsInput {
 
 export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput): OperationalAnalytics {
   const {
-    openIssues,
-    openedTodayIssues,
-    closedTodayIssues,
-    landedLast14,
-    resolvedLast14,
-    landedPrev14,
-    resolvedPrev14,
     transitionDates = new Map(),
   } = input;
+
+  const openIssues = filterDashboardIssues(input.openIssues);
+  const openedTodayIssues = filterDashboardIssues(input.openedTodayIssues);
+  const closedTodayIssues = filterDashboardIssues(input.closedTodayIssues);
+  const landedLast14 = filterDashboardIssues(input.landedLast14);
+  const resolvedLast14 = filterDashboardIssues(input.resolvedLast14);
+  const landedPrev14 = input.landedPrev14 != null ? filterDashboardIssues(input.landedPrev14) : undefined;
+  const resolvedPrev14 = input.resolvedPrev14 != null ? filterDashboardIssues(input.resolvedPrev14) : undefined;
 
   const open = openIssues.filter((i) => !isDone(i));
   const landedToday = openedTodayIssues.length;

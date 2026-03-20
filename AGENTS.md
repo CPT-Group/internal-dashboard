@@ -9,12 +9,11 @@ Context for AI coding agents working on this repo. See also README (if present) 
 
 ## The NOVA team
 
-The dev team is called **NOVA** — *Nerds Of Vast Automation*. Six members:
+The dev team is called **NOVA** — *Nerds Of Vast Automation*. Five members:
 
 | Name | Jira accountId | Jira displayName |
 |---|---|---|
 | Roy | `712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f` | royr |
-| Thomas Williams | `712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd` | Thomas Williams |
 | Kyle Dilbeck | `712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837` | Kyle Dilbeck |
 | James Cassidy | `712020:02567f23-bfb1-419b-aadd-9e51f5ed81ef` | James Cassidy |
 | Brandon Fay | `712020:384111d1-8f9d-4155-8420-37ff1888d6c3` | Brandon Fay |
@@ -23,6 +22,8 @@ The dev team is called **NOVA** — *Nerds Of Vast Automation*. Six members:
 Verified against Jira REST API (`GET /rest/api/3/user?accountId=...`) on 2026-02-24.
 
 Constant: `NOVA_TEAM.ts` (IDs, display names, ordered list for charts, `isNovaTeamMember` helper). The array order matters — IDs and display names are matched by index.
+
+**Former devs (excluded from TV metrics):** Thomas Williams (`712020:4a657f3c-6d1e-41be-88fc-e168a5e75cbd`) is listed in `DASHBOARD_EXCLUDED_ACCOUNT_IDS` — issues where he is assignee or tech owner are dropped from `buildOperationalAnalytics` so dashboards ignore his attribution. He is not in `assignee IN (...)` JQL for NOVA team scope.
 
 ## Jira workflow and projects
 
@@ -110,17 +111,17 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
 
 - **Dev Corner One (LEFT TV)** — **Developer-focused**. Closest to the dev desks. Single-view layout:
   - KPI strip: Open, Landed Today, Closed Today, Net, Avg Close Time, Throughput Ratio.
-  - Middle left: **Work Hours Today** — horizontal bar chart showing hours logged today (Pacific time) per core dev (Kyle, Roy, James, Thomas). Uses `useWorkHoursToday` hook (10-min poll). Data from Jira worklog API via `/api/jira/worklogs-today`.
+  - Middle left: **Work Hours Today** — horizontal bar chart showing hours logged today (Pacific time) per core dev (Kyle, Roy, James). Uses `useWorkHoursToday` hook (10-min poll). Data from Jira worklog API via `/api/jira/worklogs-today`.
   - Middle right: Component Activity table (per-component: open, today, this week).
   - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
-- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 4-slide carousel (20s per slide):
+- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 4-slide carousel (120s per slide):
   - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age).
   - Slide 2: Recently Completed table (last 7 days, shows **Tech Owner** not assignee, filtered to NOVA team devs).
-  - Slide 3: Backlog by Component + Aging Buckets (side-by-side horizontal bar charts).
+  - Slide 3: Requested — Not Yet Started table.
   - Slide 4: Developer Load Matrix (assignee × component heatmap table).
   - KPI strip: In Progress, Completed (7d), Requested, Open (Prod), Open (NOVA). **No total "Open"** — that's on Dev 1 (non-redundancy rule). Prod = CM + OPRD.
-  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `BacklogAgingSlide`, `DevLoadMatrixSlide`.
+  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `DevLoadMatrixSlide`.
 
 - **Trevor's Screen** — **NOVA-focused, mobile-friendly**. Single-view layout:
   - KPI strip: NOVA Active, In Progress, To Do, Review/QA, Total Open.
@@ -135,7 +136,7 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
 
 All TV dashboards use a dual-refresh approach:
 - **Soft re-fetch**: Zustand stores poll every 60s and re-fetch if stale. Cache TTL is **time-aware** via `getJiraCacheTtl()` in `JIRA_SHARED.ts`: **20 min during business hours (6 AM–8 PM Pacific)**, **60 min off-hours**. Data updates without page flicker.
-- **Hard page reload**: Full `window.location.reload()` every 3 hours to ensure clean state, clear memory leaks, and pick up any deployed code changes. Via `usePageAutoRefresh` hook.
+- **Hard page reload**: Full `window.location.reload()` on an interval from `getPageReloadInterval()` in `JIRA_SHARED.ts` (2h during business hours, 3h off-hours Pacific) to ensure clean state, clear memory leaks, and pick up deployed code changes. Via `usePageAutoRefresh` hook.
 
 ### Analytics dashboards (Dev Corner, Trevor)
 

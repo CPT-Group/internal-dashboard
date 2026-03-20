@@ -38,14 +38,14 @@ curl -X POST -H "Content-Type: application/json" \
 
 ### check-work-hours-sprint.ps1
 
-Manually run to see time tracking for the **entire sprint** (or any date range). Uses the same Jira worklog API; sums by author for all 6 NOVA team members. NOVA sprints are 2 weeks starting Tuesday.
+Manually run to see time tracking for the **entire sprint** (or any date range). Uses the same Jira worklog API; sums by author for all NOVA team members (same IDs as `NOVA_TEAM.ts`). NOVA sprints are 2 weeks starting Tuesday.
 
 **Config (top of script):** Set `$StartDate` and `$EndDate` (YYYY-MM-DD). Example for Sprint 9: `2025-02-18` to `2025-03-03`. Update these for the next sprint or any custom period.
 
 **JQL used:**
 ```
 worklogDate >= "StartDate" AND worklogDate <= "EndDate"
-AND worklogAuthor in (all 6 NOVA account IDs)
+AND worklogAuthor in (all NOVA team account IDs)
 AND project in (CM, OPRD, NOVA)
 ```
 
