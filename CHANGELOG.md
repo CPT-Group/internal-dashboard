@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Home screen compact tile redesign**: Replaced large card grid with compact clickable tiles (icon + title only). Removed title/subtitle header, "View Dashboard" buttons, and card descriptions. Theme switcher moved to bottom-right corner, subtle. 3-column grid, minimal padding. Julie's unicorn variant preserved.
 - **`byProject` and `byBoardByComponent` on OperationalAnalytics**: New fields computing open ticket counts per project and per project-per-component. Used by Trevor's Screen and the ByBoardByComponent stacked bar chart.
 
+### Added
+
+- **`scripts/common-scripts/transition-assignee-nova-to-done.ps1`**: Admin utility to find all non-Done **NOVA** issues for a Jira assignee (`assignee = accountId` + `statusCategory != Done`) and transition them to **Done** (multi-hop until resolved). Uses **`JAMES_EMAIL`** + **`JAMES_JIRA_TOKEN`** + **`JIRA_BASE_URL`** from `.env.jira.temp` or `.env.local`. GET URLs use `$($IssueKey)?fields=...` so PowerShell does not mangle `?` after the issue key.
+
 ### Changed
 
 - **NOVA roster**: Removed **Thomas Williams** from the active team in `NOVA_TEAM.ts` (five members: Roy, Kyle, James, Brandon, Carlos). Operational and Trevor JQL `assignee IN (...)` no longer include him. **`DASHBOARD_EXCLUDED_ACCOUNT_IDS`** lists his Jira `accountId` so `buildOperationalAnalytics` drops any issue where he is **assignee** or **tech owner** — TV KPIs, lists, and charts ignore his attribution while his user can remain in Jira. Work Hours scripts (`check-work-hours-today.ps1`, `check-work-hours-sprint.ps1`) and `AGENTS.md` updated accordingly.

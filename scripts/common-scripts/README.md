@@ -33,8 +33,9 @@ curl -X POST -H "Content-Type: application/json" \
 |--------|---------|
 | `check-work-hours-today.ps1` | Fetch and display today's work hours for all NOVA core devs |
 | `check-work-hours-sprint.ps1` | Fetch and display work hours for a sprint or custom date range (CM, OPRD, NOVA) |
+| `transition-assignee-nova-to-done.ps1` | Bulk-transition **NOVA** issues for a given assignee to **Done** (workflow steps until resolved). Uses **`JAMES_EMAIL`** + **`JIRA_BASE_URL`** (not Kyle). |
 
-**Credentials:** All scripts read `KYLE_EMAIL` and `KYLE_JIRA_TOKEN` from **`.env.jira.temp`** in the repo root first, then fall back to **`.env.local`**. Use `.env.jira.temp` for Jira-only scripts (see Jira Workflow doc). Keep both files git-ignored.
+**Credentials:** Worklog scripts read `KYLE_EMAIL` and `KYLE_JIRA_TOKEN` from **`.env.jira.temp`** in the repo root first, then fall back to **`.env.local`**. The transition script uses **`JAMES_EMAIL`** and **`JAMES_JIRA_TOKEN`** (and `JIRA_BASE_URL`) from the same files. Use `.env.jira.temp` for Jira-only scripts (see Jira Workflow doc). Keep both files git-ignored.
 
 ### check-work-hours-sprint.ps1
 
