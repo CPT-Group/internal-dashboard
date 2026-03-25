@@ -1,6 +1,6 @@
 {
   "name": "internal-dashboard",
-  "version": "0.1.57",
+  "version": "0.1.58",
   "private": true,
   "scripts": {
     "dev": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next dev -p 3333",
