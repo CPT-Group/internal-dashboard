@@ -13,8 +13,13 @@ import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
-const SLIDE_DURATION_MS = 120_000;
-const NUM_SLIDES = 4;
+
+/**
+ * Dwell time per slide (ms). Order matches slide JSX: In Progress → Recently Completed → Requested → Dev Load Matrix.
+ * Slides 0–2 default to ~30s; slide 3 stays longer (2 min) as the slot reserved for a future dedicated timer component.
+ */
+const SLIDE_DURATIONS_MS = [30_000, 30_000, 30_000, 120_000] as const;
+const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
 
 export const DevCornerTwoDashboard = () => {
   const { fetchOperationalData, isStale, loading, error, getAnalytics } =
@@ -34,12 +39,13 @@ export const DevCornerTwoDashboard = () => {
   }, [fetchOperationalData, isStale]);
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const ms = SLIDE_DURATIONS_MS[activeSlide];
+    const t = window.setTimeout(() => {
       setLeavingSlide(activeRef.current);
       setActiveSlide((i) => (i + 1) % NUM_SLIDES);
-    }, SLIDE_DURATION_MS);
-    return () => clearInterval(t);
-  }, []);
+    }, ms);
+    return () => window.clearTimeout(t);
+  }, [activeSlide]);
 
   useEffect(() => {
     if (leavingSlide === null) return;

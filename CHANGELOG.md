@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [0.1.57] - 2026-03-25
+
+### Changed
+
+- **Dependencies**: Ran `npm install`; `npm audit fix` for transitive **flatted**, **immutable**, and **picomatch**; bumped **next** and **eslint-config-next** to **16.2.1** to address remaining npm audit advisories for Next.js.
+
 ## [Unreleased]
 
 ### Added
@@ -33,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`scripts/common-scripts/transition-assignee-nova-to-done.ps1`**: Admin utility to find all non-Done **NOVA** issues for a Jira assignee (`assignee = accountId` + `statusCategory != Done`) and transition them to **Done** (multi-hop until resolved). Uses **`JAMES_EMAIL`** + **`JAMES_JIRA_TOKEN`** + **`JIRA_BASE_URL`** from `.env.jira.temp` or `.env.local`. GET URLs use `$($IssueKey)?fields=...` so PowerShell does not mangle `?` after the issue key.
 
 ### Changed
+
+- **Dev Corner Two carousel**: Per-slide dwell times via `SLIDE_DURATIONS_MS` (~30s for the first three slides, 2 min for the Dev Load Matrix slot / future 2‑minute timer). Replaced single `setInterval` with `setTimeout` rescheduled on each `activeSlide` change.
 
 - **NOVA roster**: Removed **Thomas Williams** from the active team in `NOVA_TEAM.ts` (five members: Roy, Kyle, James, Brandon, Carlos). Operational and Trevor JQL `assignee IN (...)` no longer include him. **`DASHBOARD_EXCLUDED_ACCOUNT_IDS`** lists his Jira `accountId` so `buildOperationalAnalytics` drops any issue where he is **assignee** or **tech owner** — TV KPIs, lists, and charts ignore his attribution while his user can remain in Jira. Work Hours scripts (`check-work-hours-today.ps1`, `check-work-hours-sprint.ps1`) and `AGENTS.md` updated accordingly.
 
