@@ -118,6 +118,15 @@
   --nova-accent-border: rgb(36, 205, 197) !important;
   --nova-accent-text: #ffffff !important;
 
+  // Dev Corner Two slide hero — uses var(--primary-color); follows active theme (no per-theme duplicate needed)
+  --slide-hero-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-color) 15%, transparent) 0%,
+    transparent 55%
+  );
+  --slide-hero-pill-bg: color-mix(in srgb, var(--primary-color) 22%, transparent);
+  --slide-hero-pill-border: color-mix(in srgb, var(--primary-color) 45%, transparent);
+
   // PrimeReact alias (some components use --p-primary-color)
   --p-primary-color: var(--primary-color) !important;
   --p-text-color: var(--text-color) !important;

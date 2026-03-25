@@ -12,3 +12,4 @@ export * from './JIRA_OPERATIONAL';
 export * from './JULIES_BACKGROUND';
 export * from './JACKIES_BACKGROUND';
 export * from './DEV1_CONFIG';
+export * from './GITHUB_WEBHOOK';

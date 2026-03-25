@@ -1,0 +1,135 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--slide-hero-bg);
+}
+
+.headerTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.headerMeta {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+}
+
+.carousel {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: 0.75rem 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  &.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &.leaving {
+    opacity: 0;
+  }
+}
+
+.slideInner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 0.5rem;
+}
+
+.slideTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.slideBody {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-color-secondary);
+}
+
+.indicators {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  z-index: 2;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-border);
+  transition: background 300ms;
+
+  &.activeDot {
+    background: var(--primary-color);
+  }
+}
+
+.feedScroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 2rem;
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.feedRow {
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  font-size: 0.78rem;
+  color: var(--text-color);
+}
+
+.feedTime {
+  font-size: 0.65rem;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.2rem;
+}
+
+.loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+}

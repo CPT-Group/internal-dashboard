@@ -6,6 +6,7 @@ import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import type { RecentlyCompletedTicket } from '@/types';
 import { useAutoScroll } from '@/hooks';
+import { DevCornerSlideHero } from '@/components/ui';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface RecentlyCompletedSlideProps {
@@ -27,10 +28,12 @@ export const RecentlyCompletedSlide = ({ tickets }: RecentlyCompletedSlideProps)
 
   return (
     <div className={styles.slideContent}>
-      <div className={styles.slideTitle}>
-        <span>Recently Completed (7d)</span>
-        <Tag value={`${tickets.length} items`} severity="success" />
-      </div>
+      <DevCornerSlideHero
+        title="Recently completed"
+        pill="7d"
+        description="Completed by Tech Owner · NOVA team"
+        trailing={<Tag value={`${tickets.length} items`} severity="success" />}
+      />
       <Card className={styles.tableCard}>
         <div ref={scrollRef} className={styles.tableScrollWrap}>
           <DataTable

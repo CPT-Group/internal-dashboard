@@ -4,6 +4,7 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import type { InProgressTicket } from '@/types';
 import { useAutoScroll } from '@/hooks';
+import { DevCornerSlideHero } from '@/components/ui';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface InProgressCardsSlideProps {
@@ -24,9 +25,16 @@ export const InProgressCardsSlide = ({ tickets }: InProgressCardsSlideProps) => 
 
   return (
     <div className={styles.slideContent}>
-      <div className={styles.slideTitle}>
-        <span>In Progress ({tickets.length})</span>
-      </div>
+      <DevCornerSlideHero
+        title="In progress"
+        description={
+          <>
+            <span>CM, OPRD & NOVA · </span>
+            <strong>{tickets.length}</strong>
+            <span> active</span>
+          </>
+        }
+      />
       <div ref={scrollRef} className={styles.cardGrid}>
         {tickets.map((t) => (
           <Card

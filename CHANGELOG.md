@@ -19,7 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **GitHub webhooks**: `POST /api/webhooks/github` receives org/repo webhook deliveries (verify `GITHUB_WEBHOOK_SECRET` when set), stores normalized rows in an in-memory cache, optional Teams mirror via `GITHUB_WEBHOOK_CPT_GROUP`. `GET /api/webhooks/github` returns cached events for the TV UI.
+- **TV route** `/tv/github-activity` (`GithubActivityDashboard`): 4-slide carousel (30s, 30s, 30s, 120s on the feed), polls the GET route every 60s; home screen tile **GitHub activity**.
+
 ### Changed
+
+- **Dev Corner Two**: Shared slide header **`DevCornerSlideHero`** (`src/components/ui/DevCornerSlideHero/`) for the same gradient + pill pattern as “Completions by developer”, applied to all Dev Corner Two slides. Theme tokens **`--slide-hero-bg`**, **`--slide-hero-pill-bg`**, **`--slide-hero-pill-border`** in `variables.scss` (derived from `--primary-color`). GitHub activity TV top bar uses **`--slide-hero-bg`**.
 
 - **Dev Corner Two — slide 6 (completions by developer)**: New **last** carousel slide with a distinct layout (`CompletedByDevSlide` + `CompletedByDevSlide.module.scss`). Five columns (NOVA team): **Today** completions (tech owner) from existing closed-today fetch, plus **earlier this week** (Monday–Friday window capped at min(today, Friday), from existing `resolvedLast14` — no extra Jira calls). `completedByDeveloper` on `OperationalAnalytics`. Dev Load Matrix remains slide 5 with the 2-minute dwell.
 

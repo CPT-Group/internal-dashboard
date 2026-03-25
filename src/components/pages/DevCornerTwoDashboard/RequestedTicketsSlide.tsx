@@ -6,6 +6,7 @@ import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import type { RequestedTicket } from '@/types';
 import { useAutoScroll } from '@/hooks';
+import { DevCornerSlideHero } from '@/components/ui';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface RequestedTicketsSlideProps {
@@ -30,10 +31,12 @@ export const RequestedTicketsSlide = ({ tickets }: RequestedTicketsSlideProps) =
 
   return (
     <div className={styles.slideContent}>
-      <div className={styles.slideTitle}>
-        <span>Requested — Not Yet Started</span>
-        <Tag value={`${tickets.length} waiting`} severity="warning" />
-      </div>
+      <DevCornerSlideHero
+        title="Requested — not yet started"
+        pill="Queue"
+        description="Tech owner vs assignee · waiting for dev pickup"
+        trailing={<Tag value={`${tickets.length} waiting`} severity="warning" />}
+      />
       <Card className={styles.tableCard}>
         <div ref={scrollRef} className={styles.tableScrollWrap}>
           <DataTable

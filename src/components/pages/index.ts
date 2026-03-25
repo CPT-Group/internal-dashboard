@@ -6,3 +6,4 @@ export * from './ConferenceRoomDashboard';
 export * from './TrevorDashboard';
 export * from './OperationalJiraDashboard';
 export * from './JuliesOfficeDashboard';
+export * from './GithubActivityDashboard/GithubActivityDashboard';

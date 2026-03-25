@@ -3,9 +3,9 @@
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
 import type { TodayComponentVelocityRow } from '@/types';
 import { useAutoScroll } from '@/hooks';
+import { DevCornerSlideHero } from '@/components/ui';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface TodayComponentVelocitySlideProps {
@@ -19,15 +19,11 @@ export const TodayComponentVelocitySlide = ({ rows }: TodayComponentVelocitySlid
 
   return (
     <div className={styles.slideContent}>
-      <div className={`${styles.slideTitle} ${styles.slideTitleStacked}`}>
-        <div className={styles.todaySlideHeading}>
-          <span>Close times today — by component</span>
-          <Tag value="Today" severity="success" />
-        </div>
-        <span className={styles.todaySlideSub}>
-          Resolved today · NOVA team tech owners · CM, OPRD & NOVA
-        </span>
-      </div>
+      <DevCornerSlideHero
+        title="Close times today — by component"
+        pill="Today"
+        description="Resolved today · NOVA team tech owners · CM, OPRD & NOVA"
+      />
       <Card className={styles.tableCard}>
         <div ref={scrollRef} className={styles.tableScrollWrap}>
           <DataTable

@@ -52,4 +52,11 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     variant: 'unicorn',
     enabled: true,
   },
+  {
+    title: 'GitHub activity',
+    description: 'Org/repo webhooks · feed & Teams mirror',
+    route: '/tv/github-activity',
+    icon: 'pi pi-github',
+    enabled: true,
+  },
 ];

@@ -23,6 +23,11 @@ const DevCornerOneDashboard = dynamic(
   { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
 );
 
+const GithubActivityDashboard = dynamic(
+  () => import('@/components/pages/GithubActivityDashboard/GithubActivityDashboard').then((m) => m.GithubActivityDashboard),
+  { ssr: false, loading: () => <div className="nova-dashboard-loading flex align-items-center justify-content-center min-h-screen" /> }
+);
+
 export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
   usePageAutoRefresh(getPageReloadInterval());
 
@@ -43,6 +48,9 @@ export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
   }
   if (roomName === 'julie') {
     return <JuliesOfficeDashboard />;
+  }
+  if (roomName === 'github-activity') {
+    return <GithubActivityDashboard />;
   }
   return null;
 };

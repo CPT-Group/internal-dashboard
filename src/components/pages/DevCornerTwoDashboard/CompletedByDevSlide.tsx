@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { CompletedByDeveloperColumn } from '@/types';
 import { useAutoScroll } from '@/hooks';
+import { DevCornerSlideHero } from '@/components/ui';
 import styles from './CompletedByDevSlide.module.scss';
 
 export interface CompletedByDevSlideProps {
@@ -26,18 +27,21 @@ export const CompletedByDevSlide = ({ columns }: CompletedByDevSlideProps) => {
 
   return (
     <div className={styles.root}>
-      <div className={styles.hero}>
-        <div className={styles.heroTitle}>Completions by developer</div>
-        <div className={styles.heroMeta}>
-          <span className={styles.pill}>Today</span>
-          <span>
-            Same data as operational fetch — no extra Jira calls. Week = Mon–Fri window (through today).
-          </span>
-          <span>
-            · Today: <strong>{totals.today}</strong> · Week: <strong>{totals.week}</strong>
-          </span>
-        </div>
-      </div>
+      <DevCornerSlideHero
+        title="Completions by developer"
+        pill="Today"
+        description={
+          <>
+            <span>
+              Same data as operational fetch — no extra Jira calls. Week = Mon–Fri window (through
+              today).
+            </span>
+            <span>
+              · Today: <strong>{totals.today}</strong> · Week: <strong>{totals.week}</strong>
+            </span>
+          </>
+        }
+      />
       <div ref={scrollRef} className={styles.scroll}>
         <div className={styles.grid}>
           {columns.map((col) => (

@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Card } from 'primereact/card';
 import type { DevLoadMatrixCell } from '@/types';
 import { useAutoScroll } from '@/hooks';
+import { DevCornerSlideHero } from '@/components/ui';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 export interface DevLoadMatrixSlideProps {
@@ -44,9 +45,10 @@ export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMat
 
   return (
     <div className={styles.slideContent}>
-      <div className={styles.slideTitle}>
-        <span>Developer Load Matrix</span>
-      </div>
+      <DevCornerSlideHero
+        title="Developer load matrix"
+        description="Open work · assignee × component · NOVA team"
+      />
       <Card className={styles.tableCard}>
         <div ref={scrollRef} className={styles.tableScrollWrap}>
           <table className={styles.matrixTable}>

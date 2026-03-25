@@ -96,7 +96,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 
 - **Paths**: Use `@/` for `src/` (e.g. `@/components/ui/...`, `@/styles/...`).
 - **App**: `src/app/` (Next.js App Router), `src/app/layout.tsx`, routes under `src/app/tv/...`.
-- **UI**: `src/components/pages/` (page-level dashboards), `src/components/ui/` (reusable pieces e.g. `BackgroundSlideshow`, `JiraMeterChart`, `TextScroller`, `CornerInfoCard`, `TrendBadge`, `KpiStrip`).
+- **UI**: `src/components/pages/` (page-level dashboards), `src/components/ui/` (reusable pieces e.g. `BackgroundSlideshow`, `JiraMeterChart`, `TextScroller`, `CornerInfoCard`, `TrendBadge`, `KpiStrip`, **`DevCornerSlideHero`**). **Dev Corner Two** slide titles use `DevCornerSlideHero` with theme-driven tokens from `variables.scss`: `--slide-hero-bg`, `--slide-hero-pill-bg`, `--slide-hero-pill-border` (all derived from `var(--primary-color)` — no per-theme duplicate; switching theme updates primary and the hero automatically). Do not hardcode hex colors in slide headers; use these variables or `color-mix` with `var(--primary-color)`.
 - **Charts**: `src/components/charts/` — **presentation-only** chart components named by **purpose** (e.g. `OpenClosedAvgHoursByAssigneeRadarChart`, `OpenedClosedFlowBarChart`, `HorizontalBarChart`, `GanttChart`). Each accepts only a typed `data` prop; no store, no JQL, no wrappers (Card/Panel). Chart data types live in `src/types/charts/`. Mappers in `src/utils/chartDataMappers.ts` convert analytics into these types. Pages get analytics from the store → call the mapper → pass result to the chart; **wrappers and layout stay on the page**.
 - **State**: Zustand stores under `src/stores/`. Data fetching and JQL live at API/store level; chart components never fetch or transform raw analytics.
 - **Jira API**: Uses **v3 REST API** (`POST /rest/api/3/search/jql`) with cursor-based pagination (`nextPageToken`, `isLast`). V3 does **not** return `total`; the service auto-paginates up to 1000 results (10 pages × 100). Auth: Basic with `KYLE_EMAIL` + `KYLE_JIRA_TOKEN` from `.env.local`. **Changelog API**: `GET /rest/api/3/issue/{key}/changelog` fetches status transition history; used to extract exact dates when CM/OPRD tickets transitioned FROM "New" (when work landed on dev team). Route: `GET /api/jira/transitions?keys=CM-123,CM-456`. **Worklog API**: `GET /rest/api/3/issue/{key}/worklog` for time tracking; JQL `worklogDate >= startOfDay() AND worklogAuthor in (...)` finds issues. Route: `GET /api/jira/worklogs-today?accountIds=id1,id2`. Polled via `useWorkHoursToday` hook (10-min interval).
@@ -105,7 +105,14 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 
 ## TV routes and dashboards
 
-- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `DevCornerTwoDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`. Route slugs match the dashboard/person name.
+- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `DevCornerTwoDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; `github-activity` → `GithubActivityDashboard`. Route slugs match the dashboard/person name.
+
+### GitHub webhooks (receiver + TV)
+
+- **GitHub “Payload URL”** must be your deployed app: **`https://<host>/api/webhooks/github`** — not a Teams Incoming Webhook URL. GitHub sends `POST` with `X-GitHub-Event`, `X-GitHub-Delivery`, and (if you set a secret) `X-Hub-Signature-256`. Teams webhooks expect different JSON; use Teams only as an optional **mirror** after our route processes the event.
+- **Env**: `GITHUB_WEBHOOK_SECRET` — same value as GitHub’s webhook secret (HMAC SHA256 verification). **`GITHUB_WEBHOOK_CPT_GROUP`** — optional Microsoft Teams Incoming Webhook URL; we POST a short `{ "text": "..." }` line per delivery (failures do not fail the webhook).
+- **Cache**: in-memory ring buffer (`GITHUB_WEBHOOK_CACHE_MAX_EVENTS`, age prune in `src/lib/githubWebhookCache.ts`). On serverless, cache is **per instance** and resets on cold starts — fine for a TV feed of recent activity.
+- **TV** `/tv/github-activity`: carousel **30s × 3 slides + 120s** on the feed slide; polls **`GET /api/webhooks/github`** every **`GITHUB_ACTIVITY_POLL_INTERVAL_MS`** (60s). Same hard page reload as other TVs via `usePageAutoRefresh` + `getPageReloadInterval()`.
 
 ### Dev Corner physical layout and dashboard philosophy
 
