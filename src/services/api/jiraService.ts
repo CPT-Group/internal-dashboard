@@ -24,6 +24,7 @@ const DEFAULT_JIRA_FIELDS = [
   'resolutiondate',
   'components',
   'customfield_10193', // Tech Owner (user who actually does the dev work)
+  'customfield_10754', // NOVA Components (NOVA project only)
 ] as const;
 
 function getJiraConfig(): { baseUrl: string; authHeader: string } {

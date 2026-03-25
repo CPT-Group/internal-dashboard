@@ -80,6 +80,41 @@ function getComponentNames(issue: JiraIssue): string[] {
     .filter(Boolean);
 }
 
+/** NOVA project "NOVA Components" field value when set (customfield_10754). */
+function getNovaComponentsLabel(issue: JiraIssue): string | null {
+  const raw = issue.fields?.customfield_10754?.value;
+  if (typeof raw === 'string' && raw.trim()) return raw.trim();
+  return null;
+}
+
+/**
+ * Dev load matrix rows: NOVA uses the NOVA Components field when set; otherwise standard Jira components (or "No component").
+ * CM/OPRD: standard Jira components.
+ */
+function getMatrixComponentLabelsForIssue(issue: JiraIssue): string[] {
+  if (getProjectKey(issue) === 'NOVA') {
+    const nv = getNovaComponentsLabel(issue);
+    if (nv) return [nv];
+  }
+  return getComponentNames(issue);
+}
+
+/** Tables/cards: show NOVA Components for NOVA tickets when set; else comma-separated Jira components. */
+function getDisplayComponentLabel(issue: JiraIssue): string {
+  if (getProjectKey(issue) === 'NOVA') {
+    const nv = getNovaComponentsLabel(issue);
+    if (nv) return nv;
+  }
+  return getComponentNames(issue).join(', ');
+}
+
+function sortMatrixComponentLabels(labels: string[]): string[] {
+  const uniq = [...new Set(labels)];
+  const rest = uniq.filter((c) => c !== 'No component').sort((a, b) => a.localeCompare(b));
+  const tail = uniq.includes('No component') ? ['No component'] : [];
+  return [...rest, ...tail];
+}
+
 function isDone(issue: JiraIssue): boolean {
   return issue.fields?.status?.statusCategory?.key === 'done';
 }
@@ -314,7 +349,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     const aid = getAssigneeKey(issue);
     if (!NOVA_TEAM_ACCOUNT_IDS.has(aid)) return;
     nameByAssignee.set(aid, getAssigneeName(issue));
-    getComponentNames(issue).forEach((comp) => {
+    getMatrixComponentLabelsForIssue(issue).forEach((comp) => {
       componentSet.add(comp);
       const key = `${aid}|${comp}`;
       matrixMap.set(key, (matrixMap.get(key) ?? 0) + 1);
@@ -324,7 +359,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   NOVA_TEAM_ORDERED.forEach((m) => {
     if (!nameByAssignee.has(m.accountId)) nameByAssignee.set(m.accountId, m.displayName);
   });
-  const components = Array.from(componentSet).sort();
+  const components = sortMatrixComponentLabels(Array.from(componentSet));
   const devLoadMatrix: DevLoadMatrixCell[] = [];
   assignees.forEach((assigneeId) => {
     components.forEach((component) => {
@@ -575,7 +610,7 @@ function buildInProgressTickets(open: JiraIssue[], transitionDates: Map<string, 
       key: issue.key,
       summary: issue.fields?.summary ?? '',
       assignee: getAssigneeName(issue),
-      component: getComponentNames(issue).join(', '),
+      component: getDisplayComponentLabel(issue),
       status: issue.fields?.status?.name ?? '',
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
@@ -603,7 +638,7 @@ function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedT
       key: issue.key,
       summary: issue.fields?.summary ?? '',
       techOwner: getTechOwnerName(issue),
-      component: getComponentNames(issue).join(', '),
+      component: getDisplayComponentLabel(issue),
       resolvedDate: issue.fields?.resolutiondate?.slice(0, 10) ?? '',
       project: getProjectKey(issue),
     }));
@@ -616,8 +651,9 @@ function buildRequestedTickets(open: JiraIssue[], transitionDates: Map<string, s
     .map((issue) => ({
       key: issue.key,
       summary: issue.fields?.summary ?? '',
+      techOwner: getTechOwnerName(issue),
       assignee: getAssigneeName(issue),
-      component: getComponentNames(issue).join(', '),
+      component: getDisplayComponentLabel(issue),
       status: issue.fields?.status?.name ?? '',
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),

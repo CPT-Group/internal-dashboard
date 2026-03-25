@@ -62,7 +62,9 @@ Jira custom field `customfield_10193` (**Tech Owner**) identifies the developer 
 **Rules for analytics attribution:**
 - **Recently Completed, Closed Today, Avg Close Time, Throughput, Flow chart (resolved side), Trend comparisons** — always use **Tech Owner** (`customfield_10193`). Filter to NOVA team tech owners so metrics only count dev-team work.
 - **In-Progress, Team Activity, Dev Load Matrix, Workload** — use **assignee** (correct because the dev is assigned while actively working).
-- **Requested / Not Started** — use **assignee** (shows who currently has the ticket, may be CM or dev).
+- **Requested / Not Started** — analytics still keys off **assignee** for “who has it now”; Dev Corner Two also displays **Tech Owner** separately so viewers see intended dev vs current assignee.
+
+**NOVA Components** (`customfield_10754`): On NOVA project issues, this field (e.g. ZION, Legacy/Other) is used for Dev Load matrix bucketing and component text in Dev 2 tables when set; if empty, behavior falls back to standard Jira **components** or “No component”. CM/OPRD continue to use standard components only.
 
 The field is fetched as part of `DEFAULT_JIRA_FIELDS` in `jiraService.ts` and typed on `JiraIssueFields` as `customfield_10193: JiraUser | null`. Helpers `getTechOwnerName()`, `getTechOwnerAccountId()`, and `isTechOwnerNovaTeam()` in `operationalAnalytics.ts` centralize access.
 
@@ -116,10 +118,10 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
 - **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 4-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): ~30s each for In Progress, Recently Completed, and Requested; **2 min** for the last slide (Dev Load Matrix slot, reserved for a future 2‑minute timer component):
-  - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age).
-  - Slide 2: Recently Completed table (last 7 days, shows **Tech Owner** not assignee, filtered to NOVA team devs).
-  - Slide 3: Requested — Not Yet Started table.
-  - Slide 4: Developer Load Matrix (assignee × component heatmap table).
+  - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age); keys starting with `NOVA-` use the same nova accent styling as Dev 1 chips.
+  - Slide 2: Recently Completed table (last 7 days, **Completed by** = Tech Owner, filtered to NOVA team devs); `NOVA-` rows highlighted.
+  - Slide 3: Requested — Not Yet Started table (**Tech owner** + **Assignee**); `NOVA-` rows highlighted.
+  - Slide 4: Developer Load Matrix — **components as rows**, **assignees as columns** (NOVA team); matrix buckets NOVA tickets by **NOVA Components** when set.
   - KPI strip: In Progress, Completed (7d), Requested, Open (Prod), Open (NOVA). **No total "Open"** — that's on Dev 1 (non-redundancy rule). Prod = CM + OPRD.
   - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `DevLoadMatrixSlide`.
 

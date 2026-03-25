@@ -112,6 +112,8 @@ export interface RecentlyCompletedTicket {
 export interface RequestedTicket {
   key: string;
   summary: string;
+  /** Tech Owner (who should do the work); distinct from assignee while ticket is in queue. */
+  techOwner: string;
   assignee: string;
   component: string;
   status: string;

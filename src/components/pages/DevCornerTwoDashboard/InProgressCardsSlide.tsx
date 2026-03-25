@@ -17,6 +17,8 @@ const statusSeverity = (status: string): 'info' | 'warning' | 'success' => {
   return 'info';
 };
 
+const isNovaTicket = (key: string) => key.startsWith('NOVA-');
+
 export const InProgressCardsSlide = ({ tickets }: InProgressCardsSlideProps) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 
@@ -27,8 +29,13 @@ export const InProgressCardsSlide = ({ tickets }: InProgressCardsSlideProps) => 
       </div>
       <div ref={scrollRef} className={styles.cardGrid}>
         {tickets.map((t) => (
-          <Card key={t.key} className={styles.ticketCard}>
-            <div className={styles.ticketKey}>{t.key}</div>
+          <Card
+            key={t.key}
+            className={`${styles.ticketCard} ${isNovaTicket(t.key) ? styles.ticketCardNova : ''}`}
+          >
+            <div className={`${styles.ticketKey} ${isNovaTicket(t.key) ? styles.ticketKeyNova : ''}`}>
+              {t.key}
+            </div>
             <div className={styles.ticketSummary}>{t.summary}</div>
             <div className={styles.ticketMeta}>
               <Tag value={t.status} severity={statusSeverity(t.status)} />

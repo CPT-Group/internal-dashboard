@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dev Corner Two**: NOVA vs prod styling aligned with Dev Corner One — tickets whose key starts with `NOVA-` use `--nova-accent` card/table row accents; CM/OPRD use default primary styling. Recently Completed column header **Completed by** (still sourced from Tech Owner). Requested slide adds **Tech owner** alongside **Assignee** (both from Jira).
+- **Dev Corner Two — Developer Load Matrix**: Layout transposed — **components as rows** (Y), **NOVA team assignees as columns** (X). Cell shading uses `color-mix` with `var(--primary-color)` instead of hard-coded blue.
+- **Operational analytics**: For **NOVA** issues, Dev Load matrix and “component” display text prefer Jira **NOVA Components** (`customfield_10754`) when set; otherwise standard Jira components or “No component”. Matrix component list is sorted with “No component” last.
+
 ### Added
 
 - **NOVA accent CSS variables**: Added `--nova-accent`, `--nova-accent-border`, `--nova-accent-text` to all 4 themes. Dark-synth uses cyan, dark/light use blue, ms-access uses orange — all matching the theme's primary. Used for NOVA-specific rows, labels, and NOVA-project ticket chips (CM/OPRD chips keep default surface styling).

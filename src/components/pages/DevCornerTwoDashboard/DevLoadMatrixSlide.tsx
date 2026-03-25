@@ -26,8 +26,15 @@ export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMat
     return map;
   }, [matrix]);
 
-  const visibleComponents = components.slice(0, 10);
+  /** Rows = components (Y); columns = devs (X). */
+  const visibleComponents = components.slice(0, 16);
   const visibleAssignees = assignees.slice(0, 12);
+
+  const cellBg = (count: number) => {
+    const intensity = maxLoad > 0 ? count / maxLoad : 0;
+    const pct = Math.round(12 + intensity * 78);
+    return `color-mix(in srgb, var(--primary-color) ${pct}%, transparent)`;
+  };
 
   return (
     <div className={styles.slideContent}>
@@ -39,34 +46,34 @@ export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMat
           <table className={styles.matrixTable}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left' }}>Dev / Component</th>
-                {visibleComponents.map((c) => (
-                  <th key={c} style={{ textAlign: 'center' }}>
-                    {c.length > 10 ? c.slice(0, 8) + '…' : c}
-                  </th>
-                ))}
+                <th className={styles.matrixCorner}>Component</th>
+                {visibleAssignees.map((aid) => {
+                  const name = nameByAssignee.get(aid) ?? aid;
+                  return (
+                    <th key={aid} className={styles.matrixColHead}>
+                      {name.split(' ')[0]}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {visibleAssignees.map((aid) => {
-                const name = nameByAssignee.get(aid) ?? aid;
-                return (
-                  <tr key={aid}>
-                    <td className={styles.matrixName}>{name.split(' ')[0]}</td>
-                    {visibleComponents.map((comp) => {
-                      const cell = matrix.find((c) => c.assigneeId === aid && c.component === comp);
-                      const count = cell?.count ?? 0;
-                      const intensity = maxLoad > 0 ? count / maxLoad : 0;
-                      const bg = `rgba(59, 130, 246, ${0.15 + intensity * 0.75})`;
-                      return (
-                        <td key={comp} style={{ textAlign: 'center', backgroundColor: bg }}>
-                          {count || '–'}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
+              {visibleComponents.map((comp) => (
+                <tr key={comp}>
+                  <td className={styles.matrixName}>
+                    {comp.length > 14 ? comp.slice(0, 12) + '…' : comp}
+                  </td>
+                  {visibleAssignees.map((aid) => {
+                    const cell = matrix.find((c) => c.assigneeId === aid && c.component === comp);
+                    const count = cell?.count ?? 0;
+                    return (
+                      <td key={aid} className={styles.matrixCell} style={{ background: cellBg(count) }}>
+                        {count || '–'}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

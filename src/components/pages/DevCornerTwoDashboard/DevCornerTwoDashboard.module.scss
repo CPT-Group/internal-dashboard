@@ -84,6 +84,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  border: 1px solid var(--surface-border);
 
   :global(.p-card-body) {
     padding: 0.6rem;
@@ -94,10 +95,21 @@
   }
 }
 
+/* Match Dev Corner One: NOVA keys use nova accent; CM/OPRD use primary. */
+.ticketCardNova {
+  border-color: var(--nova-accent-border);
+  box-shadow: inset 3px 0 0 0 var(--nova-accent-border);
+  background: color-mix(in srgb, var(--nova-accent) 35%, var(--surface-card));
+}
+
 .ticketKey {
   font-weight: 700;
   font-size: 0.8rem;
   color: var(--primary-color);
+}
+
+.ticketKeyNova {
+  color: var(--nova-accent-border);
 }
 
 .ticketSummary {
@@ -153,9 +165,15 @@
   min-height: 0;
 }
 
-/* Recently completed table */
+/* Recently completed + requested tables */
 .completedTable {
   font-size: 0.8rem;
+}
+
+.tableRowNova {
+  :global(td:first-child) {
+    box-shadow: inset 3px 0 0 0 var(--nova-accent-border);
+  }
 }
 
 .matrixTable {
@@ -177,9 +195,30 @@
   }
 }
 
+.matrixCorner {
+  text-align: left;
+  min-width: 5.5rem;
+}
+
+.matrixColHead {
+  text-align: center;
+  max-width: 3.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .matrixName {
   font-weight: 500;
   color: var(--text-color);
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matrixCell {
+  text-align: center;
 }
 
 /* Slide title */

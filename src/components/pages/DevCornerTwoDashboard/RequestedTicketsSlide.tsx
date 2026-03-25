@@ -23,6 +23,8 @@ const ageBody = (row: RequestedTicket) => {
   return <Tag value={`${row.ageDays}d`} severity={severity} />;
 };
 
+const isNovaTicket = (key: string) => key.startsWith('NOVA-');
+
 export const RequestedTicketsSlide = ({ tickets }: RequestedTicketsSlideProps) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 
@@ -41,9 +43,11 @@ export const RequestedTicketsSlide = ({ tickets }: RequestedTicketsSlideProps) =
             showGridlines
             className={styles.completedTable}
             emptyMessage="No tickets waiting — all caught up!"
+            rowClassName={(row) => (isNovaTicket(row.key) ? styles.tableRowNova : '')}
           >
             <Column field="key" header="Key" style={{ width: '80px' }} />
             <Column field="summary" header="Summary" body={summaryBody} />
+            <Column field="techOwner" header="Tech owner" style={{ width: '100px' }} />
             <Column field="assignee" header="Assignee" style={{ width: '100px' }} />
             <Column field="component" header="Component" style={{ width: '100px' }} body={componentBody} />
             <Column field="status" header="Status" style={{ width: '100px' }} />

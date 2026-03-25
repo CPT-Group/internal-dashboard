@@ -20,6 +20,8 @@ const componentBody = (row: RecentlyCompletedTicket) =>
 
 const dateBody = (row: RecentlyCompletedTicket) => row.resolvedDate.slice(5);
 
+const isNovaTicket = (key: string) => key.startsWith('NOVA-');
+
 export const RecentlyCompletedSlide = ({ tickets }: RecentlyCompletedSlideProps) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 
@@ -38,10 +40,11 @@ export const RecentlyCompletedSlide = ({ tickets }: RecentlyCompletedSlideProps)
             showGridlines
             className={styles.completedTable}
             emptyMessage="No recently completed tickets"
+            rowClassName={(row) => (isNovaTicket(row.key) ? styles.tableRowNova : '')}
           >
             <Column field="key" header="Key" style={{ width: '80px' }} />
             <Column field="summary" header="Summary" body={summaryBody} />
-            <Column field="techOwner" header="Tech Owner" style={{ width: '100px' }} />
+            <Column field="techOwner" header="Completed by" style={{ width: '100px' }} />
             <Column field="component" header="Component" style={{ width: '100px' }} body={componentBody} />
             <Column field="resolvedDate" header="Resolved" style={{ width: '70px' }} body={dateBody} />
             <Column field="project" header="Project" style={{ width: '60px' }} />

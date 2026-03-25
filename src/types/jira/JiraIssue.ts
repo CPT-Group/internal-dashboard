@@ -47,6 +47,8 @@ export interface JiraIssueFields {
   components?: Array<{ id: string; name: string }> | null;
   /** Tech Owner – the dev who actually does the work (customfield_10193). */
   customfield_10193?: JiraUser | null;
+  /** NOVA project — "NOVA Components" single-select (customfield_10754). */
+  customfield_10754?: { value?: string; id?: string; self?: string } | null;
 }
 
 export interface JiraIssue {

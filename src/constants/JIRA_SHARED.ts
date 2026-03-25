@@ -37,3 +37,6 @@ export const JIRA_SEARCH_MAX_RESULTS = 1000;
 
 /** Jira custom field ID for Tech Owner (the dev who actually does the work). */
 export const JIRA_FIELD_TECH_OWNER = 'customfield_10193';
+
+/** NOVA project — "NOVA Components" (dropdown: ZION, Legacy/Other, etc.). Verified via editmeta on NOVA-990. */
+export const JIRA_FIELD_NOVA_COMPONENTS = 'customfield_10754';
