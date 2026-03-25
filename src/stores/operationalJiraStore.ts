@@ -98,6 +98,9 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
       for (const i of landedLast14Filtered) {
         if (i.fields?.project?.key !== 'NOVA') allCmOprdKeys.add(i.key);
       }
+      for (const i of closedTodayFiltered) {
+        if (i.fields?.project?.key !== 'NOVA') allCmOprdKeys.add(i.key);
+      }
       const transitionDates = allCmOprdKeys.size > 0
         ? await jiraTransitionDates(Array.from(allCmOprdKeys))
         : new Map<string, string>();

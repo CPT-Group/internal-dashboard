@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner Two — fifth slide (today)**: New carousel slide **Close times today — by component** with a **Today** tag and subtitle. Uses the same Jira **resolved today** scope as the operational **Closed Today** KPI (`JIRA_OPERATIONAL_JQL_CLOSED_TODAY`). Groups CM, OPRD, and NOVA tickets by component (NOVA Components field when set), NOVA team tech owners only. Shows count per component, average hours to close, fastest close today, and tech owner on the fastest ticket. Cycle time uses the same start semantics as avg close time (transition from New for CM/OPRD, created for NOVA). Transition history is now fetched for **closed-today** CM/OPRD keys so those durations are accurate.
+
 - **Dev Corner Two**: NOVA vs prod styling aligned with Dev Corner One — tickets whose key starts with `NOVA-` use `--nova-accent` card/table row accents; CM/OPRD use default primary styling. Recently Completed column header **Completed by** (still sourced from Tech Owner). Requested slide adds **Tech owner** alongside **Assignee** (both from Jira).
 - **Dev Corner Two — Developer Load Matrix**: Layout transposed — **components as rows** (Y), **NOVA team assignees as columns** (X). Cell shading uses `color-mix` with `var(--primary-color)` instead of hard-coded blue.
 - **Operational analytics**: For **NOVA** issues, Dev Load matrix and “component” display text prefer Jira **NOVA Components** (`customfield_10754`) when set; otherwise standard Jira components or “No component”. Matrix component list is sorted with “No component” last.

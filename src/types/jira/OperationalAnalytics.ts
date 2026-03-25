@@ -135,6 +135,20 @@ export interface TrendComparison {
   prevClosed: number;
 }
 
+/** Per-component rollup for tickets resolved today (CM + OPRD + NOVA), NOVA team tech owners only. */
+export interface TodayComponentVelocityRow {
+  component: string;
+  /** Tickets in this component bucket (same issue may count in multiple components). */
+  completedCount: number;
+  /** Average hours from board start → resolved. */
+  avgHours: number | null;
+  /** Shortest cycle time in this bucket today. */
+  fastestHours: number | null;
+  /** Tech owner on the fastest ticket. */
+  fastestTechOwner: string | null;
+  fastestKey: string | null;
+}
+
 export interface OperationalAnalytics {
   kpis: OperationalKpis;
   flowData: FlowDay[];
@@ -168,4 +182,6 @@ export interface OperationalAnalytics {
   byProject: Record<string, number>;
   /** Open count per project per component (e.g. { CM: { 'Weekly Reports': 5, ... }, ... }). */
   byBoardByComponent: Record<string, Record<string, number>>;
+  /** Resolved today, grouped by component — avg and fastest cycle time (NOVA team tech owners). */
+  todayComponentVelocity: TodayComponentVelocityRow[];
 }

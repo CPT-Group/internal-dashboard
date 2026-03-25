@@ -10,15 +10,16 @@ import { InProgressCardsSlide } from './InProgressCardsSlide';
 import { RecentlyCompletedSlide } from './RecentlyCompletedSlide';
 import { RequestedTicketsSlide } from './RequestedTicketsSlide';
 import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
+import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
 
 /**
- * Dwell time per slide (ms). Order matches slide JSX: In Progress → Recently Completed → Requested → Dev Load Matrix.
- * Slides 0–2 default to ~30s; slide 3 stays longer (2 min) as the slot reserved for a future dedicated timer component.
+ * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested → Today's component velocity → Dev Load Matrix.
+ * Slides 0–3 ~30s; last slide 2 min (matrix / future timer slot).
  */
-const SLIDE_DURATIONS_MS = [30_000, 30_000, 30_000, 120_000] as const;
+const SLIDE_DURATIONS_MS = [30_000, 30_000, 30_000, 30_000, 120_000] as const;
 const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
 
 export const DevCornerTwoDashboard = () => {
@@ -54,7 +55,16 @@ export const DevCornerTwoDashboard = () => {
   }, [leavingSlide]);
 
   const analytics = getAnalytics();
-  const { kpis, inProgressTickets, recentlyCompleted, requestedTickets, devLoadMatrix, assignees, components } = analytics;
+  const {
+    kpis,
+    inProgressTickets,
+    recentlyCompleted,
+    requestedTickets,
+    todayComponentVelocity,
+    devLoadMatrix,
+    assignees,
+    components,
+  } = analytics;
 
   const kpiItems: KpiItem[] = useMemo(() => [
     { label: 'In Progress', value: inProgressTickets.length },
@@ -102,6 +112,9 @@ export const DevCornerTwoDashboard = () => {
           <RequestedTicketsSlide tickets={requestedTickets} />
         </div>
         <div className={slideClass(3)}>
+          <TodayComponentVelocitySlide rows={todayComponentVelocity} />
+        </div>
+        <div className={slideClass(4)}>
           <DevLoadMatrixSlide matrix={devLoadMatrix} assignees={assignees} components={components} />
         </div>
         <div className={styles.indicators}>

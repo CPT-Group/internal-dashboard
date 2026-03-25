@@ -117,13 +117,14 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Middle right: Component Activity table (per-component: open, today, this week).
   - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
-- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 4-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): ~30s each for In Progress, Recently Completed, and Requested; **2 min** for the last slide (Dev Load Matrix slot, reserved for a future 2‑minute timer component):
+- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 5-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): ~30s each for slides 1–4; **2 min** for the last slide (Dev Load Matrix):
   - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age); keys starting with `NOVA-` use the same nova accent styling as Dev 1 chips.
   - Slide 2: Recently Completed table (last 7 days, **Completed by** = Tech Owner, filtered to NOVA team devs); `NOVA-` rows highlighted.
   - Slide 3: Requested — Not Yet Started table (**Tech owner** + **Assignee**); `NOVA-` rows highlighted.
-  - Slide 4: Developer Load Matrix — **components as rows**, **assignees as columns** (NOVA team); matrix buckets NOVA tickets by **NOVA Components** when set.
+  - Slide 4: **Today** — close times by component (resolved **today**, same scope as operational closed-today KPI): per component, count, avg hours to close, fastest close today and tech owner (CM + OPRD + NOVA; NOVA team tech owners only). `TodayComponentVelocitySlide`; data: `todayComponentVelocity` from `buildOperationalAnalytics`.
+  - Slide 5: Developer Load Matrix — **components as rows**, **assignees as columns** (NOVA team); matrix buckets NOVA tickets by **NOVA Components** when set.
   - KPI strip: In Progress, Completed (7d), Requested, Open (Prod), Open (NOVA). **No total "Open"** — that's on Dev 1 (non-redundancy rule). Prod = CM + OPRD.
-  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `DevLoadMatrixSlide`.
+  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `TodayComponentVelocitySlide`, `DevLoadMatrixSlide`.
 
 - **Trevor's Screen** — **NOVA-focused, mobile-friendly**. Single-view layout:
   - KPI strip: NOVA Active, In Progress, To Do, Review/QA, Total Open.

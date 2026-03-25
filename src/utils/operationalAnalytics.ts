@@ -19,6 +19,7 @@ import type {
   InProgressTicket,
   RecentlyCompletedTicket,
   RequestedTicket,
+  TodayComponentVelocityRow,
 } from '@/types';
 import {
   DEV1_RISK_BUCKET_WEIGHTS,
@@ -429,6 +430,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const recentlyCompleted = buildRecentlyCompleted(resolvedLast14);
   const requestedTickets = buildRequestedTickets(open, transitionDates);
   const { byProject, byBoardByComponent } = buildByBoardByComponent(open);
+  const todayComponentVelocity = buildTodayComponentVelocity(closedTodayIssues, transitionDates);
 
   return {
     kpis,
@@ -452,6 +454,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     requestedTickets,
     byProject,
     byBoardByComponent,
+    todayComponentVelocity,
   };
 }
 
@@ -500,22 +503,71 @@ function buildTrendComparison(
   };
 }
 
+/** Hours from board-relevant start → resolution (matches avg close time semantics). */
+function getCloseTimeHours(issue: JiraIssue, transitionDates: Map<string, string>): number | null {
+  const project = getProjectKey(issue);
+  let startDate = issue.fields?.created;
+  if (project === 'CM' || project === 'OPRD') {
+    startDate = transitionDates.get(issue.key) ?? startDate;
+  }
+  const resolved = issue.fields?.resolutiondate;
+  if (!startDate || !resolved) return null;
+  const hours = (new Date(resolved).getTime() - new Date(startDate).getTime()) / (60 * 60 * 1000);
+  return hours >= 0 ? hours : null;
+}
+
 function buildAvgCloseTime(resolvedLast14: JiraIssue[], transitionDates: Map<string, string>): number | null {
   const closeTimes: number[] = [];
   for (const issue of resolvedLast14) {
     if (!isTechOwnerNovaTeam(issue)) continue;
-    const project = getProjectKey(issue);
-    let startDate = issue.fields?.created;
-    if (project === 'CM' || project === 'OPRD') {
-      startDate = transitionDates.get(issue.key) ?? startDate;
-    }
-    const resolved = issue.fields?.resolutiondate;
-    if (!startDate || !resolved) continue;
-    const hours = (new Date(resolved).getTime() - new Date(startDate).getTime()) / (60 * 60 * 1000);
-    if (hours >= 0) closeTimes.push(hours);
+    const hours = getCloseTimeHours(issue, transitionDates);
+    if (hours != null) closeTimes.push(hours);
   }
   if (closeTimes.length === 0) return null;
   return Math.round((closeTimes.reduce((s, h) => s + h, 0) / closeTimes.length) * 10) / 10;
+}
+
+function buildTodayComponentVelocity(
+  closedToday: JiraIssue[],
+  transitionDates: Map<string, string>
+): TodayComponentVelocityRow[] {
+  type Entry = { key: string; hours: number; techOwner: string };
+  const buckets = new Map<string, Entry[]>();
+
+  for (const issue of closedToday) {
+    if (!isTechOwnerNovaTeam(issue)) continue;
+    const hours = getCloseTimeHours(issue, transitionDates);
+    if (hours == null) continue;
+    const techOwner = getTechOwnerName(issue);
+    const key = issue.key;
+    for (const comp of getMatrixComponentLabelsForIssue(issue)) {
+      const list = buckets.get(comp) ?? [];
+      list.push({ key, hours, techOwner });
+      buckets.set(comp, list);
+    }
+  }
+
+  const labels = sortMatrixComponentLabels(Array.from(buckets.keys()));
+  return labels.map((component) => {
+    const entries = buckets.get(component) ?? [];
+    const hoursOnly = entries.map((e) => e.hours);
+    const avgHours =
+      hoursOnly.length > 0
+        ? Math.round((hoursOnly.reduce((s, h) => s + h, 0) / hoursOnly.length) * 10) / 10
+        : null;
+    let fastest = entries[0];
+    for (const e of entries) {
+      if (e.hours < fastest.hours) fastest = e;
+    }
+    return {
+      component,
+      completedCount: entries.length,
+      avgHours,
+      fastestHours: entries.length ? Math.round(fastest.hours * 10) / 10 : null,
+      fastestTechOwner: entries.length ? fastest.techOwner : null,
+      fastestKey: entries.length ? fastest.key : null,
+    };
+  });
 }
 
 function buildComponentActivity(
