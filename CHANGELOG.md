@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner Two — slide 6 (completions by developer)**: New **last** carousel slide with a distinct layout (`CompletedByDevSlide` + `CompletedByDevSlide.module.scss`). Five columns (NOVA team): **Today** completions (tech owner) from existing closed-today fetch, plus **earlier this week** (Monday–Friday window capped at min(today, Friday), from existing `resolvedLast14` — no extra Jira calls). `completedByDeveloper` on `OperationalAnalytics`. Dev Load Matrix remains slide 5 with the 2-minute dwell.
+
+- **Dev Corner Two — Developer Load Matrix**: First column uses `table-layout: fixed` and ~6.75rem width so the component label column no longer consumes flex space and shrinks the dev columns. Cell lookups memoized with a `Map` in `DevLoadMatrixSlide`.
+
 - **Dev Corner Two — fifth slide (today)**: New carousel slide **Close times today — by component** with a **Today** tag and subtitle. Uses the same Jira **resolved today** scope as the operational **Closed Today** KPI (`JIRA_OPERATIONAL_JQL_CLOSED_TODAY`). Groups CM, OPRD, and NOVA tickets by component (NOVA Components field when set), NOVA team tech owners only. Shows count per component, average hours to close, fastest close today, and tech owner on the fastest ticket. Cycle time uses the same start semantics as avg close time (transition from New for CM/OPRD, created for NOVA). Transition history is now fetched for **closed-today** CM/OPRD keys so those durations are accurate.
 
 - **Dev Corner Two**: NOVA vs prod styling aligned with Dev Corner One — tickets whose key starts with `NOVA-` use `--nova-accent` card/table row accents; CM/OPRD use default primary styling. Recently Completed column header **Completed by** (still sourced from Tech Owner). Requested slide adds **Tech owner** alongside **Assignee** (both from Jira).

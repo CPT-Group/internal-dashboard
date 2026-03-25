@@ -117,14 +117,15 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Middle right: Component Activity table (per-component: open, today, this week).
   - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
-- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 5-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): ~30s each for slides 1–4; **2 min** for the last slide (Dev Load Matrix):
+- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 6-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): ~30s each for slides 1–4 and slide 6; **2 min** for slide 5 (Dev Load Matrix):
   - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age); keys starting with `NOVA-` use the same nova accent styling as Dev 1 chips.
   - Slide 2: Recently Completed table (last 7 days, **Completed by** = Tech Owner, filtered to NOVA team devs); `NOVA-` rows highlighted.
   - Slide 3: Requested — Not Yet Started table (**Tech owner** + **Assignee**); `NOVA-` rows highlighted.
   - Slide 4: **Today** — close times by component (resolved **today**, same scope as operational closed-today KPI): per component, count, avg hours to close, fastest close today and tech owner (CM + OPRD + NOVA; NOVA team tech owners only). `TodayComponentVelocitySlide`; data: `todayComponentVelocity` from `buildOperationalAnalytics`.
-  - Slide 5: Developer Load Matrix — **components as rows**, **assignees as columns** (NOVA team); matrix buckets NOVA tickets by **NOVA Components** when set.
+  - Slide 5: Developer Load Matrix — **components as rows**, **assignees as columns** (NOVA team); matrix buckets NOVA tickets by **NOVA Components** when set. First column uses fixed table width so dev columns are not squeezed.
+  - Slide 6: **Completions by developer** — custom layout (`CompletedByDevSlide`): per NOVA team member, tickets completed **today** (from `closedTodayIssues`) and **earlier this week** (Mon–Fri window through today, from `resolvedLast14`; excludes today’s keys in the “earlier” list to avoid duplicates). No extra Jira API calls.
   - KPI strip: In Progress, Completed (7d), Requested, Open (Prod), Open (NOVA). **No total "Open"** — that's on Dev 1 (non-redundancy rule). Prod = CM + OPRD.
-  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `TodayComponentVelocitySlide`, `DevLoadMatrixSlide`.
+  - Components: `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `TodayComponentVelocitySlide`, `CompletedByDevSlide`, `DevLoadMatrixSlide`.
 
 - **Trevor's Screen** — **NOVA-focused, mobile-friendly**. Single-view layout:
   - KPI strip: NOVA Active, In Progress, To Do, Review/QA, Total Open.

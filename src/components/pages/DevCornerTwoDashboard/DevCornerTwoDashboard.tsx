@@ -11,15 +11,16 @@ import { RecentlyCompletedSlide } from './RecentlyCompletedSlide';
 import { RequestedTicketsSlide } from './RequestedTicketsSlide';
 import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
 import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
+import { CompletedByDevSlide } from './CompletedByDevSlide';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
 
 /**
- * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested → Today's component velocity → Dev Load Matrix.
- * Slides 0–3 ~30s; last slide 2 min (matrix / future timer slot).
+ * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested → Today velocity →
+ * Dev Load Matrix (2 min) → Completions by developer (slide 6).
  */
-const SLIDE_DURATIONS_MS = [30_000, 30_000, 30_000, 30_000, 120_000] as const;
+const SLIDE_DURATIONS_MS = [30_000, 30_000, 30_000, 30_000, 120_000, 30_000] as const;
 const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
 
 export const DevCornerTwoDashboard = () => {
@@ -61,6 +62,7 @@ export const DevCornerTwoDashboard = () => {
     recentlyCompleted,
     requestedTickets,
     todayComponentVelocity,
+    completedByDeveloper,
     devLoadMatrix,
     assignees,
     components,
@@ -116,6 +118,11 @@ export const DevCornerTwoDashboard = () => {
         </div>
         <div className={slideClass(4)}>
           <DevLoadMatrixSlide matrix={devLoadMatrix} assignees={assignees} components={components} />
+        </div>
+        <div className={slideClass(5)}>
+          <div className={styles.slideContent}>
+            <CompletedByDevSlide columns={completedByDeveloper} />
+          </div>
         </div>
         <div className={styles.indicators}>
           {Array.from({ length: NUM_SLIDES }, (_, i) => (

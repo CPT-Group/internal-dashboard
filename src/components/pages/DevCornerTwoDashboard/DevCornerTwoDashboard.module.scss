@@ -177,13 +177,14 @@
 }
 
 .matrixTable {
+  table-layout: fixed;
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8rem;
 
   th,
   td {
-    padding: 0.3rem 0.4rem;
+    padding: 0.3rem 0.35rem;
     border: 1px solid var(--surface-border);
     color: var(--text-color);
   }
@@ -195,14 +196,24 @@
   }
 }
 
+/* First column fixed width so dev columns keep space for counts (no flex-grow). */
+.matrixCorner,
+.matrixName {
+  width: 6.75rem;
+  max-width: 6.75rem;
+  min-width: 6.75rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .matrixCorner {
   text-align: left;
-  min-width: 5.5rem;
 }
 
 .matrixColHead {
   text-align: center;
-  max-width: 3.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -211,10 +222,6 @@
 .matrixName {
   font-weight: 500;
   color: var(--text-color);
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .matrixCell {

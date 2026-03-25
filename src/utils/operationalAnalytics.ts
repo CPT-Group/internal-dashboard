@@ -1,6 +1,7 @@
 /**
  * Build operational Jira analytics for the TV dashboard (KPIs, flow, backlog, heatmap, aging).
  */
+import { addDays, format, min, startOfDay, startOfWeek } from 'date-fns';
 import type { JiraIssue } from '@/types';
 import type {
   OperationalAnalytics,
@@ -20,6 +21,8 @@ import type {
   RecentlyCompletedTicket,
   RequestedTicket,
   TodayComponentVelocityRow,
+  CompletedByDeveloperColumn,
+  CompletedByDevTicketRow,
 } from '@/types';
 import {
   DEV1_RISK_BUCKET_WEIGHTS,
@@ -431,6 +434,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const requestedTickets = buildRequestedTickets(open, transitionDates);
   const { byProject, byBoardByComponent } = buildByBoardByComponent(open);
   const todayComponentVelocity = buildTodayComponentVelocity(closedTodayIssues, transitionDates);
+  const completedByDeveloper = buildCompletedByDeveloperBoard(closedTodayIssues, resolvedLast14);
 
   return {
     kpis,
@@ -455,6 +459,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     byProject,
     byBoardByComponent,
     todayComponentVelocity,
+    completedByDeveloper,
   };
 }
 
@@ -525,6 +530,70 @@ function buildAvgCloseTime(resolvedLast14: JiraIssue[], transitionDates: Map<str
   }
   if (closeTimes.length === 0) return null;
   return Math.round((closeTimes.reduce((s, h) => s + h, 0) / closeTimes.length) * 10) / 10;
+}
+
+function getMondayYmd(): string {
+  return format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+}
+
+/** End of “work week” window for this slide: min(today, Friday of this calendar week). */
+function getWeekResolutionEndYmd(): string {
+  const now = new Date();
+  const monday = startOfWeek(now, { weekStartsOn: 1 });
+  const friday = addDays(monday, 4);
+  const today = startOfDay(now);
+  const cap = min([friday, today]);
+  return format(cap, 'yyyy-MM-dd');
+}
+
+function toCompletedDevRow(issue: JiraIssue): CompletedByDevTicketRow {
+  return {
+    key: issue.key,
+    summary: (issue.fields?.summary ?? '').slice(0, 72),
+    project: getProjectKey(issue),
+  };
+}
+
+function buildCompletedByDeveloperBoard(
+  closedToday: JiraIssue[],
+  resolvedLast14: JiraIssue[]
+): CompletedByDeveloperColumn[] {
+  const todayYmd = format(startOfDay(new Date()), 'yyyy-MM-dd');
+  const mondayYmd = getMondayYmd();
+  const weekEndYmd = getWeekResolutionEndYmd();
+
+  const weekIssues = resolvedLast14.filter((issue) => {
+    if (!isTechOwnerNovaTeam(issue)) return false;
+    const rd = issue.fields?.resolutiondate?.slice(0, 10);
+    if (!rd) return false;
+    return rd >= mondayYmd && rd <= weekEndYmd;
+  });
+
+  return NOVA_TEAM_ORDERED.map((m) => {
+    const todayTickets = closedToday
+      .filter((i) => isTechOwnerNovaTeam(i) && getTechOwnerAccountId(i) === m.accountId)
+      .map(toCompletedDevRow)
+      .sort((a, b) => a.key.localeCompare(b.key));
+
+    const memberWeek = weekIssues.filter((i) => getTechOwnerAccountId(i) === m.accountId);
+    const weekTotalCount = memberWeek.length;
+
+    const weekTicketsNonToday = memberWeek
+      .filter((i) => i.fields?.resolutiondate?.slice(0, 10) !== todayYmd)
+      .map(toCompletedDevRow)
+      .sort((a, b) => a.key.localeCompare(b.key));
+
+    const firstName = m.displayName.split(' ')[0] ?? m.displayName;
+
+    return {
+      accountId: m.accountId,
+      displayName: m.displayName,
+      firstName,
+      todayTickets,
+      weekTicketsNonToday,
+      weekTotalCount,
+    };
+  });
 }
 
 function buildTodayComponentVelocity(

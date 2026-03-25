@@ -26,6 +26,12 @@ export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMat
     return map;
   }, [matrix]);
 
+  const cellByAssigneeAndComponent = useMemo(() => {
+    const m = new Map<string, number>();
+    matrix.forEach((c) => m.set(`${c.assigneeId}|${c.component}`, c.count));
+    return m;
+  }, [matrix]);
+
   /** Rows = components (Y); columns = devs (X). */
   const visibleComponents = components.slice(0, 16);
   const visibleAssignees = assignees.slice(0, 12);
@@ -64,8 +70,7 @@ export const DevLoadMatrixSlide = ({ matrix, assignees, components }: DevLoadMat
                     {comp.length > 14 ? comp.slice(0, 12) + '…' : comp}
                   </td>
                   {visibleAssignees.map((aid) => {
-                    const cell = matrix.find((c) => c.assigneeId === aid && c.component === comp);
-                    const count = cell?.count ?? 0;
+                    const count = cellByAssigneeAndComponent.get(`${aid}|${comp}`) ?? 0;
                     return (
                       <td key={aid} className={styles.matrixCell} style={{ background: cellBg(count) }}>
                         {count || '–'}

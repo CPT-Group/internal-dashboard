@@ -135,6 +135,25 @@ export interface TrendComparison {
   prevClosed: number;
 }
 
+/** Ticket line for “completions by developer” board (slide 6). */
+export interface CompletedByDevTicketRow {
+  key: string;
+  summary: string;
+  project: string;
+}
+
+/** One developer column: today + rest of work week (Mon–Fri), no extra Jira calls. */
+export interface CompletedByDeveloperColumn {
+  accountId: string;
+  displayName: string;
+  firstName: string;
+  todayTickets: CompletedByDevTicketRow[];
+  /** Mon–Fri this week, excluding today, so lists do not duplicate. */
+  weekTicketsNonToday: CompletedByDevTicketRow[];
+  /** Resolutions Mon–Fri in range (includes today). */
+  weekTotalCount: number;
+}
+
 /** Per-component rollup for tickets resolved today (CM + OPRD + NOVA), NOVA team tech owners only. */
 export interface TodayComponentVelocityRow {
   component: string;
@@ -184,4 +203,6 @@ export interface OperationalAnalytics {
   byBoardByComponent: Record<string, Record<string, number>>;
   /** Resolved today, grouped by component — avg and fastest cycle time (NOVA team tech owners). */
   todayComponentVelocity: TodayComponentVelocityRow[];
+  /** Tech owner–grouped completions for Dev 2 slide 6 (today + week Mon–Fri from same store fetch). */
+  completedByDeveloper: CompletedByDeveloperColumn[];
 }
