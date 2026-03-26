@@ -1,0 +1,12 @@
+---
+description: No any; unknown only at boundaries with narrowing — generics and typed callbacks (ESLint strict TS).
+alwaysApply: true
+---
+
+# TypeScript: strict types (no escape hatches)
+
+- **Never use `any`.**
+- **Do not use `unknown`** to avoid writing real types. Prefer domain types, generics, `Record<K, V>`, unions, discriminated unions, and **explicit callback parameters** when libraries infer `any` (e.g. `itemTemplate={(row: MyRow) => ...}`).
+- **`unknown` at boundaries only**: raw JSON, webhooks, third-party untyped payloads — **narrow immediately** (type guards, validation); do not propagate `unknown` through components or stores.
+- **`eslint.config.mjs`**: `no-explicit-any` = **error**; `no-unsafe-*` = **warn** — fix or narrow, do not suppress.
+- Finish tasks with **`npm run lint`** and **`npm run build`** (typecheck).

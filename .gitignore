@@ -46,3 +46,6 @@ next-env.d.ts
 # cursor
 .cursor/*
 !.cursor/.gitkeep
+# Versioned project rules (see AGENTS.md)
+!.cursor/rules/
+!.cursor/rules/*.mdc
