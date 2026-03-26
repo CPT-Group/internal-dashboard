@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GitHub webhooks**: `POST /api/webhooks/github` receives org/repo webhook deliveries (verify `GITHUB_WEBHOOK_SECRET` when set), stores normalized rows in an in-memory cache, optional Teams mirror via `GITHUB_WEBHOOK_CPT_GROUP`. `GET /api/webhooks/github` returns cached events for the TV UI.
 - **TV route** `/tv/github-activity` (`GithubActivityDashboard`): 4-slide carousel (30s, 30s, 30s, 120s on the feed), polls the GET route every 60s; home screen tile **GitHub activity**.
 
+### Fixed
+
+- **Netlify / `next build`**: `GithubDeployStatusSlide` **DataView** `itemTemplate` now types the row as **`DeployActionItem`** so `ACTION_ROW_GLOW_CLASS[item.outcome]` passes strict TypeScript (Prime’s callback item was `any`).
+
 ### Changed
 
 - **`KpiStrip`** (Dev Corner One & Two, Trevor): Reduced inner **Card** padding, label-to-value gap, and strip gap between cards for TV; label and value font sizes unchanged.

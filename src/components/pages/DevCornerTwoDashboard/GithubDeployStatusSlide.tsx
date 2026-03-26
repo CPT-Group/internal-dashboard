@@ -192,7 +192,7 @@ export const GithubDeployStatusSlide = () => {
               <div ref={actionsScrollRef} className={styles.actionsScroll}>
                 <DataView
                   value={recentActionItems}
-                  itemTemplate={(item) => (
+                  itemTemplate={(item: DeployActionItem) => (
                     <div
                       key={item.id}
                       className={`${styles.actionRow} ${ACTION_ROW_GLOW_CLASS[item.outcome]}`}
