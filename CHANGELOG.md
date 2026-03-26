@@ -21,19 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Dev Corner Two**: Seventh carousel slide **GitHub — CD deploy status** (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** aggregates the four main CD workflows (Azure Functions API, internal tools SWA, NuGet, EF migrations) via the GitHub Actions API; requires **`GITHUB_DEPLOY_READ_TOKEN`** on the server. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** can pin the carousel (e.g. `6`); use `null` for normal rotation.
+- **Dev Corner Two**: **GitHub — CD deploy status** slide (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** aggregates the four main CD workflows (Azure Functions API, internal tools SWA, NuGet, EF migrations) via the GitHub Actions API; requires **`GITHUB_DEPLOY_READ_TOKEN`** on the server. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** can pin the carousel (GitHub = index `4` when five slides active); use `null` for normal rotation.
 - **GitHub webhooks**: `POST /api/webhooks/github` receives org/repo webhook deliveries (verify `GITHUB_WEBHOOK_SECRET` when set), stores normalized rows in an in-memory cache, optional Teams mirror via `GITHUB_WEBHOOK_CPT_GROUP`. `GET /api/webhooks/github` returns cached events for the TV UI.
 - **TV route** `/tv/github-activity` (`GithubActivityDashboard`): 4-slide carousel (30s, 30s, 30s, 120s on the feed), polls the GET route every 60s; home screen tile **GitHub activity**.
 
 ### Changed
 
+- **Dev Corner Two carousel**: **Today** (close times by component / `TodayComponentVelocitySlide`) and **Developer Load Matrix** (`DevLoadMatrixSlide`) are **out of rotation** — JSX commented in `DevCornerTwoDashboard.tsx` with restore instructions; components and imports remain for later. Active order: In Progress → Recently Completed → Requested → Completions by developer → GitHub deploy. Dwell: **25s** for slides 1–4; **120s** for GitHub.
+
+- **GitHub deploy — Recent actions**: Each row gets a **subtle outcome glow** (green pass / red fail / primary-tinted in progress / soft neutral for cancelled/skipped) via `deployRunOutcomeGlow()` in **`githubDeployDisplay.ts`** and SCSS modifiers on `.actionRow`.
+
+- **GitHub deploy MeterGroup**: Stronger TV-visible motion — brighter sweep gradient, faster **2.1s** loop, added **opacity pulse** (`githubDeployMeterPulse`) alongside `background-position` animation; both respect `prefers-reduced-motion: reduce`.
+
 - **Loading copy (operational / NOVA dashboards)**: Full-screen and panel spinners now show **“Loading NOVA data, please wait...”** via shared constant `LOADING_NOVA_DATA_PLEASE_WAIT` in `src/constants/LOADING_UI.ts` (Dev Corner One & Two, Trevor, Operational Jira, Work Hours Today panel). `role="status"` + `aria-live="polite"` on the loading row.
 
 - **PrimeReact `ProgressSpinner`**: Theme-aligned stroke via `--progress-spinner-color` (defaults to `--primary-color` in `variables.scss` and each `themes/*.scss`). `primereact-overrides.scss` targets `.p-progress-spinner-circle`, drops Lara’s multi-color `p-progress-spinner-color` keyframe cycle, and keeps the dash animation. Matches [ProgressSpinner](https://primereact.org/progressspinner/) structure (`p-progress-spinner` / `p-progress-spinner-svg` / `p-progress-spinner-circle`); optional `pt` overrides remain available per the API.
-
-- **Dev Corner Two carousel**: Restored normal auto-rotation (`DEV_CORNER_TWO_FIXED_SLIDE_INDEX` defaults to `null`). Per-slide dwell: slides 1–6 **15s** each; slide 7 (GitHub CD deploy) **120s**.
-
-- **GitHub deploy slide (`GithubDeployStatusSlide`)**: Subtle looping **shimmer** on the **MeterGroup** track (CSS on `.p-metergroup-meter-container::after`, animated `background-position`); disabled when `prefers-reduced-motion: reduce`. Distinct from ProgressBar **indeterminate** mode, which is for unknown progress—here the meter still reflects real Idle / Running / Attention counts.
 
 - **GitHub deploy cards (`GithubDeployRepoCards`)**: Larger meta line and run title text for TV reading; tighter “Open run” text-button padding (overrides Prime `p-button-sm`); run title allows up to three lines.
 

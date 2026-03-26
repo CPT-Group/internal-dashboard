@@ -75,6 +75,16 @@ export function cardHealthForRow(
   return 'warning';
 }
 
+/** Subtle Recent-actions card glow: pass (green), fail (red), in-flight, or neutral (cancelled/skipped/etc.). */
+export type DeployRunOutcomeGlow = 'success' | 'failure' | 'running' | 'neutral';
+
+export function deployRunOutcomeGlow(run: GitHubDeployRunSummary): DeployRunOutcomeGlow {
+  if (run.status !== 'completed') return 'running';
+  if (run.conclusion === 'success') return 'success';
+  if (run.conclusion === 'failure' || run.conclusion === 'timed_out') return 'failure';
+  return 'neutral';
+}
+
 export type GitHubRepoTone = 'api' | 'tools' | 'nuget' | 'migrations' | 'default';
 
 /** Maps monitored repo names (full or short labels) to a theme color tone. */

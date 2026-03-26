@@ -10,10 +10,23 @@ import { DevCornerSlideHero } from '@/components/ui';
 import { useAutoScroll } from '@/hooks';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
-import { formatDeployStatusLabel, repoToneForRepo, summarizeDeployRepos } from '@/utils/githubDeployDisplay';
+import {
+  type DeployRunOutcomeGlow,
+  deployRunOutcomeGlow,
+  formatDeployStatusLabel,
+  repoToneForRepo,
+  summarizeDeployRepos,
+} from '@/utils/githubDeployDisplay';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
+
+const ACTION_ROW_GLOW_CLASS: Record<DeployRunOutcomeGlow, string> = {
+  success: styles.actionRowGlowSuccess,
+  failure: styles.actionRowGlowFailure,
+  running: styles.actionRowGlowRunning,
+  neutral: styles.actionRowGlowNeutral,
+};
 
 interface DeployTimelineItem {
   id: string;
@@ -25,6 +38,7 @@ interface DeployActionItem {
   id: string;
   repo: string;
   tone: 'api' | 'tools' | 'nuget' | 'migrations' | 'default';
+  outcome: DeployRunOutcomeGlow;
   status: string;
   title: string;
   at: string;
@@ -103,6 +117,7 @@ export const GithubDeployStatusSlide = () => {
       id: item.id,
       repo: item.repo,
       tone: repoToneForRepo(item.repo),
+      outcome: deployRunOutcomeGlow(item.run),
       status: formatDeployStatusLabel(item.run.status, item.run.conclusion),
       title: item.run.title,
       at: item.run.updatedAt.slice(5, 19).replace('T', ' '),
@@ -178,7 +193,10 @@ export const GithubDeployStatusSlide = () => {
                 <DataView
                   value={recentActionItems}
                   itemTemplate={(item) => (
-                    <div key={item.id} className={styles.actionRow}>
+                    <div
+                      key={item.id}
+                      className={`${styles.actionRow} ${ACTION_ROW_GLOW_CLASS[item.outcome]}`}
+                    >
                       <div className={styles.actionTop}>
                         <span
                           className={`${styles.actionRepo} ${

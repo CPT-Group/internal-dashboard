@@ -10,8 +10,9 @@ import type { KpiItem } from '@/components/ui';
 import { InProgressCardsSlide } from './InProgressCardsSlide';
 import { RecentlyCompletedSlide } from './RecentlyCompletedSlide';
 import { RequestedTicketsSlide } from './RequestedTicketsSlide';
-import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
-import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
+// Re-enable when adding back to carousel: Today (close times by component), Dev load matrix
+// import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
+// import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
 import { CompletedByDevSlide } from './CompletedByDevSlide';
 import { GithubDeployStatusSlide } from './GithubDeployStatusSlide';
 import styles from './DevCornerTwoDashboard.module.scss';
@@ -19,14 +20,15 @@ import styles from './DevCornerTwoDashboard.module.scss';
 const POLL_INTERVAL_MS = 60_000;
 
 /**
- * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested → Today velocity →
- * Dev Load Matrix → Completions by developer → GitHub deploy (longer dwell).
- * Slides 1–6: 15s; GitHub deploy slide: 120s.
+ * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested →
+ * Completions by developer → GitHub deploy.
+ * Slides 1–4: 25s; GitHub: 120s (2 min).
+ * (Today velocity + Dev load matrix slides are commented out below — same index order when restored.)
  */
-const SLIDE_DURATIONS_MS = [15_000, 15_000, 15_000, 15_000, 15_000, 15_000, 120_000] as const;
+const SLIDE_DURATIONS_MS = [25_000, 25_000, 25_000, 25_000, 120_000] as const;
 const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
 
-/** Set to a 0-based index to pin the carousel for local UI work; `null` = auto-advance. */
+/** Set to a 0-based index to pin the carousel for local UI work; `null` = auto-advance. GitHub deploy = index `4`. */
 const DEV_CORNER_TWO_FIXED_SLIDE_INDEX: number | null = null;
 
 const IS_CAROUSEL_LOCKED =
@@ -130,18 +132,23 @@ export const DevCornerTwoDashboard = () => {
         <div className={slideClass(2)}>
           <RequestedTicketsSlide tickets={requestedTickets} />
         </div>
+        {/*
+          Restore: uncomment imports; add todayComponentVelocity, devLoadMatrix, assignees, components
+          to the analytics destructure; insert these two slides after Requested (indices 3–4), renumber
+          CompletedByDev → 5, GitHub → 6; extend SLIDE_DURATIONS_MS (e.g. 25s×6 + 120s).
         <div className={slideClass(3)}>
           <TodayComponentVelocitySlide rows={todayComponentVelocity} />
         </div>
         <div className={slideClass(4)}>
           <DevLoadMatrixSlide matrix={devLoadMatrix} assignees={assignees} components={components} />
         </div>
-        <div className={slideClass(5)}>
+        */}
+        <div className={slideClass(3)}>
           <div className={styles.slideContent}>
             <CompletedByDevSlide columns={completedByDeveloper} />
           </div>
         </div>
-        <div className={slideClass(6)}>
+        <div className={slideClass(4)}>
           <GithubDeployStatusSlide />
         </div>
         {!IS_CAROUSEL_LOCKED && (
