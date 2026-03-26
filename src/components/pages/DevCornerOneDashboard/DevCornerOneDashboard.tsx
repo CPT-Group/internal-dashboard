@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
+import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
@@ -54,9 +55,9 @@ export const DevCornerOneDashboard = () => {
   if (loading && kpis.openCount === 0) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.loadingWrap}>
-          <ProgressSpinner />
-          <span>Loading...</span>
+        <div className={styles.loadingWrap} role="status" aria-live="polite" aria-busy="true">
+          <ProgressSpinner aria-hidden />
+          <span>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
         </div>
       </div>
     );

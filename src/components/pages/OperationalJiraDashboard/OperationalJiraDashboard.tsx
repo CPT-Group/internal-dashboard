@@ -9,6 +9,7 @@ import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 import { Tag } from 'primereact/tag';
 import { Panel } from 'primereact/panel';
+import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
 import {
   OpenedClosedFlowBarChart,
@@ -136,9 +137,9 @@ export const OperationalJiraDashboard = () => {
           ))}
         </div>
         <div className="operational-carousel flex-1 flex align-items-center justify-content-center">
-          <div className="flex align-items-center gap-2">
-            <ProgressSpinner className="progress-spinner-md" />
-            <span className="text-color-secondary">Loading…</span>
+          <div className="flex align-items-center gap-2" role="status" aria-live="polite" aria-busy="true">
+            <ProgressSpinner className="progress-spinner-md" aria-hidden />
+            <span className="text-color-secondary">{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
           </div>
         </div>
       </div>

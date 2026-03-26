@@ -27,7 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dev Corner Two carousel**: Restored normal auto-rotation (`DEV_CORNER_TWO_FIXED_SLIDE_INDEX` defaults to `null`). Per-slide dwell: slides 1–6 **15s** each; slide 7 (GitHub CD deploy) **60s**.
+- **Loading copy (operational / NOVA dashboards)**: Full-screen and panel spinners now show **“Loading NOVA data, please wait...”** via shared constant `LOADING_NOVA_DATA_PLEASE_WAIT` in `src/constants/LOADING_UI.ts` (Dev Corner One & Two, Trevor, Operational Jira, Work Hours Today panel). `role="status"` + `aria-live="polite"` on the loading row.
+
+- **PrimeReact `ProgressSpinner`**: Theme-aligned stroke via `--progress-spinner-color` (defaults to `--primary-color` in `variables.scss` and each `themes/*.scss`). `primereact-overrides.scss` targets `.p-progress-spinner-circle`, drops Lara’s multi-color `p-progress-spinner-color` keyframe cycle, and keeps the dash animation. Matches [ProgressSpinner](https://primereact.org/progressspinner/) structure (`p-progress-spinner` / `p-progress-spinner-svg` / `p-progress-spinner-circle`); optional `pt` overrides remain available per the API.
+
+- **Dev Corner Two carousel**: Restored normal auto-rotation (`DEV_CORNER_TWO_FIXED_SLIDE_INDEX` defaults to `null`). Per-slide dwell: slides 1–6 **15s** each; slide 7 (GitHub CD deploy) **120s**.
+
+- **GitHub deploy slide (`GithubDeployStatusSlide`)**: Subtle looping **shimmer** on the **MeterGroup** track (CSS on `.p-metergroup-meter-container::after`, animated `background-position`); disabled when `prefers-reduced-motion: reduce`. Distinct from ProgressBar **indeterminate** mode, which is for unknown progress—here the meter still reflects real Idle / Running / Attention counts.
 
 - **GitHub deploy cards (`GithubDeployRepoCards`)**: Larger meta line and run title text for TV reading; tighter “Open run” text-button padding (overrides Prime `p-button-sm`); run title allows up to three lines.
 

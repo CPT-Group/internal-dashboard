@@ -17,6 +17,20 @@
   color: var(--text-color-secondary);
 }
 
+.loadingWrapStacked {
+  flex-direction: column;
+  text-align: center;
+  gap: 0.5rem;
+  max-width: 12rem;
+  margin-inline: auto;
+}
+
+.loadingPanelMessage {
+  font-size: 0.72rem;
+  line-height: 1.25;
+  color: var(--text-color-secondary);
+}
+
 .kpiRow {
   flex-shrink: 0;
 }

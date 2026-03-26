@@ -101,7 +101,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 - **State**: Zustand stores under `src/stores/`. Data fetching and JQL live at API/store level; chart components never fetch or transform raw analytics.
 - **Jira API**: Uses **v3 REST API** (`POST /rest/api/3/search/jql`) with cursor-based pagination (`nextPageToken`, `isLast`). V3 does **not** return `total`; the service auto-paginates up to 1000 results (10 pages × 100). Auth: Basic with `KYLE_EMAIL` + `KYLE_JIRA_TOKEN` from `.env.local`. **Changelog API**: `GET /rest/api/3/issue/{key}/changelog` fetches status transition history; used to extract exact dates when CM/OPRD tickets transitioned FROM "New" (when work landed on dev team). Route: `GET /api/jira/transitions?keys=CM-123,CM-456`. **Worklog API**: `GET /rest/api/3/issue/{key}/worklog` for time tracking; JQL `worklogDate >= startOfDay() AND worklogAuthor in (...)` finds issues. Route: `GET /api/jira/worklogs-today?accountIds=id1,id2`. Polled via `useWorkHoursToday` hook (10-min interval).
 - **API**: Client calls go through `src/services/api/` – `apiClient` (fetch wrapper), `jiraSearchClient` (Jira search via `/api/jira/search`, transition dates via `/api/jira/transitions`). Fine-tuned Jira calls in `src/services/api/endpoints/jira/`. **Salesforce**: read-only server-side `salesforceService.ts`; see `docs/salesforce-*.md`.
-- **Styles**: `src/styles/` — `variables.scss`, `base.scss`, `utilities.scss`, `themes/*.scss`, `primereact-overrides.scss`; orchestration in `src/app/main.scss`. Theme is driven by `data-theme` on `<html>` and theme variables; avoid inline styles for theme-driven UI when possible.
+- **Styles**: `src/styles/` — `variables.scss`, `base.scss`, `utilities.scss`, `themes/*.scss`, `primereact-overrides.scss`; orchestration in `src/app/main.scss`. Theme is driven by `data-theme` on `<html>` and theme variables; avoid inline styles for theme-driven UI when possible. **ProgressSpinner** stroke uses `--progress-spinner-color` (see `primereact-overrides.scss`; Prime class names `p-progress-spinner-*`).
 
 ## TV routes and dashboards
 
@@ -117,7 +117,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 ### GitHub Actions — CD deploy status (Dev Corner Two)
 
 - **Env**: **`GITHUB_DEPLOY_READ_TOKEN`** — Personal Access Token (server only; never `NEXT_PUBLIC_*`). Needs **`actions:read`** on the monitored repos (and **`repo`** if they are private). Used by **`GET /api/github/deploy-status`**, which calls the GitHub REST API for each CD workflow listed in **`GITHUB_DEPLOY_WORKFLOW_MONITORS`** (`src/constants/GITHUB_DEPLOY_MONITORS.ts`).
-- **Dev Corner Two slide 7** (`GithubDeployStatusSlide`): **`MeterGroup`** summary strip (idle OK / running / attention), reusable **`GithubDeployRepoCards`** — 2×2 **PrimeReact Card** grid for the four main deploy pipelines (Azure Functions API, internal tools SWA, NuGet publish, EF migrations), left-column **DataView** “Recent actions” feed, and right-side **Timeline** of recent runs across monitored repos. Cards use **Tag** status, indeterminate **ProgressBar** when a run is active, left-border health cues (green/yellow/red), and link to the run. Timeline/status spacing is tuned with an opposite-column status label. Both feed and timeline reuse existing `useAutoScroll` (no custom scroller). API includes `recentRuns` per monitored workflow so history widgets can render without extra GitHub calls. Repo color coding is theme-driven via `--github-repo-*` tokens in `variables.scss` + theme overrides (dark-synth/dark/light/ms-access). Helpers in **`githubDeployDisplay.ts`**. Polls every **`GITHUB_ACTIVITY_POLL_INTERVAL_MS`** (60s). Not the same as the webhook delivery feed on `/tv/github-activity`.
+- **Dev Corner Two slide 7** (`GithubDeployStatusSlide`): **`MeterGroup`** summary strip (idle OK / running / attention; subtle looping shimmer on the meter track via CSS on `.p-metergroup-meter-container`, respects `prefers-reduced-motion`), reusable **`GithubDeployRepoCards`** — 2×2 **PrimeReact Card** grid for the four main deploy pipelines (Azure Functions API, internal tools SWA, NuGet publish, EF migrations), left-column **DataView** “Recent actions” feed, and right-side **Timeline** of recent runs across monitored repos. Cards use **Tag** status, indeterminate **ProgressBar** when a run is active, left-border health cues (green/yellow/red), and link to the run. Timeline/status spacing is tuned with an opposite-column status label. Both feed and timeline reuse existing `useAutoScroll` (no custom scroller). API includes `recentRuns` per monitored workflow so history widgets can render without extra GitHub calls. Repo color coding is theme-driven via `--github-repo-*` tokens in `variables.scss` + theme overrides (dark-synth/dark/light/ms-access). Helpers in **`githubDeployDisplay.ts`**. Polls every **`GITHUB_ACTIVITY_POLL_INTERVAL_MS`** (60s). Not the same as the webhook delivery feed on `/tv/github-activity`.
 
 ### Dev Corner physical layout and dashboard philosophy
 
@@ -129,7 +129,7 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Middle right: Component Activity table (per-component: open, today, this week).
   - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
-- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 7-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): **15s** for slides 1–6; **60s** for slide 7 (GitHub deploy):
+- **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. 7-slide carousel with **per-slide dwell** (`SLIDE_DURATIONS_MS` in `DevCornerTwoDashboard.tsx`): **15s** for slides 1–6; **120s** for slide 7 (GitHub deploy):
   - Slide 1: In-Progress ticket cards (card grid with key, summary, status, assignee, age); keys starting with `NOVA-` use the same nova accent styling as Dev 1 chips.
   - Slide 2: Recently Completed table (last 7 days, **Completed by** = Tech Owner, filtered to NOVA team devs); `NOVA-` rows highlighted.
   - Slide 3: Requested — Not Yet Started table (**Tech owner** + **Assignee**); `NOVA-` rows highlighted.
@@ -176,6 +176,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 - `JIRA_NOVA.ts` — NOVA project queries (min key 661).
 - `JIRA_DEV1.ts` — Dev Corner One queries.
 - `NOVA_TEAM.ts` — NOVA team member IDs, display names, ordered list for charts.
+- `LOADING_UI.ts` — `LOADING_NOVA_DATA_PLEASE_WAIT` for operational Jira loading spinners (Dev Corner One/Two, Trevor, Operational Jira, Work Hours Today panel).
 
 **Chart data mappers** (`src/utils/chartDataMappers.ts`):
 - `toOpenedClosedFlowChartData` — 14-day opened vs closed flow.

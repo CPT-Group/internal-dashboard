@@ -9,6 +9,7 @@ import { Tag } from 'primereact/tag';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import type { InProgressTicket } from '@/types';
+import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
@@ -166,7 +167,10 @@ export const TrevorDashboard = () => {
   if (loading && kpis.openCount === 0) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.loadingWrap}><ProgressSpinner /></div>
+        <div className={styles.loadingWrap} role="status" aria-live="polite" aria-busy="true">
+          <ProgressSpinner aria-hidden />
+          <span className={styles.loadingMessage}>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
+        </div>
       </div>
     );
   }

@@ -1,6 +1,13 @@
 // PrimeReact component overrides – lara-dark-blue uses hardcoded colors for several components.
 // This file uses theme variables only so it works for all themes. Load after theme files in main.scss.
 
+// --- ProgressSpinner (classes: .p-progress-spinner, .p-progress-spinner-svg, .p-progress-spinner-circle) ---
+// Lara theme hardcodes stroke + a multi-color keyframe; we use theme tokens only (see ProgressSpinner API / pt options).
+.p-progress-spinner-circle {
+  stroke: var(--progress-spinner-color, var(--primary-color)) !important;
+  animation: p-progress-spinner-dash 1.5s ease-in-out infinite !important;
+}
+
 // --- Card ---
 .p-card {
   background: var(--surface-card) !important;

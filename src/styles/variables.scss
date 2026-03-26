@@ -8,6 +8,8 @@
   // Progress spinner sizes (themes can override)
   --progress-spinner-size-sm: 14px;
   --progress-spinner-size-md: 18px;
+  /** Stroke color; defaults to primary so `ProgressSpinner` matches the active theme */
+  --progress-spinner-color: var(--primary-color) !important;
   // Chart container heights
   --chart-height-sm: 140px;
   --chart-height-md: 160px;

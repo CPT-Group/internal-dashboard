@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
+import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
@@ -20,9 +21,9 @@ const POLL_INTERVAL_MS = 60_000;
 /**
  * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested → Today velocity →
  * Dev Load Matrix → Completions by developer → GitHub deploy (longer dwell).
- * Slides 1–6: 15s; GitHub deploy slide: 60s.
+ * Slides 1–6: 15s; GitHub deploy slide: 120s.
  */
-const SLIDE_DURATIONS_MS = [15_000, 15_000, 15_000, 15_000, 15_000, 15_000, 60_000] as const;
+const SLIDE_DURATIONS_MS = [15_000, 15_000, 15_000, 15_000, 15_000, 15_000, 120_000] as const;
 const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
 
 /** Set to a 0-based index to pin the carousel for local UI work; `null` = auto-advance. */
@@ -98,9 +99,9 @@ export const DevCornerTwoDashboard = () => {
   if (loading && kpis.openCount === 0) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.loadingWrap}>
-          <ProgressSpinner />
-          <span>Loading...</span>
+        <div className={styles.loadingWrap} role="status" aria-live="polite" aria-busy="true">
+          <ProgressSpinner aria-hidden />
+          <span>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
         </div>
       </div>
     );

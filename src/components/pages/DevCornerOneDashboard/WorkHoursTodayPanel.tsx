@@ -5,7 +5,7 @@ import { Card } from 'primereact/card';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { HorizontalBarChart } from '@/components/charts';
 import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
-import { NOVA_CORE_DEVS } from '@/constants';
+import { LOADING_NOVA_DATA_PLEASE_WAIT, NOVA_CORE_DEVS } from '@/constants';
 import { useWorkHoursToday } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
 
@@ -79,8 +79,14 @@ export const WorkHoursTodayPanel = () => {
     <Card className={styles.panelCard}>
       <div className={styles.panelHeader}>Work Hours Today</div>
       {loading && hours.size === 0 ? (
-        <div className={styles.loadingWrap}>
-          <ProgressSpinner style={{ width: '2rem', height: '2rem' }} />
+        <div
+          className={`${styles.loadingWrap} ${styles.loadingWrapStacked}`}
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <ProgressSpinner style={{ width: '2rem', height: '2rem' }} aria-hidden />
+          <span className={styles.loadingPanelMessage}>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
         </div>
       ) : (
         <div className={styles.chartWrap}>
