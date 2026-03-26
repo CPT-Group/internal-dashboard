@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Build scripts**: Regenerated `conferenceBackgroundSlides.generated.ts`, `juliesBackgroundSlides.generated.ts`, and `jackiesBackgroundSlides.generated.ts` from `public/backgrounds/` (filesystem order).
+
 - **AGENTS.md** + **`.cursor/rules/typescript-no-any-unknown.mdc`** (always-on Cursor rule): Documented strict typing — no `any`; no `unknown` except at untrusted boundaries with immediate narrowing; use generics and typed callbacks; run lint + build; aligns with ESLint `no-explicit-any` / `no-unsafe-*`. **`.gitignore`**: allow tracking `/.cursor/rules/*.mdc` while keeping other `.cursor/` local.
 
 - **`KpiStrip`** (Dev Corner One & Two, Trevor — shared component): Further reduced **Card** padding, strip gap, label size, and value size (~`1.5rem` → ~`1.22rem`) for a denser TV KPI row; both Dev pages stay visually aligned because they use the same component and matching outer padding (`DevCornerTwo` `.kpiRow` / `DevCornerOne` `.dashboard`).
