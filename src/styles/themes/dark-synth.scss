@@ -102,6 +102,8 @@ html[data-theme='dark-synth'],
   --github-repo-nuget-border: rgba(173, 127, 255, 0.75) !important;
   --github-repo-migrations-bg: rgba(255, 177, 102, 0.34) !important;
   --github-repo-migrations-border: rgba(255, 177, 102, 0.74) !important;
+  --github-deploy-progressbar-track-bg: color-mix(in srgb, var(--surface-border) 52%, var(--surface-card)) !important;
+  --github-deploy-progressbar-fill: color-mix(in srgb, var(--primary-color) 80%, transparent) !important;
   --data-quality-valid: rgba(36, 205, 197, 0.5) !important;
   --data-quality-warning: rgba(209, 134, 22, 0.5) !important;
   --data-quality-error: rgba(244, 114, 182, 0.55) !important;

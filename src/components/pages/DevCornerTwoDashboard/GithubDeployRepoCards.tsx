@@ -60,9 +60,6 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
               </div>
             }
           >
-            {showActivityBar && (
-              <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
-            )}
             {err ? (
               <p className={styles.errorText}>{err}</p>
             ) : run ? (
@@ -71,6 +68,9 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                   {row.activeRun ? 'Running · ' : 'Last · '}
                   {run.headBranch ?? '—'} · {run.updatedAt.slice(0, 19).replace('T', ' ')}
                 </p>
+                {showActivityBar && (
+                  <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '3px' }} />
+                )}
                 <p className={styles.title}>{run.title}</p>
                 <a
                   href={run.htmlUrl}

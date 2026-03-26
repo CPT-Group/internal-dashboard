@@ -21,11 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Dev Corner Two**: **GitHub — CD deploy status** slide (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** aggregates the four main CD workflows (Azure Functions API, internal tools SWA, NuGet, EF migrations) via the GitHub Actions API; requires **`GITHUB_DEPLOY_READ_TOKEN`** on the server. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** can pin the carousel (GitHub = index `4` when five slides active); use `null` for normal rotation.
+- **Dev Corner Two**: **GitHub — CD deploy status** slide (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** aggregates the four main CD workflows (Azure Functions API, internal tools SWA, NuGet, EF migrations) via the GitHub Actions API; requires **`GITHUB_DEPLOY_READ_TOKEN`** on the server. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** pins a **0-based index among enabled slides** (see **`devCornerTwoSlides.config.ts`**); use `null` for normal rotation.
 - **GitHub webhooks**: `POST /api/webhooks/github` receives org/repo webhook deliveries (verify `GITHUB_WEBHOOK_SECRET` when set), stores normalized rows in an in-memory cache, optional Teams mirror via `GITHUB_WEBHOOK_CPT_GROUP`. `GET /api/webhooks/github` returns cached events for the TV UI.
 - **TV route** `/tv/github-activity` (`GithubActivityDashboard`): 4-slide carousel (30s, 30s, 30s, 120s on the feed), polls the GET route every 60s; home screen tile **GitHub activity**.
 
 ### Changed
+
+- **GitHub deploy repo cards** (`GithubDeployRepoCards`): Tighter grid gap, header/body padding, and typography spacing for TV; indeterminate **ProgressBar** is a thinner strip below the meta line with minimal margin. Progress bar colors use theme tokens **`--github-deploy-progressbar-track-bg`** and **`--github-deploy-progressbar-fill`** (`variables.scss` + `themes/*.scss`) instead of Lara defaults.
+
+- **Dev Corner Two carousel**: Slide list is driven by **`devCornerTwoSlides.config.ts`** — each row has **`enabled`** (boolean) and **`durationMs`**; only **`enabled: true`** slides render and rotate. Currently only **GitHub** is enabled for local TV tuning (flip others to `true` to restore the full carousel).
+
+- **Dev Corner Two — Completions by developer** (`CompletedByDevSlide`): Per-column developer header (name + Today/Week counts) uses **`position: sticky`** with solid **`surface-card`** background so labels stay visible while the shared slide area scrolls (custom grid; no DataTable change).
 
 - **Operational analytics (NOVA scope on TVs)**: Shared **`isTechOwnerNovaTeam`** filtering on issues used for **Requested — Not Started**, **In-Progress** cards, **oldest open**, **aging hotspots**, **backlog by assignee** (buckets use `getTechOwnerName`), **backlog by component**, **due-date buckets**, **component activity**, and **by board × component** — excludes work that only has non-NOVA Tech Owner / assignee (e.g. CM queue). Resolution: explicit Tech Owner account when set, else assignee (`getTechOwnerAccountId`). Total open KPIs unchanged.
 

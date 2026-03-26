@@ -131,6 +131,10 @@
   --github-repo-migrations-bg: color-mix(in srgb, var(--orange-400) 38%, transparent) !important;
   --github-repo-migrations-border: color-mix(in srgb, var(--orange-400) 70%, transparent) !important;
 
+  // GitHub CD deploy cards — ProgressBar track / fill (themes may override; uses semantic colors)
+  --github-deploy-progressbar-track-bg: color-mix(in srgb, var(--surface-border) 55%, var(--surface-card)) !important;
+  --github-deploy-progressbar-fill: color-mix(in srgb, var(--primary-color) 78%, transparent) !important;
+
   // Dev Corner Two slide hero — uses var(--primary-color); follows active theme (no per-theme duplicate needed)
   --slide-hero-bg: linear-gradient(
     135deg,
