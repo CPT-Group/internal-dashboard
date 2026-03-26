@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **AGENTS.md** + **`.cursor/rules/typescript-no-any-unknown.mdc`** (always-on Cursor rule): Documented strict typing — no `any`; no `unknown` except at untrusted boundaries with immediate narrowing; use generics and typed callbacks; run lint + build; aligns with ESLint `no-explicit-any` / `no-unsafe-*`. **`.gitignore`**: allow tracking `/.cursor/rules/*.mdc` while keeping other `.cursor/` local.
 
-- **`KpiStrip`** (Dev Corner One & Two, Trevor): Reduced inner **Card** padding, label-to-value gap, and strip gap between cards for TV; label and value font sizes unchanged.
+- **`KpiStrip`** (Dev Corner One & Two, Trevor — shared component): Further reduced **Card** padding, strip gap, label size, and value size (~`1.5rem` → ~`1.22rem`) for a denser TV KPI row; both Dev pages stay visually aligned because they use the same component and matching outer padding (`DevCornerTwo` `.kpiRow` / `DevCornerOne` `.dashboard`).
 
 - **GitHub deploy repo cards** (`GithubDeployRepoCards`): Tighter grid gap, header/body padding, and typography spacing for TV; indeterminate **ProgressBar** is a thinner strip below the meta line with minimal margin. Progress bar colors use theme tokens **`--github-deploy-progressbar-track-bg`** and **`--github-deploy-progressbar-fill`** (`variables.scss` + `themes/*.scss`) instead of Lara defaults.
 
