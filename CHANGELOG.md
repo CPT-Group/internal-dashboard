@@ -27,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dev Corner Two carousel**: **Today** (close times by component / `TodayComponentVelocitySlide`) and **Developer Load Matrix** (`DevLoadMatrixSlide`) are **out of rotation** — JSX commented in `DevCornerTwoDashboard.tsx` with restore instructions; components and imports remain for later. Active order: In Progress → Recently Completed → Requested → Completions by developer → GitHub deploy. Dwell: **25s** for slides 1–4; **120s** for GitHub.
+- **Operational analytics (NOVA scope on TVs)**: Shared **`isTechOwnerNovaTeam`** filtering on issues used for **Requested — Not Started**, **In-Progress** cards, **oldest open**, **aging hotspots**, **backlog by assignee** (buckets use `getTechOwnerName`), **backlog by component**, **due-date buckets**, **component activity**, and **by board × component** — excludes work that only has non-NOVA Tech Owner / assignee (e.g. CM queue). Resolution: explicit Tech Owner account when set, else assignee (`getTechOwnerAccountId`). Total open KPIs unchanged.
+
+- **Dev Corner Two carousel**: **Today** (close times by component / `TodayComponentVelocitySlide`) and **Developer Load Matrix** (`DevLoadMatrixSlide`) are **out of rotation** — JSX commented in `DevCornerTwoDashboard.tsx` with restore instructions; components and imports remain for later. Active order: In Progress → Recently Completed → Requested → Completions by developer → GitHub deploy. Dwell: **25s** for slides 1–4; **300s** (5 min) for GitHub deploy (was 2 min).
 
 - **GitHub deploy — Recent actions**: Each row gets a **subtle outcome glow** (green pass / red fail / primary-tinted in progress / soft neutral for cancelled/skipped) via `deployRunOutcomeGlow()` in **`githubDeployDisplay.ts`** and SCSS modifiers on `.actionRow`.
 

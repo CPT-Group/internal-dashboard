@@ -71,6 +71,11 @@ function getTechOwnerAccountId(issue: JiraIssue): string | null {
     ?? null;
 }
 
+/**
+ * True when dev work is attributed to a NOVA team member: explicit Tech Owner when set,
+ * else assignee (same ID resolution as `getTechOwnerAccountId`). Used to filter TV lists
+ * so CM/queue assignees (e.g. case managers) do not appear unless NOVA owns the work.
+ */
 function isTechOwnerNovaTeam(issue: JiraIssue): boolean {
   const id = getTechOwnerAccountId(issue);
   return id != null && NOVA_TEAM_ACCOUNT_IDS.has(id);
@@ -125,11 +130,6 @@ function isDone(issue: JiraIssue): boolean {
 
 function isInProgress(issue: JiraIssue): boolean {
   return issue.fields?.status?.statusCategory?.key === 'indeterminate';
-}
-
-function isNovaTeam(issue: JiraIssue): boolean {
-  const id = issue.fields?.assignee?.accountId;
-  return id != null && NOVA_TEAM_ACCOUNT_IDS.has(id);
 }
 
 function getProjectKey(issue: JiraIssue): string {
@@ -242,7 +242,10 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const closedToday = closedTodayIssues.filter(isTechOwnerNovaTeam).length;
   const netChangeToday = landedToday - closedToday;
 
-  const ages = open.map((i) => getDevAgeDays(i, transitionDates)).filter((a) => a >= 0);
+  const ages = open
+    .filter(isTechOwnerNovaTeam)
+    .map((i) => getDevAgeDays(i, transitionDates))
+    .filter((a) => a >= 0);
   const avgAgeDays = ages.length ? Math.round((ages.reduce((s, a) => s + a, 0) / ages.length) * 10) / 10 : 0;
   const oldestAgeDays = ages.length ? Math.max(...ages) : 0;
 
@@ -297,6 +300,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
 
   const byComponent: Record<string, { count: number; hasAging: boolean }> = {};
   open.forEach((issue) => {
+    if (!isTechOwnerNovaTeam(issue)) return;
     const comps = getComponentNames(issue);
     const age = getDevAgeDays(issue, transitionDates);
     comps.forEach((name) => {
@@ -311,7 +315,8 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
 
   const byAssignee: Record<string, number> = {};
   open.forEach((issue) => {
-    const name = getAssigneeName(issue);
+    if (!isTechOwnerNovaTeam(issue)) return;
+    const name = getTechOwnerName(issue);
     byAssignee[name] = (byAssignee[name] ?? 0) + 1;
   });
   const backlogByAssignee: BacklogByAssigneeItem[] = Object.entries(byAssignee)
@@ -326,6 +331,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   endOfNextWeek.setDate(endOfWeek.getDate() + 7);
   const dueBuckets: Record<string, number> = { Overdue: 0, 'This week': 0, 'Next week': 0, Later: 0, 'No date': 0 };
   open.forEach((issue) => {
+    if (!isTechOwnerNovaTeam(issue)) return;
     const raw = issue.fields?.duedate;
     if (!raw) {
       dueBuckets['No date']++;
@@ -392,6 +398,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   }));
 
   const oldest10: OldestTicketRow[] = [...open]
+    .filter(isTechOwnerNovaTeam)
     .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .slice(0, 10)
     .map((issue) => ({
@@ -661,6 +668,7 @@ function buildComponentActivity(
   };
 
   for (const issue of open) {
+    if (!isTechOwnerNovaTeam(issue)) continue;
     const age = getDevAgeDays(issue, transitionDates);
     for (const comp of getComponentNames(issue)) {
       const entry = ensureComp(comp);
@@ -671,6 +679,7 @@ function buildComponentActivity(
   }
 
   for (const issue of landedToday) {
+    if (!isTechOwnerNovaTeam(issue)) continue;
     for (const comp of getComponentNames(issue)) {
       ensureComp(comp).landedToday++;
     }
@@ -683,6 +692,7 @@ function buildComponentActivity(
   const weekStart = dateStr(startOfWeek);
 
   for (const issue of landedLast14) {
+    if (!isTechOwnerNovaTeam(issue)) continue;
     const project = issue.fields?.project?.key;
     let landedDate: string | undefined;
     if (project === 'NOVA') {
@@ -724,7 +734,7 @@ function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
 
 function buildInProgressTickets(open: JiraIssue[], transitionDates: Map<string, string>): InProgressTicket[] {
   return open
-    .filter((i) => isInProgress(i) && isNovaTeam(i))
+    .filter((i) => isInProgress(i) && isTechOwnerNovaTeam(i))
     .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .slice(0, 20)
     .map((issue) => ({
@@ -768,6 +778,7 @@ function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedT
 function buildRequestedTickets(open: JiraIssue[], transitionDates: Map<string, string>): RequestedTicket[] {
   return open
     .filter(isRequestedNotStarted)
+    .filter(isTechOwnerNovaTeam)
     .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
     .map((issue) => ({
       key: issue.key,
@@ -789,6 +800,7 @@ function buildByBoardByComponent(open: JiraIssue[]): {
   const byBoardByComponent: Record<string, Record<string, number>> = {};
 
   for (const issue of open) {
+    if (!isTechOwnerNovaTeam(issue)) continue;
     const project = getProjectKey(issue);
     byProject[project] = (byProject[project] ?? 0) + 1;
 

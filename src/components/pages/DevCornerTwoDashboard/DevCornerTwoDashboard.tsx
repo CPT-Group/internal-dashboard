@@ -22,10 +22,10 @@ const POLL_INTERVAL_MS = 60_000;
 /**
  * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested →
  * Completions by developer → GitHub deploy.
- * Slides 1–4: 25s; GitHub: 120s (2 min).
+ * Slides 1–4: 25s; GitHub deploy: 300s (5 min).
  * (Today velocity + Dev load matrix slides are commented out below — same index order when restored.)
  */
-const SLIDE_DURATIONS_MS = [25_000, 25_000, 25_000, 25_000, 120_000] as const;
+const SLIDE_DURATIONS_MS = [25_000, 25_000, 25_000, 25_000, 300_000] as const;
 const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
 
 /** Set to a 0-based index to pin the carousel for local UI work; `null` = auto-advance. GitHub deploy = index `4`. */
@@ -135,7 +135,7 @@ export const DevCornerTwoDashboard = () => {
         {/*
           Restore: uncomment imports; add todayComponentVelocity, devLoadMatrix, assignees, components
           to the analytics destructure; insert these two slides after Requested (indices 3–4), renumber
-          CompletedByDev → 5, GitHub → 6; extend SLIDE_DURATIONS_MS (e.g. 25s×6 + 120s).
+          CompletedByDev → 5, GitHub → 6; extend SLIDE_DURATIONS_MS (e.g. 25s×6 + 300s for GitHub).
         <div className={slideClass(3)}>
           <TodayComponentVelocitySlide rows={todayComponentVelocity} />
         </div>
