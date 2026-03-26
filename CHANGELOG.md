@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`KpiStrip`** (Dev Corner One & Two, Trevor): Reduced inner **Card** padding, label-to-value gap, and strip gap between cards for TV; label and value font sizes unchanged.
+
 - **GitHub deploy repo cards** (`GithubDeployRepoCards`): Tighter grid gap, header/body padding, and typography spacing for TV; indeterminate **ProgressBar** is a thinner strip below the meta line with minimal margin. Progress bar colors use theme tokens **`--github-deploy-progressbar-track-bg`** and **`--github-deploy-progressbar-fill`** (`variables.scss` + `themes/*.scss`) instead of Lara defaults.
 
 - **Dev Corner Two carousel**: Slide list is driven by **`devCornerTwoSlides.config.ts`** — each row has **`enabled`** (boolean) and **`durationMs`**; only **`enabled: true`** slides render and rotate. Currently only **GitHub** is enabled for local TV tuning (flip others to `true` to restore the full carousel).
