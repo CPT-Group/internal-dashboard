@@ -118,6 +118,17 @@
   --nova-accent-border: rgb(36, 205, 197) !important;
   --nova-accent-text: #ffffff !important;
 
+  // GitHub monitored repo tones (used by deploy cards/timeline/actions; theme files may override)
+  --github-repo-label-color: var(--text-color) !important;
+  --github-repo-api-bg: color-mix(in srgb, var(--cyan-400) 42%, transparent) !important;
+  --github-repo-api-border: color-mix(in srgb, var(--cyan-400) 75%, transparent) !important;
+  --github-repo-tools-bg: color-mix(in srgb, var(--green-400) 38%, transparent) !important;
+  --github-repo-tools-border: color-mix(in srgb, var(--green-400) 70%, transparent) !important;
+  --github-repo-nuget-bg: color-mix(in srgb, var(--indigo-400) 38%, transparent) !important;
+  --github-repo-nuget-border: color-mix(in srgb, var(--indigo-400) 70%, transparent) !important;
+  --github-repo-migrations-bg: color-mix(in srgb, var(--orange-400) 38%, transparent) !important;
+  --github-repo-migrations-border: color-mix(in srgb, var(--orange-400) 70%, transparent) !important;
+
   // Dev Corner Two slide hero — uses var(--primary-color); follows active theme (no per-theme duplicate needed)
   --slide-hero-bg: linear-gradient(
     135deg,

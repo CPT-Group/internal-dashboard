@@ -12,25 +12,37 @@ import { RequestedTicketsSlide } from './RequestedTicketsSlide';
 import { DevLoadMatrixSlide } from './DevLoadMatrixSlide';
 import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
 import { CompletedByDevSlide } from './CompletedByDevSlide';
+import { GithubDeployStatusSlide } from './GithubDeployStatusSlide';
 import styles from './DevCornerTwoDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
 
 /**
  * Dwell time per slide (ms). Order: In Progress → Recently Completed → Requested → Today velocity →
- * Dev Load Matrix (2 min) → Completions by developer (slide 6).
+ * Dev Load Matrix → Completions by developer → GitHub deploy (longer dwell).
+ * Slides 1–6: 15s; GitHub deploy slide: 60s.
  */
-const SLIDE_DURATIONS_MS = [30_000, 30_000, 30_000, 30_000, 120_000, 30_000] as const;
+const SLIDE_DURATIONS_MS = [15_000, 15_000, 15_000, 15_000, 15_000, 15_000, 60_000] as const;
 const NUM_SLIDES = SLIDE_DURATIONS_MS.length;
+
+/** Set to a 0-based index to pin the carousel for local UI work; `null` = auto-advance. */
+const DEV_CORNER_TWO_FIXED_SLIDE_INDEX: number | null = null;
+
+const IS_CAROUSEL_LOCKED =
+  DEV_CORNER_TWO_FIXED_SLIDE_INDEX !== null &&
+  DEV_CORNER_TWO_FIXED_SLIDE_INDEX >= 0 &&
+  DEV_CORNER_TWO_FIXED_SLIDE_INDEX < NUM_SLIDES;
 
 export const DevCornerTwoDashboard = () => {
   const { fetchOperationalData, isStale, loading, error, getAnalytics } =
     useOperationalJiraStore();
 
-  const [activeSlide, setActiveSlide] = useState(0);
+  const lockedIndex = IS_CAROUSEL_LOCKED ? DEV_CORNER_TWO_FIXED_SLIDE_INDEX! : null;
+
+  const [activeSlide, setActiveSlide] = useState(IS_CAROUSEL_LOCKED ? lockedIndex! : 0);
   const [leavingSlide, setLeavingSlide] = useState<number | null>(null);
   const activeRef = useRef(0);
-  activeRef.current = activeSlide;
+  activeRef.current = IS_CAROUSEL_LOCKED ? lockedIndex! : activeSlide;
 
   useEffect(() => {
     if (isStale()) void fetchOperationalData();
@@ -41,6 +53,7 @@ export const DevCornerTwoDashboard = () => {
   }, [fetchOperationalData, isStale]);
 
   useEffect(() => {
+    if (IS_CAROUSEL_LOCKED) return;
     const ms = SLIDE_DURATIONS_MS[activeSlide];
     const t = window.setTimeout(() => {
       setLeavingSlide(activeRef.current);
@@ -50,6 +63,7 @@ export const DevCornerTwoDashboard = () => {
   }, [activeSlide]);
 
   useEffect(() => {
+    if (IS_CAROUSEL_LOCKED) return;
     if (leavingSlide === null) return;
     const t = setTimeout(() => setLeavingSlide(null), 600);
     return () => clearTimeout(t);
@@ -76,8 +90,10 @@ export const DevCornerTwoDashboard = () => {
     { label: 'Open (NOVA)', value: kpis.openNova },
   ], [kpis, inProgressTickets.length, recentlyCompleted.length, requestedTickets.length]);
 
+  const visibleSlide = IS_CAROUSEL_LOCKED ? lockedIndex! : activeSlide;
+
   const slideClass = (idx: number) =>
-    `${styles.slide} ${activeSlide === idx ? styles.active : ''} ${leavingSlide === idx ? styles.leaving : ''}`;
+    `${styles.slide} ${visibleSlide === idx ? styles.active : ''} ${!IS_CAROUSEL_LOCKED && leavingSlide === idx ? styles.leaving : ''}`;
 
   if (loading && kpis.openCount === 0) {
     return (
@@ -124,11 +140,16 @@ export const DevCornerTwoDashboard = () => {
             <CompletedByDevSlide columns={completedByDeveloper} />
           </div>
         </div>
-        <div className={styles.indicators}>
-          {Array.from({ length: NUM_SLIDES }, (_, i) => (
-            <div key={i} className={`${styles.dot} ${activeSlide === i ? styles.activeDot : ''}`} aria-hidden />
-          ))}
+        <div className={slideClass(6)}>
+          <GithubDeployStatusSlide />
         </div>
+        {!IS_CAROUSEL_LOCKED && (
+          <div className={styles.indicators}>
+            {Array.from({ length: NUM_SLIDES }, (_, i) => (
+              <div key={i} className={`${styles.dot} ${visibleSlide === i ? styles.activeDot : ''}`} aria-hidden />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

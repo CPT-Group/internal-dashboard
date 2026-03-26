@@ -1,0 +1,277 @@
+.root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 0.5rem;
+}
+
+.meta {
+  font-size: 0.65rem;
+  color: var(--text-color-secondary);
+  line-height: 1.35;
+}
+
+.meterWrap {
+  flex-shrink: 0;
+  padding: 0 0.15rem;
+
+  :global(.p-metergroup) {
+    width: 100%;
+  }
+}
+
+.contentLayout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.cardsPane {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cardsPanel {
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.actionsPane {
+  min-height: 0;
+  flex: 1;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius);
+  background: color-mix(in srgb, var(--surface-card) 88%, transparent);
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.actionsHeader {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.35rem;
+}
+
+.actionsScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+
+  :global(.p-dataview),
+  :global(.p-dataview-content) {
+    background: transparent;
+    border: 0;
+  }
+
+  :global(.p-dataview-content) {
+    padding: 0;
+  }
+}
+
+.actionRow {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius);
+  background: color-mix(in srgb, var(--surface-card) 92%, transparent);
+  padding: 0.38rem 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.actionTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.actionRepo {
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: var(--github-repo-label-color, var(--text-color));
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.07rem 0.42rem;
+}
+
+.actionStatus {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
+}
+
+.actionTitle {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  color: var(--text-color);
+  margin-top: 0.1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actionMeta {
+  margin-top: 0.1rem;
+  font-size: 0.6rem;
+  color: var(--text-color-secondary);
+}
+
+.timelinePane {
+  min-height: 0;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius);
+  background: color-mix(in srgb, var(--surface-card) 88%, transparent);
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineHeader {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.4rem;
+}
+
+.timelineScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.timeline {
+  :global(.p-timeline-event-opposite) {
+    flex: 0 0 5.4rem;
+    padding-right: 0.45rem;
+    text-align: right;
+  }
+
+  :global(.p-timeline-event-content) {
+    flex: 1;
+    padding-left: 0.5rem;
+    min-width: 0;
+  }
+}
+
+.timelineOpposite {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.emptyTimeline {
+  font-size: 0.72rem;
+  color: var(--text-color-secondary);
+}
+
+.timelineDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  display: inline-block;
+  margin-top: 0.2rem;
+}
+
+.timelineDotSuccess {
+  background: var(--green-500);
+}
+
+.timelineDotRunning {
+  background: var(--primary-color);
+}
+
+.timelineDotAttention {
+  background: var(--red-500);
+}
+
+.timelineItem {
+  margin-bottom: 0.55rem;
+}
+
+.timelineTop {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.timelineRepo {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--github-repo-label-color, var(--text-color));
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.timelineState {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  color: var(--text-color-secondary);
+}
+
+.timelineText {
+  font-size: 0.7rem;
+  color: var(--text-color);
+  line-height: 1.32;
+  margin-top: 0.2rem;
+}
+
+.timelineMeta {
+  font-size: 0.62rem;
+  color: var(--text-color-secondary);
+  margin-top: 0.15rem;
+}
+
+.repoPillApi {
+  background: var(--github-repo-api-bg);
+  border-color: var(--github-repo-api-border);
+}
+
+.repoPillTools {
+  background: var(--github-repo-tools-bg);
+  border-color: var(--github-repo-tools-border);
+}
+
+.repoPillNuget {
+  background: var(--github-repo-nuget-bg);
+  border-color: var(--github-repo-nuget-border);
+}
+
+.repoPillMigrations {
+  background: var(--github-repo-migrations-bg);
+  border-color: var(--github-repo-migrations-border);
+}
+
+.skeletonGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-content: start;
+  min-height: 0;
+  margin-top: 0.5rem;
+}
+
+.skeletonCard {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius);
+  background: var(--surface-card);
+  padding: 0.65rem;
+}

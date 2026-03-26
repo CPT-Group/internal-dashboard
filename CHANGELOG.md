@@ -21,10 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dev Corner Two**: Seventh carousel slide **GitHub — CD deploy status** (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** aggregates the four main CD workflows (Azure Functions API, internal tools SWA, NuGet, EF migrations) via the GitHub Actions API; requires **`GITHUB_DEPLOY_READ_TOKEN`** on the server. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** can pin the carousel (e.g. `6`); use `null` for normal rotation.
 - **GitHub webhooks**: `POST /api/webhooks/github` receives org/repo webhook deliveries (verify `GITHUB_WEBHOOK_SECRET` when set), stores normalized rows in an in-memory cache, optional Teams mirror via `GITHUB_WEBHOOK_CPT_GROUP`. `GET /api/webhooks/github` returns cached events for the TV UI.
 - **TV route** `/tv/github-activity` (`GithubActivityDashboard`): 4-slide carousel (30s, 30s, 30s, 120s on the feed), polls the GET route every 60s; home screen tile **GitHub activity**.
 
 ### Changed
+
+- **Dev Corner Two carousel**: Restored normal auto-rotation (`DEV_CORNER_TWO_FIXED_SLIDE_INDEX` defaults to `null`). Per-slide dwell: slides 1–6 **15s** each; slide 7 (GitHub CD deploy) **60s**.
+
+- **GitHub deploy cards (`GithubDeployRepoCards`)**: Larger meta line and run title text for TV reading; tighter “Open run” text-button padding (overrides Prime `p-button-sm`); run title allows up to three lines.
+
+- **GitHub CD deploy slide (Dev Corner Two)**: Reusable **`GithubDeployRepoCards`** (2×2 **Card** grid with **Tag**, indeterminate **ProgressBar** when a run is active, Prime “Open run” link) now includes left-border health indicators (**green** OK / **yellow** running-warning / **red** error). Slide now uses more of the screen with a split layout: left cards + **DataView** “Recent actions” feed, right **Timeline** of recent runs across repos with improved status column spacing. Both scrolling areas reuse existing **`useAutoScroll`** (no new scroller hook). API includes `recentRuns` per workflow for history widgets. Helpers in **`githubDeployDisplay.ts`** (summary + tag severity + card health).
+- **GitHub deploy repo color system**: Added theme-aware repo tokens (`--github-repo-api-*`, `--github-repo-tools-*`, `--github-repo-nuget-*`, `--github-repo-migrations-*`, `--github-repo-label-color`) in `variables.scss` with explicit overrides in all four theme files. These now drive card tinting and repo pills in Recent actions/Timeline so color coding follows theme changes with better contrast.
 
 - **Dev Corner Two**: Shared slide header **`DevCornerSlideHero`** (`src/components/ui/DevCornerSlideHero/`) for the same gradient + pill pattern as “Completions by developer”, applied to all Dev Corner Two slides. Theme tokens **`--slide-hero-bg`**, **`--slide-hero-pill-bg`**, **`--slide-hero-pill-border`** in `variables.scss` (derived from `--primary-color`). GitHub activity TV top bar uses **`--slide-hero-bg`**.
 

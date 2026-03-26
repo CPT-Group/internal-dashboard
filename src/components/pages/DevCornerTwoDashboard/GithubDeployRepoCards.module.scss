@@ -1,0 +1,138 @@
+.grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  min-height: 0;
+  align-content: start;
+}
+
+.card {
+  min-height: 0;
+  border: 1px solid var(--surface-border);
+  border-left-width: 5px;
+
+  :global(.p-card-body) {
+    padding: 0.5rem 0.65rem 0.45rem;
+  }
+
+  :global(.p-card-content) {
+    padding: 0;
+  }
+}
+
+.repoToneApi {
+  background: linear-gradient(
+    90deg,
+    var(--github-repo-api-bg) 0%,
+    color-mix(in srgb, var(--surface-card) 96%, transparent) 45%
+  );
+}
+
+.repoToneTools {
+  background: linear-gradient(
+    90deg,
+    var(--github-repo-tools-bg) 0%,
+    color-mix(in srgb, var(--surface-card) 96%, transparent) 45%
+  );
+}
+
+.repoToneNuget {
+  background: linear-gradient(
+    90deg,
+    var(--github-repo-nuget-bg) 0%,
+    color-mix(in srgb, var(--surface-card) 96%, transparent) 45%
+  );
+}
+
+.repoToneMigrations {
+  background: linear-gradient(
+    90deg,
+    var(--github-repo-migrations-bg) 0%,
+    color-mix(in srgb, var(--surface-card) 96%, transparent) 45%
+  );
+}
+
+.cardOk {
+  border-left-color: var(--green-500);
+}
+
+.cardWarning {
+  border-left-color: var(--orange-400);
+}
+
+.cardError {
+  border-left-color: var(--red-500);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem 0.35rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.repoTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--github-repo-label-color, var(--text-color));
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+.activityBar {
+  margin: 0 0 0.45rem;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.meta {
+  font-size: 0.88rem;
+  color: var(--text-color-secondary);
+  line-height: 1.45;
+  margin: 0 0 0.4rem;
+}
+
+.title {
+  font-size: 0.95rem;
+  color: var(--text-color);
+  line-height: 1.4;
+  margin: 0 0 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.errorText {
+  font-size: 0.72rem;
+  color: var(--red-500);
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* Compact “Open run”: override Prime sm text button padding for TV legibility elsewhere */
+.openLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+  text-decoration: none;
+  padding: 0.05rem 0.3rem !important;
+  min-height: 0 !important;
+  height: auto !important;
+  line-height: 1.15;
+
+  :global(.p-button-icon) {
+    font-size: 0.7rem;
+    margin-inline-end: 0 !important;
+  }
+
+  :global(.p-button-label) {
+    font-size: 0.72rem;
+    line-height: 1.15;
+    padding: 0 !important;
+  }
+}
