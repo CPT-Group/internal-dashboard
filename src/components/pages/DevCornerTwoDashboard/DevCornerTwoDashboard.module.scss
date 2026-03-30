@@ -39,6 +39,11 @@
   }
 }
 
+/* GitHub deploy slide: less air above the hero (title sits closer to KPI strip). */
+.slideGithubDeploy {
+  padding-top: 0.32rem;
+}
+
 .slideContent {
   flex: 1;
   display: flex;

@@ -11,6 +11,8 @@ export interface DevCornerSlideHeroProps {
   description?: ReactNode;
   /** Right side of title row — tags, counts (PrimeReact Tag, etc.). */
   trailing?: ReactNode;
+  /** Puts the pill after the title on the same row (compact header; omits the meta row when there is no description). */
+  pillInline?: boolean;
 }
 
 export const DevCornerSlideHero = ({
@@ -18,18 +20,27 @@ export const DevCornerSlideHero = ({
   pill,
   description,
   trailing,
+  pillInline = false,
 }: DevCornerSlideHeroProps) => {
-  const showMeta = pill != null || description != null;
+  const hasPill = pill != null && pill !== '';
+  const showMetaRow = description != null || (!pillInline && hasPill);
 
   return (
-    <header className={styles.hero}>
+    <header className={`${styles.hero} ${pillInline ? styles.heroPillInline : ''}`}>
       <div className={styles.heroTop}>
-        <div className={styles.heroTitle}>{title}</div>
+        {pillInline ? (
+          <div className={styles.heroTitleRow}>
+            <div className={styles.heroTitle}>{title}</div>
+            {hasPill && <span className={styles.heroPill}>{pill}</span>}
+          </div>
+        ) : (
+          <div className={styles.heroTitle}>{title}</div>
+        )}
         {trailing != null && <div className={styles.heroTrailing}>{trailing}</div>}
       </div>
-      {showMeta && (
+      {showMetaRow && (
         <div className={styles.heroMeta}>
-          {pill != null && pill !== '' && <span className={styles.heroPill}>{pill}</span>}
+          {!pillInline && hasPill && <span className={styles.heroPill}>{pill}</span>}
           {description}
         </div>
       )}

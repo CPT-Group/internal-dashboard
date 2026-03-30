@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner Two — GitHub deploy slide**: **`slideGithubDeploy`** — less carousel top padding so the hero sits closer to the **KpiStrip**. Tighter hero → **MeterGroup** stack (**`pillInline`** margin/padding, slide **`.root`** flex gap). Removed the grey meta line; **`pillInline`** title + **Actions API** pill; scoped **`--content-text-size`**; tighter cards/timeline/repo padding; run title **4-line** clamp; card body **`overflow: hidden`** for footer ticker.
+- **GitHub deploy repo cards**: Detail rows are **dynamic** — **in progress**: Started + Elapsed only; **completed** (any conclusion): Elapsed + Finished only. Removed the **Workflow** id row.
+
 - **Dev Corner Two — GitHub deploy timeline**: Tighter left pane padding, slightly wider opposite column, less gap before the connector, and **`white-space: nowrap`** on status labels so **IN PROGRESS** no longer breaks mid-word (removed `word-break: break-word` on `.timelineOpposite`).
 
 - **Themes — TV content scale + GitHub deploy**: Added global **`--content-text-size`** (default ~`1.04rem`, themes bump slightly). GitHub timeline and repo card body text derive sizes from it; **`--github-deploy-timeline-meta-color`** applies only to the branch/time line under the run title (pink/accent per theme), not the left **SUCCESS / IN PROGRESS / …** column — those use semantic **green / yellow / red / orange** via `deployTimelineOppositeKind()` + `.timelineOppositeSuccess|Running|Failure|Neutral`.

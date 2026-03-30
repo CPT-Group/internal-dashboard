@@ -6,8 +6,8 @@ import { MeterGroup } from 'primereact/metergroup';
 import { Skeleton } from 'primereact/skeleton';
 import { Timeline } from 'primereact/timeline';
 import { DevCornerSlideHero } from '@/components/ui';
-import { useAutoScroll } from '@/hooks';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
+import { useAutoScroll } from '@/hooks';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
   deployTimelineOppositeKind,
@@ -146,12 +146,7 @@ export const GithubDeployStatusSlide = () => {
       <DevCornerSlideHero
         title="GitHub — CD deploy status"
         pill="Actions API"
-        description={
-          <>
-            Four main deploy workflows · poll {GITHUB_ACTIVITY_POLL_INTERVAL_MS / 1000}s ·{' '}
-            <span className={styles.meta}>left: repo cards · right: recent deploy runs</span>
-          </>
-        }
+        pillInline
       />
       {repos.length > 0 && (
         <div className={styles.meterWrap}>

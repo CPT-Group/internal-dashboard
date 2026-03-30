@@ -93,8 +93,8 @@ export const DevCornerTwoDashboard = () => {
 
   const visibleSlide = IS_CAROUSEL_LOCKED ? lockedIndex! : activeSlide;
 
-  const slideClass = (idx: number) =>
-    `${styles.slide} ${visibleSlide === idx ? styles.active : ''} ${!IS_CAROUSEL_LOCKED && leavingSlide === idx ? styles.leaving : ''}`;
+  const slideClass = (idx: number, slideId: DevCornerTwoSlideId) =>
+    `${styles.slide} ${slideId === 'github' ? styles.slideGithubDeploy : ''} ${visibleSlide === idx ? styles.active : ''} ${!IS_CAROUSEL_LOCKED && leavingSlide === idx ? styles.leaving : ''}`;
 
   const renderSlide = (id: DevCornerTwoSlideId) => {
     switch (id) {
@@ -155,7 +155,7 @@ export const DevCornerTwoDashboard = () => {
       </div>
       <div className={styles.carousel}>
         {enabledSlides.map((slide, idx) => (
-          <div key={slide.id} className={slideClass(idx)}>
+          <div key={slide.id} className={slideClass(idx, slide.id)}>
             {renderSlide(slide.id)}
           </div>
         ))}

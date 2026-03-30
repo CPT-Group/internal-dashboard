@@ -99,22 +99,29 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                   </div>
                   <p className={styles.title}>{run.title}</p>
                   <dl className={styles.detailList}>
-                    <div className={styles.detailRow}>
-                      <dt>Started</dt>
-                      <dd>{formatDeployRunTimestamp(run.createdAt)}</dd>
-                    </div>
-                    <div className={styles.detailRow}>
-                      <dt>{isRunning ? 'Elapsed' : 'Finished'}</dt>
-                      <dd>
-                        {isRunning
-                          ? durationLabel
-                          : `${formatDeployRunTimestamp(run.updatedAt)} (${durationLabel})`}
-                      </dd>
-                    </div>
-                    <div className={styles.detailRow}>
-                      <dt>Workflow</dt>
-                      <dd>#{row.workflowId}</dd>
-                    </div>
+                    {isRunning ? (
+                      <>
+                        <div className={styles.detailRow}>
+                          <dt>Started</dt>
+                          <dd>{formatDeployRunTimestamp(run.createdAt)}</dd>
+                        </div>
+                        <div className={styles.detailRow}>
+                          <dt>Elapsed</dt>
+                          <dd>{durationLabel}</dd>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={styles.detailRow}>
+                          <dt>Elapsed</dt>
+                          <dd>{durationLabel}</dd>
+                        </div>
+                        <div className={styles.detailRow}>
+                          <dt>Finished</dt>
+                          <dd>{formatDeployRunTimestamp(run.updatedAt)}</dd>
+                        </div>
+                      </>
+                    )}
                   </dl>
                   {showActivityBar && (
                     <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
