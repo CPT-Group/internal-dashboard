@@ -8,7 +8,7 @@ export interface OperationalKpis {
   openNova: number;
   /** Open tickets from CM + OPRD (production/client work). */
   openProd: number;
-  /** Tickets that landed on team today (transitioned from New or created for NOVA). */
+  /** Tickets that landed on team today, filtered to NOVA-team attribution only. */
   landedToday: number;
   closedToday: number;
   netChangeToday: number;
@@ -16,6 +16,8 @@ export interface OperationalKpis {
   oldestAgeDays: number;
   /** Average hours from created to resolved (last 14d resolved tickets). */
   avgCloseTimeHours: number | null;
+  /** Open tickets not attributed to any NOVA team member (no tech owner + non-NOVA/unassigned). */
+  limboCount: number;
 }
 
 export interface FlowDay {
@@ -173,6 +175,17 @@ export interface TodayComponentVelocityRow {
   fastestKey: string | null;
 }
 
+/** Active ticket not attributed to any NOVA team member — unassigned or owned by non-team. */
+export interface LimboTicket {
+  key: string;
+  summary: string;
+  project: string;
+  status: string;
+  assignee: string;
+  ageDays: number;
+  isNova: boolean;
+}
+
 export interface OperationalAnalytics {
   kpis: OperationalKpis;
   flowData: FlowDay[];
@@ -210,4 +223,6 @@ export interface OperationalAnalytics {
   todayComponentVelocity: TodayComponentVelocityRow[];
   /** Tech owner–grouped completions for Dev 2 slide 6 (today + week Mon–Fri from same store fetch). */
   completedByDeveloper: CompletedByDeveloperColumn[];
+  /** Active tickets not attributed to any NOVA team member (for Limbo KPI and future table). */
+  limboTickets: LimboTicket[];
 }

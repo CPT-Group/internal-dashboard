@@ -1,0 +1,29 @@
+.root {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.table {
+  font-size: var(--dev1-panel-text, var(--content-text-size, 0.88rem));
+}
+
+.key {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.keyNova {
+  color: var(--nova-accent-border);
+}
+
+.ageWarn {
+  color: var(--red-400);
+  font-weight: 700;
+}
+
+.rowNova {
+  :global(td:first-child) {
+    box-shadow: inset 3px 0 0 0 var(--nova-accent-border);
+  }
+}

@@ -23,6 +23,7 @@ import type {
   TodayComponentVelocityRow,
   CompletedByDeveloperColumn,
   CompletedByDevTicketRow,
+  LimboTicket,
 } from '@/types';
 import {
   DEV1_RISK_BUCKET_WEIGHTS,
@@ -257,9 +258,10 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const resolvedPrev14 = input.resolvedPrev14 != null ? filterDashboardIssues(input.resolvedPrev14) : undefined;
 
   const open = openIssues.filter((i) => !isDone(i));
-  const landedToday = openedTodayIssues.length;
+  const landedToday = openedTodayIssues.filter(isTechOwnerNovaTeam).length;
   const closedToday = closedTodayIssues.filter(isTechOwnerNovaTeam).length;
   const netChangeToday = landedToday - closedToday;
+  const limboIssues = open.filter((i) => !isTechOwnerNovaTeam(i));
 
   const ages = open
     .filter(isTechOwnerNovaTeam)
@@ -283,6 +285,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     avgAgeDays,
     oldestAgeDays,
     avgCloseTimeHours,
+    limboCount: limboIssues.length,
   };
 
   const dayCountsLanded: Record<string, number> = {};
@@ -486,6 +489,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
     byBoardByComponent,
     todayComponentVelocity,
     completedByDeveloper,
+    limboTickets: buildLimboTickets(limboIssues, transitionDates),
   };
 }
 
@@ -834,4 +838,18 @@ function buildByBoardByComponent(open: JiraIssue[]): {
   }
 
   return { byProject, byBoardByComponent };
+}
+
+function buildLimboTickets(limboIssues: JiraIssue[], transitionDates: Map<string, string>): LimboTicket[] {
+  return limboIssues
+    .sort((a, b) => getDevAgeDays(b, transitionDates) - getDevAgeDays(a, transitionDates))
+    .map((issue) => ({
+      key: issue.key,
+      summary: issue.fields?.summary ?? '',
+      project: getProjectKey(issue),
+      status: displayStatusName(issue.fields?.status?.name ?? ''),
+      assignee: getAssigneeName(issue),
+      ageDays: getDevAgeDays(issue, transitionDates),
+      isNova: getProjectKey(issue) === 'NOVA',
+    }));
 }

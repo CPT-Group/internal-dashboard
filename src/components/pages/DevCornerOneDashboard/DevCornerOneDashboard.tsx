@@ -36,7 +36,7 @@ export const DevCornerOneDashboard = () => {
   const { kpis, throughputRatio, componentActivity, teamActivity } = analytics;
 
   const kpiItems: KpiItem[] = useMemo(() => [
-    { label: 'Open', value: kpis.openCount },
+    { label: 'Limbo', value: kpis.limboCount, severity: kpis.limboCount > 0 ? 'warning' : 'success' },
     { label: 'Landed Today', value: kpis.landedToday },
     { label: 'Closed Today', value: kpis.closedToday },
     {

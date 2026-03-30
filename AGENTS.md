@@ -101,6 +101,8 @@ Jira custom field `customfield_10193` (**Tech Owner**) identifies the developer 
 - **Team Activity, Dev Load Matrix** — use **assignee** (dev is assigned while actively working); matrix already restricts columns to NOVA assignees.
 - **Requested / Not Started** — only issues where **`isTechOwnerNovaTeam`** is true (explicit Tech Owner must be NOVA when set; if Tech Owner is empty, assignee must be NOVA). Dev Corner Two still displays **Tech Owner** and **Assignee** columns so viewers see intended dev vs current queue assignee.
 - **Backlog by assignee, backlog by component, due-date buckets, component activity, oldest open, aging hotspots, board×component** — count only issues matching **`isTechOwnerNovaTeam`** so TV aggregates stay NOVA-attributed (same helper as Tech Owner resolution: explicit field, else assignee).
+- **Landed Today, Net Today** — both filtered by **`isTechOwnerNovaTeam`**. Tickets assigned to non-team members or unassigned with no tech owner do not count toward landed or net.
+- **Limbo** — active tickets on the board where **`!isTechOwnerNovaTeam`**: unassigned with no tech owner, or assigned to someone outside the NOVA team. `kpis.limboCount` + `limboTickets: LimboTicket[]` on `OperationalAnalytics`. Dev Corner One KPI strip shows "Limbo" (replaced "Open"). `LimboTicketsTable` component in `src/components/ui/` (not mounted yet).
 
 **NOVA Components** (`customfield_10754`): On NOVA project issues, this field (e.g. ZION, Legacy/Other) is used for Dev Load matrix bucketing and component text in Dev 2 tables when set; if empty, behavior falls back to standard Jira **components** or “No component”. CM/OPRD continue to use standard components only.
 
@@ -183,7 +185,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near the entrance and break room. Other departments walk by daily.
 
 - **Dev Corner One (LEFT TV)** — **Developer-focused**. Closest to the dev desks. Single-view layout:
-  - KPI strip: Open, Landed Today, Closed Today, Net, Avg Close Time, Throughput Ratio.
+  - KPI strip: **Limbo** (unattributed active tickets), Landed Today, Closed Today, Net, Avg Close Time, Throughput Ratio.
   - Middle left: **Work Hours Today** — horizontal bar chart showing hours logged today (Pacific time) per core dev (Kyle, Roy, James). Uses `useWorkHoursToday` hook (10-min poll). Data from Jira worklog API via `/api/jira/worklogs-today`.
   - Middle right: Component Activity table (per-component: open, today, this week).
   - Bottom: NOVA Team Activity panel (4 dev cards with in-progress ticket chips).

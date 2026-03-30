@@ -32,9 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Landed Today / Net KPI counted non-team tickets**: `kpis.landedToday` was unfiltered (all issues from landed query), while `kpis.closedToday` filtered by `isTechOwnerNovaTeam`. This inflated Landed and Net counts with tickets assigned to non-NOVA members (case managers) or unassigned with no tech owner. Now both sides of the net calculation use `isTechOwnerNovaTeam`, dropping landed today from ~14 to ~7 NOVA-attributed.
+
 - **"Landed Today" count inflated by Backlog tickets**: After the Jira rework, `NOVA_CREATED` JQL was counting all newly created NOVA tickets — including template-cloned tickets sitting in Backlog that hadn't been submitted to the team. Replaced with a two-path `NOVA_LANDED` that mirrors CM/OPRD's transition-based approach: (1) direct-to-sprint tickets (Bug, Case Update Request, dev-originated) use `created >= date AND status != Backlog`; (2) template-cloned tickets use `status changed FROM "Backlog" AFTER date` so the *transition* date — not creation date — determines when work landed on the team. Added `NOVA_LANDED_RANGE` for the prev-14 trend window. Dropped today's count from ~37 to ~14 (23 Backlog templates excluded, 1 Backlog→Done transition correctly captured). All other operational queries (open, resolved) were already clean via `sprint in openSprints()` or resolution-date scoping.
 
 - **Samsung TV CSS compatibility (`color-mix()` fallbacks)**: Samsung Tizen TV browsers (older Chromium/WebKit) do not support the CSS `color-mix()` function, causing missing backgrounds, glows, and translucent effects on TV dashboards while borders and simpler animations rendered fine. Added `rgba()` fallback declarations before every `color-mix()` usage across 12 SCSS files (~70 instances): `variables.scss`, all 4 theme files, `primereact-overrides.scss`, `CornerInfoCard`, `DevCornerOneDashboard`, `DevCornerTwoDashboard`, `GithubDeployStatusSlide`, `GithubDeployRepoCards`, and `CompletedByDevSlide`. Old browsers use the hardcoded `rgba()` fallback; modern browsers override with theme-aware `color-mix()`.
+
+### Added
+
+- **Limbo KPI (Dev Corner One)**: Replaced the "Open" card in the KPI strip with **"Limbo"** — count of active tickets on the board that are not attributed to any NOVA team member (unassigned with no tech owner, or assigned to non-team members). Severity badge: warning when > 0, success when 0.
+- **`LimboTicket` type + `limboTickets` array** on `OperationalAnalytics`: sorted by age descending, with key/project/status/assignee/summary/ageDays/isNova. Available for future dashboard panels.
+- **`LimboTicketsTable` component** (`src/components/ui/LimboTicketsTable/`): Reusable PrimeReact `DataTable` with auto-scroll, NOVA-key accent, age warning styling. Not mounted on any dashboard yet — ready for future use.
 
 ### Changed
 
