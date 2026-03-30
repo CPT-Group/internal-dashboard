@@ -104,35 +104,21 @@
   line-height: 1.2;
 }
 
-.repoPath {
-  font-size: calc(var(--content-text-size, 1rem) * 0.72);
-  font-family: ui-monospace, monospace;
-  color: var(--text-color-secondary);
-  margin: 0;
-  line-height: 1.25;
-  word-break: break-all;
-}
-
-.runMetaRow {
+.branchRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
 }
 
-.runMetaPill,
 .branchPill {
   font-size: calc(var(--content-text-size, 1rem) * 0.78);
-  font-weight: 600;
+  font-weight: 500;
   padding: 0.12rem 0.4rem;
   border-radius: var(--border-radius);
   border: 1px solid var(--surface-border);
   background: color-mix(in srgb, var(--surface-card) 85%, transparent);
   color: var(--text-color);
-}
-
-.branchPill {
-  font-weight: 500;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -192,16 +178,39 @@
   margin: 0 0 0.12rem;
 }
 
-.title {
-  font-size: var(--content-text-size, 1rem);
-  color: var(--text-color);
-  line-height: 1.32;
-  margin: 0;
-  flex-shrink: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+/* Main run title — one line, marquee so long messages stay readable without wrapping */
+.titleTicker {
   overflow: hidden;
+  width: 100%;
+  flex-shrink: 0;
+  min-height: calc(var(--content-text-size, 1rem) * 1.38);
+  display: flex;
+  align-items: center;
+}
+
+.titleTickerTrack {
+  display: inline-flex;
+  width: max-content;
+  animation: githubDeployTitleTicker 48s linear infinite;
+}
+
+.titleTickerSeg {
+  padding: 0 2.25rem 0 0;
+  white-space: nowrap;
+  font-size: var(--content-text-size, 1rem);
+  font-weight: 600;
+  color: var(--text-color);
+  line-height: 1.38;
+}
+
+@keyframes githubDeployTitleTicker {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .errorText {
@@ -250,6 +259,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .titleTickerTrack,
   .footerTickerTrack {
     animation: none;
   }

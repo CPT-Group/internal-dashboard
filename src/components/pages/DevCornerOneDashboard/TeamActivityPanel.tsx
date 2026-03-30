@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { Card } from 'primereact/card';
 import { Badge } from 'primereact/badge';
 import { Chip } from 'primereact/chip';
@@ -53,7 +54,12 @@ export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
 
   return (
     <Card header={header} className={styles.panelCard}>
-      <div className={styles.teamGrid}>
+      <div
+        className={styles.teamGrid}
+        style={
+          { '--team-columns': String(members.length) } as CSSProperties
+        }
+      >
         {members.map((m) => (
           <MemberCard key={m.accountId} m={m} />
         ))}

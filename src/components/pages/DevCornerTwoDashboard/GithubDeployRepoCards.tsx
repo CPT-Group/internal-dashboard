@@ -37,7 +37,7 @@ function statusTagWrapClass(
 }
 
 /**
- * Reusable 2×2 grid of CD deploy cards (repo label, status, branch, run title, footer ticker).
+ * Reusable 2×2 grid of CD deploy cards (repo label, status, branch pill, marquee run title, details, footer ticker).
  * Uses PrimeReact Card, Tag, ProgressBar — TV-safe (no button links).
  */
 export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => {
@@ -90,14 +90,15 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                 <p className={styles.errorText}>{err}</p>
               ) : run ? (
                 <>
-                  <p className={styles.repoPath}>
-                    {row.owner}/{row.repo}
-                  </p>
-                  <div className={styles.runMetaRow}>
-                    <span className={styles.runMetaPill}>Run #{run.id}</span>
+                  <div className={styles.branchRow}>
                     <span className={styles.branchPill}>{run.headBranch ?? '—'}</span>
                   </div>
-                  <p className={styles.title}>{run.title}</p>
+                  <div className={styles.titleTicker} title={run.title}>
+                    <div className={styles.titleTickerTrack}>
+                      <span className={styles.titleTickerSeg}>{run.title}</span>
+                      <span className={styles.titleTickerSeg}>{run.title}</span>
+                    </div>
+                  </div>
                   <dl className={styles.detailList}>
                     {isRunning ? (
                       <>

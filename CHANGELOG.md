@@ -32,8 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner One**: **Team activity** grid uses **`repeat(var(--team-columns), minmax(0, 1fr))`** from the member count (was a fixed **4** columns, leaving empty space after Thomas was removed). Panel copy uses shared **`--content-text-size`** via **`--dev1-panel-text`** / **`--dev1-panel-text-sm`**; ticket chips span column width with larger type.
+
 - **Dev Corner Two — GitHub deploy slide**: **`slideGithubDeploy`** — less carousel top padding so the hero sits closer to the **KpiStrip**. Tighter hero → **MeterGroup** stack (**`pillInline`** margin/padding, slide **`.root`** flex gap). Removed the grey meta line; **`pillInline`** title + **Actions API** pill; scoped **`--content-text-size`**; tighter cards/timeline/repo padding; run title **4-line** clamp; card body **`overflow: hidden`** for footer ticker.
 - **GitHub deploy repo cards**: Detail rows are **dynamic** — **in progress**: Started + Elapsed only; **completed** (any conclusion): Elapsed + Finished only. Removed the **Workflow** id row.
+- **GitHub deploy repo cards**: Removed **owner/repo** line and **Run #** pill; branch pill only. Main run title is a **single-line marquee** (full `--content-text-size`, duplicated segment loop) so long titles do not wrap.
 
 - **Dev Corner Two — GitHub deploy timeline**: Tighter left pane padding, slightly wider opposite column, less gap before the connector, and **`white-space: nowrap`** on status labels so **IN PROGRESS** no longer breaks mid-word (removed `word-break: break-word` on `.timelineOpposite`).
 

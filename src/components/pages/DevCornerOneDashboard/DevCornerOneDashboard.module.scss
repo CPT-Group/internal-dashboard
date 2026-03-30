@@ -1,4 +1,8 @@
 .dashboard {
+  /* Match TV content scale (shared --content-text-size from themes / variables). */
+  --dev1-panel-text: var(--content-text-size, 1.04rem);
+  --dev1-panel-text-sm: calc(var(--content-text-size, 1.04rem) * 0.92);
+
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -26,7 +30,7 @@
 }
 
 .loadingPanelMessage {
-  font-size: 0.72rem;
+  font-size: var(--dev1-panel-text-sm);
   line-height: 1.25;
   color: var(--text-color-secondary);
 }
@@ -88,7 +92,7 @@
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--dev1-panel-text);
   color: var(--text-color);
 }
 
@@ -99,7 +103,7 @@
 }
 
 .ratioLabel {
-  font-size: 0.8rem;
+  font-size: var(--dev1-panel-text-sm);
   font-weight: 500;
   color: var(--text-color-secondary);
 }
@@ -118,7 +122,7 @@
 }
 
 .compTable {
-  font-size: 0.8rem;
+  font-size: var(--dev1-panel-text-sm);
 }
 
 /* ── Count badges (consistent size for 0 and non-0) ── */
@@ -126,10 +130,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.6rem;
-  height: 1.6rem;
+  min-width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
-  font-size: 0.75rem;
+  font-size: calc(var(--dev1-panel-text-sm) * 0.98);
   font-weight: 600;
   line-height: 1;
 }
@@ -172,8 +176,9 @@
 /* ── Team Activity panel ── */
 .teamGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+  width: 100%;
+  grid-template-columns: repeat(var(--team-columns, 3), minmax(0, 1fr));
+  gap: 0.55rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -202,14 +207,15 @@
 
 .teamName {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--dev1-panel-text);
   color: var(--text-color);
 }
 
 .teamCounts {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
+  font-size: var(--dev1-panel-text-sm);
   color: var(--text-color-secondary);
 }
 
@@ -223,7 +229,9 @@
 }
 
 .ticketChip {
-  font-size: 0.72rem !important;
+  width: 100%;
+  max-width: 100%;
+  font-size: var(--dev1-panel-text-sm) !important;
   background: var(--surface-hover) !important;
   color: var(--text-color) !important;
   border: 1px solid var(--surface-border) !important;
@@ -232,7 +240,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 220px;
+    max-width: 100%;
     color: var(--text-color);
   }
 }
@@ -250,6 +258,6 @@
 
 .noTickets {
   color: var(--text-color-secondary);
-  font-size: 0.75rem;
+  font-size: var(--dev1-panel-text-sm);
   font-style: italic;
 }
