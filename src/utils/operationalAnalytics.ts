@@ -150,6 +150,19 @@ const REQUESTED_STATUSES: Record<string, Set<string>> = {
   NOVA: new Set(['TO DO', 'To Do']),
 };
 
+/**
+ * Map Jira status names to dashboard-friendly display names.
+ * "In Dev" was renamed from "In Progress" in the 2026-03 Jira rework;
+ * dashboards continue showing "In Progress" for readability.
+ */
+const STATUS_DISPLAY_NAMES: Record<string, string> = {
+  'In Dev': 'In Progress',
+};
+
+function displayStatusName(jiraStatusName: string): string {
+  return STATUS_DISPLAY_NAMES[jiraStatusName] ?? jiraStatusName;
+}
+
 function isRequestedNotStarted(issue: JiraIssue): boolean {
   const project = getProjectKey(issue);
   const statusName = issue.fields?.status?.name ?? '';
@@ -171,7 +184,7 @@ const DEV_RESPONSIBLE_STATUSES: Record<string, Set<string>> = {
     'Data Team In Progress', 'DATA TEAM IN PROGRESS',
     'Data Team Testing', 'DATA TEAM TESTING',
   ]),
-  NOVA: new Set(['To Do', 'In Progress', 'Dev Review', 'QA']),
+  NOVA: new Set(['To Do', 'In Dev', 'Dev Review', 'QA']),
 };
 
 function isDevResponsible(issue: JiraIssue): boolean {
@@ -407,7 +420,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
       assignee: getAssigneeName(issue),
       component: getComponentNames(issue).join(', '),
       ageDays: getDevAgeDays(issue, transitionDates),
-      status: issue.fields?.status?.name ?? '',
+      status: displayStatusName(issue.fields?.status?.name ?? ''),
     }));
 
   const resolvedByTeam = resolvedLast14.filter(isTechOwnerNovaTeam);
@@ -742,7 +755,7 @@ function buildInProgressTickets(open: JiraIssue[], transitionDates: Map<string, 
       summary: issue.fields?.summary ?? '',
       assignee: getAssigneeName(issue),
       component: getDisplayComponentLabel(issue),
-      status: issue.fields?.status?.name ?? '',
+      status: displayStatusName(issue.fields?.status?.name ?? ''),
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
     }));
@@ -786,7 +799,7 @@ function buildRequestedTickets(open: JiraIssue[], transitionDates: Map<string, s
       techOwner: getTechOwnerName(issue),
       assignee: getAssigneeName(issue),
       component: getDisplayComponentLabel(issue),
-      status: issue.fields?.status?.name ?? '',
+      status: displayStatusName(issue.fields?.status?.name ?? ''),
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
     }));

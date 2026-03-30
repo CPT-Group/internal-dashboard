@@ -5,14 +5,11 @@ import { Message } from 'primereact/message';
 import { MeterGroup } from 'primereact/metergroup';
 import { Skeleton } from 'primereact/skeleton';
 import { Timeline } from 'primereact/timeline';
-import { DataView } from 'primereact/dataview';
 import { DevCornerSlideHero } from '@/components/ui';
 import { useAutoScroll } from '@/hooks';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
-  type DeployRunOutcomeGlow,
-  deployRunOutcomeGlow,
   formatDeployStatusLabel,
   repoToneForRepo,
   summarizeDeployRepos,
@@ -21,28 +18,10 @@ import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
 
-const ACTION_ROW_GLOW_CLASS: Record<DeployRunOutcomeGlow, string> = {
-  success: styles.actionRowGlowSuccess,
-  failure: styles.actionRowGlowFailure,
-  running: styles.actionRowGlowRunning,
-  neutral: styles.actionRowGlowNeutral,
-};
-
 interface DeployTimelineItem {
   id: string;
   repo: string;
   run: GitHubDeployRunSummary;
-}
-
-interface DeployActionItem {
-  id: string;
-  repo: string;
-  tone: 'api' | 'tools' | 'nuget' | 'migrations' | 'default';
-  outcome: DeployRunOutcomeGlow;
-  status: string;
-  title: string;
-  at: string;
-  branch: string;
 }
 
 export const GithubDeployStatusSlide = () => {
@@ -51,7 +30,6 @@ export const GithubDeployStatusSlide = () => {
   const [error, setError] = useState<string | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
   const timelineScrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 8, pauseMs: 5000 });
-  const actionsScrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 9, pauseMs: 4500 });
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -112,19 +90,6 @@ export const GithubDeployStatusSlide = () => {
       .slice(0, 12);
   }, [repos]);
 
-  const recentActionItems = useMemo<DeployActionItem[]>(() => {
-    return timelineItems.slice(0, 16).map((item) => ({
-      id: item.id,
-      repo: item.repo,
-      tone: repoToneForRepo(item.repo),
-      outcome: deployRunOutcomeGlow(item.run),
-      status: formatDeployStatusLabel(item.run.status, item.run.conclusion),
-      title: item.run.title,
-      at: item.run.updatedAt.slice(5, 19).replace('T', ' '),
-      branch: item.run.headBranch ?? '—',
-    }));
-  }, [timelineItems]);
-
   if (loading && repos.length === 0 && !error && !configError) {
     return (
       <div className={slideStyles.slideContent}>
@@ -170,7 +135,7 @@ export const GithubDeployStatusSlide = () => {
         description={
           <>
             Four main deploy workflows · poll {GITHUB_ACTIVITY_POLL_INTERVAL_MS / 1000}s ·{' '}
-            <span className={styles.meta}>left: cards + action feed · right: timeline</span>
+            <span className={styles.meta}>left: repo cards · right: recent deploy runs</span>
           </>
         }
       />
@@ -184,47 +149,7 @@ export const GithubDeployStatusSlide = () => {
           <div className={styles.cardsPanel}>
             <GithubDeployRepoCards repos={repos} />
           </div>
-          <section className={styles.actionsPane}>
-            <div className={styles.actionsHeader}>Recent actions</div>
-            {recentActionItems.length === 0 ? (
-              <div className={styles.emptyTimeline}>No recent actions returned from the API.</div>
-            ) : (
-              <div ref={actionsScrollRef} className={styles.actionsScroll}>
-                <DataView
-                  value={recentActionItems}
-                  itemTemplate={(item: DeployActionItem) => (
-                    <div
-                      key={item.id}
-                      className={`${styles.actionRow} ${ACTION_ROW_GLOW_CLASS[item.outcome]}`}
-                    >
-                      <div className={styles.actionTop}>
-                        <span
-                          className={`${styles.actionRepo} ${
-                            item.tone === 'api'
-                              ? styles.repoPillApi
-                              : item.tone === 'tools'
-                                ? styles.repoPillTools
-                                : item.tone === 'nuget'
-                                  ? styles.repoPillNuget
-                                  : item.tone === 'migrations'
-                                    ? styles.repoPillMigrations
-                                    : ''
-                          }`}
-                        >
-                          {item.repo}
-                        </span>
-                        <span className={styles.actionStatus}>{item.status}</span>
-                      </div>
-                      <div className={styles.actionTitle}>{item.title}</div>
-                      <div className={styles.actionMeta}>
-                        {item.branch} · {item.at}
-                      </div>
-                    </div>
-                  )}
-                />
-              </div>
-            )}
-          </section>
+          {/* Temporarily hidden: DataView "Recent actions" feed (restore with actionsScrollRef + recentActionItems useMemo). */}
         </div>
         <aside className={styles.timelinePane}>
           <div className={styles.timelineHeader}>Recent deploy runs</div>

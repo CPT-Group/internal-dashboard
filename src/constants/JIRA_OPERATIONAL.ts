@@ -11,7 +11,7 @@ import { NOVA_TEAM_ACCOUNT_IDS_ARRAY } from './NOVA_TEAM';
 
 export const JIRA_OPERATIONAL_PROJECTS = ['CM', 'OPRD', 'NOVA'] as const;
 
-/** Components tracked on the dev board (shared by CM and OPRD). */
+/** Components tracked on the dev board (shared by CM, OPRD, and NOVA). */
 const CM_OPRD_COMPONENTS = [
   'NCOA/ACS',
   'Interactive Website',
@@ -24,6 +24,7 @@ const CM_OPRD_COMPONENTS = [
   'Shut Down Service',
   'Data Analysis',
   'Database Migration',
+  'Docket Update',
   'Website',
 ].map((c) => `"${c}"`).join(', ');
 

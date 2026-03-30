@@ -1,4 +1,42 @@
+import { differenceInMinutes, differenceInSeconds } from 'date-fns';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
+
+/** Short local timestamp for deploy cards (TV-readable). */
+export function formatDeployRunTimestamp(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso.slice(0, 16);
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso.slice(0, 16);
+  }
+}
+
+/**
+ * Human-readable duration between two ISO timestamps (for run wall time).
+ * When `endIsNow` is true, uses current time (in-flight elapsed).
+ */
+export function formatDeployRunDuration(
+  createdAtIso: string,
+  endAtIso: string,
+  endIsNow: boolean
+): string {
+  const start = new Date(createdAtIso);
+  const end = endIsNow ? new Date() : new Date(endAtIso);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return '—';
+  const sec = differenceInSeconds(end, start);
+  if (sec < 60) return `${sec}s`;
+  const mins = differenceInMinutes(end, start);
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
 export function formatDeployStatusLabel(status: string, conclusion: string | null): string {
   if (status !== 'completed') {

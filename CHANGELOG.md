@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [0.1.59] - 2026-03-30
+
+### Changed
+
+- **Jira rework documentation**: Updated `AGENTS.md` with comprehensive documentation of the 2026-03-29 Jira restructuring — all new dev work is now NOVA tickets; CM and OPRD are legacy/phasing out; new Backlog→To Do→In Dev→Dev Review→QA→UAT→Done workflow; 14 new template-cloned issue types; Bug Sub-Task for internal bugs; structured root-cause fields on Bugs; future note on Backlog→To Do "landed on team" tracking.
+- **NOVA status rename**: Jira "In Progress" was renamed to "In Dev" across the NOVA project. Updated `DEV_RESPONSIBLE_STATUSES` in `operationalAnalytics.ts` to match on `'In Dev'` for NOVA. Dashboard UI continues to display "In Progress" for readability.
+- **Trevor dashboard**: Updated `STATUS_ORDER`, `novaInProgress` KPI filter, and `statusSeverity` to recognize `'In Dev'` as the active-work status (alongside legacy `'Development'`/`'In Progress'` for CM/OPRD tickets).
+- **Component list**: Added `Docket Update` to `CM_OPRD_COMPONENTS` in `JIRA_OPERATIONAL.ts` (valid component on both NOVA and OPRD projects, was missing from the dev-board filter).
+- **Dev Corner Two — GitHub deploy slide**: Temporarily removed the **Recent actions** DataView feed; left column is repo cards only (timeline unchanged). Restore path noted in `GithubDeployStatusSlide.tsx`.
+- **GitHub deploy repo cards** (`GithubDeployRepoCards`): Cards fill the left column in a **2×2** grid with equal row heights; added **owner/repo** path, **Run #** + **branch** pills, longer commit/workflow title (**6-line** clamp), and a **detail list** (started time, finished/elapsed + duration, workflow id). Helpers `formatDeployRunTimestamp` and `formatDeployRunDuration` in `githubDeployDisplay.ts`. **Open run** link pinned to the card footer.
+
 ## [0.1.58] - 2026-03-25
 
 ### Changed

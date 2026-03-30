@@ -23,13 +23,13 @@ import styles from './TrevorDashboard.module.scss';
 const POLL_INTERVAL_MS = 60_000;
 const SHOW_BY_BOARD_AND_COMPONENT = false;
 
-const STATUS_ORDER = ['To Do', 'Data Team New', 'Requested', 'In Progress', 'Data Team In Progress',
+const STATUS_ORDER = ['To Do', 'Data Team New', 'Requested', 'In Dev', 'In Progress', 'Data Team In Progress',
   'Development', 'DEVELOPMENT', 'Dev Review', 'Peer Testing', 'PEER TESTING',
   'Data Team Testing', 'QA', 'QA/QC'];
 
 function statusSeverity(status: string): 'info' | 'success' | 'warning' | 'danger' | undefined {
   const s = status.toLowerCase();
-  if (s.includes('progress') || s === 'development') return 'info';
+  if (s.includes('progress') || s === 'development' || s === 'in dev') return 'info';
   if (s.includes('review') || s.includes('testing') || s === 'qa' || s === 'qa/qc' || s === 'peer testing') return 'warning';
   if (s.includes('to do') || s.includes('new') || s === 'requested') return undefined;
   return undefined;
@@ -90,7 +90,7 @@ export const TrevorDashboard = () => {
 
   const novaInProgress = novaActive.filter((t) => {
     const s = t.status.toLowerCase();
-    return s.includes('progress') || s === 'development';
+    return s.includes('progress') || s === 'development' || s === 'in dev';
   }).length;
 
   const novaReview = novaActive.filter((t) => {

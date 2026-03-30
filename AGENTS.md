@@ -27,33 +27,67 @@ Constant: `NOVA_TEAM.ts` (IDs, display names, ordered list for charts, `isNovaTe
 
 ## Jira workflow and projects
 
+### Jira rework (2026-03-29)
+
+A major Jira restructuring was completed. Going forward, **all new dev work is created as NOVA tickets**. CM and OPRD are legacy — no new tickets will be created in those projects. Existing open CM/OPRD tickets were **not** migrated and will trickle through until resolved; their workflows and JQL remain unchanged. OPRD will be locked down once remaining tickets are cleared (estimated ~1 month).
+
+**What changed:**
+- All new tickets from case managers (Alejandra's templates, case update requests, bugs) are now **NOVA** issue types, not CM tasks or OPRD bugs.
+- NOVA gained a **Backlog** status and **UAT** status. "In Progress" was **renamed to "In Dev"** across the entire project (all tickets, old and new). Dashboard UI still displays "In Progress" for readability.
+- Template-cloned tickets start in **Backlog** (hidden from board). Automation moves them into the sprint when transitioned from Backlog → To Do. Field validation on that transition forces requesters to fill out all required fields.
+- **Case Update Requests** and **Bugs** skip Backlog — they are created directly into the active sprint.
+- **Bug Sub-Tasks** are a new subtask type for internal bugs found during development. They are tracked on dashboards the same as other subtasks.
+- New per-issue-type fields exist (root cause analysis, caused by, avoidance plan, etc. on Bugs). These are available but not yet surfaced on dashboards.
+- **Tech Owner** (`customfield_10193`) is being added to all new issue types by the scrum master. Some new types may temporarily lack it; the `isTechOwnerNovaTeam` helper falls back to assignee when Tech Owner is null, so dashboards remain functional.
+
 Three Jira projects feed the dashboards:
 
-- **CM (Case Management)** — High-volume; case managers (e.g. Alejandra) create tickets in **"New"** status while prepping info. Dev team doesn't see or touch "New" items. Work becomes visible to devs at **Data Team New** or **Requested**. Then: **Data Team In Progress → Data Team Testing → Data Team Complete** (back to CMs for UAT). Tickets bounce between teams — the "tech owner" field is the actual developer, but assignee can change as work is handed off. When devs complete a ticket they assign it back to the requester for final UAT/approval.
-- **OPRD (Operational/Prod Support)** — Bug fixes, operational tasks. Flow: **TO DO** (requested/waiting) → **Requirement Review** (optional) → **Development** (actively working) → **Peer Testing** → **QA/QC** → **UAT** → **Resolved**. Same "New" exclusion: dev work starts at TO DO.
-- **NOVA (Software Development)** — Internal tools, dashboards, new features. Simple linear flow: **To Do** (requested) → **In Progress** → **Dev Review** → **QA** → **Done**. Legacy issues below NOVA-661 are excluded via client-side `filterIssuesNovaMinKey`.
+- **CM (Case Management)** — **Legacy, winding down.** Case managers created tickets in **"New"** status. Dev work started at **Data Team New** or **Requested**. Then: **Data Team In Progress → Data Team Testing → Data Team Complete** (back to CMs for UAT). Only ~2 open tickets remain. No new CM tasks will be created; replaced by NOVA issue types (see below).
+- **OPRD (Operational/Prod Support)** — **Legacy, phasing out.** Bug fixes, operational tasks. Flow: **TO DO** → **Requirement Review** (optional) → **Development** → **Peer Testing** → **QA/QC** → **UAT** → **Resolved**. ~48 open tickets remain (mostly Epics). No new OPRD tickets; bugs are now NOVA Bugs.
+- **NOVA (Software Development)** — **Primary project for all new work.** Internal tools, dashboards, and all requests from other departments. Workflow: **Backlog** (template staging, hidden from board) → **To Do** (submitted to devs) → **In Dev** (actively working; Jira status name, displayed as "In Progress" on dashboards) → **Dev Review** → **QA** → **UAT** (back to requesters; category "Done") → **Done**. Legacy issues below NOVA-661 are excluded via client-side `filterIssuesNovaMinKey`.
+
+### NOVA issue types (post-rework)
+
+| Category | Issue Types | Backlog start? | Notes |
+|----------|-------------|----------------|-------|
+| **Template-cloned** (from Alejandra's deep-clone trees) | Create Database Request, Create Static Website, Create Interactive Website, Create Weekly Report Request, Cancel Weekly Report, NCOA/ACS Request, Create Website Testing - Internal, Create Website Testing - Counsel/External User, Post Order to Website, Downloader Request, Reset Test Users and Import Web Data, Website Tagging, DD Token, Purchase Website URL | Yes — Backlog → To Do | Automation moves to sprint on Backlog→To Do transition. Field validation enforces required fields per type. |
+| **Direct-to-sprint** | Case Update Request, Bug | No — created in sprint | Already have required info at creation time. |
+| **Subtasks** | Sub-task, Bug Sub-Task | No | Bug Sub-Task is new; used for internal bugs found during dev. Tracked same as other subtasks on dashboards. |
+| **Dev-originated** | Story, Task, Epic, Research, Initiative | No | Created by NOVA team for internal work. Epic and Initiative are excluded from most JQL. |
 
 ### Status definitions for analytics
 
 | Concept | OPRD | CM | NOVA |
 |---------|------|-----|------|
+| **Backlog (hidden)** | — | New | Backlog |
 | **Requested / not started** | TO DO, Requirement Review | DATA TEAM NEW, REQUESTED | TO DO |
-| **Actively working** | Development | Data Team In Progress | In Progress |
+| **Actively working** | Development | Data Team In Progress | In Dev |
 | **Dev complete / testing** | Peer Testing, QA/QC | Data Team Testing | Dev Review, QA |
-| **Back to requesters** | UAT | Data Team Complete | — |
+| **Back to requesters** | UAT | Data Team Complete | UAT |
 | **Done** | Resolved | Request Complete | Done |
 
-These status mappings drive the `isRequestedNotStarted()` helper in `operationalAnalytics.ts` and the "Requested — Not Yet Started" slide on Dev Corner Two.
+These status mappings drive `isRequestedNotStarted()` and `DEV_RESPONSIBLE_STATUSES` in `operationalAnalytics.ts`.
+
+**Important status notes:**
+- Jira status is **"In Dev"**; dashboard UI displays **"In Progress"** for readability. Code must match on `'In Dev'` for NOVA status-name logic but can display "In Progress".
+- NOVA **Backlog** has `statusCategory: "To Do"` (`key: "new"`). It is excluded from the board by the `sprint in openSprints()` JQL filter (Backlog tickets aren't in a sprint). It is NOT in `REQUESTED_STATUSES` because Backlog items haven't been submitted to the team.
+- NOVA **UAT** has `statusCategory: "Done"` (`key: "done"`), so `statusCategory != Done` queries naturally exclude it.
 
 ### JQL scoping rules
 
 All operational JQL (Dev Corner dashboards) mirrors the "Case Management Data Team Board" filter (V.3). The board filter JQL lives in `src/constants/JIRA_OPERATIONAL.ts`.
 
-- **CM**: `status != New`, `statusCategory != Done`, component IN dev-relevant list (Interactive Website, Case Database, NCOA/ACS, Static Website, Web Database, Downloader, Weekly Reports, SCP, Shut Down Service, Data Analysis, Database Migration, Website). No Epics.
+- **CM**: `status != New`, `statusCategory != Done`, component IN dev-relevant list (Interactive Website, Case Database, NCOA/ACS, Static Website, Web Database, Downloader, Weekly Reports, SCP, Shut Down Service, Data Analysis, Docket Update, Database Migration, Website). No Epics.
 - **OPRD**: Two clauses OR'd: (1) `labels IN ("linked-to-CM")` no Epics, (2) `status != New`, `statusCategory != Done`, same component list, no Epics.
-- **NOVA**: `assignee IN (NOVA_TEAM)`, `sprint in openSprints()`, `statusCategory != Done`. Only shows team members' tickets in active sprints — not the entire project backlog.
+- **NOVA**: `assignee IN (NOVA_TEAM)`, `sprint in openSprints()`, `statusCategory != Done`. Only shows team members' tickets in active sprints — not the entire project backlog. The `sprint` filter naturally excludes Backlog items.
 
 Time-based queries (created/resolved today/14d) use the same scoped filter so flow data reflects dev work only, not all project activity.
+
+### Future: "landed on team" tracking for NOVA Backlog
+
+Currently, NOVA "landed on team" uses `created` date in JQL (`NOVA_CREATED` in `JIRA_OPERATIONAL.ts`). This was correct when NOVA tickets went straight to the team at creation. With the new Backlog workflow, template tickets sit in Backlog until submitted (Backlog → To Do). The `created` date no longer reflects when work landed on the team for these tickets.
+
+**Recommended future change:** Mirror CM/OPRD's approach — use `status changed FROM "Backlog"` for NOVA template tickets, similar to `status changed FROM "New"` for CM/OPRD. For now, the `sprint in openSprints()` filter on the board query prevents Backlog items from appearing in the "open" count, and the "landed" inflation from template tickets is acceptable while the new workflow stabilizes.
 
 ### Tech Owner vs Assignee
 
@@ -68,7 +102,28 @@ Jira custom field `customfield_10193` (**Tech Owner**) identifies the developer 
 
 **NOVA Components** (`customfield_10754`): On NOVA project issues, this field (e.g. ZION, Legacy/Other) is used for Dev Load matrix bucketing and component text in Dev 2 tables when set; if empty, behavior falls back to standard Jira **components** or “No component”. CM/OPRD continue to use standard components only.
 
+**Standard Jira components on NOVA project:** Case Database, Docket Update, Downloader, Interactive Website, NCOA/ACS, Shut Down Service, Static Website, Web Database, Weekly Reports. These overlap heavily with CM/OPRD components. New template-cloned tickets typically have standard Jira components set; older dev-originated tickets (Stories, Tasks) often use only `customfield_10754` or have no component.
+
 The field is fetched as part of `DEFAULT_JIRA_FIELDS` in `jiraService.ts` and typed on `JiraIssueFields` as `customfield_10193: JiraUser | null`. Helpers `getTechOwnerName()`, `getTechOwnerAccountId()`, and `isTechOwnerNovaTeam()` in `operationalAnalytics.ts` centralize access.
+
+### Bug fields (post-rework)
+
+NOVA Bugs now have structured root-cause fields (not yet surfaced on dashboards):
+
+| Custom field | Label | Notes |
+|---|---|---|
+| `customfield_10197` | Root Cause Analysis | Free text |
+| `customfield_10826` | Root Cause Category | Dropdown |
+| `customfield_10969` | Bug Introduced By | User picker |
+| `customfield_10970` | Bug Introduced Date | Date |
+| `customfield_10968` | Avoidance Plan | Free text |
+| `customfield_10789` | Actual Results | Free text |
+| `customfield_10790` | Expected Results | Free text |
+| `customfield_10791` | Frequency | Dropdown/text |
+| `customfield_10792` | Stage Found | Dropdown/text |
+| `customfield_10793` | User Impact | Dropdown/text |
+
+These are available for future dashboard features (e.g. root-cause trends, bug quality metrics).
 
 ### NOVA ticket hygiene
 
@@ -119,7 +174,7 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 ### GitHub Actions — CD deploy status (Dev Corner Two)
 
 - **Env**: **`GITHUB_DEPLOY_READ_TOKEN`** — Personal Access Token (server only; never `NEXT_PUBLIC_*`). Needs **`actions:read`** on the monitored repos (and **`repo`** if they are private). Used by **`GET /api/github/deploy-status`**, which calls the GitHub REST API for each CD workflow listed in **`GITHUB_DEPLOY_WORKFLOW_MONITORS`** (`src/constants/GITHUB_DEPLOY_MONITORS.ts`).
-- **Dev Corner Two** GitHub slide (`GithubDeployStatusSlide`): **`MeterGroup`** summary strip (idle OK / running / attention; shimmer + opacity pulse on `.p-metergroup-meter-container::after`, respects `prefers-reduced-motion`), reusable **`GithubDeployRepoCards`** — 2×2 **PrimeReact Card** grid for the four main deploy pipelines (Azure Functions API, internal tools SWA, NuGet publish, EF migrations), left-column **DataView** “Recent actions” feed (subtle **green / red / primary** border + soft box-shadow glow per run outcome via `deployRunOutcomeGlow` in **`githubDeployDisplay.ts`**), and right-side **Timeline** of recent runs across monitored repos. Cards use **Tag** status, indeterminate **ProgressBar** when a run is active (track/fill: **`--github-deploy-progressbar-track-bg`** / **`--github-deploy-progressbar-fill`** in `variables.scss` + theme files), compact padding for TV, left-border health cues (green/yellow/red), and link to the run. Timeline/status spacing is tuned with an opposite-column status label. Both feed and timeline reuse existing `useAutoScroll` (no custom scroller). API includes `recentRuns` per monitored workflow so history widgets can render without extra GitHub calls. Repo color coding is theme-driven via `--github-repo-*` tokens in `variables.scss` + theme overrides (dark-synth/dark/light/ms-access). Helpers in **`githubDeployDisplay.ts`**. Polls every **`GITHUB_ACTIVITY_POLL_INTERVAL_MS`** (60s). Not the same as the webhook delivery feed on `/tv/github-activity`.
+- **Dev Corner Two** GitHub slide (`GithubDeployStatusSlide`): **`MeterGroup`** summary strip (idle OK / running / attention; shimmer + opacity pulse on `.p-metergroup-meter-container::after`, respects `prefers-reduced-motion`), reusable **`GithubDeployRepoCards`** — 2×2 **PrimeReact Card** grid (equal-height rows filling the left column) for the four main deploy pipelines (Azure Functions API, internal tools SWA, NuGet publish, EF migrations): each card shows **owner/repo**, **run id**, **branch**, workflow title (multi-line), **started / finished or elapsed** timestamps, **duration**, and GitHub workflow id; and right-side **Timeline** of recent runs across monitored repos. **Temporary (2026-03):** the left-column **DataView** “Recent actions” feed is removed; restore from the comment in `GithubDeployStatusSlide.tsx` if needed. Cards use **Tag** status, indeterminate **ProgressBar** when a run is active (track/fill: **`--github-deploy-progressbar-track-bg`** / **`--github-deploy-progressbar-fill`** in `variables.scss` + theme files), compact padding for TV, left-border health cues (green/yellow/red), and link to the run. Timeline/status spacing is tuned with an opposite-column status label. Timeline uses **`useAutoScroll`**. API includes `recentRuns` per monitored workflow so history widgets can render without extra GitHub calls. Repo color coding is theme-driven via `--github-repo-*` tokens in `variables.scss` + theme overrides (dark-synth/dark/light/ms-access). Helpers in **`githubDeployDisplay.ts`**. Polls every **`GITHUB_ACTIVITY_POLL_INTERVAL_MS`** (60s). Not the same as the webhook delivery feed on `/tv/github-activity`.
 
 ### Dev Corner physical layout and dashboard philosophy
 
@@ -142,7 +197,7 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - Components in repo (carousel subset active): `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `CompletedByDevSlide`, `GithubDeployStatusSlide`; plus **`TodayComponentVelocitySlide`**, **`DevLoadMatrixSlide`** when re-added.
 
 - **Trevor's Screen** — **NOVA-focused, mobile-friendly**. Single-view layout:
-  - KPI strip: NOVA Active, In Progress, To Do, Review/QA, Total Open.
+  - KPI strip: NOVA Active, In Progress (matches Jira "In Dev"), To Do, Review/QA, Total Open.
   - Top-left: By Board & Component stacked bar chart (CM/OPRD/NOVA with component breakdown).
   - Bottom-left: NOVA Team Load horizontal bar chart (open tickets per dev, sorted descending).
   - Right: NOVA Tickets table (all active NOVA tickets sorted by status, with auto-scroll).
