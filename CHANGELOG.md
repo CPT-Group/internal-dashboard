@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **"Landed Today" count inflated by Backlog tickets**: After the Jira rework, `NOVA_CREATED` JQL was counting all newly created NOVA tickets — including template-cloned tickets sitting in Backlog that hadn't been submitted to the team. Added `status != Backlog` to `NOVA_LANDED` (landed today, landed last 14d, landed prev 14d) so only tickets that have actually entered the team's workflow are counted. Dropped today's count from ~37 to ~13 (24 Backlog templates excluded). All other operational queries (open, resolved) were already clean via `sprint in openSprints()` or resolution-date scoping.
+
+- **Samsung TV CSS compatibility (`color-mix()` fallbacks)**: Samsung Tizen TV browsers (older Chromium/WebKit) do not support the CSS `color-mix()` function, causing missing backgrounds, glows, and translucent effects on TV dashboards while borders and simpler animations rendered fine. Added `rgba()` fallback declarations before every `color-mix()` usage across 12 SCSS files (~70 instances): `variables.scss`, all 4 theme files, `primereact-overrides.scss`, `CornerInfoCard`, `DevCornerOneDashboard`, `DevCornerTwoDashboard`, `GithubDeployStatusSlide`, `GithubDeployRepoCards`, and `CompletedByDevSlide`. Old browsers use the hardcoded `rgba()` fallback; modern browsers override with theme-aware `color-mix()`.
+
 ### Changed
 
 - **Dev Corner One**: Tighter **between-section** spacing — **`dashboard`** column **`gap`** and outer **`padding`**, plus **`middleRow`** column **`gap`** (KPI vs middle vs bottom; work hours vs component activity), without changing inner panel/card content padding.

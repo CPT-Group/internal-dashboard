@@ -55,17 +55,18 @@ const BOARD_FILTER = [
 ].join(' OR ');
 
 /**
- * "Landed on team" = CM/OPRD tickets that transitioned FROM "New" + NOVA created.
+ * "Landed on team" = CM/OPRD tickets that transitioned FROM "New" + NOVA created
+ * (excluding Backlog, which are template-cloned tickets that haven't been submitted).
  * Represents when work actually becomes visible to devs.
  */
 const LANDED_CM_OPRD = (after: string) =>
   `project IN (CM, OPRD) AND status changed FROM "New" AFTER ${after} AND ${CM_OPRD_BASE}`;
 
-const NOVA_CREATED = (after: string) =>
-  `project = NOVA AND created >= ${after}`;
+const NOVA_LANDED = (after: string) =>
+  `project = NOVA AND created >= ${after} AND status != Backlog`;
 
 const LANDED_COMBINED = (after: string) =>
-  `(${LANDED_CM_OPRD(after)}) OR (${NOVA_CREATED(after)})`;
+  `(${LANDED_CM_OPRD(after)}) OR (${NOVA_LANDED(after)})`;
 
 /**
  * Scoped filter for resolved queries (includes Done items since they're resolved).
@@ -95,7 +96,7 @@ export const JIRA_OPERATIONAL_JQL_LANDED_LAST_14 =
 
 /** Landed on team in previous 14-day window (days -28 to -14) for trend comparison. */
 export const JIRA_OPERATIONAL_JQL_LANDED_PREV_14 =
-  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR (project = NOVA AND created >= startOfDay(-28) AND created < startOfDay(-14)) ORDER BY updated DESC`;
+  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR (project = NOVA AND created >= startOfDay(-28) AND created < startOfDay(-14) AND status != Backlog) ORDER BY updated DESC`;
 
 // ── Resolved ──
 

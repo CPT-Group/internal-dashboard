@@ -85,9 +85,9 @@ Time-based queries (created/resolved today/14d) use the same scoped filter so fl
 
 ### Future: "landed on team" tracking for NOVA Backlog
 
-Currently, NOVA "landed on team" uses `created` date in JQL (`NOVA_CREATED` in `JIRA_OPERATIONAL.ts`). This was correct when NOVA tickets went straight to the team at creation. With the new Backlog workflow, template tickets sit in Backlog until submitted (Backlog → To Do). The `created` date no longer reflects when work landed on the team for these tickets.
+Currently, NOVA "landed on team" uses `created` date in JQL (`NOVA_LANDED` in `JIRA_OPERATIONAL.ts`) with `status != Backlog` to exclude template-cloned tickets that haven't been submitted. This was updated 2026-03-30 — previously there was no Backlog exclusion, which inflated "Landed Today" counts by ~24 template tickets. The `sprint in openSprints()` filter on the board query also prevents Backlog items from appearing in the "open" count.
 
-**Recommended future change:** Mirror CM/OPRD's approach — use `status changed FROM "Backlog"` for NOVA template tickets, similar to `status changed FROM "New"` for CM/OPRD. For now, the `sprint in openSprints()` filter on the board query prevents Backlog items from appearing in the "open" count, and the "landed" inflation from template tickets is acceptable while the new workflow stabilizes.
+**Recommended future change:** Mirror CM/OPRD's approach — use `status changed FROM "Backlog"` for NOVA template tickets, similar to `status changed FROM "New"` for CM/OPRD. This would also catch tickets created yesterday in Backlog that move to To Do today (currently they'd be missed by `created >= startOfDay()`).
 
 ### Tech Owner vs Assignee
 
@@ -258,6 +258,7 @@ These dashboards display rotating background images with optional overlays. See 
 
 ## Conventions and rules
 
+- **Samsung TV CSS compatibility**: TV dashboards run on Samsung Tizen browsers (older Chromium/WebKit) that do **not** support `color-mix()`. When using `color-mix()` in SCSS, always add a hardcoded `rgba()` fallback on the line **before** the `color-mix` line. Old browsers use the fallback; modern browsers override with the theme-aware `color-mix`. Example: `background: rgba(239, 68, 68, 0.6);` then `background: color-mix(in srgb, var(--red-500) 60%, var(--surface-card));`. For `color-mix(X N%, transparent)`, the fallback is `rgba(R, G, B, N/100)` with the token's approximate RGB.
 - **Theme and global styles**: Do **not** change theme, color, or global styles unless the user explicitly asks for it.
 - **Changelog**: After every completed task, update `CHANGELOG.md` under `[Unreleased]` (Keep a Changelog format; use Added / Changed / Fixed etc. as appropriate).
 - **Components**: Prefer functional components and clear, focused components; reuse shared UI from `src/components/ui/` where it fits. For **charts**: name by purpose, not by dashboard; accept only typed data props; put types in `src/types/charts/`, mappers in `src/utils/chartDataMappers.ts`; pages own Card/Panel and layout.

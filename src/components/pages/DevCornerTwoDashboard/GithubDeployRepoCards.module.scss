@@ -44,6 +44,7 @@
 }
 
 .repoToneApi {
+  background: linear-gradient(90deg, var(--github-repo-api-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
   background: linear-gradient(
     90deg,
     var(--github-repo-api-bg) 0%,
@@ -52,6 +53,7 @@
 }
 
 .repoToneTools {
+  background: linear-gradient(90deg, var(--github-repo-tools-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
   background: linear-gradient(
     90deg,
     var(--github-repo-tools-bg) 0%,
@@ -60,6 +62,7 @@
 }
 
 .repoToneNuget {
+  background: linear-gradient(90deg, var(--github-repo-nuget-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
   background: linear-gradient(
     90deg,
     var(--github-repo-nuget-bg) 0%,
@@ -68,6 +71,7 @@
 }
 
 .repoToneMigrations {
+  background: linear-gradient(90deg, var(--github-repo-migrations-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
   background: linear-gradient(
     90deg,
     var(--github-repo-migrations-bg) 0%,
@@ -117,6 +121,7 @@
   padding: 0.12rem 0.4rem;
   border-radius: var(--border-radius);
   border: 1px solid var(--surface-border);
+  background: rgba(30, 30, 46, 0.85);
   background: color-mix(in srgb, var(--surface-card) 85%, transparent);
   color: var(--text-color);
   max-width: 100%;
@@ -227,7 +232,9 @@
   margin-top: auto;
   flex-shrink: 0;
   border-radius: var(--border-radius);
+  border: 1px solid rgba(255, 79, 216, 0.28);
   border: 1px solid color-mix(in srgb, var(--github-deploy-timeline-meta-color, var(--primary-color)) 28%, var(--surface-border));
+  background: rgba(30, 30, 46, 0.9);
   background: color-mix(in srgb, var(--surface-card) 90%, transparent);
   padding: 0.16rem 0;
   min-height: 1.45rem;
@@ -294,10 +301,14 @@
 @keyframes deployTagPulseSuccess {
   0%,
   100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.2);
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--green-500) 20%, transparent);
   }
 
   50% {
+    box-shadow:
+      0 0 14px 2px rgba(34, 197, 94, 0.42),
+      inset 0 0 12px rgba(34, 197, 94, 0.12);
     box-shadow:
       0 0 14px 2px color-mix(in srgb, var(--green-500) 42%, transparent),
       inset 0 0 12px color-mix(in srgb, var(--green-500) 12%, transparent);
@@ -307,10 +318,14 @@
 @keyframes deployTagPulseWarning {
   0%,
   100% {
+    box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.18);
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--yellow-500) 18%, transparent);
   }
 
   50% {
+    box-shadow:
+      0 0 12px 3px rgba(234, 179, 8, 0.48),
+      inset 0 0 10px rgba(234, 179, 8, 0.14);
     box-shadow:
       0 0 12px 3px color-mix(in srgb, var(--yellow-500) 48%, transparent),
       inset 0 0 10px color-mix(in srgb, var(--yellow-500) 14%, transparent);
@@ -320,11 +335,15 @@
 @keyframes deployTagAlarm {
   0%,
   100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35);
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--red-500) 35%, transparent);
     filter: brightness(1);
   }
 
   50% {
+    box-shadow:
+      0 0 18px 5px rgba(239, 68, 68, 0.58),
+      inset 0 0 14px rgba(239, 68, 68, 0.22);
     box-shadow:
       0 0 18px 5px color-mix(in srgb, var(--red-500) 58%, transparent),
       inset 0 0 14px color-mix(in srgb, var(--red-500) 22%, transparent);
@@ -335,10 +354,14 @@
 @keyframes deployTagPulseInfo {
   0%,
   100% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.22);
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-color) 22%, transparent);
   }
 
   50% {
+    box-shadow:
+      0 0 12px 2px rgba(168, 85, 247, 0.45),
+      inset 0 0 10px rgba(168, 85, 247, 0.12);
     box-shadow:
       0 0 12px 2px color-mix(in srgb, var(--primary-color) 45%, transparent),
       inset 0 0 10px color-mix(in srgb, var(--primary-color) 12%, transparent);
@@ -352,6 +375,7 @@
   }
 
   50% {
+    box-shadow: 0 0 8px 1px rgba(120, 120, 140, 0.35);
     box-shadow: 0 0 8px 1px color-mix(in srgb, var(--surface-400) 35%, transparent);
   }
 }

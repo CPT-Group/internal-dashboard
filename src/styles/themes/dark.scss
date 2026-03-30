@@ -93,7 +93,9 @@ html[data-theme='dark'],
   --github-repo-nuget-border: rgba(167, 139, 250, 0.55) !important;
   --github-repo-migrations-bg: rgba(251, 191, 36, 0.25) !important;
   --github-repo-migrations-border: rgba(251, 191, 36, 0.58) !important;
+  --github-deploy-progressbar-track-bg: rgba(55, 65, 81, 0.58) !important;
   --github-deploy-progressbar-track-bg: color-mix(in srgb, var(--surface-border) 58%, var(--surface-card)) !important;
+  --github-deploy-progressbar-fill: rgba(99, 102, 241, 0.78) !important;
   --github-deploy-progressbar-fill: color-mix(in srgb, var(--primary-color) 78%, transparent) !important;
   --content-text-size: 1.05rem !important;
   --github-deploy-timeline-meta-color: #ff4fd8 !important;

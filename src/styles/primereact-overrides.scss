@@ -171,6 +171,7 @@
 
 // --- Message ---
 .p-message.p-message-info {
+  background: rgba(168, 85, 247, 0.2) !important;
   background: color-mix(in srgb, var(--primary-color) 20%, transparent) !important;
   border-color: var(--primary-color) !important;
   color: var(--text-color) !important;
@@ -180,6 +181,7 @@
   color: var(--primary-color) !important;
 }
 .p-message.p-message-success {
+  background: rgba(34, 197, 94, 0.2) !important;
   background: color-mix(in srgb, var(--green-500) 20%, transparent) !important;
   border-color: var(--green-500) !important;
   color: var(--text-color) !important;
@@ -189,6 +191,7 @@
   color: var(--green-500) !important;
 }
 .p-message.p-message-warn {
+  background: rgba(234, 179, 8, 0.2) !important;
   background: color-mix(in srgb, var(--yellow-500) 20%, transparent) !important;
   border-color: var(--yellow-500) !important;
   color: var(--text-color) !important;
@@ -198,6 +201,7 @@
   color: var(--yellow-500) !important;
 }
 .p-message.p-message-error {
+  background: rgba(239, 68, 68, 0.2) !important;
   background: color-mix(in srgb, var(--red-500) 20%, transparent) !important;
   border-color: var(--red-500) !important;
   color: var(--text-color) !important;
