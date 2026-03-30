@@ -39,7 +39,13 @@ export const InProgressCardsSlide = ({ tickets }: InProgressCardsSlideProps) => 
         {tickets.map((t) => (
           <Card
             key={t.key}
-            className={`${styles.ticketCard} ${isNovaTicket(t.key) ? styles.ticketCardNova : ''}`}
+            className={`${styles.ticketCard} ${
+              t.isBug
+                ? styles.ticketCardBug
+                : isNovaTicket(t.key)
+                  ? styles.ticketCardNova
+                  : ''
+            }`}
           >
             <div className={`${styles.ticketKey} ${isNovaTicket(t.key) ? styles.ticketKeyNova : ''}`}>
               {t.key}

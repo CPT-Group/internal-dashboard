@@ -84,6 +84,8 @@ export interface TeamMemberActivity {
   inProgressKeys: string[];
   /** Summaries of in-progress tickets (for display). */
   inProgressSummaries: string[];
+  /** Per-ticket: true when the issue type is Bug or Bug Sub-Task. */
+  inProgressIsBug: boolean[];
 }
 
 /** In-progress ticket for company-facing card display. */
@@ -95,6 +97,7 @@ export interface InProgressTicket {
   status: string;
   ageDays: number;
   project: string;
+  isBug: boolean;
 }
 
 /** Recently completed ticket for company-facing display. Uses Tech Owner, not assignee. */
@@ -106,6 +109,7 @@ export interface RecentlyCompletedTicket {
   component: string;
   resolvedDate: string;
   project: string;
+  isBug: boolean;
 }
 
 /** Ticket that has been requested but not yet started by a developer. */
@@ -119,6 +123,7 @@ export interface RequestedTicket {
   status: string;
   ageDays: number;
   project: string;
+  isBug: boolean;
 }
 
 export interface AgingHotspot {

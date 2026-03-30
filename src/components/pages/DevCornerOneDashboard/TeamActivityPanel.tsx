@@ -33,8 +33,14 @@ const MemberCard = ({ m }: { m: TeamMemberActivity }) => {
         {m.inProgressKeys.map((key, i) => (
           <Chip
             key={key}
-            label={m.inProgressSummaries[i]?.slice(0, 50) ?? ''}
-            className={`${styles.ticketChip} ${key.startsWith('NOVA-') ? styles.ticketChipNova : ''}`}
+            label={m.inProgressSummaries[i] ?? ''}
+            className={`${styles.ticketChip} ${
+              m.inProgressIsBug[i]
+                ? styles.ticketChipBug
+                : key.startsWith('NOVA-')
+                  ? styles.ticketChipNova
+                  : ''
+            }`}
           />
         ))}
       </div>

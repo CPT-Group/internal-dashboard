@@ -46,7 +46,13 @@ export const RequestedTicketsSlide = ({ tickets }: RequestedTicketsSlideProps) =
             showGridlines
             className={styles.completedTable}
             emptyMessage="No tickets waiting — all caught up!"
-            rowClassName={(row) => (isNovaTicket(row.key) ? styles.tableRowNova : '')}
+            rowClassName={(row: RequestedTicket) =>
+              row.isBug
+                ? styles.tableRowBug
+                : isNovaTicket(row.key)
+                  ? styles.tableRowNova
+                  : ''
+            }
           >
             <Column field="key" header="Key" style={{ width: '80px' }} />
             <Column field="summary" header="Summary" body={summaryBody} />

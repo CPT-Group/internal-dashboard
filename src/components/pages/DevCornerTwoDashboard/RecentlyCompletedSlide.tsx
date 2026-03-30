@@ -43,7 +43,13 @@ export const RecentlyCompletedSlide = ({ tickets }: RecentlyCompletedSlideProps)
             showGridlines
             className={styles.completedTable}
             emptyMessage="No recently completed tickets"
-            rowClassName={(row) => (isNovaTicket(row.key) ? styles.tableRowNova : '')}
+            rowClassName={(row: RecentlyCompletedTicket) =>
+              row.isBug
+                ? styles.tableRowBug
+                : isNovaTicket(row.key)
+                  ? styles.tableRowNova
+                  : ''
+            }
           >
             <Column field="key" header="Key" style={{ width: '80px' }} />
             <Column field="summary" header="Summary" body={summaryBody} />

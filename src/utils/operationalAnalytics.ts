@@ -81,6 +81,12 @@ function isTechOwnerNovaTeam(issue: JiraIssue): boolean {
   return id != null && NOVA_TEAM_ACCOUNT_IDS.has(id);
 }
 
+/** True when the Jira issue type is Bug or Bug Sub-Task. */
+function isIssueBug(issue: JiraIssue): boolean {
+  const name = (issue.fields?.issuetype?.name ?? '').toLowerCase();
+  return name === 'bug' || name === 'bug sub-task';
+}
+
 function getComponentNames(issue: JiraIssue): string[] {
   const comps = issue.fields?.components;
   if (!Array.isArray(comps) || comps.length === 0) return ['No component'];
@@ -740,7 +746,8 @@ function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
       inProgressCount: myInProgress.length,
       openCount: myDevOpen.length,
       inProgressKeys: myInProgress.map((i) => i.key),
-      inProgressSummaries: myInProgress.map((i) => (i.fields?.summary ?? '').slice(0, 50)),
+      inProgressSummaries: myInProgress.map((i) => (i.fields?.summary ?? '').trim()),
+      inProgressIsBug: myInProgress.map(isIssueBug),
     };
   });
 }
@@ -758,6 +765,7 @@ function buildInProgressTickets(open: JiraIssue[], transitionDates: Map<string, 
       status: displayStatusName(issue.fields?.status?.name ?? ''),
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
+      isBug: isIssueBug(issue),
     }));
 }
 
@@ -785,6 +793,7 @@ function buildRecentlyCompleted(resolvedLast14: JiraIssue[]): RecentlyCompletedT
       component: getDisplayComponentLabel(issue),
       resolvedDate: issue.fields?.resolutiondate?.slice(0, 10) ?? '',
       project: getProjectKey(issue),
+      isBug: isIssueBug(issue),
     }));
 }
 
@@ -802,6 +811,7 @@ function buildRequestedTickets(open: JiraIssue[], transitionDates: Map<string, s
       status: displayStatusName(issue.fields?.status?.name ?? ''),
       ageDays: getDevAgeDays(issue, transitionDates),
       project: getProjectKey(issue),
+      isBug: isIssueBug(issue),
     }));
 }
 
