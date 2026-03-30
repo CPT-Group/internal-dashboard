@@ -115,6 +115,9 @@
   --chart-cat-8: rgba(99, 102, 241, 0.82) !important;
   --chart-label-color: #ffffff !important;
 
+  // TV / dense dashboards — primary body line height for cards + GitHub deploy slide (themes override)
+  --content-text-size: 1.04rem !important;
+
   // NOVA accent (used for NOVA-specific rows, badges, ticket chips)
   --nova-accent: rgba(36, 205, 197, 0.7) !important;
   --nova-accent-border: rgb(36, 205, 197) !important;
@@ -134,6 +137,14 @@
   // GitHub CD deploy cards — ProgressBar track / fill (themes may override; uses semantic colors)
   --github-deploy-progressbar-track-bg: color-mix(in srgb, var(--surface-border) 55%, var(--surface-card)) !important;
   --github-deploy-progressbar-fill: color-mix(in srgb, var(--primary-color) 78%, transparent) !important;
+
+  // GitHub CD deploy — Timeline: sizes derived from --content-text-size; meta line accent (not status column)
+  --github-deploy-timeline-header-size: calc(var(--content-text-size) * 1.08) !important;
+  --github-deploy-timeline-repo-size: calc(var(--content-text-size) * 0.88) !important;
+  --github-deploy-timeline-opposite-size: calc(var(--content-text-size) * 0.92) !important;
+  --github-deploy-timeline-text-size: var(--content-text-size) !important;
+  --github-deploy-timeline-meta-size: calc(var(--content-text-size) * 0.9) !important;
+  --github-deploy-timeline-meta-color: #ff4fd8 !important;
 
   // Dev Corner Two slide hero — uses var(--primary-color); follows active theme (no per-theme duplicate needed)
   --slide-hero-bg: linear-gradient(

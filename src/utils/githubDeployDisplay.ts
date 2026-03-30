@@ -116,6 +116,16 @@ export function cardHealthForRow(
 /** Subtle Recent-actions card glow: pass (green), fail (red), in-flight, or neutral (cancelled/skipped/etc.). */
 export type DeployRunOutcomeGlow = 'success' | 'failure' | 'running' | 'neutral';
 
+/** Timeline left-column status label: semantic color (green / yellow / red / neutral). */
+export type DeployTimelineOppositeKind = 'success' | 'running' | 'failure' | 'neutral';
+
+export function deployTimelineOppositeKind(run: GitHubDeployRunSummary): DeployTimelineOppositeKind {
+  if (run.status !== 'completed') return 'running';
+  if (run.conclusion === 'success') return 'success';
+  if (run.conclusion === 'failure' || run.conclusion === 'timed_out') return 'failure';
+  return 'neutral';
+}
+
 export function deployRunOutcomeGlow(run: GitHubDeployRunSummary): DeployRunOutcomeGlow {
   if (run.status !== 'completed') return 'running';
   if (run.conclusion === 'success') return 'success';

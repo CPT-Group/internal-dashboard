@@ -65,8 +65,8 @@
     );
     background-size: 200% 100%;
     animation:
-      githubDeployMeterShimmer 2.1s linear infinite,
-      githubDeployMeterPulse 2.8s ease-in-out infinite;
+      githubDeployMeterShimmer 5.2s linear infinite,
+      githubDeployMeterPulse 6.5s ease-in-out infinite;
   }
 }
 
@@ -222,13 +222,13 @@
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   background: color-mix(in srgb, var(--surface-card) 88%, transparent);
-  padding: 0.45rem 0.55rem;
+  padding: 0.45rem 0.55rem 0.45rem 0.28rem;
   display: flex;
   flex-direction: column;
 }
 
 .timelineHeader {
-  font-size: 0.78rem;
+  font-size: var(--github-deploy-timeline-header-size, 0.95rem);
   font-weight: 700;
   color: var(--text-color);
   margin-bottom: 0.4rem;
@@ -243,28 +243,48 @@
 
 .timeline {
   :global(.p-timeline-event-opposite) {
-    flex: 0 0 5.4rem;
-    padding-right: 0.45rem;
+    flex: 0 0 7.35rem;
+    padding-right: 0.28rem;
     text-align: right;
   }
 
   :global(.p-timeline-event-content) {
     flex: 1;
-    padding-left: 0.5rem;
+    padding-left: 0.35rem;
     min-width: 0;
   }
 }
 
 .timelineOpposite {
-  font-size: 0.58rem;
+  font-size: var(--github-deploy-timeline-opposite-size, 0.74rem);
   text-transform: uppercase;
-  color: var(--text-color-secondary);
-  line-height: 1.2;
-  word-break: break-word;
+  line-height: 1.25;
+  white-space: nowrap;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.timelineOppositeSuccess {
+  color: var(--green-400) !important;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--green-500) 35%, transparent);
+}
+
+.timelineOppositeRunning {
+  color: var(--yellow-400) !important;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--yellow-500) 40%, transparent);
+}
+
+.timelineOppositeFailure {
+  color: var(--red-400) !important;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--red-500) 45%, transparent);
+}
+
+.timelineOppositeNeutral {
+  color: var(--orange-300) !important;
 }
 
 .emptyTimeline {
-  font-size: 0.72rem;
+  font-size: var(--github-deploy-timeline-meta-size, 0.8rem);
   color: var(--text-color-secondary);
 }
 
@@ -300,35 +320,37 @@
 }
 
 .timelineRepo {
-  font-size: 0.62rem;
+  font-size: var(--github-deploy-timeline-repo-size, 0.76rem);
   font-weight: 600;
   color: var(--github-repo-label-color, var(--text-color));
   text-transform: uppercase;
   letter-spacing: 0.02em;
   border: 1px solid transparent;
   border-radius: 999px;
-  padding: 0.08rem 0.45rem;
+  padding: 0.1rem 0.48rem;
   display: inline-flex;
   align-items: center;
 }
 
 .timelineState {
-  font-size: 0.62rem;
+  font-size: var(--github-deploy-timeline-opposite-size, 0.74rem);
   text-transform: uppercase;
-  color: var(--text-color-secondary);
+  color: var(--github-deploy-timeline-meta-color, var(--text-color-secondary));
 }
 
 .timelineText {
-  font-size: 0.7rem;
+  font-size: var(--github-deploy-timeline-text-size, var(--content-text-size, 1rem));
   color: var(--text-color);
-  line-height: 1.32;
-  margin-top: 0.2rem;
+  line-height: 1.38;
+  margin-top: 0.22rem;
+  font-weight: 500;
 }
 
 .timelineMeta {
-  font-size: 0.62rem;
-  color: var(--text-color-secondary);
-  margin-top: 0.15rem;
+  font-size: var(--github-deploy-timeline-meta-size, 0.8rem);
+  color: var(--github-deploy-timeline-meta-color, var(--text-color-secondary));
+  margin-top: 0.18rem;
+  font-weight: 500;
 }
 
 .repoPillApi {

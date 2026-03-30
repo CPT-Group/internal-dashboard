@@ -101,6 +101,8 @@ html[data-theme='light'],
   --github-repo-migrations-border: rgba(245, 158, 11, 0.46) !important;
   --github-deploy-progressbar-track-bg: color-mix(in srgb, var(--surface-border) 48%, var(--surface-100)) !important;
   --github-deploy-progressbar-fill: color-mix(in srgb, var(--primary-color) 88%, transparent) !important;
+  --content-text-size: 1.05rem !important;
+  --github-deploy-timeline-meta-color: #c026d3 !important;
   --data-quality-valid: rgba(34, 197, 94, 0.4) !important;
   --data-quality-warning: rgba(234, 179, 8, 0.4) !important;
   --data-quality-error: rgba(239, 68, 68, 0.45) !important;

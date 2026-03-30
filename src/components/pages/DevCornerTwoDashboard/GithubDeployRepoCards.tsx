@@ -19,9 +19,26 @@ export interface GithubDeployRepoCardsProps {
   repos: GitHubDeployWorkflowStatus[];
 }
 
+function statusTagWrapClass(
+  severity: ReturnType<typeof tagSeverityForRow>
+): string {
+  switch (severity) {
+    case 'success':
+      return styles.tagWrapSuccess;
+    case 'warning':
+      return styles.tagWrapWarning;
+    case 'danger':
+      return styles.tagWrapDanger;
+    case 'info':
+      return styles.tagWrapInfo;
+    default:
+      return styles.tagWrapNeutral;
+  }
+}
+
 /**
- * Reusable 2×2 grid of CD deploy cards (repo label, status, branch, run title, link).
- * Uses PrimeReact Card, Tag, ProgressBar, Button — safe to embed on other dashboards.
+ * Reusable 2×2 grid of CD deploy cards (repo label, status, branch, run title, footer ticker).
+ * Uses PrimeReact Card, Tag, ProgressBar — TV-safe (no button links).
  */
 export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => {
   return (
@@ -63,7 +80,9 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
               header={
                 <div className={styles.cardHeader}>
                   <span className={styles.repoTitle}>{row.shortLabel}</span>
-                  <Tag value={tagValue} severity={severity} rounded />
+                  <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
+                    <Tag value={tagValue} severity={severity} rounded />
+                  </span>
                 </div>
               }
             >
@@ -100,15 +119,16 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                   {showActivityBar && (
                     <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
                   )}
-                  <a
-                    href={run.htmlUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`${styles.openLink} p-button p-button-text p-button-sm`}
-                  >
-                    <span className="p-button-icon pi pi-github" />
-                    <span className="p-button-label">Open run</span>
-                  </a>
+                  <div className={styles.footerTicker} title={run.title}>
+                    <div className={styles.footerTickerTrack}>
+                      <span className={styles.footerTickerSeg}>
+                        {run.title} · {run.headBranch ?? '—'} · Run #{run.id} · GitHub Actions
+                      </span>
+                      <span className={styles.footerTickerSeg}>
+                        {run.title} · {run.headBranch ?? '—'} · Run #{run.id} · GitHub Actions
+                      </span>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <p className={styles.meta}>No workflow runs returned.</p>

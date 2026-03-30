@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dev Corner Two — GitHub deploy timeline**: Tighter left pane padding, slightly wider opposite column, less gap before the connector, and **`white-space: nowrap`** on status labels so **IN PROGRESS** no longer breaks mid-word (removed `word-break: break-word` on `.timelineOpposite`).
+
+- **Themes — TV content scale + GitHub deploy**: Added global **`--content-text-size`** (default ~`1.04rem`, themes bump slightly). GitHub timeline and repo card body text derive sizes from it; **`--github-deploy-timeline-meta-color`** applies only to the branch/time line under the run title (pink/accent per theme), not the left **SUCCESS / IN PROGRESS / …** column — those use semantic **green / yellow / red / orange** via `deployTimelineOppositeKind()` + `.timelineOppositeSuccess|Running|Failure|Neutral`.
+- **GitHub deploy repo cards**: Replaced **Open run** with a **footer ticker** (scrolling run title · branch · run id · “GitHub Actions”). Header **Tag** status badges get subtle **pulse/glow** animations (faster “alarm” on danger). MeterGroup bar **shimmer/pulse slowed** (~5.2s / ~6.5s).
+- **Themes — GitHub deploy timeline (Dev Corner Two)**: Timeline sizing tied to `--content-text-size`; theme files set `--content-text-size` + `--github-deploy-timeline-meta-color` (per-theme accent for meta line only).
+
 ### Added
 
 - **Dev Corner Two**: **GitHub — CD deploy status** slide (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** aggregates the four main CD workflows (Azure Functions API, internal tools SWA, NuGet, EF migrations) via the GitHub Actions API; requires **`GITHUB_DEPLOY_READ_TOKEN`** on the server. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** pins a **0-based index among enabled slides** (see **`devCornerTwoSlides.config.ts`**); use `null` for normal rotation.

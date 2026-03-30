@@ -96,7 +96,7 @@
 }
 
 .repoTitle {
-  font-size: 0.82rem;
+  font-size: calc(var(--content-text-size, 1rem) * 1.02);
   font-weight: 700;
   color: var(--github-repo-label-color, var(--text-color));
   word-break: break-word;
@@ -104,7 +104,7 @@
 }
 
 .repoPath {
-  font-size: 0.62rem;
+  font-size: calc(var(--content-text-size, 1rem) * 0.72);
   font-family: ui-monospace, monospace;
   color: var(--text-color-secondary);
   margin: 0;
@@ -121,7 +121,7 @@
 
 .runMetaPill,
 .branchPill {
-  font-size: 0.65rem;
+  font-size: calc(var(--content-text-size, 1rem) * 0.78);
   font-weight: 600;
   padding: 0.12rem 0.4rem;
   border-radius: var(--border-radius);
@@ -152,7 +152,7 @@
   grid-template-columns: 4.2rem minmax(0, 1fr);
   gap: 0.35rem;
   align-items: baseline;
-  font-size: 0.68rem;
+  font-size: calc(var(--content-text-size, 1rem) * 0.88);
   line-height: 1.3;
 
   dt {
@@ -192,7 +192,7 @@
 }
 
 .title {
-  font-size: 0.88rem;
+  font-size: var(--content-text-size, 1rem);
   color: var(--text-color);
   line-height: 1.32;
   margin: 0;
@@ -210,28 +210,147 @@
   margin: 0;
 }
 
-/* Compact “Open run”: override Prime sm text button padding for TV legibility elsewhere */
-.openLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+/* Footer ticker — replaces button link on TV; duplicates content for seamless loop */
+.footerTicker {
+  overflow: hidden;
+  width: 100%;
   margin-top: auto;
   flex-shrink: 0;
-  padding-top: 0.15rem !important;
-  text-decoration: none;
-  padding: 0.05rem 0.3rem !important;
-  min-height: 0 !important;
-  height: auto !important;
-  line-height: 1.15;
+  border-radius: var(--border-radius);
+  border: 1px solid color-mix(in srgb, var(--github-deploy-timeline-meta-color, var(--primary-color)) 28%, var(--surface-border));
+  background: color-mix(in srgb, var(--surface-card) 90%, transparent);
+  padding: 0.22rem 0;
+  min-height: 1.65rem;
+}
 
-  :global(.p-button-icon) {
-    font-size: 0.7rem;
-    margin-inline-end: 0 !important;
+.footerTickerTrack {
+  display: inline-flex;
+  width: max-content;
+  animation: githubDeployCardTicker 38s linear infinite;
+}
+
+.footerTickerSeg {
+  padding: 0 2.5rem 0 0.45rem;
+  white-space: nowrap;
+  font-size: calc(var(--content-text-size, 1rem) * 0.82);
+  font-weight: 600;
+  color: var(--github-deploy-timeline-meta-color, var(--text-color-secondary));
+  line-height: 1.35;
+}
+
+@keyframes githubDeployCardTicker {
+  0% {
+    transform: translateX(0);
   }
 
-  :global(.p-button-label) {
-    font-size: 0.72rem;
-    line-height: 1.15;
-    padding: 0 !important;
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footerTickerTrack {
+    animation: none;
+  }
+}
+
+.statusTagWrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tagWrapSuccess :global(.p-tag) {
+  animation: deployTagPulseSuccess 2.6s ease-in-out infinite;
+}
+
+.tagWrapWarning :global(.p-tag) {
+  animation: deployTagPulseWarning 1.8s ease-in-out infinite;
+}
+
+.tagWrapDanger :global(.p-tag) {
+  animation: deployTagAlarm 0.75s ease-in-out infinite;
+}
+
+.tagWrapInfo :global(.p-tag) {
+  animation: deployTagPulseInfo 2.2s ease-in-out infinite;
+}
+
+.tagWrapNeutral :global(.p-tag) {
+  animation: deployTagPulseNeutral 3.5s ease-in-out infinite;
+}
+
+@keyframes deployTagPulseSuccess {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green-500) 20%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 14px 2px color-mix(in srgb, var(--green-500) 42%, transparent),
+      inset 0 0 12px color-mix(in srgb, var(--green-500) 12%, transparent);
+  }
+}
+
+@keyframes deployTagPulseWarning {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--yellow-500) 18%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 12px 3px color-mix(in srgb, var(--yellow-500) 48%, transparent),
+      inset 0 0 10px color-mix(in srgb, var(--yellow-500) 14%, transparent);
+  }
+}
+
+@keyframes deployTagAlarm {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--red-500) 35%, transparent);
+    filter: brightness(1);
+  }
+
+  50% {
+    box-shadow:
+      0 0 18px 5px color-mix(in srgb, var(--red-500) 58%, transparent),
+      inset 0 0 14px color-mix(in srgb, var(--red-500) 22%, transparent);
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes deployTagPulseInfo {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-color) 22%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      0 0 12px 2px color-mix(in srgb, var(--primary-color) 45%, transparent),
+      inset 0 0 10px color-mix(in srgb, var(--primary-color) 12%, transparent);
+  }
+}
+
+@keyframes deployTagPulseNeutral {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  50% {
+    box-shadow: 0 0 8px 1px color-mix(in srgb, var(--surface-400) 35%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tagWrapSuccess :global(.p-tag),
+  .tagWrapWarning :global(.p-tag),
+  .tagWrapDanger :global(.p-tag),
+  .tagWrapInfo :global(.p-tag),
+  .tagWrapNeutral :global(.p-tag) {
+    animation: none;
   }
 }

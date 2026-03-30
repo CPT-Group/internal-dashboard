@@ -10,6 +10,7 @@ import { useAutoScroll } from '@/hooks';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
+  deployTimelineOppositeKind,
   formatDeployStatusLabel,
   repoToneForRepo,
   summarizeDeployRepos,
@@ -22,6 +23,19 @@ interface DeployTimelineItem {
   id: string;
   repo: string;
   run: GitHubDeployRunSummary;
+}
+
+function timelineOppositeClass(run: GitHubDeployRunSummary): string {
+  const k = deployTimelineOppositeKind(run);
+  const extra =
+    k === 'success'
+      ? styles.timelineOppositeSuccess
+      : k === 'running'
+        ? styles.timelineOppositeRunning
+        : k === 'failure'
+          ? styles.timelineOppositeFailure
+          : styles.timelineOppositeNeutral;
+  return `${styles.timelineOpposite} ${extra}`;
 }
 
 export const GithubDeployStatusSlide = () => {
@@ -173,7 +187,7 @@ export const GithubDeployStatusSlide = () => {
                   />
                 )}
                 opposite={(item: DeployTimelineItem) => (
-                  <div className={styles.timelineOpposite}>
+                  <div className={timelineOppositeClass(item.run)}>
                     {formatDeployStatusLabel(item.run.status, item.run.conclusion)}
                   </div>
                 )}
