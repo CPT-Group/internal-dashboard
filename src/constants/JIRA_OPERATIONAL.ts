@@ -2,9 +2,10 @@
  * Operational Jira dashboard: Dev team board spanning CM, OPRD, and NOVA.
  * JQL modeled after the "Case Management Data Team Board" filter (V.3).
  *
- * "Opened" / "Landed on team" = when tickets transition OUT of "New" status
- * (CM/OPRD) or when created (NOVA). This reflects when work actually becomes
- * visible to the dev team, not when the Jira ticket was first created by CMs.
+ * "Opened" / "Landed on team" = when tickets transition OUT of their staging
+ * status: CM/OPRD transition FROM "New"; NOVA direct-to-sprint tickets use
+ * created date, NOVA template-cloned tickets use transition FROM "Backlog".
+ * This reflects when work actually becomes visible to the dev team.
  */
 
 import { NOVA_TEAM_ACCOUNT_IDS_ARRAY } from './NOVA_TEAM';
@@ -55,18 +56,28 @@ const BOARD_FILTER = [
 ].join(' OR ');
 
 /**
- * "Landed on team" = CM/OPRD tickets that transitioned FROM "New" + NOVA created
- * (excluding Backlog, which are template-cloned tickets that haven't been submitted).
- * Represents when work actually becomes visible to devs.
+ * "Landed on team" = when work becomes visible to devs.
+ *
+ * CM/OPRD: ticket transitioned FROM "New" (CMs create in New; devs see it once it moves).
+ * NOVA — two paths:
+ *   1. Direct-to-sprint (Bug, Case Update Request, dev-originated): created after the
+ *      date and never in Backlog — these land immediately at creation.
+ *   2. Template-cloned: sat in Backlog until submitted → transitioned OUT of Backlog.
+ *      The transition date is when work landed, NOT the created date.
  */
 const LANDED_CM_OPRD = (after: string) =>
   `project IN (CM, OPRD) AND status changed FROM "New" AFTER ${after} AND ${CM_OPRD_BASE}`;
 
 const NOVA_LANDED = (after: string) =>
-  `project = NOVA AND created >= ${after} AND status != Backlog`;
+  `(project = NOVA AND created >= ${after} AND status != Backlog) OR ` +
+  `(project = NOVA AND status changed FROM "Backlog" AFTER ${after})`;
+
+const NOVA_LANDED_RANGE = (after: string, before: string) =>
+  `(project = NOVA AND created >= ${after} AND created < ${before} AND status != Backlog) OR ` +
+  `(project = NOVA AND status changed FROM "Backlog" AFTER ${after} BEFORE ${before})`;
 
 const LANDED_COMBINED = (after: string) =>
-  `(${LANDED_CM_OPRD(after)}) OR (${NOVA_LANDED(after)})`;
+  `(${LANDED_CM_OPRD(after)}) OR ${NOVA_LANDED(after)}`;
 
 /**
  * Scoped filter for resolved queries (includes Done items since they're resolved).
@@ -96,7 +107,7 @@ export const JIRA_OPERATIONAL_JQL_LANDED_LAST_14 =
 
 /** Landed on team in previous 14-day window (days -28 to -14) for trend comparison. */
 export const JIRA_OPERATIONAL_JQL_LANDED_PREV_14 =
-  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR (project = NOVA AND created >= startOfDay(-28) AND created < startOfDay(-14) AND status != Backlog) ORDER BY updated DESC`;
+  `(${LANDED_CM_OPRD('startOfDay(-28)')}) AND NOT (${LANDED_CM_OPRD('startOfDay(-14)')}) OR ${NOVA_LANDED_RANGE('startOfDay(-28)', 'startOfDay(-14)')} ORDER BY updated DESC`;
 
 // ── Resolved ──
 

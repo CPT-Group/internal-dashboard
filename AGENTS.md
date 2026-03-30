@@ -85,9 +85,11 @@ Time-based queries (created/resolved today/14d) use the same scoped filter so fl
 
 ### Future: "landed on team" tracking for NOVA Backlog
 
-Currently, NOVA "landed on team" uses `created` date in JQL (`NOVA_LANDED` in `JIRA_OPERATIONAL.ts`) with `status != Backlog` to exclude template-cloned tickets that haven't been submitted. This was updated 2026-03-30 — previously there was no Backlog exclusion, which inflated "Landed Today" counts by ~24 template tickets. The `sprint in openSprints()` filter on the board query also prevents Backlog items from appearing in the "open" count.
+NOVA "landed on team" now mirrors CM/OPRD's transition-based approach (`NOVA_LANDED` / `NOVA_LANDED_RANGE` in `JIRA_OPERATIONAL.ts`). Two paths:
+1. **Direct-to-sprint** (Bug, Case Update Request, dev-originated): `created >= date AND status != Backlog` — these land immediately at creation.
+2. **Template-cloned** (sat in Backlog): `status changed FROM "Backlog" AFTER date` — the transition date is when work landed, not the created date.
 
-**Recommended future change:** Mirror CM/OPRD's approach — use `status changed FROM "Backlog"` for NOVA template tickets, similar to `status changed FROM "New"` for CM/OPRD. This would also catch tickets created yesterday in Backlog that move to To Do today (currently they'd be missed by `created >= startOfDay()`).
+Updated 2026-03-30 — previously used bare `created >= date` which inflated counts by ~23 Backlog template tickets per day. The `sprint in openSprints()` filter on the board query also prevents Backlog items from appearing in the "open" count.
 
 ### Tech Owner vs Assignee
 
