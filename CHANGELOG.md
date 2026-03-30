@@ -50,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dev Corner One — team activity chips**: Ticket summaries **wrap** (multi-line) with full text; removed **ellipsis** chip styles. **`buildTeamActivity`** no longer applies **`slice(0, 50)`** to summaries (that truncation caused mid-word cutoffs).
 
-- **Dev Corner One — Component Activity**: DataTable header is now **sticky** (`scrollable` + `scrollHeight="flex"`) so column headings stay visible while the table scrolls.
+- **Dev Corner One — Component Activity**: Table header is **sticky** via CSS `position: sticky` on `.p-datatable-thead` within the auto-scroll wrapper. Removed PrimeReact's `scrollable`/`scrollHeight="flex"` which was stealing the scroll container from `useAutoScroll`, breaking auto-scrolling on TV.
 
 - **Bug ticket highlighting (Dev Corner One & Two)**: NOVA **Bug** and **Bug Sub-Task** issues get a distinctive alert style: **60% red background**, **pulsing 3px red border** (smooth ease-in-out, 2.4s), **white bold text** for contrast. `isIssueBug()` helper in `operationalAnalytics.ts`; `isBug` boolean on `InProgressTicket`, `RecentlyCompletedTicket`, `RequestedTicket`, and `TeamMemberActivity` (per-ticket `inProgressIsBug[]`). Bug styling overrides NOVA accent when both apply. `prefers-reduced-motion` disables the pulse.
 

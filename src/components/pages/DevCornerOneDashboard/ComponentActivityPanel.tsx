@@ -50,8 +50,6 @@ export const ComponentActivityPanel = ({ components }: ComponentActivityPanelPro
           value={components}
           size="small"
           stripedRows
-          scrollable
-          scrollHeight="flex"
           className={styles.compTable}
           rowClassName={rowClass}
         >

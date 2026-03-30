@@ -115,11 +115,18 @@
   position: relative;
 }
 
-/* Component Activity table — our own scrollable wrapper (not PrimeReact's) */
+/* Component Activity table — our own scrollable wrapper for useAutoScroll + CSS sticky header */
 .compTableWrap {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+
+  :global(.p-datatable-thead) {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-card);
+  }
 }
 
 .compTable {
