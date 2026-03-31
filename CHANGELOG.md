@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [0.1.60] - 2026-03-30
+
+### Changed
+
+- **Removed all `color-mix()` CSS**: Deleted every `color-mix()` line from 12 SCSS files (variables, 4 theme files, primereact-overrides, CornerInfoCard, DevCornerOneDashboard, DevCornerTwoDashboard, GithubDeployStatusSlide, GithubDeployRepoCards, CompletedByDevSlide). Only the `rgba()` fallback lines remain, which are fully compatible with Samsung Tizen TV browsers.
+
 ## [0.1.59] - 2026-03-30
 
 ### Changed
@@ -36,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **"Landed Today" count inflated by Backlog tickets**: After the Jira rework, `NOVA_CREATED` JQL was counting all newly created NOVA tickets — including template-cloned tickets sitting in Backlog that hadn't been submitted to the team. Replaced with a two-path `NOVA_LANDED` that mirrors CM/OPRD's transition-based approach: (1) direct-to-sprint tickets (Bug, Case Update Request, dev-originated) use `created >= date AND status != Backlog`; (2) template-cloned tickets use `status changed FROM "Backlog" AFTER date` so the *transition* date — not creation date — determines when work landed on the team. Added `NOVA_LANDED_RANGE` for the prev-14 trend window. Dropped today's count from ~37 to ~14 (23 Backlog templates excluded, 1 Backlog→Done transition correctly captured). All other operational queries (open, resolved) were already clean via `sprint in openSprints()` or resolution-date scoping.
 
-- **Samsung TV CSS compatibility (`color-mix()` fallbacks)**: Samsung Tizen TV browsers (older Chromium/WebKit) do not support the CSS `color-mix()` function, causing missing backgrounds, glows, and translucent effects on TV dashboards while borders and simpler animations rendered fine. Added `rgba()` fallback declarations before every `color-mix()` usage across 12 SCSS files (~70 instances): `variables.scss`, all 4 theme files, `primereact-overrides.scss`, `CornerInfoCard`, `DevCornerOneDashboard`, `DevCornerTwoDashboard`, `GithubDeployStatusSlide`, `GithubDeployRepoCards`, and `CompletedByDevSlide`. Old browsers use the hardcoded `rgba()` fallback; modern browsers override with theme-aware `color-mix()`.
+- **Samsung TV CSS compatibility (removed `color-mix()`)**: Samsung Tizen TV browsers (older Chromium/WebKit) do not support the CSS `color-mix()` function, causing missing backgrounds, glows, and translucent effects on TV dashboards while borders and simpler animations rendered fine. Initially added `rgba()` fallback declarations; subsequently removed all `color-mix()` entirely (see v0.1.60) so only universally compatible `rgba()` values remain.
 
 ### Added
 

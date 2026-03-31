@@ -105,7 +105,6 @@
   border-color: var(--nova-accent-border);
   box-shadow: inset 3px 0 0 0 var(--nova-accent-border);
   background: rgba(36, 205, 197, 0.35);
-  background: color-mix(in srgb, var(--nova-accent) 35%, var(--surface-card));
 }
 
 /* ── Bug ticket alert ── */
@@ -113,7 +112,6 @@
   0%,
   100% {
     border-color: rgba(239, 68, 68, 0.45);
-    border-color: color-mix(in srgb, var(--red-500) 45%, transparent);
     box-shadow: 0 0 0 0 transparent;
   }
 
@@ -122,16 +120,12 @@
     box-shadow:
       0 0 14px 2px rgba(239, 68, 68, 0.38),
       inset 0 0 10px rgba(239, 68, 68, 0.1);
-    box-shadow:
-      0 0 14px 2px color-mix(in srgb, var(--red-500) 38%, transparent),
-      inset 0 0 10px color-mix(in srgb, var(--red-500) 10%, transparent);
   }
 }
 
 .ticketCardBug {
   border: 3px solid var(--red-500);
   background: rgba(239, 68, 68, 0.6);
-  background: color-mix(in srgb, var(--red-500) 60%, var(--surface-card));
   animation: bugBorderPulse 2.4s ease-in-out infinite;
 
   :global(.p-card-body) {
@@ -228,14 +222,12 @@
 
 .tableRowBug {
   background: rgba(239, 68, 68, 0.55) !important;
-  background: color-mix(in srgb, var(--red-500) 55%, var(--surface-card)) !important;
   animation: bugRowPulse 2.4s ease-in-out infinite;
 
   :global(td) {
     color: #fff !important;
     font-weight: 700;
     border-color: rgba(239, 68, 68, 0.4);
-    border-color: color-mix(in srgb, var(--red-500) 40%, var(--surface-border));
   }
 
   :global(td:first-child) {
@@ -251,7 +243,6 @@
 
   50% {
     box-shadow: inset 0 0 12px rgba(239, 68, 68, 0.25);
-    box-shadow: inset 0 0 12px color-mix(in srgb, var(--red-500) 25%, transparent);
   }
 }
 

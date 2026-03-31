@@ -101,7 +101,6 @@
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   background: rgba(30, 30, 46, 0.88);
-  background: color-mix(in srgb, var(--surface-card) 88%, transparent);
   padding: 0.45rem 0.55rem;
   display: flex;
   flex-direction: column;
@@ -135,7 +134,6 @@
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   background: rgba(30, 30, 46, 0.92);
-  background: color-mix(in srgb, var(--surface-card) 92%, transparent);
   padding: 0.38rem 0.45rem;
   margin-bottom: 0.35rem;
   transition:
@@ -146,52 +144,33 @@
 /* Outcome glow — soft “status light” under each row (Recent actions) */
 .actionRowGlowSuccess {
   border-color: rgba(34, 197, 94, 0.38);
-  border-color: color-mix(in srgb, var(--green-500) 38%, var(--surface-border));
   box-shadow:
     0 0 0 1px rgba(34, 197, 94, 0.18),
     0 5px 22px -4px rgba(34, 197, 94, 0.34),
     inset 0 1px 0 rgba(74, 222, 128, 0.1);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--green-500) 18%, transparent),
-    0 5px 22px -4px color-mix(in srgb, var(--green-500) 34%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--green-400) 10%, transparent);
 }
 
 .actionRowGlowFailure {
   border-color: rgba(239, 68, 68, 0.4);
-  border-color: color-mix(in srgb, var(--red-500) 40%, var(--surface-border));
   box-shadow:
     0 0 0 1px rgba(239, 68, 68, 0.2),
     0 6px 24px -4px rgba(239, 68, 68, 0.32),
     inset 0 1px 0 rgba(248, 113, 113, 0.09);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--red-500) 20%, transparent),
-    0 6px 24px -4px color-mix(in srgb, var(--red-500) 32%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--red-400) 9%, transparent);
 }
 
 .actionRowGlowRunning {
   border-color: rgba(168, 85, 247, 0.3);
-  border-color: color-mix(in srgb, var(--primary-color) 30%, var(--surface-border));
   box-shadow:
     0 0 0 1px rgba(168, 85, 247, 0.14),
     0 4px 20px -6px rgba(168, 85, 247, 0.3),
     inset 0 1px 0 rgba(168, 85, 247, 0.08);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--primary-color) 14%, transparent),
-    0 4px 20px -6px color-mix(in srgb, var(--primary-color) 30%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--primary-color) 8%, transparent);
 }
 
 .actionRowGlowNeutral {
   border-color: rgba(120, 120, 140, 0.22);
-  border-color: color-mix(in srgb, var(--surface-400) 22%, var(--surface-border));
   box-shadow:
     0 2px 14px -8px rgba(200, 200, 220, 0.12),
     inset 0 1px 0 transparent;
-  box-shadow:
-    0 2px 14px -8px color-mix(in srgb, var(--text-color) 12%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--surface-0) 0%, transparent);
 }
 
 .actionTop {
@@ -240,7 +219,6 @@
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   background: rgba(30, 30, 46, 0.88);
-  background: color-mix(in srgb, var(--surface-card) 88%, transparent);
   padding: 0.32rem 0.45rem 0.32rem 0.22rem;
   display: flex;
   flex-direction: column;
@@ -286,19 +264,16 @@
 .timelineOppositeSuccess {
   color: var(--green-400) !important;
   text-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--green-500) 35%, transparent);
 }
 
 .timelineOppositeRunning {
   color: var(--yellow-400) !important;
   text-shadow: 0 0 10px rgba(234, 179, 8, 0.4);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--yellow-500) 40%, transparent);
 }
 
 .timelineOppositeFailure {
   color: var(--red-400) !important;
   text-shadow: 0 0 12px rgba(239, 68, 68, 0.45);
-  text-shadow: 0 0 12px color-mix(in srgb, var(--red-500) 45%, transparent);
 }
 
 .timelineOppositeNeutral {

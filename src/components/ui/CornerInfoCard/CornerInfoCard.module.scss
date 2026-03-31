@@ -9,7 +9,6 @@
   max-width: 20rem;
   /* Glass: ~65% surface, solid border (theme) */
   background: rgba(26, 10, 46, 0.65);
-  background: color-mix(in srgb, var(--surface-100, #1a0a2e) 65%, transparent);
   border: 1px solid var(--surface-400, #5c4d7a);
   border-radius: 0.35rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
