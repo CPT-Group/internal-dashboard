@@ -235,6 +235,14 @@
   color: var(--red-50) !important;
 }
 
+// --- ProgressBar ---
+.p-progressbar {
+  background: var(--github-deploy-progressbar-track-bg) !important;
+}
+.p-progressbar .p-progressbar-value {
+  background: var(--github-deploy-progressbar-fill) !important;
+}
+
 // --- Button (primary / outlined / text) ---
 .p-button {
   background: var(--primary-color) !important;

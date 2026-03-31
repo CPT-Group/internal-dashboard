@@ -111,9 +111,16 @@ export const JIRA_OPERATIONAL_JQL_LANDED_PREV_14 =
 
 // ── Resolved ──
 
-/** Resolved today (scoped to dev components). */
+/**
+ * Closed today = handed to requesters/UAT today (not final Jira resolution).
+ * CM uses "Data Team Complete", OPRD/NOVA use "UAT".
+ */
 export const JIRA_OPERATIONAL_JQL_CLOSED_TODAY =
-  `(${SCOPED_FILTER}) AND resolutiondate >= startOfDay() ORDER BY resolutiondate DESC`;
+  `(` +
+  `(project = CM AND status changed TO "Data Team Complete" AFTER startOfDay() AND status != New AND ${CM_OPRD_BASE}) OR ` +
+  `(project = OPRD AND status changed TO UAT AFTER startOfDay() AND status != New AND ${CM_OPRD_BASE}) OR ` +
+  `(project = NOVA AND status changed TO UAT AFTER startOfDay())` +
+  `) ORDER BY updated DESC`;
 
 /** Resolved in last 14 days (flow chart closed side). */
 export const JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14 =

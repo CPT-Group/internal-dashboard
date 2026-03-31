@@ -286,7 +286,11 @@
 .ticketChipBug {
   background: rgba(239, 68, 68, 0.6) !important;
   border: 3px solid var(--red-500) !important;
-  animation: bugChipPulse 2.4s ease-in-out infinite;
+  animation: bugChipPulse 2.1s ease-in-out infinite;
+  transition:
+    box-shadow 250ms ease,
+    border-color 250ms ease,
+    transform 250ms ease;
 
   :global(.p-chip-text) {
     color: #fff !important;

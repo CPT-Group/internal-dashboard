@@ -90,10 +90,19 @@ function isIssueBug(issue: JiraIssue): boolean {
 
 function getComponentNames(issue: JiraIssue): string[] {
   const comps = issue.fields?.components;
-  if (!Array.isArray(comps) || comps.length === 0) return ['No component'];
-  return comps
+  const jiraComponents = Array.isArray(comps)
+    ? comps
     .map((c) => (c && typeof c === 'object' && 'name' in c ? (c as { name: string }).name : 'Unknown'))
-    .filter(Boolean);
+    .filter(Boolean)
+    : [];
+
+  // For NOVA tickets, include "NOVA Components" (customfield_10754) in addition to Jira components.
+  const novaLabel = getProjectKey(issue) === 'NOVA' ? getNovaComponentsLabel(issue) : null;
+
+  const all = new Set<string>(jiraComponents);
+  if (novaLabel) all.add(novaLabel);
+  if (all.size === 0) return ['No component'];
+  return [...all];
 }
 
 /** NOVA project "NOVA Components" field value when set (customfield_10754). */
@@ -234,6 +243,7 @@ function dateStr(d: Date): string {
 export interface BuildOperationalAnalyticsInput {
   openIssues: JiraIssue[];
   openedTodayIssues: JiraIssue[];
+  /** Issues moved to requester handoff status today (CM Data Team Complete / OPRD+NOVA UAT). */
   closedTodayIssues: JiraIssue[];
   /** Issues that "landed on team" in last 14 days (CM/OPRD transitioned from New + NOVA created). */
   landedLast14: JiraIssue[];
@@ -545,9 +555,9 @@ function getCloseTimeHours(issue: JiraIssue, transitionDates: Map<string, string
   if (project === 'CM' || project === 'OPRD') {
     startDate = transitionDates.get(issue.key) ?? startDate;
   }
-  const resolved = issue.fields?.resolutiondate;
-  if (!startDate || !resolved) return null;
-  const hours = (new Date(resolved).getTime() - new Date(startDate).getTime()) / (60 * 60 * 1000);
+  const closedAt = issue.fields?.resolutiondate ?? issue.fields?.updated ?? null;
+  if (!startDate || !closedAt) return null;
+  const hours = (new Date(closedAt).getTime() - new Date(startDate).getTime()) / (60 * 60 * 1000);
   return hours >= 0 ? hours : null;
 }
 

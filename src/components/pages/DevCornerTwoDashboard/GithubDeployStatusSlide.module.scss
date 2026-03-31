@@ -100,7 +100,7 @@
   flex: 1;
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
-  background: rgba(30, 30, 46, 0.88);
+  background: var(--surface-card);
   padding: 0.45rem 0.55rem;
   display: flex;
   flex-direction: column;
@@ -133,7 +133,7 @@
 .actionRow {
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
-  background: rgba(30, 30, 46, 0.92);
+  background: var(--surface-card);
   padding: 0.38rem 0.45rem;
   margin-bottom: 0.35rem;
   transition:
@@ -218,7 +218,7 @@
   min-height: 0;
   border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
-  background: rgba(30, 30, 46, 0.88);
+  background: var(--surface-card);
   padding: 0.32rem 0.45rem 0.32rem 0.22rem;
   display: flex;
   flex-direction: column;

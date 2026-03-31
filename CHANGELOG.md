@@ -38,6 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dev Corner Two theme parity (timeline/actions panes)**: Replaced hardcoded deploy-pane backgrounds with theme tokens (`--surface-card`) so the right timeline panel and action rows now follow the active theme instead of appearing near-black on some screens.
+- **Deploy activity progress bar theming**: Fixed PrimeReact `ProgressBar` styling selectors for the GitHub deploy cards so indeterminate bars consistently use `--github-deploy-progressbar-track-bg` and `--github-deploy-progressbar-fill` (instead of default gray/blue).
+- **TV loading state centering**: `nova-dashboard-loading` now centers fallback loaders with explicit flex alignment so loading overlays remain centered regardless of utility class availability.
+- **Closed Today KPI semantics**: Updated operational “Closed Today” query to count tickets transitioned to requester handoff statuses today (`CM: Data Team Complete`, `OPRD/NOVA: UAT`) instead of relying on `resolutiondate`, matching team workflow expectations.
+
 - **Landed Today / Net KPI counted non-team tickets**: `kpis.landedToday` was unfiltered (all issues from landed query), while `kpis.closedToday` filtered by `isTechOwnerNovaTeam`. This inflated Landed and Net counts with tickets assigned to non-NOVA members (case managers) or unassigned with no tech owner. Now both sides of the net calculation use `isTechOwnerNovaTeam`, dropping landed today from ~14 to ~7 NOVA-attributed.
 
 - **"Landed Today" count inflated by Backlog tickets**: After the Jira rework, `NOVA_CREATED` JQL was counting all newly created NOVA tickets — including template-cloned tickets sitting in Backlog that hadn't been submitted to the team. Replaced with a two-path `NOVA_LANDED` that mirrors CM/OPRD's transition-based approach: (1) direct-to-sprint tickets (Bug, Case Update Request, dev-originated) use `created >= date AND status != Backlog`; (2) template-cloned tickets use `status changed FROM "Backlog" AFTER date` so the *transition* date — not creation date — determines when work landed on the team. Added `NOVA_LANDED_RANGE` for the prev-14 trend window. Dropped today's count from ~37 to ~14 (23 Backlog templates excluded, 1 Backlog→Done transition correctly captured). All other operational queries (open, resolved) were already clean via `sprint in openSprints()` or resolution-date scoping.
@@ -51,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`LimboTicketsTable` component** (`src/components/ui/LimboTicketsTable/`): Reusable PrimeReact `DataTable` with auto-scroll, NOVA-key accent, age warning styling. Not mounted on any dashboard yet — ready for future use.
 
 ### Changed
+
+- **Bug ticket motion polish (Dev Corner One/Two)**: Smoothed bug pulse cadence/transitions for chip/card/table treatments and added stronger TV-readable border/glow cues while preserving `prefers-reduced-motion` behavior.
+- **GitHub deploy repo cards (live state emphasis)**: Added subtle status-aware card pulses for active warning/error states so in-progress/pending/problem workflows read as “alive” at a distance.
+- **Operational component bucketing (NOVA)**: Component aggregation now includes both Jira Components and NOVA Components (`customfield_10754`) for NOVA issues, reducing “missing component” drift in Dev Corner analytics.
 
 - **Dev Corner One**: Tighter **between-section** spacing — **`dashboard`** column **`gap`** and outer **`padding`**, plus **`middleRow`** column **`gap`** (KPI vs middle vs bottom; work hours vs component activity), without changing inner panel/card content padding.
 

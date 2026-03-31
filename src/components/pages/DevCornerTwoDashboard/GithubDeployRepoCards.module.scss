@@ -23,6 +23,10 @@
   flex-direction: column;
   border: 1px solid var(--surface-border);
   border-left-width: 5px;
+  transition:
+    box-shadow 300ms ease,
+    border-color 300ms ease,
+    transform 300ms ease;
 
   :global(.p-card-body) {
     flex: 1;
@@ -44,19 +48,19 @@
 }
 
 .repoToneApi {
-  background: linear-gradient(90deg, var(--github-repo-api-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
+  background: linear-gradient(90deg, var(--github-repo-api-bg) 0%, var(--surface-card) 45%);
 }
 
 .repoToneTools {
-  background: linear-gradient(90deg, var(--github-repo-tools-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
+  background: linear-gradient(90deg, var(--github-repo-tools-bg) 0%, var(--surface-card) 45%);
 }
 
 .repoToneNuget {
-  background: linear-gradient(90deg, var(--github-repo-nuget-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
+  background: linear-gradient(90deg, var(--github-repo-nuget-bg) 0%, var(--surface-card) 45%);
 }
 
 .repoToneMigrations {
-  background: linear-gradient(90deg, var(--github-repo-migrations-bg) 0%, rgba(30, 30, 46, 0.96) 45%);
+  background: linear-gradient(90deg, var(--github-repo-migrations-bg) 0%, var(--surface-card) 45%);
 }
 
 .cardOk {
@@ -65,10 +69,42 @@
 
 .cardWarning {
   border-left-color: var(--orange-400);
+  animation: deployCardRunningPulse 2.4s ease-in-out infinite;
 }
 
 .cardError {
   border-left-color: var(--red-500);
+  animation: deployCardErrorPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes deployCardRunningPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: translateY(0);
+  }
+
+  50% {
+    box-shadow:
+      0 0 16px -2px rgba(234, 179, 8, 0.36),
+      inset 0 0 0 1px rgba(234, 179, 8, 0.25);
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes deployCardErrorPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: translateY(0);
+  }
+
+  50% {
+    box-shadow:
+      0 0 18px 0 rgba(239, 68, 68, 0.38),
+      inset 0 0 0 1px rgba(239, 68, 68, 0.35);
+    transform: translateY(-1px);
+  }
 }
 
 .cardHeader {
@@ -145,12 +181,13 @@
   border-radius: 2px;
   overflow: hidden;
 
-  :global(.p-progressbar) {
+  &:global(.p-progressbar) {
     border-radius: 2px;
     background: var(--github-deploy-progressbar-track-bg);
+    height: 0.25rem !important;
   }
 
-  :global(.p-progressbar .p-progressbar-value) {
+  &:global(.p-progressbar) :global(.p-progressbar-value) {
     background: var(--github-deploy-progressbar-fill) !important;
   }
 }
@@ -243,6 +280,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cardWarning,
+  .cardError,
   .titleTickerTrack,
   .footerTickerTrack {
     animation: none;
