@@ -14,6 +14,7 @@ interface GitHubWorkflowRunApi {
 }
 
 interface GitHubWorkflowRunsResponse {
+  total_count?: number;
   workflow_runs: GitHubWorkflowRunApi[];
 }
 
@@ -45,6 +46,27 @@ function shortLabel(repo: string): string {
   return repo.replace(/^cpt-/, '');
 }
 
+function isQueuedLikeStatus(status: string): boolean {
+  return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
+}
+
+async function fetchWorkflowRunCountByStatus(
+  token: string,
+  owner: string,
+  repo: string,
+  workflowId: number,
+  status: 'queued' | 'in_progress'
+): Promise<number> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?status=${status}&per_page=1`;
+  const res = await fetch(url, {
+    headers: githubHeaders(token),
+    cache: 'no-store',
+  });
+  if (!res.ok) return 0;
+  const data = (await res.json()) as GitHubWorkflowRunsResponse;
+  return typeof data.total_count === 'number' ? data.total_count : 0;
+}
+
 export async function fetchDeployWorkflowStatus(
   token: string,
   monitor: GitHubDeployWorkflowMonitor
@@ -73,14 +95,23 @@ export async function fetchDeployWorkflowStatus(
       };
     }
 
-    const data = (await res.json()) as GitHubWorkflowRunsResponse;
+    const [data, queuedCount, inProgressCount] = await Promise.all([
+      res.json() as Promise<GitHubWorkflowRunsResponse>,
+      fetchWorkflowRunCountByStatus(token, owner, repo, workflowId, 'queued'),
+      fetchWorkflowRunCountByStatus(token, owner, repo, workflowId, 'in_progress'),
+    ]);
     const runs = Array.isArray(data.workflow_runs) ? data.workflow_runs : [];
 
-    const active = runs.find((r) => r.status !== 'completed');
+    const active = runs.find((r) => r.status === 'in_progress')
+      ?? runs.find((r) => isQueuedLikeStatus(r.status))
+      ?? runs.find((r) => r.status !== 'completed');
     const lastDone = runs.find((r) => r.status === 'completed');
 
     return {
       ...base,
+      queuedCount,
+      inProgressCount,
+      activeCount: queuedCount + inProgressCount,
       activeRun: active ? toSummary(active) : undefined,
       lastCompletedRun: lastDone ? toSummary(lastDone) : undefined,
       recentRuns: runs.slice(0, 6).map(toSummary),

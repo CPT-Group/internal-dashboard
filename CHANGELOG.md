@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **GitHub deploy queue visibility (Dev Corner Two)**: Monitored workflow cards now include explicit queue depth (`Queued`) and no longer read as all-green when runs are waiting for runners. Status summary and card health now treat `queued-without-in-progress` as an attention/warning state.
 - **Work Hours Today now uses dynamic pace percentages**: Replaced fixed hour thresholds with workday-relative scoring against elapsed target hours (9 AM–5 PM): `<=50%` critical, `50–75%` warning, `75–100%` on-track, `100–125%` ahead, `125–150%` high, `150%+` super-performer.
 - **Work Hours Today target line**: Added a live vertical target marker (`Target X.Xh`) on the bar chart showing where 100% should be at the current time; marker updates during runtime, uses theme-primary color, and now spans the full chart plotting area (through all bars) for clearer visibility.
 - **Work Hours Today target line polish**: Target marker line now renders at **75% opacity** (line only) while keeping the target label full-opacity for readability; line color now uses `--work-hours-target-line-color` (defaulting to `--primary-color`) so it follows each active theme.

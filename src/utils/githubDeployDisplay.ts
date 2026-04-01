@@ -58,7 +58,13 @@ export function summarizeDeployRepos(repos: GitHubDeployWorkflowStatus[]): Deplo
       attention++;
       continue;
     }
-    if (row.activeRun) {
+    const queued = row.queuedCount ?? 0;
+    const inProgress = row.inProgressCount ?? 0;
+    if (queued > 0 && inProgress === 0) {
+      attention++;
+      continue;
+    }
+    if (row.activeRun || inProgress > 0) {
       active++;
       continue;
     }
@@ -84,6 +90,9 @@ export function tagSeverityForRow(
   if (row.error) {
     return 'danger';
   }
+  if ((row.queuedCount ?? 0) > 0 && (row.inProgressCount ?? 0) === 0) {
+    return 'warning';
+  }
   if (!run) {
     return 'secondary';
   }
@@ -106,6 +115,7 @@ export function cardHealthForRow(
   run: GitHubDeployRunSummary | undefined
 ): DeployCardHealth {
   if (row.error) return 'error';
+  if ((row.queuedCount ?? 0) > 0 && (row.inProgressCount ?? 0) === 0) return 'warning';
   if (!run) return 'warning';
   if (run.status !== 'completed') return 'warning';
   if (run.conclusion === 'success') return 'ok';

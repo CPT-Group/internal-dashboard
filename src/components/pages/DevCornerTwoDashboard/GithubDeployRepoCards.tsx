@@ -49,6 +49,8 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
           const err = row.error;
           const tagValue = err
             ? 'API error'
+            : (row.queuedCount ?? 0) > 0 && (row.inProgressCount ?? 0) === 0
+              ? `queued (${row.queuedCount})`
             : run
               ? formatDeployStatusLabel(run.status, run.conclusion)
               : 'No runs';
@@ -100,6 +102,12 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                     </div>
                   </div>
                   <dl className={styles.detailList}>
+                    {(row.queuedCount ?? 0) > 0 && (
+                      <div className={styles.detailRow}>
+                        <dt>Queued</dt>
+                        <dd>{row.queuedCount}</dd>
+                      </div>
+                    )}
                     {isRunning ? (
                       <>
                         <div className={styles.detailRow}>
