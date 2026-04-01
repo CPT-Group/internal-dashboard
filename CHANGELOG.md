@@ -57,6 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Work Hours Today now uses dynamic pace percentages**: Replaced fixed hour thresholds with workday-relative scoring against elapsed target hours (9 AM–5 PM): `<=50%` critical, `50–75%` warning, `75–100%` on-track, `100–125%` ahead, `125–150%` high, `150%+` super-performer.
+- **Work Hours Today target line**: Added a live vertical target marker (`Target X.Xh`) on the bar chart showing where 100% should be at the current time; marker updates during runtime, uses theme-primary color, and now spans the full chart plotting area (through all bars) for clearer visibility.
+- **Work Hours Today target line polish**: Target marker line now renders at **75% opacity** (line only) while keeping the target label full-opacity for readability; line color now uses `--work-hours-target-line-color` (defaulting to `--primary-color`) so it follows each active theme.
+- **Work Hours Today target line opacity tweak**: Increased target marker line opacity from **75%** to **85%** for better visibility at TV viewing distance (label remains full opacity).
+- **Work Hours Today target layering**: Adjusted marker rendering order so the vertical target line is drawn beneath bars/data labels, preventing it from crossing over hour values on bar text.
+- **Dev Corner One — Team Activity layout refresh**: Removed the outer section header/title row (`NOVA: In Progress...`) and wrapper-card header treatment to reclaim vertical space and eliminate the nested-card/double-border feel; team member cards now render directly in the bottom section.
+- **Dev Corner One — Team card readability**: Increased team member name size/weight and boosted in-progress/open counter contrast and badge weight for better distance readability across themes.
+- **Dev Corner One — Team ticket chip opacity tuning**: Updated highlighted ticket chips to match the softer Work Hours style — NOVA/cyan and bug/red chip backgrounds now use ~35% alpha while keeping semantic border colors and alert emphasis.
 - **Loading overlay centering hardening (Dev Corner + Trevor)**: Added dedicated loading-overlay sizing classes so the initial “Loading NOVA data…” state stays centered in the viewport reliably after layout/theme changes.
 - **Work Hours motion visibility (yellow/orange)**: Increased non-red pulse intensity and upgraded `warn`/`over-8h` bars to the stronger animation profile so orange/yellow states visibly animate on TVs.
 - **Work Hours Today badge visibility + stronger bar motion**: Header badges now render only when their count is non-zero (Zero/Low/Healthy/Over 8h). Increased in-bar animation visibility with stronger pulsing border width/alpha and an added tinted “surge” wave across bar bodies for clearer TV readability.

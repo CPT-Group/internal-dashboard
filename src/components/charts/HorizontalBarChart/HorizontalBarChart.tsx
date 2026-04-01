@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Chart } from 'primereact/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import type { Plugin } from 'chart.js';
 import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
 import styles from './HorizontalBarChart.module.scss';
 
@@ -13,9 +14,16 @@ export interface HorizontalBarChartProps {
 interface ChartTheme {
   text: string;
   grid: string;
+  surfaceCard: string;
   barPrimary: string;
   barPrimaryBorder: string;
   labelColor: string;
+}
+
+interface MarkerScale {
+  left: number;
+  right: number;
+  getPixelForValue: (value: number) => number;
 }
 
 const BORDER_WIDTH = 3.5;
@@ -72,6 +80,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     setTheme({
       text: s.getPropertyValue('--text-color').trim() || '#e2e8f0',
       grid: s.getPropertyValue('--surface-border').trim() || 'rgba(255,255,255,0.1)',
+      surfaceCard: s.getPropertyValue('--surface-card').trim() || 'rgba(12, 0, 32, 0.92)',
       barPrimary: s.getPropertyValue('--chart-bar-primary').trim() || 'rgba(36,205,197,0.82)',
       barPrimaryBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
       labelColor: s.getPropertyValue('--chart-label-color').trim() || '#ffffff',
@@ -234,6 +243,83 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   }, [data, theme]);
 
   const suffix = data.suffix ?? '';
+  const xMax = useMemo(() => {
+    const valuesMax = data.values.length > 0 ? Math.max(...data.values) : 0;
+    const markerMax = data.targetMarker?.value ?? 0;
+    const base = Math.max(valuesMax, markerMax, 1);
+    return Math.ceil((base + 0.5) * 2) / 2;
+  }, [data.values, data.targetMarker?.value]);
+
+  const targetMarkerPlugin = useMemo<Plugin<'bar'>>(
+    () => ({
+      id: 'horizontal-bar-target-marker',
+      beforeDatasetsDraw: (chart) => {
+        const marker = data.targetMarker;
+        if (!marker) return;
+
+        const rawScale = chart.scales.x;
+        if (!rawScale) return;
+        const scale = rawScale as MarkerScale;
+        const x = scale.getPixelForValue(marker.value);
+        if (x < scale.left || x > scale.right) return;
+
+        const ctx: CanvasRenderingContext2D = chart.ctx;
+        const color = marker.color ?? theme?.barPrimaryBorder ?? 'rgb(34, 211, 238)';
+        const label = marker.label ?? '';
+
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 5]);
+        ctx.beginPath();
+        ctx.moveTo(x, chart.chartArea.top + 1);
+        ctx.lineTo(x, chart.chartArea.bottom - 1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      },
+
+      afterDatasetsDraw: (chart) => {
+        const marker = data.targetMarker;
+        if (!marker) return;
+
+        const rawScale = chart.scales.x;
+        if (!rawScale) return;
+        const scale = rawScale as MarkerScale;
+        const x = scale.getPixelForValue(marker.value);
+        if (x < scale.left || x > scale.right) return;
+
+        const ctx: CanvasRenderingContext2D = chart.ctx;
+        const color = marker.color ?? theme?.barPrimaryBorder ?? 'rgb(34, 211, 238)';
+        const label = marker.label ?? '';
+
+        if (label) {
+          ctx.save();
+          ctx.font = '700 11px Lato, Helvetica, sans-serif';
+          const textWidth = ctx.measureText(label).width;
+          const padX = 6;
+          const textHeight = 14;
+          const bx = Math.min(
+            Math.max(x - textWidth / 2 - padX, chart.chartArea.left + 2),
+            chart.chartArea.right - (textWidth + padX * 2) - 2
+          );
+          const by = chart.chartArea.bottom - textHeight - 2;
+
+          ctx.fillStyle = theme?.surfaceCard ?? 'rgba(12, 0, 32, 0.92)';
+          ctx.fillRect(bx, by, textWidth + padX * 2, textHeight);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(bx, by, textWidth + padX * 2, textHeight);
+          ctx.fillStyle = color;
+          ctx.fillText(label, bx + padX, by + 11);
+          ctx.restore();
+        }
+      },
+    }),
+    [data.targetMarker, theme?.barPrimaryBorder, theme?.surfaceCard]
+  );
 
   const options = useMemo(
     () =>
@@ -261,6 +347,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
             scales: {
               x: {
                 beginAtZero: true,
+                max: xMax,
                 grid: { color: theme.grid },
                 ticks: { color: theme.text },
               },
@@ -289,7 +376,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
             },
           }
         : null,
-    [theme, suffix, data.labelColors, data.values]
+    [theme, suffix, data.labelColors, data.values, xMax]
   );
 
   if (!options || data.labels.length === 0) return null;
@@ -301,7 +388,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         type="bar"
         data={chartData}
         options={options}
-        plugins={[ChartDataLabels]}
+        plugins={[ChartDataLabels, targetMarkerPlugin]}
         className={styles.chart}
       />
     </div>

@@ -138,6 +138,9 @@
   --github-deploy-progressbar-track-bg: rgba(80, 80, 100, 0.55) !important;
   --github-deploy-progressbar-fill: rgba(168, 85, 247, 0.78) !important;
 
+  // Dev Corner One — Work Hours target marker line
+  --work-hours-target-line-color: var(--primary-color) !important;
+
   // GitHub CD deploy — Timeline: sizes derived from --content-text-size; meta line accent (not status column)
   --github-deploy-timeline-header-size: calc(var(--content-text-size) * 1.08) !important;
   --github-deploy-timeline-repo-size: calc(var(--content-text-size) * 0.88) !important;

@@ -13,36 +13,58 @@ interface HourThemeColors {
   successFill: string;
   warningFill: string;
   orangeFill: string;
+  aheadFill: string;
+  superFill: string;
   dangerFill: string;
   neutralFill: string;
   successBorder: string;
   warningBorder: string;
   orangeBorder: string;
+  aheadBorder: string;
+  superBorder: string;
   dangerBorder: string;
+  markerColor: string;
 }
 
-type HourZone = 'low' | 'warn' | 'good' | 'over';
+type HourZone = 'critical' | 'warn' | 'onTrack' | 'ahead' | 'high' | 'super';
 
 const formatHours = (seconds: number): number =>
   Math.round((seconds / 3600) * 100) / 100;
 
-function getHourZone(hours: number): HourZone {
-  if (hours < 4) return 'low';
-  if (hours < 6) return 'warn';
-  if (hours <= 8) return 'good';
-  return 'over';
+function getCurrentTargetHours(now: Date): number {
+  const minutesNow = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = 9 * 60;
+  const endMinutes = 17 * 60;
+
+  if (minutesNow <= startMinutes) return 0.1;
+  if (minutesNow >= endMinutes) return 8;
+  return Math.max(0.1, (minutesNow - startMinutes) / 60);
+}
+
+function getHourZone(hours: number, targetHours: number): HourZone {
+  const ratio = targetHours > 0 ? hours / targetHours : Number.POSITIVE_INFINITY;
+  if (ratio <= 0.5) return 'critical';
+  if (ratio <= 0.75) return 'warn';
+  if (ratio <= 1) return 'onTrack';
+  if (ratio <= 1.25) return 'ahead';
+  if (ratio <= 1.5) return 'high';
+  return 'super';
 }
 
 function getBarFill(zone: HourZone, t: HourThemeColors): string {
   switch (zone) {
-    case 'low':
+    case 'critical':
       return t.dangerFill;
     case 'warn':
-      return t.neutralFill;
-    case 'good':
+      return t.warningFill;
+    case 'onTrack':
       return t.successFill;
-    case 'over':
+    case 'ahead':
+      return t.aheadFill;
+    case 'high':
       return t.orangeFill;
+    case 'super':
+      return t.superFill;
     default:
       return t.neutralFill;
   }
@@ -50,14 +72,18 @@ function getBarFill(zone: HourZone, t: HourThemeColors): string {
 
 function getBorderColor(zone: HourZone, t: HourThemeColors): string {
   switch (zone) {
-    case 'low':
+    case 'critical':
       return t.dangerBorder;
     case 'warn':
       return t.warningBorder;
-    case 'good':
+    case 'onTrack':
       return t.successBorder;
-    case 'over':
+    case 'ahead':
+      return t.aheadBorder;
+    case 'high':
       return t.orangeBorder;
+    case 'super':
+      return t.superBorder;
     default:
       return t.warningBorder;
   }
@@ -65,29 +91,45 @@ function getBorderColor(zone: HourZone, t: HourThemeColors): string {
 
 function getFlashLevel(zone: HourZone, hours: number): BarFlashLevel {
   if (hours <= 0) return 'none';
-  if (zone === 'low') return 'full';
-  if (zone === 'warn' || zone === 'over') return 'full';
+  if (zone === 'critical' || zone === 'super') return 'full';
+  if (zone === 'warn' || zone === 'high') return 'full';
   return 'subtle';
 }
 
 export const WorkHoursTodayPanel = () => {
   const { hours, loading } = useWorkHoursToday();
   const [themeColors, setThemeColors] = useState<HourThemeColors | null>(null);
+  const [now, setNow] = useState<Date>(new Date());
 
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
     setThemeColors({
       successFill: 'rgba(34,197,94,0.35)',
-      warningFill: 'rgba(36,205,197,0.35)',
+      warningFill: 'rgba(234,179,8,0.35)',
       orangeFill: 'rgba(249,115,22,0.35)',
+      aheadFill: 'rgba(36,205,197,0.35)',
+      superFill: 'rgba(34,211,238,0.45)',
       dangerFill: s.getPropertyValue('--chart-danger').trim() || 'rgba(239,68,68,0.78)',
       neutralFill: 'rgba(36,205,197,0.35)',
       successBorder: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
       warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
       orangeBorder: s.getPropertyValue('--chart-orange-border').trim() || 'rgb(249,115,22)',
+      aheadBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
+      superBorder: 'rgb(34,211,238)',
       dangerBorder: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
+      markerColor:
+        s.getPropertyValue('--work-hours-target-line-color').trim()
+        || s.getPropertyValue('--primary-color').trim()
+        || 'rgb(36,205,197)',
     });
   }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const targetHours = useMemo(() => getCurrentTargetHours(now), [now]);
 
   const members = useMemo(
     () => NOVA_CORE_DEVS.map((m) => ({
@@ -100,24 +142,28 @@ export const WorkHoursTodayPanel = () => {
   const zoneSummary = useMemo(() => {
     return members.reduce(
       (acc, m) => {
-        const zone = getHourZone(m.hours);
+        const zone = getHourZone(m.hours, targetHours);
         if (m.hours <= 0) acc.zero += 1;
-        if (zone === 'low') acc.low += 1;
-        if (zone === 'good') acc.good += 1;
-        if (zone === 'over') acc.over += 1;
+        if (zone === 'critical') acc.critical += 1;
+        if (zone === 'onTrack') acc.onTrack += 1;
+        if (zone === 'super') acc.super += 1;
         return acc;
       },
-      { zero: 0, low: 0, good: 0, over: 0 }
+      { zero: 0, critical: 0, onTrack: 0, super: 0 }
     );
-  }, [members]);
+  }, [members, targetHours]);
 
   const chartData: HorizontalBarChartData = useMemo(() => {
-    const zones = members.map((m) => getHourZone(m.hours));
+    const zones = members.map((m) => getHourZone(m.hours, targetHours));
 
     if (!themeColors) {
       return {
         labels: members.map((m) => m.name),
         values: members.map((m) => m.hours),
+        targetMarker: {
+          value: targetHours,
+          label: `Target ${targetHours.toFixed(1)}h`,
+        },
         suffix: 'h',
       };
     }
@@ -128,10 +174,15 @@ export const WorkHoursTodayPanel = () => {
       colors: zones.map((z) => getBarFill(z, themeColors)),
       borderColors: zones.map((z) => getBorderColor(z, themeColors)),
       labelColors: members.map((m) => (m.hours <= 0 ? 'rgb(239,68,68)' : '')),
+      targetMarker: {
+        value: targetHours,
+        color: themeColors.markerColor,
+        label: `Target ${targetHours.toFixed(1)}h`,
+      },
       suffix: 'h',
       flashLevels: zones.map((z, i) => getFlashLevel(z, members[i]?.hours ?? 0)),
     };
-  }, [members, themeColors]);
+  }, [members, targetHours, themeColors]);
 
   return (
     <Card className={styles.panelCard}>
@@ -141,14 +192,14 @@ export const WorkHoursTodayPanel = () => {
           {zoneSummary.zero > 0 && (
             <span className={`${styles.workHoursBadge} ${styles.badgeZero}`}>Zero Hours {zoneSummary.zero}</span>
           )}
-          {zoneSummary.low > 0 && (
-            <span className={`${styles.workHoursBadge} ${styles.badgeDanger}`}>Low {zoneSummary.low}</span>
+          {zoneSummary.critical > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeDanger}`}>Under 50% {zoneSummary.critical}</span>
           )}
-          {zoneSummary.good > 0 && (
-            <span className={`${styles.workHoursBadge} ${styles.badgeSuccess}`}>Healthy {zoneSummary.good}</span>
+          {zoneSummary.onTrack > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeSuccess}`}>75-100% {zoneSummary.onTrack}</span>
           )}
-          {zoneSummary.over > 0 && (
-            <span className={`${styles.workHoursBadge} ${styles.badgeOver}`}>Over 8h {zoneSummary.over}</span>
+          {zoneSummary.super > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeSuper}`}>150%+ {zoneSummary.super}</span>
           )}
         </div>
       </div>

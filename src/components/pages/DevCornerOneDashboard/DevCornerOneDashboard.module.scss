@@ -151,6 +151,12 @@
   color: #fff;
 }
 
+.badgeSuper {
+  background: rgba(34, 211, 238, 0.28);
+  border-color: rgb(34, 211, 238);
+  color: #fff;
+}
+
 @keyframes workHoursDangerBadgePulse {
   0%,
   100% {
@@ -257,6 +263,12 @@
   overflow-y: auto;
 }
 
+.teamSection {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
 .teamCard {
   display: flex;
   flex-direction: column;
@@ -279,8 +291,8 @@
 }
 
 .teamName {
-  font-weight: 600;
-  font-size: var(--dev1-panel-text);
+  font-weight: 700;
+  font-size: calc(var(--dev1-panel-text) * 1.12);
   color: var(--text-color);
 }
 
@@ -288,8 +300,15 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: var(--dev1-panel-text-sm);
-  color: var(--text-color-secondary);
+  font-size: var(--dev1-panel-text);
+  font-weight: 700;
+  color: var(--text-color);
+
+  :global(.p-badge) {
+    font-weight: 800;
+    min-width: 1.5rem;
+    text-align: center;
+  }
 }
 
 .teamTickets {
@@ -322,7 +341,7 @@
 }
 
 .ticketChipNova {
-  background: var(--nova-accent) !important;
+  background: rgba(36, 205, 197, 0.35) !important;
   color: var(--nova-accent-text) !important;
   border: 1.5px solid var(--nova-accent-border) !important;
   backdrop-filter: blur(4px);
@@ -349,7 +368,7 @@
 }
 
 .ticketChipBug {
-  background: rgba(239, 68, 68, 0.6) !important;
+  background: rgba(239, 68, 68, 0.35) !important;
   border: 3px solid var(--red-500) !important;
   animation: bugChipPulse 2.1s ease-in-out infinite;
   transition:

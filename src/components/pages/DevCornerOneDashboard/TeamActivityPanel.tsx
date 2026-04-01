@@ -1,7 +1,6 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { Card } from 'primereact/card';
 import { Badge } from 'primereact/badge';
 import { Chip } from 'primereact/chip';
 import type { TeamMemberActivity } from '@/types';
@@ -49,17 +48,8 @@ const MemberCard = ({ m }: { m: TeamMemberActivity }) => {
 };
 
 export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
-  const totalActive = members.reduce((s, m) => s + m.inProgressCount, 0);
-
-  const header = (
-    <div className={styles.panelHeader}>
-      <span>NOVA: In Progress (Actively Working On)</span>
-      <Badge value={`${totalActive} active`} severity="info" />
-    </div>
-  );
-
   return (
-    <Card header={header} className={styles.panelCard}>
+    <div className={styles.teamSection}>
       <div
         className={styles.teamGrid}
         style={
@@ -70,6 +60,6 @@ export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
           <MemberCard key={m.accountId} m={m} />
         ))}
       </div>
-    </Card>
+    </div>
   );
 };
