@@ -126,11 +126,11 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       if (level === 'full') {
         newFills.push(rgbaStr(fillRgb, 0.45 + 0.5 * f));
         newBorders.push(rgbaStr(rgb, 0.1 + 0.9 * f));
-        newWidths.push(BORDER_WIDTH);
+        newWidths.push(BORDER_WIDTH + 1.1 * f);
       } else {
-        newFills.push(rgbaStr(fillRgb, 0.6 + 0.3 * f));
-        newBorders.push(rgbaStr(rgb, 0.5 + 0.5 * f));
-        newWidths.push(BORDER_WIDTH);
+        newFills.push(rgbaStr(fillRgb, 0.35 + 0.55 * f));
+        newBorders.push(rgbaStr(rgb, 0.2 + 0.75 * f));
+        newWidths.push(BORDER_WIDTH + 1.0 * f);
       }
     }
 
@@ -176,14 +176,23 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const shimmerX = bx + (bw + shimmerWidth) * f - shimmerWidth;
       const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
       shimmer.addColorStop(0, 'rgba(255,255,255,0)');
-      shimmer.addColorStop(0.5, level === 'full' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.12)');
+      shimmer.addColorStop(0.5, level === 'full' ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.22)');
       shimmer.addColorStop(1, 'rgba(255,255,255,0)');
+
+      const surgeWidth = Math.max(20, bw * 0.34);
+      const surgeX = bx + (bw + surgeWidth) * ((f + 0.35) % 1) - surgeWidth;
+      const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
+      surge.addColorStop(0, 'rgba(0,0,0,0)');
+      surge.addColorStop(0.5, level === 'full' ? rgbaStr(rgb, 0.3) : rgbaStr(rgb, 0.24));
+      surge.addColorStop(1, 'rgba(0,0,0,0)');
 
       ctx.save();
       ctx.fillStyle = shimmer;
       ctx.beginPath();
       ctx.roundRect(bx, by, bw, bh, 3);
       ctx.clip();
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = surge;
       ctx.fillRect(bx, by, bw, bh);
       ctx.restore();
 

@@ -66,6 +66,7 @@ function getBorderColor(zone: HourZone, t: HourThemeColors): string {
 function getFlashLevel(zone: HourZone, hours: number): BarFlashLevel {
   if (hours <= 0) return 'none';
   if (zone === 'low') return 'full';
+  if (zone === 'warn' || zone === 'over') return 'full';
   return 'subtle';
 }
 
@@ -137,10 +138,18 @@ export const WorkHoursTodayPanel = () => {
       <div className={`${styles.panelHeader} ${styles.workHoursHeader}`}>
         <span>Work Hours Today</span>
         <div className={styles.workHoursBadges}>
-          <span className={`${styles.workHoursBadge} ${styles.badgeZero}`}>Zero Hours {zoneSummary.zero}</span>
-          <span className={`${styles.workHoursBadge} ${styles.badgeDanger}`}>Low {zoneSummary.low}</span>
-          <span className={`${styles.workHoursBadge} ${styles.badgeSuccess}`}>Healthy {zoneSummary.good}</span>
-          <span className={`${styles.workHoursBadge} ${styles.badgeOver}`}>Over 8h {zoneSummary.over}</span>
+          {zoneSummary.zero > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeZero}`}>Zero Hours {zoneSummary.zero}</span>
+          )}
+          {zoneSummary.low > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeDanger}`}>Low {zoneSummary.low}</span>
+          )}
+          {zoneSummary.good > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeSuccess}`}>Healthy {zoneSummary.good}</span>
+          )}
+          {zoneSummary.over > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeOver}`}>Over 8h {zoneSummary.over}</span>
+          )}
         </div>
       </div>
       {loading && hours.size === 0 ? (

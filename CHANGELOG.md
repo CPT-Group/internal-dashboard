@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Loading overlay centering hardening (Dev Corner + Trevor)**: Added dedicated loading-overlay sizing classes so the initial “Loading NOVA data…” state stays centered in the viewport reliably after layout/theme changes.
+- **Work Hours motion visibility (yellow/orange)**: Increased non-red pulse intensity and upgraded `warn`/`over-8h` bars to the stronger animation profile so orange/yellow states visibly animate on TVs.
+- **Work Hours Today badge visibility + stronger bar motion**: Header badges now render only when their count is non-zero (Zero/Low/Healthy/Over 8h). Increased in-bar animation visibility with stronger pulsing border width/alpha and an added tinted “surge” wave across bar bodies for clearer TV readability.
 - **Work Hours Today zero-hours alerting**: Added explicit **Zero Hours** header badge with fast red pulse and y-axis name highlighting for developers at `0h`, including pulsing red label treatment on the chart for immediate “bad state” visibility.
 - **Work Hours Today bar visuals (follow-up polish)**: Added an animated gradient sheen across all non-zero bars and switched non-red bar fills to softer ~35% opacity so cyan/green/orange read less harsh on TV. Red keeps stronger contrast for low-hours alert state.
 

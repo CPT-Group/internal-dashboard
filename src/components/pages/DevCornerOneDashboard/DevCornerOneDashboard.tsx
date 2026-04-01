@@ -55,7 +55,7 @@ export const DevCornerOneDashboard = () => {
   if (loading && kpis.openCount === 0) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.loadingWrap} role="status" aria-live="polite" aria-busy="true">
+        <div className={`${styles.loadingWrap} ${styles.loadingOverlay}`} role="status" aria-live="polite" aria-busy="true">
           <ProgressSpinner aria-hidden />
           <span>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
         </div>
