@@ -57,6 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Work Hours Today zero-hours alerting**: Added explicit **Zero Hours** header badge with fast red pulse and y-axis name highlighting for developers at `0h`, including pulsing red label treatment on the chart for immediate “bad state” visibility.
+- **Work Hours Today bar visuals (follow-up polish)**: Added an animated gradient sheen across all non-zero bars and switched non-red bar fills to softer ~35% opacity so cyan/green/orange read less harsh on TV. Red keeps stronger contrast for low-hours alert state.
+
+- **Dev Corner One — Work Hours Today redesign**: Added per-zone visual treatment with TV-safe animations: **red (low hours)** gets hazard pulse + flashing warning triangle, **yellow (4–6h)** uses subtle border pulse, **green (6–8h)** renders full green bars, and **over-8h** now uses orange styling (red reserved for low-hours attention only).
+- **Work Hours Today header status badges**: Added compact live badges (**Low / Healthy / Over 8h**) with theme-aware colors and a red pulse on low-hours state for faster at-a-glance scanning.
+
 - **Bug ticket motion polish (Dev Corner One/Two)**: Smoothed bug pulse cadence/transitions for chip/card/table treatments and added stronger TV-readable border/glow cues while preserving `prefers-reduced-motion` behavior.
 - **GitHub deploy repo cards (live state emphasis)**: Added subtle status-aware card pulses for active warning/error states so in-progress/pending/problem workflows read as “alive” at a distance.
 - **Operational component bucketing (NOVA)**: Component aggregation now includes both Jira Components and NOVA Components (`customfield_10754`) for NOVA issues, reducing “missing component” drift in Dev Corner analytics.

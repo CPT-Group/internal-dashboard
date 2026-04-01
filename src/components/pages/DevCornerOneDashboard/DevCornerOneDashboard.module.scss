@@ -97,6 +97,66 @@
   color: var(--text-color);
 }
 
+.workHoursHeader {
+  gap: 0.45rem;
+}
+
+.workHoursBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.workHoursBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  font-size: calc(var(--dev1-panel-text-sm) * 0.88);
+  font-weight: 700;
+  border: 1px solid var(--surface-border);
+  white-space: nowrap;
+}
+
+.badgeDanger {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: var(--red-500);
+  color: #fff;
+  animation: workHoursDangerBadgePulse 1.4s ease-in-out infinite;
+}
+
+.badgeZero {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: var(--red-500);
+  color: #fff;
+  animation: workHoursDangerBadgePulse 0.95s ease-in-out infinite;
+}
+
+.badgeSuccess {
+  background: rgba(34, 197, 94, 0.24);
+  border-color: var(--green-500);
+  color: #fff;
+}
+
+.badgeOver {
+  background: rgba(249, 115, 22, 0.24);
+  border-color: var(--orange-500);
+  color: #fff;
+}
+
+@keyframes workHoursDangerBadgePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  50% {
+    box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.4);
+  }
+}
+
 .panelBadges {
   display: flex;
   align-items: center;
@@ -299,6 +359,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .badgeZero,
+  .badgeDanger {
+    animation: none;
+  }
+
   .ticketChipBug {
     animation: none;
   }

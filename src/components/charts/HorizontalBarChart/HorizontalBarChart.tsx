@@ -31,6 +31,31 @@ function rgbaStr(rgb: [number, number, number], a: number): string {
   return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(2)})`;
 }
 
+function drawHazardTriangle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  color: string
+): void {
+  const h = size * 0.9;
+  const half = size / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x, y - h);
+  ctx.lineTo(x - half, y + h * 0.6);
+  ctx.lineTo(x + half, y + h * 0.6);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillRect(x - 1, y - h * 0.38, 2, h * 0.7);
+  ctx.fillRect(x - 1.2, y + h * 0.36, 2.4, 2.4);
+  ctx.restore();
+}
+
 /**
  * Horizontal bar chart with themed per-bar border colors, smooth pulsing
  * glow animation (per-bar flash levels), and optional suffix on data labels.
@@ -54,8 +79,8 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   }, []);
 
   const hasAnimation = useMemo(
-    () => (data.flashLevels ?? []).some((l) => l !== 'none'),
-    [data.flashLevels]
+    () => (data.flashLevels ?? []).some((l) => l !== 'none') || data.values.some((v) => v <= 0),
+    [data.flashLevels, data.values]
   );
 
   const applyFlash = useCallback(() => {
@@ -71,28 +96,45 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     if (phaseRef.current <= 0) { phaseRef.current = 0; dirRef.current = 1; }
     const f = phaseRef.current;
 
+    const newFills: string[] = [];
     const newBorders: string[] = [];
     const newWidths: number[] = [];
+    const hasCustomColors = Array.isArray(data.colors) && data.colors.length === borders.length;
+    const baseFills = hasCustomColors
+      ? data.colors as string[]
+      : Array.from({ length: borders.length }, () => theme?.barPrimary ?? 'rgba(36,205,197,0.82)');
 
     for (let i = 0; i < borders.length; i++) {
       const level = levels[i];
+      const fillRgb = parseRGB(baseFills[i]);
       const rgb = parseRGB(borders[i]);
 
-      if (level === 'none' || !rgb) {
+      if (!rgb) {
+        newFills.push(baseFills[i]);
+        newBorders.push(borders[i]);
+        newWidths.push(BORDER_WIDTH);
+        continue;
+      }
+
+      if (level === 'none' || !fillRgb) {
+        newFills.push(baseFills[i]);
         newBorders.push(borders[i]);
         newWidths.push(BORDER_WIDTH);
         continue;
       }
 
       if (level === 'full') {
+        newFills.push(rgbaStr(fillRgb, 0.45 + 0.5 * f));
         newBorders.push(rgbaStr(rgb, 0.1 + 0.9 * f));
         newWidths.push(BORDER_WIDTH);
       } else {
+        newFills.push(rgbaStr(fillRgb, 0.6 + 0.3 * f));
         newBorders.push(rgbaStr(rgb, 0.5 + 0.5 * f));
         newWidths.push(BORDER_WIDTH);
       }
     }
 
+    ds.backgroundColor = newFills;
     ds.borderColor = newBorders;
     ds.borderWidth = newWidths;
 
@@ -117,6 +159,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const bw = (props.x ?? 0) - bx;
       const by = (props.y ?? 0) - (props.height ?? 0) / 2;
       const bh = props.height ?? 0;
+      if (bw <= 0 || bh <= 0) continue;
 
       ctx.save();
       ctx.shadowColor = rgbaStr(rgb, 0.7 * f);
@@ -127,8 +170,31 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       ctx.roundRect(bx, by, bw, bh, 3);
       ctx.stroke();
       ctx.restore();
+
+      // Subtle animated gradient sheen so bar bodies feel alive on TV.
+      const shimmerWidth = Math.max(18, bw * 0.26);
+      const shimmerX = bx + (bw + shimmerWidth) * f - shimmerWidth;
+      const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
+      shimmer.addColorStop(0, 'rgba(255,255,255,0)');
+      shimmer.addColorStop(0.5, level === 'full' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.12)');
+      shimmer.addColorStop(1, 'rgba(255,255,255,0)');
+
+      ctx.save();
+      ctx.fillStyle = shimmer;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 3);
+      ctx.clip();
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.restore();
+
+      // Red/full bars get a blinking hazard icon near the bar end.
+      if (level === 'full' && f > 0.55) {
+        const iconX = (props.x ?? 0) - 10;
+        const iconY = props.y ?? 0;
+        drawHazardTriangle(ctx, iconX, iconY, 10, rgbaStr(rgb, 0.95));
+      }
     }
-  }, [data.flashLevels, data.borderColors]);
+  }, [data.flashLevels, data.borderColors, data.colors, theme?.barPrimary]);
 
   useEffect(() => {
     if (!hasAnimation) return;
@@ -191,12 +257,30 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
               },
               y: {
                 grid: { display: false },
-                ticks: { color: theme.text },
+                ticks: {
+                  color: (ctx: { index?: number }) => {
+                    const idx = ctx.index ?? 0;
+                    const explicit = data.labelColors?.[idx];
+                    if (explicit && explicit.trim()) {
+                      const rgb = parseRGB(explicit);
+                      if (!rgb) return explicit;
+                      const pulse = 0.45 + 0.55 * phaseRef.current;
+                      return rgbaStr(rgb, pulse);
+                    }
+
+                    if ((data.values[idx] ?? 0) <= 0) {
+                      const pulse = 0.45 + 0.55 * phaseRef.current;
+                      return `rgba(239,68,68,${pulse.toFixed(2)})`;
+                    }
+
+                    return theme.text;
+                  },
+                },
               },
             },
           }
         : null,
-    [theme, suffix]
+    [theme, suffix, data.labelColors, data.values]
   );
 
   if (!options || data.labels.length === 0) return null;

@@ -14,6 +14,8 @@ export interface HorizontalBarChartData {
   values: number[];
   colors?: string[];
   borderColors?: string[];
+  /** Optional per-label (y-axis) text colors, index-aligned with labels. */
+  labelColors?: string[];
   /** Suffix appended to data labels (e.g. "h" for hours). */
   suffix?: string;
   /** Bar indices that should pulse/flash (e.g. danger-zone values). @deprecated Use flashLevels instead. */
