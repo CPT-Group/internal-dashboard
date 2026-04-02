@@ -95,6 +95,13 @@ const SCOPED_FILTER = [
 export const JIRA_OPERATIONAL_JQL_OPEN =
   `${BOARD_FILTER} ORDER BY created DESC`;
 
+/**
+ * Limbo (Dev Corner One KPI): NOVA tickets currently in active sprint, still in To Do,
+ * and unassigned. Backlog and assigned tickets are excluded by definition.
+ */
+export const JIRA_OPERATIONAL_JQL_LIMBO =
+  `project = NOVA AND sprint in openSprints() AND status IN ("To Do", "TO DO") AND assignee IS EMPTY ORDER BY created DESC`;
+
 // ── "Landed on team" (transition-based opened) ──
 
 /** Landed on team today: CM/OPRD transitioned from New + NOVA created. */

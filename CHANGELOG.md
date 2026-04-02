@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Deploy activity progress bar theming**: Fixed PrimeReact `ProgressBar` styling selectors for the GitHub deploy cards so indeterminate bars consistently use `--github-deploy-progressbar-track-bg` and `--github-deploy-progressbar-fill` (instead of default gray/blue).
 - **TV loading state centering**: `nova-dashboard-loading` now centers fallback loaders with explicit flex alignment so loading overlays remain centered regardless of utility class availability.
 - **Closed Today KPI semantics**: Updated operational “Closed Today” query to count tickets transitioned to requester handoff statuses today (`CM: Data Team Complete`, `OPRD/NOVA: UAT`) instead of relying on `resolutiondate`, matching team workflow expectations.
+- **Limbo criteria tightened to sprint To Do unassigned only**: Limbo now uses a dedicated NOVA query (`sprint in openSprints()`, `status = To Do`, `assignee IS EMPTY`) and no longer counts CM/OPRD backlog or tickets assigned to other people.
 
 - **Landed Today / Net KPI counted non-team tickets**: `kpis.landedToday` was unfiltered (all issues from landed query), while `kpis.closedToday` filtered by `isTechOwnerNovaTeam`. This inflated Landed and Net counts with tickets assigned to non-NOVA members (case managers) or unassigned with no tech owner. Now both sides of the net calculation use `isTechOwnerNovaTeam`, dropping landed today from ~14 to ~7 NOVA-attributed.
 

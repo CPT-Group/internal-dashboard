@@ -144,6 +144,14 @@ function isDone(issue: JiraIssue): boolean {
   return issue.fields?.status?.statusCategory?.key === 'done';
 }
 
+function isNovaSprintTodoUnassigned(issue: JiraIssue): boolean {
+  if (getProjectKey(issue) !== 'NOVA') return false;
+  const status = (issue.fields?.status?.name ?? '').toLowerCase();
+  const isTodo = status === 'to do' || status === 'to-do';
+  const isUnassigned = issue.fields?.assignee == null;
+  return isTodo && isUnassigned;
+}
+
 function isInProgress(issue: JiraIssue): boolean {
   return issue.fields?.status?.statusCategory?.key === 'indeterminate';
 }
@@ -242,6 +250,8 @@ function dateStr(d: Date): string {
 
 export interface BuildOperationalAnalyticsInput {
   openIssues: JiraIssue[];
+  /** Candidate limbo tickets (NOVA sprint To Do + assignee empty), fetched by dedicated JQL. */
+  limboCandidateIssues?: JiraIssue[];
   openedTodayIssues: JiraIssue[];
   /** Issues moved to requester handoff status today (CM Data Team Complete / OPRD+NOVA UAT). */
   closedTodayIssues: JiraIssue[];
@@ -260,6 +270,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   } = input;
 
   const openIssues = filterDashboardIssues(input.openIssues);
+  const limboCandidateIssues = filterDashboardIssues(input.limboCandidateIssues ?? []);
   const openedTodayIssues = filterDashboardIssues(input.openedTodayIssues);
   const closedTodayIssues = filterDashboardIssues(input.closedTodayIssues);
   const landedLast14 = filterDashboardIssues(input.landedLast14);
@@ -271,7 +282,7 @@ export function buildOperationalAnalytics(input: BuildOperationalAnalyticsInput)
   const landedToday = openedTodayIssues.filter(isTechOwnerNovaTeam).length;
   const closedToday = closedTodayIssues.filter(isTechOwnerNovaTeam).length;
   const netChangeToday = landedToday - closedToday;
-  const limboIssues = open.filter((i) => !isTechOwnerNovaTeam(i));
+  const limboIssues = limboCandidateIssues.filter((i) => !isDone(i) && isNovaSprintTodoUnassigned(i));
 
   const ages = open
     .filter(isTechOwnerNovaTeam)
