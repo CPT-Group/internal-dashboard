@@ -92,7 +92,9 @@ function getBorderColor(zone: HourZone, t: HourThemeColors): string {
 function getFlashLevel(zone: HourZone, hours: number): BarFlashLevel {
   if (hours <= 0) return 'none';
   if (zone === 'critical' || zone === 'super') return 'full';
-  if (zone === 'warn' || zone === 'high') return 'full';
+  if (zone === 'warn') return 'full';
+  if (zone === 'high') return 'intense';
+  if (zone === 'ahead') return 'medium';
   return 'subtle';
 }
 

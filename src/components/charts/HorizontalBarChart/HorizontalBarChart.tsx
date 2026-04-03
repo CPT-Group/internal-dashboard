@@ -64,6 +64,25 @@ function drawHazardTriangle(
   ctx.restore();
 }
 
+function pulseForPhase01(phase01: number): number {
+  return 0.5 - 0.5 * Math.cos(phase01 * Math.PI * 2);
+}
+
+function speedForLevel(level: BarFlashLevel): number {
+  switch (level) {
+    case 'full':
+      return 1.55;
+    case 'intense':
+      return 1.3;
+    case 'medium':
+      return 1.1;
+    case 'subtle':
+      return 0.95;
+    default:
+      return 1;
+  }
+}
+
 /**
  * Horizontal bar chart with themed per-bar border colors, smooth pulsing
  * glow animation (per-bar flash levels), and optional suffix on data labels.
@@ -72,7 +91,6 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
   const chartRef = useRef<Chart>(null);
   const phaseRef = useRef(0);
-  const dirRef = useRef(1);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -100,10 +118,9 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     const borders = data.borderColors;
     if (!ds || !levels?.length || !borders?.length) return;
 
-    phaseRef.current += STEP * dirRef.current;
-    if (phaseRef.current >= 1) { phaseRef.current = 1; dirRef.current = -1; }
-    if (phaseRef.current <= 0) { phaseRef.current = 0; dirRef.current = 1; }
-    const f = phaseRef.current;
+    phaseRef.current += STEP;
+    if (phaseRef.current > 1) phaseRef.current -= 1;
+    const globalPhase = phaseRef.current;
 
     const newFills: string[] = [];
     const newBorders: string[] = [];
@@ -117,6 +134,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const level = levels[i];
       const fillRgb = parseRGB(baseFills[i]);
       const rgb = parseRGB(borders[i]);
+      const f = pulseForPhase01((globalPhase * speedForLevel(level)) % 1);
 
       if (!rgb) {
         newFills.push(baseFills[i]);
@@ -158,8 +176,13 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       if (!bar) continue;
       const rgb = parseRGB(borders[i]);
       if (!rgb) continue;
+      const f = pulseForPhase01((globalPhase * speedForLevel(level)) % 1);
 
-      const maxBlur = level === 'full' ? 14 : 5;
+      const maxBlur =
+        level === 'full' ? 14
+          : level === 'intense' ? 10
+            : level === 'medium' ? 8
+              : 5;
       const blur = maxBlur * f;
       if (blur < 0.5) continue;
 

@@ -2,8 +2,8 @@
  * Data types for horizontal bar charts (backlog by component, aging buckets, work hours, etc.).
  */
 
-/** Per-bar flash behavior: none (static), subtle (small shadow pulse), full (border + glow pulse). */
-export type BarFlashLevel = 'none' | 'subtle' | 'full';
+/** Per-bar flash behavior from muted to strongest. */
+export type BarFlashLevel = 'none' | 'subtle' | 'medium' | 'intense' | 'full';
 
 /**
  * Generic horizontal bar chart: one label per bar, one value per bar.
