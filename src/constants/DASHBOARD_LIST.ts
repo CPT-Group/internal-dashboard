@@ -59,4 +59,11 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     icon: 'pi pi-github',
     enabled: true,
   },
+  {
+    title: 'Website Health',
+    description: 'Interactive / production DB analytics (in development)',
+    route: '/website-health',
+    icon: 'pi pi-heart',
+    enabled: true,
+  },
 ];

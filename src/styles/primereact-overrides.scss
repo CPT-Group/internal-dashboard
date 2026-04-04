@@ -282,6 +282,50 @@
   box-shadow: var(--focus-ring) !important;
 }
 
+// --- Dropdown / Overlay controls ---
+.p-dropdown,
+.p-multiselect {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--surface-border) !important;
+  color: var(--text-color) !important;
+}
+.p-dropdown .p-dropdown-label,
+.p-multiselect .p-multiselect-label {
+  color: var(--text-color) !important;
+}
+.p-dropdown .p-dropdown-trigger,
+.p-multiselect .p-multiselect-trigger {
+  color: var(--text-color-secondary) !important;
+}
+.p-dropdown:not(.p-disabled):hover,
+.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--primary-color) !important;
+}
+.p-dropdown:not(.p-disabled).p-focus,
+.p-multiselect:not(.p-disabled).p-focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: var(--focus-ring) !important;
+}
+.p-dropdown-panel,
+.p-multiselect-panel {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--surface-border) !important;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+  color: var(--text-color) !important;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--surface-hover) !important;
+}
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight {
+  background: var(--highlight-bg) !important;
+  color: var(--text-color) !important;
+}
+
 // --- Skeleton ---
 .p-skeleton {
   background-color: var(--surface-c) !important;

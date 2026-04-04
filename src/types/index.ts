@@ -6,3 +6,4 @@ export * from './api/ApiResponse';
 export * from './jira';
 export * from './github';
 export * from './charts';
+export * from './websiteHealth';

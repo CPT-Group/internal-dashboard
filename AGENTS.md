@@ -136,10 +136,12 @@ NOVA tickets older than 14 days with no recent updates should be closed periodic
 ## Dev environment
 
 - **Install**: `npm install`
-- **Env**: Copy or create `.env.local` for any required env vars (e.g. JIRA/API keys if used). Do not commit secrets.
+- **Env**: Copy or create `.env.local` for any required env vars (e.g. JIRA/API keys if used). Do not commit secrets. Optional **SQL Server** keys (`DB_*` for CPT2K16, `PROD_DB_*` for interactive-site prod host **10.0.0.5**) match **slack-bot-manager** naming for future Website Health / read-only APIs; values live only in `.env.local`.
+- **Website Health env**: Optional `WEBSITE_HEALTH_SITE_MAP_JSON` (`[{ "siteKey": "...", "websiteDbName": "...", "cleanClaimsDbName": "..." }]`) for multi-site checks; optional `WEBSITE_HEALTH_DEFAULT_2K16_DB` fallback and `WEBSITE_HEALTH_TEAMS_WEBHOOK_URL` for discrepancy-only Teams alerts.
 - **Dev server**: `npm run dev` — runs build-time scripts then starts Next.js on port **3333**.
 - **Build**: `npm run build` — same scripts then production build.
 - **Lint**: `npm run lint` (ESLint; type-aware rules on `src/**`).
+- **SQL connectivity check**: `npm run test:sql` — loads `.env.local` and probes `DB_*` (CPT2K16) and `PROD_DB_*` (interactive-site prod) with a read-only query; run from a machine/VPN that can reach both hosts.
 
 Do **not** run `next dev` (or `next build`) directly without the scripts; slide lists and other generated data can be stale.
 
@@ -167,6 +169,11 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 ## TV routes and dashboards
 
 - **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `DevCornerTwoDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; `github-activity` → `GithubActivityDashboard`. Route slugs match the dashboard/person name.
+- **Website Health**: `/website-health` is intentionally **not a TV dashboard**. It is the only planned mobile-first/responsive dashboard for desktop/laptop/phone usage.
+- **Website Health data intent**: read-only discrepancy checks between website `Submissions` on `10.0.0.5` (`DateReceived IS NOT NULL`) and mapped 2K16 `CleanClaims` rows; downloader misses are reported as discrepancies.
+- **Website Health API**: `GET /api/website-health?sinceDays=...` for scan summaries, `POST /api/website-health` (`{ sinceDays, notify }`) for on-demand scan + optional Teams alert (refreshes active-case list), and `GET /api/website-health/site?siteKey=...&sinceDays=...` for on-demand missing-row details.
+- **Website Health active cases source**: `CPTMaster.dbo.OCPAutomation` (`Active = 1`) on CPT2K16. Use `CaseName` for UI label, `WebServerDBName` for website DB (`10.0.0.5`), and `SQLName` for 2K16 clean-claims DB. Do **not** assume `_SQL` suffix derivation only; active-case exceptions exist.
+- **Website Health active-case caching**: in-memory TTL cache for active mappings (`WEBSITE_HEALTH_ACTIVE_CASES_TTL_MIN`, default 20). Optional override DB name: `WEBSITE_HEALTH_ACTIVE_CASES_DATABASE` (default `CPTMaster`).
 
 ### GitHub webhooks (receiver + TV)
 

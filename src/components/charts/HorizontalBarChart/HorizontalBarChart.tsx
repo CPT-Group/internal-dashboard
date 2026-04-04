@@ -71,15 +71,86 @@ function pulseForPhase01(phase01: number): number {
 function speedForLevel(level: BarFlashLevel): number {
   switch (level) {
     case 'full':
-      return 1.55;
+      return 1.9;
     case 'intense':
-      return 1.3;
+      return 1.5;
     case 'medium':
-      return 1.1;
+      return 1.25;
     case 'subtle':
-      return 0.95;
+      return 1.05;
     default:
       return 1;
+  }
+}
+
+interface FlashProfile {
+  fillMin: number;
+  fillRange: number;
+  borderMin: number;
+  borderRange: number;
+  widthBoost: number;
+  maxBlur: number;
+  shimmerPeak: number;
+  surgePeak: number;
+}
+
+function profileForLevel(level: BarFlashLevel): FlashProfile {
+  switch (level) {
+    case 'full':
+      return {
+        fillMin: 0.5,
+        fillRange: 0.5,
+        borderMin: 0.25,
+        borderRange: 0.75,
+        widthBoost: 1.6,
+        maxBlur: 16,
+        shimmerPeak: 0.32,
+        surgePeak: 0.38,
+      };
+    case 'intense':
+      return {
+        fillMin: 0.42,
+        fillRange: 0.5,
+        borderMin: 0.22,
+        borderRange: 0.7,
+        widthBoost: 1.2,
+        maxBlur: 12,
+        shimmerPeak: 0.26,
+        surgePeak: 0.3,
+      };
+    case 'medium':
+      return {
+        fillMin: 0.38,
+        fillRange: 0.44,
+        borderMin: 0.18,
+        borderRange: 0.57,
+        widthBoost: 0.9,
+        maxBlur: 9,
+        shimmerPeak: 0.22,
+        surgePeak: 0.24,
+      };
+    case 'subtle':
+      return {
+        fillMin: 0.34,
+        fillRange: 0.34,
+        borderMin: 0.16,
+        borderRange: 0.42,
+        widthBoost: 0.55,
+        maxBlur: 6,
+        shimmerPeak: 0.18,
+        surgePeak: 0.18,
+      };
+    default:
+      return {
+        fillMin: 0.35,
+        fillRange: 0.2,
+        borderMin: 0.2,
+        borderRange: 0.2,
+        widthBoost: 0,
+        maxBlur: 4,
+        shimmerPeak: 0.12,
+        surgePeak: 0.12,
+      };
   }
 }
 
@@ -135,6 +206,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const fillRgb = parseRGB(baseFills[i]);
       const rgb = parseRGB(borders[i]);
       const f = pulseForPhase01((globalPhase * speedForLevel(level)) % 1);
+      const profile = profileForLevel(level);
 
       if (!rgb) {
         newFills.push(baseFills[i]);
@@ -150,15 +222,9 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         continue;
       }
 
-      if (level === 'full') {
-        newFills.push(rgbaStr(fillRgb, 0.45 + 0.5 * f));
-        newBorders.push(rgbaStr(rgb, 0.1 + 0.9 * f));
-        newWidths.push(BORDER_WIDTH + 1.1 * f);
-      } else {
-        newFills.push(rgbaStr(fillRgb, 0.35 + 0.55 * f));
-        newBorders.push(rgbaStr(rgb, 0.2 + 0.75 * f));
-        newWidths.push(BORDER_WIDTH + 1.0 * f);
-      }
+      newFills.push(rgbaStr(fillRgb, profile.fillMin + profile.fillRange * f));
+      newBorders.push(rgbaStr(rgb, profile.borderMin + profile.borderRange * f));
+      newWidths.push(BORDER_WIDTH + profile.widthBoost * f);
     }
 
     ds.backgroundColor = newFills;
@@ -177,13 +243,9 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const rgb = parseRGB(borders[i]);
       if (!rgb) continue;
       const f = pulseForPhase01((globalPhase * speedForLevel(level)) % 1);
+      const profile = profileForLevel(level);
 
-      const maxBlur =
-        level === 'full' ? 14
-          : level === 'intense' ? 10
-            : level === 'medium' ? 8
-              : 5;
-      const blur = maxBlur * f;
+      const blur = profile.maxBlur * f;
       if (blur < 0.5) continue;
 
       const props = bar.getProps(['x', 'y', 'width', 'height', 'base'], true);
@@ -208,14 +270,14 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const shimmerX = bx + (bw + shimmerWidth) * f - shimmerWidth;
       const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
       shimmer.addColorStop(0, 'rgba(255,255,255,0)');
-      shimmer.addColorStop(0.5, level === 'full' ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.22)');
+      shimmer.addColorStop(0.5, `rgba(255,255,255,${(profile.shimmerPeak * f).toFixed(2)})`);
       shimmer.addColorStop(1, 'rgba(255,255,255,0)');
 
       const surgeWidth = Math.max(20, bw * 0.34);
       const surgeX = bx + (bw + surgeWidth) * ((f + 0.35) % 1) - surgeWidth;
       const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
       surge.addColorStop(0, 'rgba(0,0,0,0)');
-      surge.addColorStop(0.5, level === 'full' ? rgbaStr(rgb, 0.3) : rgbaStr(rgb, 0.24));
+      surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * f));
       surge.addColorStop(1, 'rgba(0,0,0,0)');
 
       ctx.save();

@@ -36,6 +36,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Website Health**: Home grid tile and blank route `/website-health` (placeholder for future analytics).
+- **Local SQL env**: `.env.local` may include `DB_*` (CPT2K16, aligned with slack-bot-manager) and `PROD_DB_*` (interactive-site **10.0.0.5**) for future DB-backed features — not committed.
+- **`npm run test:sql`**: Dev script `scripts/test-sql-connections.cjs` runs a read-only `SELECT @@SERVERNAME, DB_NAME(), GETDATE()` against both pools (requires `mssql` + `dotenv` devDependencies).
+- **Website Health planning doc**: Added `docs/website-health-dashboard-plan.md` outlining responsive UX, discrepancy logic (`Submissions` vs `CleanClaims`), phased delivery, and Teams alert behavior for discrepancy-only notifications.
+- **Website Health Teams env key**: Added local `.env.local` key `WEBSITE_HEALTH_TEAMS_WEBHOOK_URL` for discrepancy alerts.
+- **Website Health API + scanner**: Added read-only scanner service (`src/services/websiteHealth/`) and `GET/POST /api/website-health` for discrepancy checks between `10.0.0.5` `Submissions` (`DateReceived IS NOT NULL`) and mapped 2K16 `CleanClaims` records.
+- **Website Health responsive UI**: Replaced placeholder `/website-health` page with a mobile-first dashboard (scope picker, run button, KPI cards, per-site status table, and missing-item drilldown).
+- **Website Health source-of-truth docs**: Deep-dive documented `CPTMaster.dbo.OCPAutomation` (`Active` flag, `CaseName`, `WebServerDBName`, `SQLName`) as active-site source; added guidance to use `SQLName` directly instead of assuming `_SQL` suffix for all active cases.
+- **Website Health active-site mapping**: Scanner now loads active cases dynamically from `CPTMaster.dbo.OCPAutomation` (`Active = 1`) with in-memory TTL caching; `POST /api/website-health` refreshes the active list before scan and `GET` uses cache when warm.
+- **Website Health details dialog**: Added on-demand per-site details endpoint (`GET /api/website-health/site`) and UI dialog with loading state; “View Missing” now fetches rows for the selected case and shows `Submission ID`, `Date Received`, and `Email`.
+- **Website Health defaults / theming**: Default scope is now **All submissions**; added PrimeReact `Dropdown`/`MultiSelect` theme overrides in `primereact-overrides.scss` so selectors follow app theme tokens.
+- **Website Health matcher fix (schema-aware)**: CleanClaims matching now adapts per case schema — prefer `SubmissionId`-style columns when present, otherwise fall back to normalized `ConfirmationNo` matching with online-flag filtering (`ClaimFiledOnline`/`SubmittedOnline` when available). This fixes false all-zero/all-error results on cases where `SubmissionId` columns do not exist.
+- **Website Health UX polish**: Replaced persistent scan/error banners with user-friendly toast notifications, tightened KPI card spacing for denser layout, renamed KPI label to **Active Sites Checked**, and formatted missing KPI as `total [impacted sites]` (e.g., `195 [4]`).
+
 ### Fixed
 
 - **Dev Corner Two theme parity (timeline/actions panes)**: Replaced hardcoded deploy-pane backgrounds with theme tokens (`--surface-card`) so the right timeline panel and action rows now follow the active theme instead of appearing near-black on some screens.
@@ -65,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Work Hours Today target line opacity tweak**: Increased target marker line opacity from **75%** to **85%** for better visibility at TV viewing distance (label remains full opacity).
 - **Work Hours Today target layering**: Adjusted marker rendering order so the vertical target line is drawn beneath bars/data labels, preventing it from crossing over hour values on bar text.
 - **Work Hours Today high-performance animation ladder**: Added stepped animation intensity for positive over-target zones: `100–125%` uses a muted medium pulse, `125–150%` uses a stronger intense pulse, and `150%+` remains the brightest/craziest full pulse. Animation cadence now scales by level so higher performance zones pulse faster.
+- **Work Hours animation visibility tuning (TV)**: Increased per-tier pulse visibility for legacy TV readability by boosting border-width modulation, glow blur, shimmer/ surge amplitude, and tier-specific speed scaling while preserving `150%+` as the strongest effect.
 - **Dev Corner One — Team Activity layout refresh**: Removed the outer section header/title row (`NOVA: In Progress...`) and wrapper-card header treatment to reclaim vertical space and eliminate the nested-card/double-border feel; team member cards now render directly in the bottom section.
 - **Dev Corner One — Team card readability**: Increased team member name size/weight and boosted in-progress/open counter contrast and badge weight for better distance readability across themes.
 - **Dev Corner One — Team ticket chip opacity tuning**: Updated highlighted ticket chips to match the softer Work Hours style — NOVA/cyan and bug/red chip backgrounds now use ~35% alpha while keeping semantic border colors and alert emphasis.
