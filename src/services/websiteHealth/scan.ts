@@ -128,6 +128,10 @@ async function fetchSubmittedRows(
       TRY_CONVERT(nvarchar(320), s.Email) AS email
     FROM ${db}.dbo.Submissions s
     WHERE s.DateReceived IS NOT NULL
+      AND (
+        s.Email IS NULL
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(320), s.Email)))) NOT LIKE '%@cptgroup.com%'
+      )
       AND (@sinceDays IS NULL OR s.DateReceived >= DATEADD(DAY, -@sinceDays, GETDATE()))
     ORDER BY s.DateReceived DESC;
   `);

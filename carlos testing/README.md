@@ -1,0 +1,39 @@
+# Carlos Testing - Website Health Analysis Pack
+
+This folder is a practical, copy/paste-friendly guide for validating Website Health data comparisons without reading application code.
+
+## Goal
+
+Help you answer:
+
+1. What is truly missing in `CleanClaims`?
+2. Which differences are expected (cutoff windows, internal test traffic)?
+3. Which differences are likely data quality issues that need root-cause work?
+
+## What is included
+
+- `comparison-methods.md` - plain-language explanation of each comparison method and when to use it.
+- `known-discrepancies-and-rules.md` - current business rules, known edge cases, and interpretation guidance.
+- `sql/00-setup-and-mapping.sql` - find the case mapping and verify database names.
+- `sql/10-confirmation-based-check.sql` - confirmation-number method (business-facing truth check).
+- `sql/20-id-based-check.sql` - `MailingListID`/ID linkage check (pipeline/technical check).
+- `sql/30-reconciliation-breakdown.sql` - side-by-side breakdown to explain why counts differ.
+
+## Quick start (recommended order)
+
+1. Run `sql/00-setup-and-mapping.sql`.
+2. Run `sql/10-confirmation-based-check.sql`.
+3. Run `sql/20-id-based-check.sql`.
+4. Run `sql/30-reconciliation-breakdown.sql`.
+5. Use `known-discrepancies-and-rules.md` to classify results as:
+   - expected,
+   - data quality concern,
+   - process/pipeline mapping concern.
+
+## Important assumptions used in these scripts
+
+- Source scope only includes submissions where `DateReceived IS NOT NULL`.
+- Internal test submissions are excluded when source email contains `@cptgroup.com`.
+- CleanClaims side uses online flags when present (`ClaimFiledOnline` / equivalent).
+- If a case has a business cutoff date, apply cutoff on `Submissions.DateReceived`.
+
