@@ -109,25 +109,25 @@ function profileForLevel(level: BarFlashLevel): FlashProfile {
       };
     case 'intense':
       return {
-        fillMin: 0.42,
-        fillRange: 0.5,
-        borderMin: 0.22,
-        borderRange: 0.7,
-        widthBoost: 1.2,
-        maxBlur: 12,
-        shimmerPeak: 0.26,
-        surgePeak: 0.3,
+        fillMin: 0.46,
+        fillRange: 0.52,
+        borderMin: 0.28,
+        borderRange: 0.72,
+        widthBoost: 1.35,
+        maxBlur: 13,
+        shimmerPeak: 0.3,
+        surgePeak: 0.34,
       };
     case 'medium':
       return {
-        fillMin: 0.38,
-        fillRange: 0.44,
-        borderMin: 0.18,
-        borderRange: 0.57,
-        widthBoost: 0.9,
-        maxBlur: 9,
-        shimmerPeak: 0.22,
-        surgePeak: 0.24,
+        fillMin: 0.42,
+        fillRange: 0.46,
+        borderMin: 0.24,
+        borderRange: 0.62,
+        widthBoost: 1.05,
+        maxBlur: 10,
+        shimmerPeak: 0.26,
+        surgePeak: 0.28,
       };
     case 'subtle':
       return {
@@ -205,7 +205,8 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const level = levels[i];
       const fillRgb = parseRGB(baseFills[i]);
       const rgb = parseRGB(borders[i]);
-      const f = pulseForPhase01((globalPhase * speedForLevel(level)) % 1);
+      const sweep = (globalPhase * speedForLevel(level)) % 1;
+      const pulse = pulseForPhase01(sweep);
       const profile = profileForLevel(level);
 
       if (!rgb) {
@@ -222,9 +223,9 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         continue;
       }
 
-      newFills.push(rgbaStr(fillRgb, profile.fillMin + profile.fillRange * f));
-      newBorders.push(rgbaStr(rgb, profile.borderMin + profile.borderRange * f));
-      newWidths.push(BORDER_WIDTH + profile.widthBoost * f);
+      newFills.push(rgbaStr(fillRgb, profile.fillMin + profile.fillRange * pulse));
+      newBorders.push(rgbaStr(rgb, profile.borderMin + profile.borderRange * pulse));
+      newWidths.push(BORDER_WIDTH + profile.widthBoost * pulse);
     }
 
     ds.backgroundColor = newFills;
@@ -242,10 +243,11 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       if (!bar) continue;
       const rgb = parseRGB(borders[i]);
       if (!rgb) continue;
-      const f = pulseForPhase01((globalPhase * speedForLevel(level)) % 1);
+      const sweep = (globalPhase * speedForLevel(level)) % 1;
+      const pulse = pulseForPhase01(sweep);
       const profile = profileForLevel(level);
 
-      const blur = profile.maxBlur * f;
+      const blur = profile.maxBlur * pulse;
       if (blur < 0.5) continue;
 
       const props = bar.getProps(['x', 'y', 'width', 'height', 'base'], true);
@@ -256,28 +258,28 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       if (bw <= 0 || bh <= 0) continue;
 
       ctx.save();
-      ctx.shadowColor = rgbaStr(rgb, 0.7 * f);
+      ctx.shadowColor = rgbaStr(rgb, 0.75 * pulse);
       ctx.shadowBlur = blur;
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = rgbaStr(rgb, 0.4 * f);
+      ctx.strokeStyle = rgbaStr(rgb, 0.45 * pulse);
       ctx.beginPath();
       ctx.roundRect(bx, by, bw, bh, 3);
       ctx.stroke();
       ctx.restore();
 
       // Subtle animated gradient sheen so bar bodies feel alive on TV.
-      const shimmerWidth = Math.max(18, bw * 0.26);
-      const shimmerX = bx + (bw + shimmerWidth) * f - shimmerWidth;
+      const shimmerWidth = Math.max(20, bw * 0.34);
+      const shimmerX = bx + (bw + shimmerWidth) * sweep - shimmerWidth;
       const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
       shimmer.addColorStop(0, 'rgba(255,255,255,0)');
-      shimmer.addColorStop(0.5, `rgba(255,255,255,${(profile.shimmerPeak * f).toFixed(2)})`);
+      shimmer.addColorStop(0.5, `rgba(255,255,255,${(profile.shimmerPeak * pulse).toFixed(2)})`);
       shimmer.addColorStop(1, 'rgba(255,255,255,0)');
 
-      const surgeWidth = Math.max(20, bw * 0.34);
-      const surgeX = bx + (bw + surgeWidth) * ((f + 0.35) % 1) - surgeWidth;
+      const surgeWidth = Math.max(22, bw * 0.4);
+      const surgeX = bx + (bw + surgeWidth) * ((sweep + 0.35) % 1) - surgeWidth;
       const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
       surge.addColorStop(0, 'rgba(0,0,0,0)');
-      surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * f));
+      surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * pulse));
       surge.addColorStop(1, 'rgba(0,0,0,0)');
 
       ctx.save();
@@ -291,7 +293,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       ctx.restore();
 
       // Red/full bars get a blinking hazard icon near the bar end.
-      if (level === 'full' && f > 0.55) {
+      if (level === 'full' && pulse > 0.55) {
         const iconX = (props.x ?? 0) - 10;
         const iconY = props.y ?? 0;
         drawHazardTriangle(ctx, iconX, iconY, 10, rgbaStr(rgb, 0.95));

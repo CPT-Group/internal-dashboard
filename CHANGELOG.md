@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Website Health UX polish**: Replaced persistent scan/error banners with user-friendly toast notifications, tightened KPI card spacing for denser layout, renamed KPI label to **Active Sites Checked**, and formatted missing KPI as `total [impacted sites]` (e.g., `195 [4]`).
 - **Website Health Teams alert formatting**: Updated discrepancy notifications to a table-first markdown layout with KPI rows (scope, active sites checked, submitted online, missing with impacted-site count, last run) plus per-site detail table for easier channel scanning.
 - **Website Health FK priority update**: Matching now prioritizes `CleanClaims.MailingListID` against `Submissions.ID` (canonical relationship from downloader flow), with `SubmissionId` and `ConfirmationNo` fallbacks for nonstandard schemas.
+- **Dialog theme parity**: Added PrimeReact `Dialog` and dialog-mask overrides in `primereact-overrides.scss` so Website Health details modal follows active theme tokens in both light and dark modes (header/content/footer/close icon states).
 
 ### Fixed
 
