@@ -12,6 +12,7 @@ Help you answer:
 
 ## What is included
 
+- `env-setup.md` - required `.env.local` variable names, server targets, and access checklist (no secrets).
 - `comparison-methods.md` - plain-language explanation of each comparison method and when to use it.
 - `known-discrepancies-and-rules.md` - current business rules, known edge cases, and interpretation guidance.
 - `sql/00-setup-and-mapping.sql` - find the case mapping and verify database names.
@@ -21,11 +22,12 @@ Help you answer:
 
 ## Quick start (recommended order)
 
-1. Run `sql/00-setup-and-mapping.sql`.
-2. Run `sql/10-confirmation-based-check.sql`.
-3. Run `sql/20-id-based-check.sql`.
-4. Run `sql/30-reconciliation-breakdown.sql`.
-5. Use `known-discrepancies-and-rules.md` to classify results as:
+1. Complete `.env.local` using `env-setup.md`.
+2. Run `sql/00-setup-and-mapping.sql`.
+3. Run `sql/10-confirmation-based-check.sql`.
+4. Run `sql/20-id-based-check.sql`.
+5. Run `sql/30-reconciliation-breakdown.sql`.
+6. Use `known-discrepancies-and-rules.md` to classify results as:
    - expected,
    - data quality concern,
    - process/pipeline mapping concern.
