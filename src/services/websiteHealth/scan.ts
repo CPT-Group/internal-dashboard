@@ -156,7 +156,18 @@ async function discoverCleanClaimsColumns(
 
   const columns = new Set(columnsRs.recordset.map((row) => row.column_name.toLowerCase()));
 
-  const idCandidates = ['SubmissionId', 'SubmissionID', 'Submission_Id', 'SubmissionsId'];
+  // Canonical relationship from downloader flows:
+  // Submissions.ID (website DB) -> CleanClaims.MailingListID (2K16 DB).
+  // Keep SubmissionId-style fallbacks for legacy/nonstandard case schemas.
+  const idCandidates = [
+    'MailingListID',
+    'MailingListId',
+    'MailingList_ID',
+    'SubmissionId',
+    'SubmissionID',
+    'Submission_Id',
+    'SubmissionsId',
+  ];
   const confirmationCandidates = ['ConfirmationNo', 'ConfirmationNumber', 'Confirmation'];
   const flagCandidates = ['SubmittedOnline', 'IsSubmittedOnline'];
   const claimFiledOnlineCandidates = ['ClaimFiledOnline', 'FiledOnline', 'SubmittedOnline', 'IsSubmittedOnline'];
@@ -189,7 +200,7 @@ async function discoverCleanClaimsColumns(
   }
 
   throw new Error(
-    `Unable to find SubmissionId or ConfirmationNo columns on ${cleanClaimsDbName}.dbo.CleanClaims`
+    `Unable to find MailingListID/SubmissionId or ConfirmationNo columns on ${cleanClaimsDbName}.dbo.CleanClaims`
   );
 }
 

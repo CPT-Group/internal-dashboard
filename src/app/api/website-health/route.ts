@@ -36,28 +36,35 @@ function parseBodyNotify(body: unknown): boolean {
 }
 
 function buildAlertText(summary: WebsiteHealthSummaryResponse['summary']): string {
-  const top = summary.results
+  const impactedSites = summary.results.filter((r) => r.missingCount > 0).length;
+  const scope = summary.sinceDays === null ? 'All submitted records' : `Last ${summary.sinceDays} day(s)`;
+  const topRows = summary.results
     .filter((r) => r.missingCount > 0 || r.status === 'error')
     .sort((a, b) => b.missingCount - a.missingCount)
-    .slice(0, 8)
-    .map((r) => {
-      const issuePart =
-        r.status === 'error'
-          ? `error: ${r.errorMessage ?? 'unknown'}`
-          : `missing: ${r.missingCount} / submitted: ${r.submittedOnlineCount}`;
-      return `- ${r.siteKey} (${r.websiteDbName} -> ${r.cleanClaimsDbName}) ${issuePart}`;
-    });
+    .slice(0, 10);
+
+  const detailLines = topRows.map((r) => {
+    const status = r.status === 'error' ? 'ERROR' : 'WARNING';
+    const site = r.siteKey.replace(/\|/g, '/');
+    const error = r.errorMessage ? ` (${r.errorMessage.replace(/\|/g, '/')})` : '';
+    return `| ${site} | ${r.missingCount} | ${r.submittedOnlineCount} | ${r.matchedInCleanClaimsCount} | ${status}${error} |`;
+  });
 
   return [
-    '[Website Health] Discrepancies detected',
-    `Run: ${summary.runAt}`,
-    `Scope: ${summary.sinceDays === null ? 'all submitted records' : `last ${summary.sinceDays} day(s)`}`,
-    `Sites checked: ${summary.totalSitesChecked}`,
-    `Sites with issues: ${summary.sitesWithIssues}`,
-    `Total missing: ${summary.totalMissingInCleanClaims}`,
+    '## WEBSITE HEALTH ALERT ⚠️',
     '',
-    ...top,
-  ].join('\n');
+    '| Metric | Value |',
+    '|---|---|',
+    `| Scope | ${scope} |`,
+    `| Active Sites Checked | ${summary.totalSitesChecked} |`,
+    `| Submitted Online | ${summary.totalSubmittedOnline} |`,
+    `| Missing in CleanClaims | ${summary.totalMissingInCleanClaims} [${impactedSites}] |`,
+    `| Last Run | ${summary.runAt} |`,
+    '',
+    '| Site | Missing | Submitted | Matched | Status |',
+    '|---|---:|---:|---:|---|',
+    ...detailLines,
+  ].join('\n').slice(0, 3900);
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
