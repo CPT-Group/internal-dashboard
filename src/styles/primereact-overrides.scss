@@ -326,6 +326,45 @@
   color: var(--text-color) !important;
 }
 
+// --- Dialog ---
+.p-dialog-mask {
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+.p-dialog {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--surface-border) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--card-shadow, 0 2px 10px rgba(0, 0, 0, 0.3)) !important;
+}
+.p-dialog .p-dialog-header {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--surface-border) !important;
+}
+.p-dialog .p-dialog-header .p-dialog-title {
+  color: var(--text-color) !important;
+}
+.p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: var(--text-color-secondary) !important;
+}
+.p-dialog .p-dialog-header .p-dialog-header-icon:hover {
+  background: var(--surface-hover) !important;
+  color: var(--text-color) !important;
+}
+.p-dialog .p-dialog-header .p-dialog-header-icon:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+.p-dialog .p-dialog-content {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+}
+.p-dialog .p-dialog-footer {
+  background: var(--surface-card) !important;
+  color: var(--text-color) !important;
+  border-top: 1px solid var(--surface-border) !important;
+}
+
 // --- Skeleton ---
 .p-skeleton {
   background-color: var(--surface-c) !important;
