@@ -7,8 +7,10 @@ Use this as a checklist before calling anything "missing."
 Treat source records as in-scope only when:
 
 1. `DateReceived IS NOT NULL`
-2. Email does **not** contain `@cptgroup.com` (internal testing traffic excluded)
-3. Optional case cutoff rules are applied when agreed by business (example: `DateReceived <= 2025-10-20`)
+2. `DateReceived` is **before today** (exclude same-day submissions because downloader runs overnight)
+3. Submission ID is **not** in test range `2000000` through `2000039`
+4. Email does **not** contain `@cptgroup.com` (internal testing traffic excluded)
+5. Optional case cutoff rules are applied when agreed by business (example: `DateReceived <= 2025-10-20`)
 
 ## Current target-side rules
 

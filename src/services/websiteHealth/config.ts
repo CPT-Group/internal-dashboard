@@ -4,6 +4,7 @@ interface JsonSiteMappingShape {
   siteKey?: string;
   websiteDbName?: string;
   cleanClaimsDbName?: string;
+  deadlineDate?: string | null;
 }
 
 function parseJsonSiteMappings(raw: string): WebsiteHealthSiteMapping[] {
@@ -29,12 +30,18 @@ function parseJsonSiteMappings(raw: string): WebsiteHealthSiteMapping[] {
     const websiteDbName = typeof shape.websiteDbName === 'string' ? shape.websiteDbName.trim() : '';
     const cleanClaimsDbName =
       typeof shape.cleanClaimsDbName === 'string' ? shape.cleanClaimsDbName.trim() : '';
+    const deadlineDate =
+      typeof shape.deadlineDate === 'string'
+        ? shape.deadlineDate.trim() || null
+        : shape.deadlineDate === null
+          ? null
+          : null;
 
     if (!siteKey || !websiteDbName || !cleanClaimsDbName) {
       continue;
     }
 
-    mappings.push({ siteKey, websiteDbName, cleanClaimsDbName });
+    mappings.push({ siteKey, websiteDbName, cleanClaimsDbName, deadlineDate });
   }
 
   return mappings;

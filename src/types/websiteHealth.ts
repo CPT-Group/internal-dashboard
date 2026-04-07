@@ -4,6 +4,7 @@ export interface WebsiteHealthSiteMapping {
   siteKey: string;
   websiteDbName: string;
   cleanClaimsDbName: string;
+  deadlineDate?: string | null;
 }
 
 export interface WebsiteHealthMissingItem {

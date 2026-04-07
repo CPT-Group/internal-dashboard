@@ -109,11 +109,13 @@ function qIdentifier(name: string): string {
 async function fetchSubmittedRows(
   websitePool: ConnectionPool,
   websiteDbName: string,
-  sinceDays: number | null
+  sinceDays: number | null,
+  deadlineDate: string | null | undefined
 ): Promise<SubmittedRow[]> {
   const db = qIdentifier(websiteDbName);
   const req = websitePool.request();
   req.input('sinceDays', sql.Int, sinceDays);
+  req.input('deadlineDate', sql.Date, deadlineDate ?? null);
 
   const rs = await req.query<{
     submission_id: number;
@@ -128,10 +130,13 @@ async function fetchSubmittedRows(
       TRY_CONVERT(nvarchar(320), s.Email) AS email
     FROM ${db}.dbo.Submissions s
     WHERE s.DateReceived IS NOT NULL
+      AND CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+      AND (s.ID < 2000000 OR s.ID > 2000039)
       AND (
         s.Email IS NULL
         OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(320), s.Email)))) NOT LIKE '%@cptgroup.com%'
       )
+      AND (@deadlineDate IS NULL OR CAST(s.DateReceived AS date) <= @deadlineDate)
       AND (@sinceDays IS NULL OR s.DateReceived >= DATEADD(DAY, -@sinceDays, GETDATE()))
     ORDER BY s.DateReceived DESC;
   `);
@@ -343,7 +348,12 @@ async function scanSite(
   includeMissingItems: boolean
 ): Promise<WebsiteHealthSiteResult & { missingItems: WebsiteHealthMissingItem[] }> {
   try {
-    const submittedRows = await fetchSubmittedRows(websitePool, mapping.websiteDbName, sinceDays);
+    const submittedRows = await fetchSubmittedRows(
+      websitePool,
+      mapping.websiteDbName,
+      sinceDays,
+      mapping.deadlineDate
+    );
     const submittedIds = submittedRows.map((row) => row.submissionId);
     const strategy = await discoverCleanClaimsColumns(claimsPool, mapping.cleanClaimsDbName);
     const allMissingItems =
@@ -442,11 +452,18 @@ async function fetchActiveSiteMappingsFromDb(
     case_name: string;
     website_db_name: string;
     sql_name: string;
+    deadline_date: Date | null;
   }>(`
     SELECT
       TRY_CONVERT(nvarchar(512), o.CaseName) AS case_name,
       TRY_CONVERT(nvarchar(256), o.WebServerDBName) AS website_db_name,
-      TRY_CONVERT(nvarchar(256), o.SQLName) AS sql_name
+      TRY_CONVERT(nvarchar(256), o.SQLName) AS sql_name,
+      COALESCE(
+        TRY_CONVERT(date, NULLIF(LTRIM(RTRIM(TRY_CONVERT(nvarchar(32), o.Deadline))), ''), 101),
+        TRY_CONVERT(date, NULLIF(LTRIM(RTRIM(TRY_CONVERT(nvarchar(32), o.Deadline))), ''), 110),
+        TRY_CONVERT(date, NULLIF(LTRIM(RTRIM(TRY_CONVERT(nvarchar(32), o.Deadline))), ''), 120),
+        TRY_CONVERT(date, NULLIF(LTRIM(RTRIM(TRY_CONVERT(nvarchar(32), o.Deadline))), ''))
+      ) AS deadline_date
     FROM ${db}.dbo.OCPAutomation o
     WHERE ISNULL(o.Active, 0) = 1
     ORDER BY o.CaseName ASC;
@@ -457,6 +474,7 @@ async function fetchActiveSiteMappingsFromDb(
       siteKey: (row.case_name ?? '').trim(),
       websiteDbName: (row.website_db_name ?? '').trim(),
       cleanClaimsDbName: (row.sql_name ?? '').trim(),
+      deadlineDate: row.deadline_date ? row.deadline_date.toISOString().slice(0, 10) : null,
     }))
     .filter((row) => row.siteKey.length > 0 && row.websiteDbName.length > 0 && row.cleanClaimsDbName.length > 0);
 }
