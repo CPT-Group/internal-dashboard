@@ -56,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Website Health source filter update**: Scanner now excludes internal test submissions where email contains `@cptgroup.com` while still requiring `DateReceived IS NOT NULL`, so discrepancy counts reflect claimant-facing traffic only.
 - **Carlos analysis handoff pack**: Added `carlos testing/` with plain-language comparison guides and SQL templates (setup/mapping, confirmation-based checks, ID-linkage checks, and reconciliation breakdown) so non-developer data analysis can reproduce Website Health discrepancy calculations consistently.
 - **Carlos env onboarding doc**: Added `carlos testing/env-setup.md` with required `.env.local` variable names, server mapping guidance, and least-needed access checklist (without secrets) so analysis can run outside Kyle's local environment.
+- **Impact analysis CSV ordering + health context fields**: Added `carlos testing/impact-analysis-since-fashion-nova.csv` with `OK → WARNING → BAD` row ordering, new `isDBOnline` status column, and clearer offline descriptions for expected comparison failures on offline databases.
 - **Dialog theme parity**: Added PrimeReact `Dialog` and dialog-mask overrides in `primereact-overrides.scss` so Website Health details modal follows active theme tokens in both light and dark modes (header/content/footer/close icon states).
 
 ### Fixed
