@@ -10,6 +10,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
+import { Tooltip } from 'primereact/tooltip';
 import type { ToastMessage } from 'primereact/toast';
 import type {
   WebsiteHealthSiteDetailsResponse,
@@ -23,6 +24,8 @@ interface SinceDaysOption {
   label: string;
   value: number | null;
 }
+
+type DetailsViewMode = 'missing' | 'info';
 
 const SINCE_DAYS_OPTIONS: SinceDaysOption[] = [
   { label: 'Last 1 day', value: 1 },
@@ -60,6 +63,7 @@ export const WebsiteHealthDashboard = () => {
   const [runningScan, setRunningScan] = useState<boolean>(false);
   const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
   const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
+  const [detailsMode, setDetailsMode] = useState<DetailsViewMode>('missing');
   const [detailsSite, setDetailsSite] = useState<(WebsiteHealthSiteResult & { missingItems: Array<{ submissionId: number; dateReceived: string; email: string | null }> }) | null>(null);
 
   const showToast = useCallback((message: ToastMessage) => {
@@ -148,8 +152,9 @@ export const WebsiteHealthDashboard = () => {
     }
   }, [showToast, sinceDays]);
 
-  const openDetails = useCallback(
+  const openMissingDetails = useCallback(
     async (site: WebsiteHealthSiteResult) => {
+      setDetailsMode('missing');
       setDetailsVisible(true);
       setDetailsLoading(true);
       setDetailsSite({
@@ -192,6 +197,16 @@ export const WebsiteHealthDashboard = () => {
     [showToast, sinceDays]
   );
 
+  const openInfoDetails = useCallback((site: WebsiteHealthSiteResult) => {
+    setDetailsMode('info');
+    setDetailsVisible(true);
+    setDetailsLoading(false);
+    setDetailsSite({
+      ...site,
+      missingItems: [],
+    });
+  }, []);
+
   useEffect(() => {
     void fetchSummary(sinceDays);
   }, [fetchSummary, sinceDays]);
@@ -213,6 +228,9 @@ export const WebsiteHealthDashboard = () => {
   return (
     <main className={styles.page} aria-label="Website health dashboard">
       <Toast ref={toastRef} position="top-right" />
+      <Tooltip target=".websiteHealthInfoButton" />
+      <Tooltip target=".websiteHealthMissingButton" />
+      <Tooltip target=".websiteHealthStatusTag" />
       <section className={styles.header}>
         <div>
           <h1>Website Health</h1>
@@ -281,31 +299,74 @@ export const WebsiteHealthDashboard = () => {
               showGridlines
               stripedRows
               emptyMessage="No results."
+              tableStyle={{ width: '100%', tableLayout: 'fixed' }}
             >
-              <Column field="siteKey" header="Site" style={{ width: '8rem' }} />
+              <Column field="siteKey" header="Site" />
               <Column
                 header="Status"
+                headerClassName={styles.statusColumn}
+                className={styles.statusColumn}
+                headerStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
+                bodyStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
                 body={(row: WebsiteHealthSiteResult) => (
-                  <Tag value={row.status.toUpperCase()} severity={statusSeverity(row)} />
+                  <span
+                    className="websiteHealthStatusTag"
+                    data-pr-tooltip={`Status: ${row.status.toUpperCase()}`}
+                    data-pr-position="top"
+                  >
+                    <Tag value={row.status.toUpperCase()} severity={statusSeverity(row)} />
+                  </span>
                 )}
-                style={{ width: '7rem' }}
               />
-              <Column field="websiteDbName" header="Website DB" />
-              <Column field="cleanClaimsDbName" header="2K16 CleanClaims DB" />
-              <Column field="submittedOnlineCount" header="Submitted" style={{ width: '7rem' }} />
-              <Column field="matchedInCleanClaimsCount" header="Matched" style={{ width: '7rem' }} />
-              <Column field="missingCount" header="Missing" style={{ width: '7rem' }} />
+              <Column field="submittedOnlineCount" header="Submitted" />
+              <Column field="matchedInCleanClaimsCount" header="Matched" />
               <Column
-                header="Details"
+                field="missingCount"
+                header="Missing"
                 body={(row: WebsiteHealthSiteResult) => (
-                  <Button
-                    size="small"
-                    text
-                    onClick={() => void openDetails(row)}
-                    label={row.status === 'error' ? 'View Error' : 'View Missing'}
-                  />
+                  <span className={row.missingCount > 1 ? styles.missingCountEmphasis : undefined}>
+                    {row.missingCount}
+                  </span>
                 )}
-                style={{ width: '8rem' }}
+              />
+              <Column
+                header="Actions"
+                headerClassName={styles.actionsColumn}
+                className={styles.actionsColumn}
+                headerStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
+                bodyStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
+                body={(row: WebsiteHealthSiteResult) => (
+                  <div className={styles.actionButtons}>
+                    <span
+                      className="websiteHealthInfoButton"
+                      data-pr-tooltip="View comparison info"
+                      data-pr-position="top"
+                    >
+                      <Button
+                        size="small"
+                        text
+                        icon="pi pi-info-circle"
+                        className={styles.actionButton}
+                        onClick={() => openInfoDetails(row)}
+                        aria-label={`View info for ${row.siteKey}`}
+                      />
+                    </span>
+                    <span
+                      className="websiteHealthMissingButton"
+                      data-pr-tooltip={row.status === 'error' ? 'View error details' : 'View missing rows'}
+                      data-pr-position="top"
+                    >
+                      <Button
+                        size="small"
+                        text
+                        icon={row.status === 'error' ? 'pi pi-exclamation-triangle' : 'pi pi-search'}
+                        className={styles.actionButton}
+                        onClick={() => void openMissingDetails(row)}
+                        aria-label={`View missing rows for ${row.siteKey}`}
+                      />
+                    </span>
+                  </div>
+                )}
               />
             </DataTable>
           </Card>
@@ -313,7 +374,13 @@ export const WebsiteHealthDashboard = () => {
       )}
 
       <Dialog
-        header={detailsSite ? `${detailsSite.siteKey} — Missing Rows` : 'Missing Rows'}
+        header={
+          detailsSite
+            ? `${detailsSite.siteKey} — ${detailsMode === 'info' ? 'Comparison Info' : 'Missing Rows'}`
+            : detailsMode === 'info'
+              ? 'Comparison Info'
+              : 'Missing Rows'
+        }
         visible={detailsVisible}
         onHide={() => setDetailsVisible(false)}
         style={{ width: 'min(95vw, 900px)' }}
@@ -328,6 +395,39 @@ export const WebsiteHealthDashboard = () => {
           </div>
         ) : !detailsSite ? (
           <div className={styles.expansionEmpty}>No site selected.</div>
+        ) : detailsMode === 'info' ? (
+          <div className={styles.infoPanel}>
+            <div className={styles.infoRow}>
+              <strong>Website DB:</strong> <span>{detailsSite.websiteDbName}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>2K16 CleanClaims DB:</strong> <span>{detailsSite.cleanClaimsDbName}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Deadline Date:</strong> <span>{detailsSite.deadlineDate ?? '(none)'}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Status:</strong> <Tag value={detailsSite.status.toUpperCase()} severity={statusSeverity(detailsSite)} />
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Submitted:</strong> <span>{detailsSite.submittedOnlineCount.toLocaleString()}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Matched:</strong> <span>{detailsSite.matchedInCleanClaimsCount.toLocaleString()}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Missing:</strong> <span>{detailsSite.missingCount.toLocaleString()}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Method:</strong>{' '}
+              <span>
+                Confirmation number compare with source filters (date received, today only through 5:15 AM, no test IDs, no @cptgroup.com).
+              </span>
+            </div>
+            {detailsSite.errorMessage ? (
+              <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
+            ) : null}
+          </div>
         ) : detailsSite.errorMessage ? (
           <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
         ) : detailsSite.missingItems.length === 0 ? (

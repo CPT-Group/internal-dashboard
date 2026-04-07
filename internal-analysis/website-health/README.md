@@ -35,6 +35,8 @@ Help you answer:
 ## Important assumptions used in these scripts
 
 - Source scope only includes submissions where `DateReceived IS NOT NULL`.
+- Source includes all prior dates and only today's submissions received up to `05:15:00`; rows submitted later today are excluded until the next run window.
+- Submission IDs in test range `2000000` through `2000039` are excluded.
 - Internal test submissions are excluded when source email contains `@cptgroup.com`.
 - CleanClaims side uses online flags when present (`ClaimFiledOnline` / equivalent).
 - If a case has a business cutoff date, apply cutoff on `Submissions.DateReceived`.

@@ -130,7 +130,13 @@ async function fetchSubmittedRows(
       TRY_CONVERT(nvarchar(320), s.Email) AS email
     FROM ${db}.dbo.Submissions s
     WHERE s.DateReceived IS NOT NULL
-      AND CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+      AND (
+        CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+        OR (
+          CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+          AND CAST(s.DateReceived AS time) <= CAST('05:15:00' AS time)
+        )
+      )
       AND (s.ID < 2000000 OR s.ID > 2000039)
       AND (
         s.Email IS NULL
@@ -375,6 +381,7 @@ async function scanSite(
       siteKey: mapping.siteKey,
       websiteDbName: mapping.websiteDbName,
       cleanClaimsDbName: mapping.cleanClaimsDbName,
+      deadlineDate: mapping.deadlineDate ?? null,
       status: allMissingItems.length > 0 ? 'warning' : 'ok',
       submittedOnlineCount,
       matchedInCleanClaimsCount,
@@ -387,6 +394,7 @@ async function scanSite(
       siteKey: mapping.siteKey,
       websiteDbName: mapping.websiteDbName,
       cleanClaimsDbName: mapping.cleanClaimsDbName,
+      deadlineDate: mapping.deadlineDate ?? null,
       status: 'error',
       submittedOnlineCount: 0,
       matchedInCleanClaimsCount: 0,
@@ -570,6 +578,7 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
         siteKey: result.siteKey,
         websiteDbName: result.websiteDbName,
         cleanClaimsDbName: result.cleanClaimsDbName,
+        deadlineDate: result.deadlineDate ?? null,
         status: result.status,
         submittedOnlineCount: result.submittedOnlineCount,
         matchedInCleanClaimsCount: result.matchedInCleanClaimsCount,
@@ -610,6 +619,7 @@ export async function getWebsiteHealthSiteDetails(
         siteKey,
         websiteDbName: '(unknown)',
         cleanClaimsDbName: '(unknown)',
+        deadlineDate: null,
         status: 'error',
         submittedOnlineCount: 0,
         matchedInCleanClaimsCount: 0,

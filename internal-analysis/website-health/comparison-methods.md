@@ -12,7 +12,7 @@ How it works:
 
 - Match source `Submissions.ConfirmationNo` to target `CleanClaims.ConfirmationNo`.
 - Only evaluate source rows with non-empty confirmation number.
-- Keep source rules (`DateReceived IS NOT NULL`, exclude internal `@cptgroup.com` test emails).
+- Keep source rules (`DateReceived IS NOT NULL`, prior dates + today through `05:15`, exclude test IDs `2000000-2000039`, exclude internal `@cptgroup.com` test emails).
 
 Why this is strong:
 

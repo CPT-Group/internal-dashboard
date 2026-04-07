@@ -12,6 +12,7 @@ Replace:
 */
 
 DECLARE @cutoff_date date = NULL; -- Example: '2025-10-20'. Keep NULL for no cutoff.
+DECLARE @today_cutoff_time time = '05:15:00'; -- Downloader window cutoff for same-day submissions.
 
 WITH SourceRows AS (
   SELECT
@@ -20,6 +21,14 @@ WITH SourceRows AS (
     s.DateReceived
   FROM [YOUR_WEBSITE_DB].dbo.Submissions s
   WHERE s.DateReceived IS NOT NULL
+    AND (
+      CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+      OR (
+        CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+        AND CAST(s.DateReceived AS time) <= @today_cutoff_time
+      )
+    )
+    AND (s.ID < 2000000 OR s.ID > 2000039)
     AND (@cutoff_date IS NULL OR CAST(s.DateReceived AS date) <= @cutoff_date)
     AND (
       s.Email IS NULL

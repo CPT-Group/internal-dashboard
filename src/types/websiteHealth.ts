@@ -17,6 +17,7 @@ export interface WebsiteHealthSiteResult {
   siteKey: string;
   websiteDbName: string;
   cleanClaimsDbName: string;
+  deadlineDate?: string | null;
   status: WebsiteHealthStatus;
   submittedOnlineCount: number;
   matchedInCleanClaimsCount: number;

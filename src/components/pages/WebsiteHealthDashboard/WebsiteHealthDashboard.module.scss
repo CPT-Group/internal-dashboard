@@ -104,6 +104,54 @@
   color: var(--text-color-secondary);
 }
 
+.actionButtons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.statusColumn {
+  width: 5.5rem !important;
+  min-width: 5.5rem !important;
+  max-width: 5.5rem !important;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.actionsColumn {
+  width: 5.5rem !important;
+  min-width: 5.5rem !important;
+  max-width: 5.5rem !important;
+  white-space: nowrap;
+}
+
+.actionButton {
+  width: 1.6rem;
+  height: 1.6rem;
+  min-width: 1.6rem;
+  padding: 0;
+}
+
+.missingCountEmphasis {
+  font-weight: 700;
+}
+
+.infoPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
 @media (min-width: 768px) {
   .page {
     padding: 1.25rem;
