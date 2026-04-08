@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Website Health details dialog**: One scroll container on dialog content (removed nested inner/Web DB table scroll areas); enabled PrimeReact **draggable**, **resizable**, and **maximizable**; **blockScroll** while open.
 - **Website Health Web DB integrity (OR logic)**: A website row is flagged if **any** of DateReceived missing, confirmation missing, or `IsSubmitted`≠1 (**only when** a submitted-flag column exists on `Submissions`). Issue list shows **all** applicable reasons per row; breakdown counts can overlap. Dashboard Info/help text and tooltips updated; internal analysis doc aligned.
 
 ### Added

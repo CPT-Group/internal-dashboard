@@ -454,6 +454,11 @@ export const WebsiteHealthDashboard = () => {
           setShowWebDbIssueRows(false);
         }}
         style={{ width: 'min(98vw, 1120px)' }}
+        contentClassName={styles.dialogContentSingleScroll}
+        draggable
+        resizable
+        maximizable
+        blockScroll
         modal
       >
         {detailsLoading ? (
@@ -468,7 +473,7 @@ export const WebsiteHealthDashboard = () => {
         ) : !detailsSite ? (
           <div className={styles.expansionEmpty}>No site selected.</div>
         ) : detailsMode === 'info' ? (
-          <div className={`${styles.infoPanel} ${styles.dialogBodyScroll}`}>
+          <div className={styles.infoPanel}>
             <div className={styles.infoRow}>
               <strong>Website DB:</strong> <span>{detailsSite.websiteDbName}</span>
             </div>

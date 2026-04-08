@@ -175,16 +175,21 @@
   color: var(--text-color-secondary);
 }
 
-.dialogBodyScroll {
+// Single vertical scroll on PrimeReact .p-dialog-content (avoid nested scrollbars).
+.dialogContentSingleScroll {
   max-height: min(85vh, 920px);
+  overflow-x: hidden;
   overflow-y: auto;
-  padding-right: 0.2rem;
+}
+
+:global(.p-dialog-maximized) .dialogContentSingleScroll {
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .webDbIssuesTable {
   margin-top: 0.5rem;
-  max-height: min(50vh, 440px);
-  overflow: auto;
   border: 1px solid var(--surface-border);
   border-radius: 6px;
   padding: 0.35rem;
