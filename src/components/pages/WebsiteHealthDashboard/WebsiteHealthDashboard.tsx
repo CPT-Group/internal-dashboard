@@ -10,7 +10,6 @@ import { Dropdown } from 'primereact/dropdown';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
-import { Tooltip } from 'primereact/tooltip';
 import type { ToastMessage } from 'primereact/toast';
 import type {
   WebsiteHealthSiteDetailsResponse,
@@ -228,9 +227,6 @@ export const WebsiteHealthDashboard = () => {
   return (
     <main className={styles.page} aria-label="Website health dashboard">
       <Toast ref={toastRef} position="top-right" />
-      <Tooltip target=".websiteHealthInfoButton" />
-      <Tooltip target=".websiteHealthMissingButton" />
-      <Tooltip target=".websiteHealthStatusTag" />
       <section className={styles.header}>
         <div>
           <h1>Website Health</h1>
@@ -245,6 +241,8 @@ export const WebsiteHealthDashboard = () => {
             onChange={(e) => setSinceDays(e.value as number | null)}
             className={styles.scopeSelect}
             placeholder="Select scope"
+            tooltip="Choose how far back to scan submission rows."
+            tooltipOptions={{ position: 'top' }}
           />
           <Button
             label={runningScan ? 'Running…' : 'Run Scan'}
@@ -252,6 +250,8 @@ export const WebsiteHealthDashboard = () => {
             onClick={() => void runScan()}
             loading={runningScan}
             disabled={runningScan || loading}
+            tooltip="Run an on-demand Website Health scan for the selected scope."
+            tooltipOptions={{ position: 'top' }}
           />
         </div>
       </section>
@@ -265,19 +265,28 @@ export const WebsiteHealthDashboard = () => {
           <section className={styles.kpis}>
             <Card className={styles.kpiCard}>
               <div className={styles.kpiLabel}>Scope</div>
-              <div className={styles.kpiValue}>{formatScopeLabel(summary?.sinceDays ?? sinceDays)}</div>
+              <div
+                className={styles.kpiValue}
+                title="Current source record window used by the scanner."
+              >
+                {formatScopeLabel(summary?.sinceDays ?? sinceDays)}
+              </div>
             </Card>
             <Card className={styles.kpiCard}>
               <div className={styles.kpiLabel}>Active Sites Checked</div>
-              <div className={styles.kpiValue}>{summary?.totalSitesChecked ?? 0}</div>
+              <div className={styles.kpiValue} title="Number of active sites scanned this run.">
+                {summary?.totalSitesChecked ?? 0}
+              </div>
             </Card>
             <Card className={styles.kpiCard}>
               <div className={styles.kpiLabel}>Submitted Online</div>
-              <div className={styles.kpiValue}>{summary?.totalSubmittedOnline ?? 0}</div>
+              <div className={styles.kpiValue} title="Total in-scope source submissions considered.">
+                {summary?.totalSubmittedOnline ?? 0}
+              </div>
             </Card>
             <Card className={styles.kpiCard}>
               <div className={styles.kpiLabel}>Missing in CleanClaims</div>
-              <div className={styles.kpiValue}>
+              <div className={styles.kpiValue} title="Total source submissions not matched in CleanClaims.">
                 {(summary?.totalMissingInCleanClaims ?? 0).toLocaleString()} [{sitesWithMissing}]
               </div>
             </Card>
@@ -301,7 +310,7 @@ export const WebsiteHealthDashboard = () => {
               emptyMessage="No results."
               tableStyle={{ width: '100%', tableLayout: 'fixed' }}
             >
-              <Column field="siteKey" header="Site" />
+              <Column field="siteKey" header="Site" style={{ width: '46%' }} />
               <Column
                 header="Status"
                 headerClassName={styles.statusColumn}
@@ -310,19 +319,19 @@ export const WebsiteHealthDashboard = () => {
                 bodyStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
                 body={(row: WebsiteHealthSiteResult) => (
                   <span
-                    className="websiteHealthStatusTag"
-                    data-pr-tooltip={`Status: ${row.status.toUpperCase()}`}
-                    data-pr-position="top"
+                    className={styles.statusTagWrap}
+                    title={`Status: ${row.status.toUpperCase()}`}
                   >
                     <Tag value={row.status.toUpperCase()} severity={statusSeverity(row)} />
                   </span>
                 )}
               />
-              <Column field="submittedOnlineCount" header="Submitted" />
-              <Column field="matchedInCleanClaimsCount" header="Matched" />
+              <Column field="submittedOnlineCount" header="Submitted" style={{ width: '14%' }} />
+              <Column field="matchedInCleanClaimsCount" header="Matched" style={{ width: '14%' }} />
               <Column
                 field="missingCount"
                 header="Missing"
+                style={{ width: '14%' }}
                 body={(row: WebsiteHealthSiteResult) => (
                   <span className={row.missingCount > 1 ? styles.missingCountEmphasis : undefined}>
                     {row.missingCount}
@@ -337,34 +346,26 @@ export const WebsiteHealthDashboard = () => {
                 bodyStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
                 body={(row: WebsiteHealthSiteResult) => (
                   <div className={styles.actionButtons}>
-                    <span
-                      className="websiteHealthInfoButton"
-                      data-pr-tooltip="View comparison info"
-                      data-pr-position="top"
-                    >
-                      <Button
-                        size="small"
-                        text
-                        icon="pi pi-info-circle"
-                        className={styles.actionButton}
-                        onClick={() => openInfoDetails(row)}
-                        aria-label={`View info for ${row.siteKey}`}
-                      />
-                    </span>
-                    <span
-                      className="websiteHealthMissingButton"
-                      data-pr-tooltip={row.status === 'error' ? 'View error details' : 'View missing rows'}
-                      data-pr-position="top"
-                    >
-                      <Button
-                        size="small"
-                        text
-                        icon={row.status === 'error' ? 'pi pi-exclamation-triangle' : 'pi pi-search'}
-                        className={styles.actionButton}
-                        onClick={() => void openMissingDetails(row)}
-                        aria-label={`View missing rows for ${row.siteKey}`}
-                      />
-                    </span>
+                    <Button
+                      size="small"
+                      text
+                      icon="pi pi-info-circle"
+                      className={styles.actionButton}
+                      onClick={() => openInfoDetails(row)}
+                      aria-label={`View info for ${row.siteKey}`}
+                      tooltip="View comparison info"
+                      tooltipOptions={{ position: 'top' }}
+                    />
+                    <Button
+                      size="small"
+                      text
+                      icon={row.status === 'error' ? 'pi pi-exclamation-triangle' : 'pi pi-search'}
+                      className={styles.actionButton}
+                      onClick={() => void openMissingDetails(row)}
+                      aria-label={`View missing rows for ${row.siteKey}`}
+                      tooltip={row.status === 'error' ? 'View error details' : 'View missing rows'}
+                      tooltipOptions={{ position: 'top' }}
+                    />
                   </div>
                 )}
               />

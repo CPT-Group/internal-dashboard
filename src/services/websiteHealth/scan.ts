@@ -196,20 +196,20 @@ async function discoverCleanClaimsColumns(
     flagCandidates.find((c) => columns.has(c.toLowerCase())) ??
     null;
 
-  if (idColumn) {
-    return {
-      mode: 'submissionId',
-      idColumn,
-      confirmationColumn,
-      submittedOnlineColumn,
-    };
-  }
-
   if (confirmationColumn) {
     return {
       mode: 'confirmationNo',
       idColumn: null,
       confirmationColumn,
+      submittedOnlineColumn,
+    };
+  }
+
+  if (idColumn) {
+    return {
+      mode: 'submissionId',
+      idColumn,
+      confirmationColumn: null,
       submittedOnlineColumn,
     };
   }
