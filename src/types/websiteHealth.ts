@@ -1,4 +1,5 @@
 export type WebsiteHealthStatus = 'ok' | 'warning' | 'error';
+export type WebsiteHealthWebDbStatus = 'ok' | 'error';
 
 export interface WebsiteHealthSiteMapping {
   siteKey: string;
@@ -19,6 +20,10 @@ export interface WebsiteHealthSiteResult {
   cleanClaimsDbName: string;
   deadlineDate?: string | null;
   status: WebsiteHealthStatus;
+  webDbStatus: WebsiteHealthWebDbStatus;
+  webDbIssueCount: number;
+  webDbMissingConfirmationCount: number;
+  webDbNotSubmittedCount: number;
   submittedOnlineCount: number;
   matchedInCleanClaimsCount: number;
   missingCount: number;

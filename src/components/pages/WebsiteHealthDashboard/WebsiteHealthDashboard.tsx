@@ -50,6 +50,10 @@ function statusSeverity(site: WebsiteHealthSiteResult): 'success' | 'warning' | 
   return 'success';
 }
 
+function webDbStatusSeverity(site: WebsiteHealthSiteResult): 'success' | 'danger' {
+  return site.webDbStatus === 'error' ? 'danger' : 'success';
+}
+
 function toFetchSinceDaysValue(value: number | null): string {
   return value === null ? 'all' : String(value);
 }
@@ -310,7 +314,22 @@ export const WebsiteHealthDashboard = () => {
               emptyMessage="No results."
               tableStyle={{ width: '100%', tableLayout: 'fixed' }}
             >
-              <Column field="siteKey" header="Site" style={{ width: '46%' }} />
+              <Column field="siteKey" header="Site" style={{ width: '36%' }} />
+              <Column
+                header="Web DB"
+                headerClassName={styles.webDbColumn}
+                className={styles.webDbColumn}
+                headerStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
+                bodyStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
+                body={(row: WebsiteHealthSiteResult) => (
+                  <span
+                    className={styles.statusTagWrap}
+                    title={`Web DB Status: ${row.webDbStatus.toUpperCase()} (issues: ${row.webDbIssueCount}, missing confirmation: ${row.webDbMissingConfirmationCount}, not submitted: ${row.webDbNotSubmittedCount})`}
+                  >
+                    <Tag value={row.webDbStatus.toUpperCase()} severity={webDbStatusSeverity(row)} />
+                  </span>
+                )}
+              />
               <Column
                 header="Status"
                 headerClassName={styles.statusColumn}
@@ -326,12 +345,12 @@ export const WebsiteHealthDashboard = () => {
                   </span>
                 )}
               />
-              <Column field="submittedOnlineCount" header="Submitted" style={{ width: '14%' }} />
-              <Column field="matchedInCleanClaimsCount" header="Matched" style={{ width: '14%' }} />
+              <Column field="submittedOnlineCount" header="Submitted" style={{ width: '12%' }} />
+              <Column field="matchedInCleanClaimsCount" header="Matched" style={{ width: '12%' }} />
               <Column
                 field="missingCount"
                 header="Missing"
-                style={{ width: '14%' }}
+                style={{ width: '12%' }}
                 body={(row: WebsiteHealthSiteResult) => (
                   <span className={row.missingCount > 1 ? styles.missingCountEmphasis : undefined}>
                     {row.missingCount}
@@ -409,6 +428,20 @@ export const WebsiteHealthDashboard = () => {
             </div>
             <div className={styles.infoRow}>
               <strong>Status:</strong> <Tag value={detailsSite.status.toUpperCase()} severity={statusSeverity(detailsSite)} />
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Web DB Status:</strong> <Tag value={detailsSite.webDbStatus.toUpperCase()} severity={webDbStatusSeverity(detailsSite)} />
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Web DB Issue Count:</strong> <span>{detailsSite.webDbIssueCount.toLocaleString()}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Web DB Missing Confirmation:</strong>{' '}
+              <span>{detailsSite.webDbMissingConfirmationCount.toLocaleString()}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Web DB Not Submitted:</strong>{' '}
+              <span>{detailsSite.webDbNotSubmittedCount.toLocaleString()}</span>
             </div>
             <div className={styles.infoRow}>
               <strong>Submitted:</strong> <span>{detailsSite.submittedOnlineCount.toLocaleString()}</span>

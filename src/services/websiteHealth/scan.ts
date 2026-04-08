@@ -17,6 +17,7 @@ interface SubmittedRow {
   confirmationNo: string | null;
   dateReceived: string;
   email: string | null;
+  isSubmittedOnline: boolean | null;
 }
 
 type CleanClaimsMatchMode = 'submissionId' | 'confirmationNo';
@@ -106,6 +107,40 @@ function qIdentifier(name: string): string {
   return `[${name.replace(/\]/g, ']]')}]`;
 }
 
+function parseTruthyFlag(value: string | null): boolean | null {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length === 0) {
+    return null;
+  }
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'n') {
+    return false;
+  }
+  return null;
+}
+
+async function discoverSubmissionOnlineFlagColumn(
+  websitePool: ConnectionPool,
+  websiteDbName: string
+): Promise<string | null> {
+  const db = qIdentifier(websiteDbName);
+  const columnsRs = await websitePool.request().query<{ column_name: string }>(`
+    SELECT c.COLUMN_NAME AS column_name
+    FROM ${db}.INFORMATION_SCHEMA.COLUMNS c
+    WHERE c.TABLE_SCHEMA = 'dbo'
+      AND c.TABLE_NAME = 'Submissions';
+  `);
+
+  const columns = new Set(columnsRs.recordset.map((row) => row.column_name.toLowerCase()));
+  const candidates = ['IsSubmittedOnline', 'SubmittedOnline', 'IsSubmitted', 'Submitted', 'ClaimFiledOnline'];
+  return candidates.find((c) => columns.has(c.toLowerCase())) ?? null;
+}
+
 async function fetchSubmittedRows(
   websitePool: ConnectionPool,
   websiteDbName: string,
@@ -113,6 +148,10 @@ async function fetchSubmittedRows(
   deadlineDate: string | null | undefined
 ): Promise<SubmittedRow[]> {
   const db = qIdentifier(websiteDbName);
+  const submittedOnlineColumn = await discoverSubmissionOnlineFlagColumn(websitePool, websiteDbName);
+  const submittedOnlineExpr = submittedOnlineColumn
+    ? `TRY_CONVERT(nvarchar(32), s.${qIdentifier(submittedOnlineColumn)})`
+    : `CAST(NULL AS nvarchar(32))`;
   const req = websitePool.request();
   req.input('sinceDays', sql.Int, sinceDays);
   req.input('deadlineDate', sql.Date, deadlineDate ?? null);
@@ -122,12 +161,14 @@ async function fetchSubmittedRows(
     confirmation_no: string | null;
     date_received: Date;
     email: string | null;
+    submitted_online: string | null;
   }>(`
     SELECT
       s.ID AS submission_id,
       TRY_CONVERT(nvarchar(256), s.ConfirmationNo) AS confirmation_no,
       s.DateReceived AS date_received,
-      TRY_CONVERT(nvarchar(320), s.Email) AS email
+      TRY_CONVERT(nvarchar(320), s.Email) AS email,
+      ${submittedOnlineExpr} AS submitted_online
     FROM ${db}.dbo.Submissions s
     WHERE s.DateReceived IS NOT NULL
       AND (
@@ -153,6 +194,7 @@ async function fetchSubmittedRows(
       confirmationNo: row.confirmation_no ? row.confirmation_no.trim() : null,
       dateReceived: row.date_received.toISOString(),
       email: row.email ?? null,
+      isSubmittedOnline: parseTruthyFlag(row.submitted_online ?? null),
     }))
     .filter((row) => Number.isFinite(row.submissionId));
 }
@@ -244,7 +286,7 @@ function getMissingItemsByConfirmation(
     .filter((row) => {
       const confirmation = row.confirmationNo;
       if (!confirmation || confirmation.trim().length === 0) {
-        return true;
+        return false;
       }
       return !existingConfirmations.has(normalizeConfirmation(confirmation));
     })
@@ -274,9 +316,12 @@ async function fetchExistingSubmissionIds(
   const db = qIdentifier(cleanClaimsDbName);
   const idExpr = `TRY_CONVERT(int, cc.${qIdentifier(idColumn)})`;
   const flagSql = submittedOnlineColumn
-    ? ` AND (cc.${qIdentifier(submittedOnlineColumn)} = 1 OR cc.${qIdentifier(
-        submittedOnlineColumn
-      )} = 'true' OR cc.${qIdentifier(submittedOnlineColumn)} = 'True')`
+    ? ` AND (
+        TRY_CONVERT(int, cc.${qIdentifier(submittedOnlineColumn)}) = 1
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(16), cc.${qIdentifier(
+          submittedOnlineColumn
+        )})))) IN ('true', 'yes', 'y')
+      )`
     : '';
 
   const found = new Set<number>();
@@ -324,9 +369,12 @@ async function fetchExistingConfirmationNos(
     confirmationColumn
   )})))`;
   const flagSql = submittedOnlineColumn
-    ? ` AND (cc.${qIdentifier(submittedOnlineColumn)} = 1 OR cc.${qIdentifier(
-        submittedOnlineColumn
-      )} = 'true' OR cc.${qIdentifier(submittedOnlineColumn)} = 'True')`
+    ? ` AND (
+        TRY_CONVERT(int, cc.${qIdentifier(submittedOnlineColumn)}) = 1
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(16), cc.${qIdentifier(
+          submittedOnlineColumn
+        )})))) IN ('true', 'yes', 'y')
+      )`
     : '';
 
   const rs = await claimsPool.request().query<{ confirmation_no: string | null }>(`
@@ -360,6 +408,12 @@ async function scanSite(
       sinceDays,
       mapping.deadlineDate
     );
+    const webDbMissingConfirmationCount = submittedRows.filter(
+      (row) => !row.confirmationNo || row.confirmationNo.trim().length === 0
+    ).length;
+    const webDbNotSubmittedCount = submittedRows.filter((row) => row.isSubmittedOnline === false).length;
+    const webDbIssueCount = webDbMissingConfirmationCount + webDbNotSubmittedCount;
+    const webDbStatus = webDbIssueCount > 0 ? 'error' : 'ok';
     const submittedIds = submittedRows.map((row) => row.submissionId);
     const strategy = await discoverCleanClaimsColumns(claimsPool, mapping.cleanClaimsDbName);
     const allMissingItems =
@@ -383,6 +437,10 @@ async function scanSite(
       cleanClaimsDbName: mapping.cleanClaimsDbName,
       deadlineDate: mapping.deadlineDate ?? null,
       status: allMissingItems.length > 0 ? 'warning' : 'ok',
+      webDbStatus,
+      webDbIssueCount,
+      webDbMissingConfirmationCount,
+      webDbNotSubmittedCount,
       submittedOnlineCount,
       matchedInCleanClaimsCount,
       missingCount: allMissingItems.length,
@@ -396,6 +454,10 @@ async function scanSite(
       cleanClaimsDbName: mapping.cleanClaimsDbName,
       deadlineDate: mapping.deadlineDate ?? null,
       status: 'error',
+      webDbStatus: 'error',
+      webDbIssueCount: 0,
+      webDbMissingConfirmationCount: 0,
+      webDbNotSubmittedCount: 0,
       submittedOnlineCount: 0,
       matchedInCleanClaimsCount: 0,
       missingCount: 0,
@@ -559,6 +621,10 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
             websiteDbName: '(unset)',
             cleanClaimsDbName: '(unset)',
             status: 'error',
+            webDbStatus: 'error',
+            webDbIssueCount: 0,
+            webDbMissingConfirmationCount: 0,
+            webDbNotSubmittedCount: 0,
             submittedOnlineCount: 0,
             matchedInCleanClaimsCount: 0,
             missingCount: 0,
@@ -580,6 +646,10 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
         cleanClaimsDbName: result.cleanClaimsDbName,
         deadlineDate: result.deadlineDate ?? null,
         status: result.status,
+        webDbStatus: result.webDbStatus,
+        webDbIssueCount: result.webDbIssueCount,
+        webDbMissingConfirmationCount: result.webDbMissingConfirmationCount,
+        webDbNotSubmittedCount: result.webDbNotSubmittedCount,
         submittedOnlineCount: result.submittedOnlineCount,
         matchedInCleanClaimsCount: result.matchedInCleanClaimsCount,
         missingCount: result.missingCount,
@@ -621,6 +691,10 @@ export async function getWebsiteHealthSiteDetails(
         cleanClaimsDbName: '(unknown)',
         deadlineDate: null,
         status: 'error',
+        webDbStatus: 'error',
+        webDbIssueCount: 0,
+        webDbMissingConfirmationCount: 0,
+        webDbNotSubmittedCount: 0,
         submittedOnlineCount: 0,
         matchedInCleanClaimsCount: 0,
         missingCount: 0,
