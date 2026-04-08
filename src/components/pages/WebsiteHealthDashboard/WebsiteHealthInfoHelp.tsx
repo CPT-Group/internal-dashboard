@@ -9,8 +9,8 @@ interface WebsiteHealthInfoHelpProps {
 export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
   const webDbProblem =
     site.webDbStatus === 'error'
-      ? `This row shows ERROR because at least one in-scope website submission is missing a confirmation number and/or is not marked submitted online (${site.webDbIssueCount.toLocaleString()} row(s) affected). That is separate from whether 2K16 has a matching claim.`
-      : 'OK means every in-scope row has a confirmation number and is not explicitly marked “not submitted” on the website (when that column exists).';
+      ? `This row shows ERROR because at least one in-scope row has a Web DB integrity issue (${site.webDbIssueCount.toLocaleString()} row(s)): missing confirmation only when DateReceived is set and the row is submitted online but has no confirmation, and/or not marked submitted online. Separate from 2K16 matching.`
+      : 'OK means no such issues: submitted-online rows have a confirmation when required, and nothing is explicitly “not submitted” in a bad state for this check.';
 
   const compareProblem =
     site.status === 'warning'
@@ -29,21 +29,21 @@ export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
             </p>
             <ul>
               <li>
-                <strong>OK</strong> — In-scope rows have a confirmation number and are not flagged as not submitted when
-                the site has a submitted flag column (for example <code>IsSubmitted</code> or <code>IsSubmittedOnline</code>
-                ).
+                <strong>OK</strong> — No rows that fail the checks below. In-scope always means <code>DateReceived</code>{' '}
+                is set.
               </li>
               <li>
-                <strong>ERROR</strong> — At least one in-scope row is missing a confirmation number, or the submitted flag
-                is explicitly false. Fix these on the website side; they are not counted as “missing in CleanClaims” for
-                the confirmation compare.
+                <strong>ERROR</strong> — At least one row is missing confirmation when it should have one (see below), or
+                the submitted flag is explicitly false. These are not counted as “missing in CleanClaims.”
               </li>
             </ul>
             <p className={styles.infoHelpHighlight}>{webDbProblem}</p>
             <p>
-              <strong>Missing confirmation</strong> — <code>DateReceived</code> is set but confirmation is blank.
+              <strong>Missing confirmation</strong> — <code>DateReceived</code> is not null, confirmation is null/empty,
+              and the row is <em>not</em> explicitly “not submitted online” (drafts without confirmation use the not-submitted
+              bucket instead).
               <br />
-              <strong>Not submitted</strong> — Row is in scope but the site marks it as not submitted online.
+              <strong>Not submitted</strong> — Row is in scope and the site marks it as not submitted online.
             </p>
           </div>
         </AccordionTab>

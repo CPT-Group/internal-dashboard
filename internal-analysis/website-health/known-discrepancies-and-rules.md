@@ -12,6 +12,10 @@ Treat source records as in-scope only when:
 4. Email does **not** contain `@cptgroup.com` (internal testing traffic excluded)
 5. Optional case cutoff rules are applied when agreed by business (example: `DateReceived <= 2025-10-20`)
 
+## Web DB integrity (dashboard)
+
+Rows in scope already satisfy `DateReceived IS NOT NULL`. For **missing confirmation** alerts, only count rows where **confirmation is blank** (SQL `NULL` or empty after trim) **and** the row is **not** explicitly marked not submitted online (e.g. `IsSubmitted` / `IsSubmittedOnline` is not false). Drafts or not-submitted rows without a confirmation are **not** treated as “missing confirmation” — they fall under **not submitted** if the flag is false.
+
 ## Current target-side rules
 
 - Compare to `CleanClaims` records that are online-submitted (`ClaimFiledOnline` style truthy flag when available).

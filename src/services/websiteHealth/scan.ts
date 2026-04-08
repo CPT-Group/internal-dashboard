@@ -279,12 +279,31 @@ function normalizeConfirmation(value: string): string {
   return value.trim().toLowerCase();
 }
 
+/** In-scope rows always come from SQL with DateReceived IS NOT NULL. */
+function isConfirmationBlank(row: SubmittedRow): boolean {
+  return !row.confirmationNo || row.confirmationNo.trim().length === 0;
+}
+
+/**
+ * "Missing confirmation" is a data problem only when the row was received and is treated as submitted online,
+ * but ConfirmationNo is null/empty. Drafts marked not submitted online are excluded from this bucket.
+ */
+function isWebDbMissingConfirmationIssue(row: SubmittedRow): boolean {
+  if (!isConfirmationBlank(row)) return false;
+  if (row.isSubmittedOnline === false) return false;
+  return true;
+}
+
+function rowHasAnyWebDbIssue(row: SubmittedRow): boolean {
+  return isWebDbMissingConfirmationIssue(row) || row.isSubmittedOnline === false;
+}
+
 function getWebDbIssueItems(submittedRows: SubmittedRow[]): WebsiteHealthWebDbIssueItem[] {
   const items: WebsiteHealthWebDbIssueItem[] = [];
   for (const row of submittedRows) {
     const reasons: string[] = [];
-    if (!row.confirmationNo || row.confirmationNo.trim().length === 0) {
-      reasons.push('Missing confirmation number');
+    if (isWebDbMissingConfirmationIssue(row)) {
+      reasons.push('Missing confirmation (DateReceived set, submitted online, no confirmation number)');
     }
     if (row.isSubmittedOnline === false) {
       reasons.push('Not marked submitted online');
@@ -437,11 +456,9 @@ async function scanSite(
       sinceDays,
       mapping.deadlineDate
     );
-    const webDbMissingConfirmationCount = submittedRows.filter(
-      (row) => !row.confirmationNo || row.confirmationNo.trim().length === 0
-    ).length;
+    const webDbMissingConfirmationCount = submittedRows.filter((row) => isWebDbMissingConfirmationIssue(row)).length;
     const webDbNotSubmittedCount = submittedRows.filter((row) => row.isSubmittedOnline === false).length;
-    const webDbIssueCount = webDbMissingConfirmationCount + webDbNotSubmittedCount;
+    const webDbIssueCount = submittedRows.filter((row) => rowHasAnyWebDbIssue(row)).length;
     const webDbStatus = webDbIssueCount > 0 ? 'error' : 'ok';
     const submittedIds = submittedRows.map((row) => row.submissionId);
     const strategy = await discoverCleanClaimsColumns(claimsPool, mapping.cleanClaimsDbName);
