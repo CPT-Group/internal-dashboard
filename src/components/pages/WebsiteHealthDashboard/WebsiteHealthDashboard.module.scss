@@ -158,10 +158,37 @@
 .infoRow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.45rem;
   color: var(--text-color);
   font-size: 0.9rem;
   line-height: 1.25;
+}
+
+.infoRowAction {
+  margin-left: auto;
+}
+
+.dialogBodyScroll {
+  max-height: min(85vh, 920px);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.webDbIssuesTable {
+  margin-top: 0.5rem;
+  max-height: min(50vh, 440px);
+  overflow: auto;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  padding: 0.35rem;
+}
+
+.webDbIssuesTableTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.35rem;
 }
 
 .infoHelpAccordion {

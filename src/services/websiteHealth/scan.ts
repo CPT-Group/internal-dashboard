@@ -4,6 +4,7 @@ import type {
   WebsiteHealthSiteMapping,
   WebsiteHealthSiteResult,
   WebsiteHealthSummary,
+  WebsiteHealthWebDbIssueItem,
 } from '@/types';
 import { getWebsiteHealthSiteMappings } from './config';
 
@@ -278,6 +279,29 @@ function normalizeConfirmation(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function getWebDbIssueItems(submittedRows: SubmittedRow[]): WebsiteHealthWebDbIssueItem[] {
+  const items: WebsiteHealthWebDbIssueItem[] = [];
+  for (const row of submittedRows) {
+    const reasons: string[] = [];
+    if (!row.confirmationNo || row.confirmationNo.trim().length === 0) {
+      reasons.push('Missing confirmation number');
+    }
+    if (row.isSubmittedOnline === false) {
+      reasons.push('Not marked submitted online');
+    }
+    if (reasons.length > 0) {
+      items.push({
+        submissionId: row.submissionId,
+        dateReceived: row.dateReceived,
+        email: row.email,
+        confirmationNo: row.confirmationNo,
+        reasons,
+      });
+    }
+  }
+  return items;
+}
+
 function getMissingItemsByConfirmation(
   submittedRows: SubmittedRow[],
   existingConfirmations: Set<string>
@@ -400,7 +424,12 @@ async function scanSite(
   mapping: WebsiteHealthSiteMapping,
   sinceDays: number | null,
   includeMissingItems: boolean
-): Promise<WebsiteHealthSiteResult & { missingItems: WebsiteHealthMissingItem[] }> {
+): Promise<
+  WebsiteHealthSiteResult & {
+    missingItems: WebsiteHealthMissingItem[];
+    webDbIssueItems: WebsiteHealthWebDbIssueItem[];
+  }
+> {
   try {
     const submittedRows = await fetchSubmittedRows(
       websitePool,
@@ -427,7 +456,7 @@ async function scanSite(
             await fetchExistingConfirmationNos(claimsPool, mapping.cleanClaimsDbName)
           );
     const missingItems = includeMissingItems ? allMissingItems : [];
-    const missingCount = missingItems.length;
+    const webDbIssueItems = includeMissingItems ? getWebDbIssueItems(submittedRows) : [];
     const submittedOnlineCount = submittedRows.length;
     const matchedInCleanClaimsCount = Math.max(0, submittedOnlineCount - allMissingItems.length);
 
@@ -445,6 +474,7 @@ async function scanSite(
       matchedInCleanClaimsCount,
       missingCount: allMissingItems.length,
       missingItems,
+      webDbIssueItems,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -462,6 +492,7 @@ async function scanSite(
       matchedInCleanClaimsCount: 0,
       missingCount: 0,
       missingItems: [],
+      webDbIssueItems: [],
       errorMessage: message,
     };
   }
@@ -674,7 +705,12 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
 export async function getWebsiteHealthSiteDetails(
   siteKey: string,
   sinceDays: number | null
-): Promise<WebsiteHealthSiteResult & { missingItems: WebsiteHealthMissingItem[] }> {
+): Promise<
+  WebsiteHealthSiteResult & {
+    missingItems: WebsiteHealthMissingItem[];
+    webDbIssueItems: WebsiteHealthWebDbIssueItem[];
+  }
+> {
   const prodCfg = readServerConfig('PROD_DB_');
   const claimsCfg = readServerConfig('DB_');
   const websitePool = new sql.ConnectionPool(toPool(prodCfg));
@@ -699,6 +735,7 @@ export async function getWebsiteHealthSiteDetails(
         matchedInCleanClaimsCount: 0,
         missingCount: 0,
         missingItems: [],
+        webDbIssueItems: [],
         errorMessage: `Site not found in active case list: ${siteKey}`,
       };
     }

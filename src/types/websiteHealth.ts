@@ -14,6 +14,15 @@ export interface WebsiteHealthMissingItem {
   email: string | null;
 }
 
+/** Rows on the website Submissions side that fail Web DB integrity checks (in-scope only). */
+export interface WebsiteHealthWebDbIssueItem {
+  submissionId: number;
+  dateReceived: string;
+  email: string | null;
+  confirmationNo: string | null;
+  reasons: string[];
+}
+
 export interface WebsiteHealthSiteResult {
   siteKey: string;
   websiteDbName: string;
@@ -55,5 +64,6 @@ export interface WebsiteHealthSiteDetailsResponse {
   ok: boolean;
   site: WebsiteHealthSiteResult & {
     missingItems: WebsiteHealthMissingItem[];
+    webDbIssueItems: WebsiteHealthWebDbIssueItem[];
   };
 }

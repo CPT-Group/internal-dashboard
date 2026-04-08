@@ -12,10 +12,12 @@ import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import type { ToastMessage } from 'primereact/toast';
 import type {
+  WebsiteHealthMissingItem,
   WebsiteHealthSiteDetailsResponse,
   WebsiteHealthSiteResult,
   WebsiteHealthSummary,
   WebsiteHealthSummaryResponse,
+  WebsiteHealthWebDbIssueItem,
 } from '@/types';
 import { WebsiteHealthInfoHelp } from './WebsiteHealthInfoHelp';
 import styles from './WebsiteHealthDashboard.module.scss';
@@ -26,6 +28,11 @@ interface SinceDaysOption {
 }
 
 type DetailsViewMode = 'missing' | 'info';
+
+type WebsiteHealthDetailsSite = WebsiteHealthSiteResult & {
+  missingItems: WebsiteHealthMissingItem[];
+  webDbIssueItems: WebsiteHealthWebDbIssueItem[];
+};
 
 const SINCE_DAYS_OPTIONS: SinceDaysOption[] = [
   { label: 'Last 1 day', value: 1 },
@@ -68,7 +75,8 @@ export const WebsiteHealthDashboard = () => {
   const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
   const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
   const [detailsMode, setDetailsMode] = useState<DetailsViewMode>('missing');
-  const [detailsSite, setDetailsSite] = useState<(WebsiteHealthSiteResult & { missingItems: Array<{ submissionId: number; dateReceived: string; email: string | null }> }) | null>(null);
+  const [detailsSite, setDetailsSite] = useState<WebsiteHealthDetailsSite | null>(null);
+  const [showWebDbIssueRows, setShowWebDbIssueRows] = useState<boolean>(false);
 
   const showToast = useCallback((message: ToastMessage) => {
     toastRef.current?.show(message);
@@ -164,6 +172,7 @@ export const WebsiteHealthDashboard = () => {
       setDetailsSite({
         ...site,
         missingItems: [],
+        webDbIssueItems: [],
       });
 
       try {
@@ -192,6 +201,7 @@ export const WebsiteHealthDashboard = () => {
           ...site,
           status: 'error',
           missingItems: [],
+          webDbIssueItems: [],
           errorMessage: msg,
         });
       } finally {
@@ -201,15 +211,51 @@ export const WebsiteHealthDashboard = () => {
     [showToast, sinceDays]
   );
 
-  const openInfoDetails = useCallback((site: WebsiteHealthSiteResult) => {
-    setDetailsMode('info');
-    setDetailsVisible(true);
-    setDetailsLoading(false);
-    setDetailsSite({
-      ...site,
-      missingItems: [],
-    });
-  }, []);
+  const openInfoDetails = useCallback(
+    async (site: WebsiteHealthSiteResult) => {
+      setDetailsMode('info');
+      setDetailsVisible(true);
+      setShowWebDbIssueRows(false);
+      setDetailsLoading(true);
+      setDetailsSite({
+        ...site,
+        missingItems: [],
+        webDbIssueItems: [],
+      });
+
+      try {
+        const qs = new URLSearchParams({
+          siteKey: site.siteKey,
+          sinceDays: toFetchSinceDaysValue(sinceDays),
+        });
+        const res = await fetch(`/api/website-health/site?${qs.toString()}`, { cache: 'no-store' });
+        const body = (await res.json()) as WebsiteHealthSiteDetailsResponse | { ok: false; message?: string };
+        if (!res.ok || !body.ok) {
+          const msg = 'message' in body && typeof body.message === 'string' ? body.message : 'Unable to fetch details.';
+          throw new Error(msg);
+        }
+        setDetailsSite(body.site);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        showToast({
+          severity: 'error',
+          summary: 'Could not load comparison info',
+          detail: msg,
+          life: 5000,
+        });
+        setDetailsSite({
+          ...site,
+          missingItems: [],
+          webDbIssueItems: [],
+          status: 'error',
+          errorMessage: msg,
+        });
+      } finally {
+        setDetailsLoading(false);
+      }
+    },
+    [showToast, sinceDays]
+  );
 
   useEffect(() => {
     void fetchSummary(sinceDays);
@@ -371,7 +417,7 @@ export const WebsiteHealthDashboard = () => {
                       text
                       icon="pi pi-info-circle"
                       className={styles.actionButton}
-                      onClick={() => openInfoDetails(row)}
+                      onClick={() => void openInfoDetails(row)}
                       aria-label={`View info for ${row.siteKey}`}
                       tooltip="View comparison info"
                       tooltipOptions={{ position: 'top' }}
@@ -403,21 +449,26 @@ export const WebsiteHealthDashboard = () => {
               : 'Missing Rows'
         }
         visible={detailsVisible}
-        onHide={() => setDetailsVisible(false)}
-        style={{ width: 'min(95vw, 900px)' }}
+        onHide={() => {
+          setDetailsVisible(false);
+          setShowWebDbIssueRows(false);
+        }}
+        style={{ width: 'min(98vw, 1120px)' }}
         modal
       >
         {detailsLoading ? (
           <div className={styles.detailsLoading}>
             <ProgressSpinner className="progress-spinner-sm" />
             <span>
-              Please wait while we fetch rows for {detailsSite?.siteKey ?? 'selected case'}...
+              {detailsMode === 'info'
+                ? `Loading comparison details for ${detailsSite?.siteKey ?? 'selected case'}...`
+                : `Please wait while we fetch rows for ${detailsSite?.siteKey ?? 'selected case'}...`}
             </span>
           </div>
         ) : !detailsSite ? (
           <div className={styles.expansionEmpty}>No site selected.</div>
         ) : detailsMode === 'info' ? (
-          <div className={styles.infoPanel}>
+          <div className={`${styles.infoPanel} ${styles.dialogBodyScroll}`}>
             <div className={styles.infoRow}>
               <strong>Website DB:</strong> <span>{detailsSite.websiteDbName}</span>
             </div>
@@ -435,6 +486,21 @@ export const WebsiteHealthDashboard = () => {
             </div>
             <div className={styles.infoRow}>
               <strong>Web DB Issue Count:</strong> <span>{detailsSite.webDbIssueCount.toLocaleString()}</span>
+              {detailsSite.webDbStatus === 'error' && detailsSite.webDbIssueCount > 0 ? (
+                <Button
+                  type="button"
+                  size="small"
+                  text
+                  rounded
+                  icon={showWebDbIssueRows ? 'pi pi-eye-slash' : 'pi pi-eye'}
+                  className={styles.infoRowAction}
+                  onClick={() => setShowWebDbIssueRows((v) => !v)}
+                  tooltip={showWebDbIssueRows ? 'Hide Web DB issue rows' : 'Show website rows with Web DB issues'}
+                  tooltipOptions={{ position: 'left' }}
+                  aria-expanded={showWebDbIssueRows}
+                  aria-label="Toggle Web DB issue rows"
+                />
+              ) : null}
             </div>
             <div className={styles.infoRow}>
               <strong>Web DB Missing Confirmation:</strong>{' '}
@@ -461,6 +527,43 @@ export const WebsiteHealthDashboard = () => {
             </div>
             {detailsSite.errorMessage ? (
               <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
+            ) : null}
+            {showWebDbIssueRows && detailsSite.webDbIssueItems.length > 0 ? (
+              <div className={styles.webDbIssuesTable}>
+                <div className={styles.webDbIssuesTableTitle}>Website rows with Web DB issues (in-scope)</div>
+                <DataTable
+                  value={detailsSite.webDbIssueItems}
+                  size="small"
+                  responsiveLayout="scroll"
+                  showGridlines
+                  stripedRows
+                  emptyMessage="No rows."
+                >
+                  <Column field="submissionId" header="ID" style={{ width: '6rem' }} />
+                  <Column
+                    field="dateReceived"
+                    header="Date received"
+                    body={(item: WebsiteHealthWebDbIssueItem) => formatDateTime(item.dateReceived)}
+                    style={{ width: '11rem' }}
+                  />
+                  <Column field="email" header="Email" />
+                  <Column
+                    field="confirmationNo"
+                    header="Confirmation"
+                    body={(item: WebsiteHealthWebDbIssueItem) => item.confirmationNo?.trim() || '—'}
+                  />
+                  <Column
+                    field="reasons"
+                    header="Issue"
+                    body={(item: WebsiteHealthWebDbIssueItem) => item.reasons.join(' · ')}
+                  />
+                </DataTable>
+              </div>
+            ) : null}
+            {showWebDbIssueRows && detailsSite.webDbStatus === 'error' && detailsSite.webDbIssueCount > 0 && detailsSite.webDbIssueItems.length === 0 ? (
+              <div className={styles.expansionEmpty}>
+                Issue rows could not be loaded. Refresh the page or open Info again after the scan finishes.
+              </div>
             ) : null}
             <WebsiteHealthInfoHelp site={detailsSite} />
           </div>
