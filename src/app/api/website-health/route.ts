@@ -36,33 +36,41 @@ function parseBodyNotify(body: unknown): boolean {
 }
 
 function buildAlertText(summary: WebsiteHealthSummaryResponse['summary']): string {
-  const impactedSites = summary.results.filter((r) => r.missingCount > 0).length;
+  const impactedCompareSites = summary.results.filter((r) => r.missingCount > 0).length;
+  const impactedWebDbSites = summary.results.filter((r) => r.webDbStatus === 'error').length;
   const scope = summary.sinceDays === null ? 'All submitted records' : `Last ${summary.sinceDays} day(s)`;
   const topRows = summary.results
-    .filter((r) => r.missingCount > 0 || r.status === 'error')
-    .sort((a, b) => b.missingCount - a.missingCount)
+    .filter((r) => r.missingCount > 0 || r.status === 'error' || r.webDbStatus === 'error')
+    .sort((a, b) => {
+      if (a.webDbStatus === 'error' && b.webDbStatus !== 'error') return -1;
+      if (b.webDbStatus === 'error' && a.webDbStatus !== 'error') return 1;
+      return b.missingCount - a.missingCount;
+    })
     .slice(0, 10);
 
   const detailLines = topRows.map((r) => {
-    const status = r.status === 'error' ? 'ERROR' : 'WARNING';
+    const compareStatus = r.status.toUpperCase();
+    const webDbStatus = r.webDbStatus.toUpperCase();
     const site = r.siteKey.replace(/\|/g, '/');
     const error = r.errorMessage ? ` (${r.errorMessage.replace(/\|/g, '/')})` : '';
-    return `| ${site} | ${r.missingCount} | ${r.submittedOnlineCount} | ${r.matchedInCleanClaimsCount} | ${status}${error} |`;
+    return `| ${site} | ${webDbStatus} | ${r.webDbIssueCount} | ${compareStatus}${error} | ${r.submittedOnlineCount} | ${r.matchedInCleanClaimsCount} | ${r.missingCount} |`;
   });
 
   return [
-    '## WEBSITE HEALTH ALERT ⚠️',
+    '## WEBSITE HEALTH ALERT',
     '',
     '| Metric | Value |',
     '|---|---|',
     `| Scope | ${scope} |`,
     `| Active Sites Checked | ${summary.totalSitesChecked} |`,
-    `| Submitted Online | ${summary.totalSubmittedOnline} |`,
-    `| Missing in CleanClaims | ${summary.totalMissingInCleanClaims} [${impactedSites}] |`,
+    `| Compare Issues (sites) | ${summary.sitesWithIssues} |`,
+    `| Web DB Issues (sites) | ${impactedWebDbSites} |`,
+    `| Submitted | ${summary.totalSubmittedOnline} |`,
+    `| Missing | ${summary.totalMissingInCleanClaims} [${impactedCompareSites}] |`,
     `| Last Run | ${summary.runAt} |`,
     '',
-    '| Site | Missing | Submitted | Matched | Status |',
-    '|---|---:|---:|---:|---|',
+    '| Site | Web DB | Web DB Issues | Status | Submitted | Matched | Missing |',
+    '|---|---|---:|---|---:|---:|---:|',
     ...detailLines,
   ].join('\n').slice(0, 3900);
 }

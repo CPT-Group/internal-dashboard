@@ -83,6 +83,7 @@ export const WebsiteHealthDashboard = () => {
   const [detailsMode, setDetailsMode] = useState<DetailsViewMode>('missing');
   const [detailsSite, setDetailsSite] = useState<WebsiteHealthDetailsSite | null>(null);
   const [showWebDbIssueRows, setShowWebDbIssueRows] = useState<boolean>(false);
+  const [showMissingRowsInInfo, setShowMissingRowsInInfo] = useState<boolean>(false);
   const [detailsActionLoading, setDetailsActionLoading] = useState<{
     siteKey: string;
     mode: DetailsViewMode;
@@ -136,12 +137,14 @@ export const WebsiteHealthDashboard = () => {
       }
 
       setSummary(body.summary);
-      const missingSites = body.summary.results.filter((site) => site.missingCount > 0).length;
+      const compareIssueSites = body.summary.results.filter((site) => site.missingCount > 0).length;
+      const webDbIssueSites = body.summary.results.filter((site) => site.webDbStatus === 'error').length;
+      const sitesWithAnyIssue = body.summary.sitesWithIssues;
       if (body.alerted) {
         showToast({
           severity: 'warn',
           summary: 'Scan complete',
-          detail: `Issues found in ${missingSites} site(s). Teams alert sent.`,
+          detail: `Issues found in ${sitesWithAnyIssue} site(s) (${compareIssueSites} compare, ${webDbIssueSites} Web DB). Teams alert sent.`,
           life: 5000,
         });
       } else if (body.summary.sitesWithIssues > 0) {
@@ -150,7 +153,7 @@ export const WebsiteHealthDashboard = () => {
           summary: 'Scan complete',
           detail:
             body.alertMessage ??
-            `Issues found in ${missingSites} site(s). Please review the table for details.`,
+            `Issues found in ${sitesWithAnyIssue} site(s) (${compareIssueSites} compare, ${webDbIssueSites} Web DB). Please review the table for details.`,
           life: 5000,
         });
       } else {
@@ -180,6 +183,7 @@ export const WebsiteHealthDashboard = () => {
       setDetailsMode('missing');
       setDetailsVisible(true);
       setDetailsLoading(true);
+      setShowMissingRowsInInfo(false);
       setDetailsSite({
         ...site,
         missingItems: [],
@@ -229,6 +233,7 @@ export const WebsiteHealthDashboard = () => {
       setDetailsMode('info');
       setDetailsVisible(true);
       setShowWebDbIssueRows(false);
+      setShowMissingRowsInInfo(false);
       setDetailsLoading(true);
       setDetailsSite({
         ...site,
@@ -310,6 +315,29 @@ export const WebsiteHealthDashboard = () => {
       },
     ];
   }, [detailsSite]);
+  const renderMissingItemsTable = useCallback((items: WebsiteHealthMissingItem[]) => {
+    if (items.length === 0) {
+      return <div className={styles.expansionEmpty}>No missing items for this site.</div>;
+    }
+    return (
+      <DataTable
+        value={items}
+        size="small"
+        responsiveLayout="scroll"
+        showGridlines
+        stripedRows
+        emptyMessage="No missing items."
+      >
+        <Column field="submissionId" header="Submission ID" style={{ width: '10rem' }} />
+        <Column
+          field="dateReceived"
+          header="Date Received"
+          body={(item: WebsiteHealthMissingItem) => formatDateTime(item.dateReceived)}
+        />
+        <Column field="email" header="Email" />
+      </DataTable>
+    );
+  }, []);
 
   return (
     <main className={styles.page} aria-label="Website health dashboard">
@@ -498,6 +526,7 @@ export const WebsiteHealthDashboard = () => {
         onHide={() => {
           setDetailsVisible(false);
           setShowWebDbIssueRows(false);
+          setShowMissingRowsInInfo(false);
         }}
         style={{ width: 'min(98vw, 1120px)' }}
         contentClassName={styles.dialogContentSingleScroll}
@@ -555,6 +584,48 @@ export const WebsiteHealthDashboard = () => {
                 />
               ) : null}
             </div>
+            <div className={styles.infoRow}>
+              <strong>Submitted:</strong>{' '}
+              <Tag value={detailsSite.submittedOnlineCount.toLocaleString()} severity="info" />
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Matched:</strong>{' '}
+              <Tag value={detailsSite.matchedInCleanClaimsCount.toLocaleString()} severity="success" />
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Missing:</strong>{' '}
+              <Tag
+                value={detailsSite.missingCount.toLocaleString()}
+                severity={detailsSite.missingCount > 0 ? 'warning' : 'success'}
+              />
+              {detailsSite.missingCount > 0 ? (
+                <Button
+                  type="button"
+                  size="small"
+                  text
+                  rounded
+                  icon={showMissingRowsInInfo ? 'pi pi-eye-slash' : 'pi pi-eye'}
+                  className={styles.infoRowAction}
+                  onClick={() => setShowMissingRowsInInfo((v) => !v)}
+                  tooltip={showMissingRowsInInfo ? 'Hide missing rows' : 'Show missing rows'}
+                  tooltipOptions={{ position: 'left' }}
+                  aria-expanded={showMissingRowsInInfo}
+                  aria-label="Toggle missing rows"
+                />
+              ) : null}
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Method:</strong>{' '}
+              <span>
+                Confirmation number compare with source filters (date received, today only through 5:15 AM, no test IDs, no @cptgroup.com).
+              </span>
+            </div>
+            {showMissingRowsInInfo ? (
+              <div className={styles.webDbIssuesTable}>
+                <div className={styles.webDbIssuesTableTitle}>Missing rows (same dataset as View Missing Rows)</div>
+                {renderMissingItemsTable(detailsSite.missingItems)}
+              </div>
+            ) : null}
             <div className={styles.webDbMetricsBlock}>
               <DataTable
                 value={webDbMetricItems}
@@ -580,21 +651,6 @@ export const WebsiteHealthDashboard = () => {
                   )}
                 />
               </DataTable>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Submitted:</strong> <span>{detailsSite.submittedOnlineCount.toLocaleString()}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Matched:</strong> <span>{detailsSite.matchedInCleanClaimsCount.toLocaleString()}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Missing:</strong> <span>{detailsSite.missingCount.toLocaleString()}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Method:</strong>{' '}
-              <span>
-                Confirmation number compare with source filters (date received, today only through 5:15 AM, no test IDs, no @cptgroup.com).
-              </span>
             </div>
             {detailsSite.errorMessage ? (
               <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
@@ -645,25 +701,8 @@ export const WebsiteHealthDashboard = () => {
           </div>
         ) : detailsSite.errorMessage ? (
           <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
-        ) : detailsSite.missingItems.length === 0 ? (
-          <div className={styles.expansionEmpty}>No missing items for this site.</div>
         ) : (
-          <DataTable
-            value={detailsSite.missingItems}
-            size="small"
-            responsiveLayout="scroll"
-            showGridlines
-            stripedRows
-            emptyMessage="No missing items."
-          >
-            <Column field="submissionId" header="Submission ID" style={{ width: '10rem' }} />
-            <Column
-              field="dateReceived"
-              header="Date Received"
-              body={(item: { dateReceived: string }) => formatDateTime(item.dateReceived)}
-            />
-            <Column field="email" header="Email" />
-          </DataTable>
+          renderMissingItemsTable(detailsSite.missingItems)
         )}
       </Dialog>
     </main>

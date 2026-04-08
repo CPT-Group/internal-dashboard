@@ -662,7 +662,7 @@ function buildSummary(
       acc.totalSubmittedOnline += site.submittedOnlineCount;
       acc.totalMatchedInCleanClaims += site.matchedInCleanClaimsCount;
       acc.totalMissingInCleanClaims += site.missingCount;
-      if (site.status === 'warning' || site.status === 'error') {
+      if (site.status === 'warning' || site.status === 'error' || site.webDbStatus === 'error') {
         acc.sitesWithIssues += 1;
       }
       return acc;
