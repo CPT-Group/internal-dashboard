@@ -169,6 +169,12 @@
   margin-left: auto;
 }
 
+.infoRowHint {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-color-secondary);
+}
+
 .dialogBodyScroll {
   max-height: min(85vh, 920px);
   overflow-y: auto;

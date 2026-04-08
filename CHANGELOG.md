@@ -36,8 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Website Health Web DB integrity (OR logic)**: A website row is flagged if **any** of DateReceived missing, confirmation missing, or `IsSubmitted`≠1 (**only when** a submitted-flag column exists on `Submissions`). Issue list shows **all** applicable reasons per row; breakdown counts can overlap. Dashboard Info/help text and tooltips updated; internal analysis doc aligned.
+
 ### Added
 
+- **Cursor agent skills in repo**: `.gitignore` now allows `.cursor/skills/**` (with `.cursor/rules/`); added `website-health-check` skill (`SKILL.md`, `teams-message-templates.md`). `AGENTS.md` documents versioned Cursor paths.
 - **Website Health**: Home grid tile and blank route `/website-health` (placeholder for future analytics).
 - **Local SQL env**: `.env.local` may include `DB_*` (CPT2K16, aligned with slack-bot-manager) and `PROD_DB_*` (interactive-site **10.0.0.5**) for future DB-backed features — not committed.
 - **`npm run test:sql`**: Dev script `scripts/test-sql-connections.cjs` runs a read-only `SELECT @@SERVERNAME, DB_NAME(), GETDATE()` against both pools (requires `mssql` + `dotenv` devDependencies).

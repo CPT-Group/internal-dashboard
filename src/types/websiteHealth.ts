@@ -17,7 +17,8 @@ export interface WebsiteHealthMissingItem {
 /** Rows on the website Submissions side that fail Web DB integrity checks (in-scope only). */
 export interface WebsiteHealthWebDbIssueItem {
   submissionId: number;
-  dateReceived: string;
+  /** ISO timestamp when set; null when `DateReceived` is missing in the website DB. */
+  dateReceived: string | null;
   email: string | null;
   confirmationNo: string | null;
   reasons: string[];
@@ -31,6 +32,7 @@ export interface WebsiteHealthSiteResult {
   status: WebsiteHealthStatus;
   webDbStatus: WebsiteHealthWebDbStatus;
   webDbIssueCount: number;
+  webDbMissingDateReceivedCount: number;
   webDbMissingConfirmationCount: number;
   webDbNotSubmittedCount: number;
   submittedOnlineCount: number;

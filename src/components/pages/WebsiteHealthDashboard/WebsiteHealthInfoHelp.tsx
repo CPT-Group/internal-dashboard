@@ -9,8 +9,8 @@ interface WebsiteHealthInfoHelpProps {
 export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
   const webDbProblem =
     site.webDbStatus === 'error'
-      ? `This row shows ERROR because at least one in-scope row has a Web DB integrity issue (${site.webDbIssueCount.toLocaleString()} row(s)): missing confirmation only when DateReceived is set and the row is submitted online but has no confirmation, and/or not marked submitted online. Separate from 2K16 matching.`
-      : 'OK means no such issues: submitted-online rows have a confirmation when required, and nothing is explicitly “not submitted” in a bad state for this check.';
+      ? `ERROR: ${site.webDbIssueCount.toLocaleString()} website row(s) fail at least one of the three Web DB checks below. The issue list shows every problem that applies per row (OR logic — you can see 1, 2, or 3 reasons). Breakdown counts can overlap the same row. This is separate from 2K16 matching.`
+      : 'OK: every candidate row has DateReceived, a confirmation number, and IsSubmitted effectively 1/true (when the flag column exists).';
 
   const compareProblem =
     site.status === 'warning'
@@ -25,25 +25,42 @@ export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
         <AccordionTab header="What does Web DB status mean?">
           <div className={styles.infoHelpBody}>
             <p>
-              <strong>Web DB</strong> checks the website <code>Submissions</code> table only — before we compare to 2K16.
+              <strong>Web DB</strong> checks the website <code>Submissions</code> table. A <strong>healthy</strong> row
+              should have all of:
             </p>
             <ul>
               <li>
-                <strong>OK</strong> — No rows that fail the checks below. In-scope always means <code>DateReceived</code>{' '}
-                is set.
+                <strong>DateReceived</strong> — not null (received timestamp).
               </li>
               <li>
-                <strong>ERROR</strong> — At least one row is missing confirmation when it should have one (see below), or
-                the submitted flag is explicitly false. These are not counted as “missing in CleanClaims.”
+                <strong>Confirmation number</strong> — present (not null/empty).
+              </li>
+              <li>
+                <strong>IsSubmitted</strong> — effectively <code>1</code> / true (via <code>IsSubmitted</code>,{' '}
+                <code>IsSubmittedOnline</code>, or similar when present).
+              </li>
+            </ul>
+            <p>
+              <strong>If any one of those is wrong, the row is a Web DB error.</strong> A single row can be wrong in
+              multiple ways at once (for example only DateReceived, or missing confirmation and IsSubmitted≠1) — the
+              detail table lists every failing check for that row. If the website schema has no submitted-flag column (
+              <code>IsSubmitted</code>, <code>IsSubmittedOnline</code>, etc.), the IsSubmitted rule is skipped so we do
+              not flag every row.
+            </p>
+            <ul>
+              <li>
+                <strong>OK</strong> — No candidate rows fail any of the three checks.
+              </li>
+              <li>
+                <strong>ERROR</strong> — At least one row fails one or more checks. These rows are not used as
+                “missing in CleanClaims” for the confirmation compare when confirmation is absent.
               </li>
             </ul>
             <p className={styles.infoHelpHighlight}>{webDbProblem}</p>
             <p>
-              <strong>Missing confirmation</strong> — <code>DateReceived</code> is not null, confirmation is null/empty,
-              and the row is <em>not</em> explicitly “not submitted online” (drafts without confirmation use the not-submitted
-              bucket instead).
-              <br />
-              <strong>Not submitted</strong> — Row is in scope and the site marks it as not submitted online.
+              <strong>Candidate rows</strong> use the same filters as the scanner (test IDs, email, deadline, 5:15 rule
+              for today, etc.) but can include <code>DateReceived IS NULL</code> so incomplete submissions appear in the
+              Web DB issue list.
             </p>
           </div>
         </AccordionTab>
@@ -73,16 +90,15 @@ export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
           <div className={styles.infoHelpBody}>
             <ul>
               <li>
-                <strong>Submitted</strong> — Rows in <code>Submissions</code> that pass all source filters (date received,
-                5:15 AM rule for today, test ID range, email, deadline, etc.).
+                <strong>Submitted</strong> — Rows in <code>Submissions</code> that pass the <strong>strict</strong> compare
+                filters, including <code>DateReceived IS NOT NULL</code>.
               </li>
               <li>
                 <strong>Matched</strong> — Of those, how many had a confirmation that appears in online CleanClaims.
               </li>
               <li>
                 <strong>Missing</strong> — Submissions that <em>have</em> a confirmation number but that confirmation was
-                not found on matching online CleanClaims rows. Blank confirmations are tracked under Web DB status, not
-                here.
+                not found on matching online CleanClaims rows. Web DB integrity is a separate concept.
               </li>
             </ul>
           </div>
@@ -105,7 +121,7 @@ export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
               </li>
               <li>
                 <strong>Deadline</strong> — When set on the case, <code>DateReceived</code> must be on or before the
-                deadline date.
+                deadline date (when DateReceived is present).
               </li>
               <li>
                 <strong>CleanClaims</strong> — Only rows treated as filed/submitted online (e.g. <code>ClaimFiledOnline</code>

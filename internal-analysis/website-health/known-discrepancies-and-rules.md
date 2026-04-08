@@ -14,7 +14,11 @@ Treat source records as in-scope only when:
 
 ## Web DB integrity (dashboard)
 
-Rows in scope already satisfy `DateReceived IS NOT NULL`. For **missing confirmation** alerts, only count rows where **confirmation is blank** (SQL `NULL` or empty after trim) **and** the row is **not** explicitly marked not submitted online (e.g. `IsSubmitted` / `IsSubmittedOnline` is not false). Drafts or not-submitted rows without a confirmation are **not** treated as “missing confirmation” — they fall under **not submitted** if the flag is false.
+Separate from the **confirmation compare** (which uses submissions with `DateReceived IS NOT NULL` and other filters). **Web DB integrity** uses an **OR** rule on in-scope candidate rows (same ID/email/deadline/5:15 rules; **allows** `DateReceived IS NULL` so partial rows appear):
+
+- **Bad** if **any** of: `DateReceived` null, confirmation blank (null/trim-empty), or submitted flag not effectively `1`/true (**only if** a known flag column exists on `Submissions`, e.g. `IsSubmitted` / `IsSubmittedOnline`; otherwise that pillar is skipped).
+- One row can fail **one, two, or all three** checks; the UI lists **every** failing check for that row.
+- Summary **breakdown counts** (missing date / missing confirmation / not submitted) **can overlap** the same row; **issue count** = distinct rows with **at least one** failure.
 
 ## Current target-side rules
 

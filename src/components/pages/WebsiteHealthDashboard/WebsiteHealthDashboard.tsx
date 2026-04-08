@@ -371,7 +371,7 @@ export const WebsiteHealthDashboard = () => {
                 body={(row: WebsiteHealthSiteResult) => (
                   <span
                     className={styles.statusTagWrap}
-                    title={`Web DB Status: ${row.webDbStatus.toUpperCase()} (issues: ${row.webDbIssueCount}, missing confirmation: ${row.webDbMissingConfirmationCount}, not submitted: ${row.webDbNotSubmittedCount})`}
+                    title={`Web DB: ${row.webDbStatus.toUpperCase()}. Distinct rows with any issue: ${row.webDbIssueCount}. Breakdown (can overlap): missing DateReceived ${row.webDbMissingDateReceivedCount}, missing confirmation ${row.webDbMissingConfirmationCount}, IsSubmitted≠1 ${row.webDbNotSubmittedCount}.`}
                   >
                     <Tag value={row.webDbStatus.toUpperCase()} severity={webDbStatusSeverity(row)} />
                   </span>
@@ -495,7 +495,11 @@ export const WebsiteHealthDashboard = () => {
                   icon={showWebDbIssueRows ? 'pi pi-eye-slash' : 'pi pi-eye'}
                   className={styles.infoRowAction}
                   onClick={() => setShowWebDbIssueRows((v) => !v)}
-                  tooltip={showWebDbIssueRows ? 'Hide Web DB issue rows' : 'Show website rows with Web DB issues'}
+                  tooltip={
+                    showWebDbIssueRows
+                      ? 'Hide Web DB issue rows'
+                      : 'Show rows failing any Web DB check (DateReceived, confirmation, or IsSubmitted=1)'
+                  }
                   tooltipOptions={{ position: 'left' }}
                   aria-expanded={showWebDbIssueRows}
                   aria-label="Toggle Web DB issue rows"
@@ -503,11 +507,16 @@ export const WebsiteHealthDashboard = () => {
               ) : null}
             </div>
             <div className={styles.infoRow}>
+              <strong>Web DB Missing DateReceived:</strong>{' '}
+              <span>{detailsSite.webDbMissingDateReceivedCount.toLocaleString()}</span>
+              <span className={styles.infoRowHint}>(breakdown; rows can count in more than one)</span>
+            </div>
+            <div className={styles.infoRow}>
               <strong>Web DB Missing Confirmation:</strong>{' '}
               <span>{detailsSite.webDbMissingConfirmationCount.toLocaleString()}</span>
             </div>
             <div className={styles.infoRow}>
-              <strong>Web DB Not Submitted:</strong>{' '}
+              <strong>Web DB IsSubmitted≠1:</strong>{' '}
               <span>{detailsSite.webDbNotSubmittedCount.toLocaleString()}</span>
             </div>
             <div className={styles.infoRow}>
@@ -530,7 +539,10 @@ export const WebsiteHealthDashboard = () => {
             ) : null}
             {showWebDbIssueRows && detailsSite.webDbIssueItems.length > 0 ? (
               <div className={styles.webDbIssuesTable}>
-                <div className={styles.webDbIssuesTableTitle}>Website rows with Web DB issues (in-scope)</div>
+                <div className={styles.webDbIssuesTableTitle}>
+                  Website rows failing at least one Web DB rule (DateReceived set · confirmation · IsSubmitted=1) — issue
+                  column lists all that apply
+                </div>
                 <DataTable
                   value={detailsSite.webDbIssueItems}
                   size="small"
@@ -543,7 +555,9 @@ export const WebsiteHealthDashboard = () => {
                   <Column
                     field="dateReceived"
                     header="Date received"
-                    body={(item: WebsiteHealthWebDbIssueItem) => formatDateTime(item.dateReceived)}
+                    body={(item: WebsiteHealthWebDbIssueItem) =>
+                      item.dateReceived ? formatDateTime(item.dateReceived) : '—'
+                    }
                     style={{ width: '11rem' }}
                   />
                   <Column field="email" header="Email" />

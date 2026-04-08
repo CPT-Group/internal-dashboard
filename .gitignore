@@ -49,3 +49,6 @@ next-env.d.ts
 # Versioned project rules (see AGENTS.md)
 !.cursor/rules/
 !.cursor/rules/*.mdc
+# Versioned agent skills (see AGENTS.md)
+!.cursor/skills/
+!.cursor/skills/**

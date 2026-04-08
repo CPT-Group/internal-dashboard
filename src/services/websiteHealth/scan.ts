@@ -21,6 +21,17 @@ interface SubmittedRow {
   isSubmittedOnline: boolean | null;
 }
 
+/** Broader website row shape for Web DB integrity (may include null DateReceived). */
+interface WebDbIntegrityRow {
+  submissionId: number;
+  dateReceived: string | null;
+  confirmationNo: string | null;
+  email: string | null;
+  isSubmittedOnline: boolean | null;
+  /** When false, we do not evaluate IsSubmitted (no matching column on Submissions). */
+  isSubmittedColumnPresent: boolean;
+}
+
 type CleanClaimsMatchMode = 'submissionId' | 'confirmationNo';
 
 interface CleanClaimsMatchStrategy {
@@ -146,12 +157,16 @@ async function fetchSubmittedRows(
   websitePool: ConnectionPool,
   websiteDbName: string,
   sinceDays: number | null,
-  deadlineDate: string | null | undefined
+  deadlineDate: string | null | undefined,
+  submittedOnlineColumn?: string | null
 ): Promise<SubmittedRow[]> {
   const db = qIdentifier(websiteDbName);
-  const submittedOnlineColumn = await discoverSubmissionOnlineFlagColumn(websitePool, websiteDbName);
-  const submittedOnlineExpr = submittedOnlineColumn
-    ? `TRY_CONVERT(nvarchar(32), s.${qIdentifier(submittedOnlineColumn)})`
+  const flagCol =
+    submittedOnlineColumn === undefined
+      ? await discoverSubmissionOnlineFlagColumn(websitePool, websiteDbName)
+      : submittedOnlineColumn;
+  const submittedOnlineExpr = flagCol
+    ? `TRY_CONVERT(nvarchar(32), s.${qIdentifier(flagCol)})`
     : `CAST(NULL AS nvarchar(32))`;
   const req = websitePool.request();
   req.input('sinceDays', sql.Int, sinceDays);
@@ -196,6 +211,70 @@ async function fetchSubmittedRows(
       dateReceived: row.date_received.toISOString(),
       email: row.email ?? null,
       isSubmittedOnline: parseTruthyFlag(row.submitted_online ?? null),
+    }))
+    .filter((row) => Number.isFinite(row.submissionId));
+}
+
+/**
+ * Same filters as compare rows, but allows `DateReceived IS NULL` so Web DB integrity can flag incomplete rows.
+ */
+async function fetchWebDbCandidateRows(
+  websitePool: ConnectionPool,
+  websiteDbName: string,
+  sinceDays: number | null,
+  deadlineDate: string | null | undefined,
+  submittedOnlineColumn: string | null
+): Promise<WebDbIntegrityRow[]> {
+  const db = qIdentifier(websiteDbName);
+  const submittedOnlineExpr = submittedOnlineColumn
+    ? `TRY_CONVERT(nvarchar(32), s.${qIdentifier(submittedOnlineColumn)})`
+    : `CAST(NULL AS nvarchar(32))`;
+  const req = websitePool.request();
+  req.input('sinceDays', sql.Int, sinceDays);
+  req.input('deadlineDate', sql.Date, deadlineDate ?? null);
+
+  const rs = await req.query<{
+    submission_id: number;
+    confirmation_no: string | null;
+    date_received: Date | null;
+    email: string | null;
+    submitted_online: string | null;
+  }>(`
+    SELECT
+      s.ID AS submission_id,
+      TRY_CONVERT(nvarchar(256), s.ConfirmationNo) AS confirmation_no,
+      s.DateReceived AS date_received,
+      TRY_CONVERT(nvarchar(320), s.Email) AS email,
+      ${submittedOnlineExpr} AS submitted_online
+    FROM ${db}.dbo.Submissions s
+    WHERE (s.ID < 2000000 OR s.ID > 2000039)
+      AND (
+        s.Email IS NULL
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(320), s.Email)))) NOT LIKE '%@cptgroup.com%'
+      )
+      AND (
+        s.DateReceived IS NULL
+        OR (
+          CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+          OR (
+            CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+            AND CAST(s.DateReceived AS time) <= CAST('05:15:00' AS time)
+          )
+        )
+      )
+      AND (@deadlineDate IS NULL OR s.DateReceived IS NULL OR CAST(s.DateReceived AS date) <= @deadlineDate)
+      AND (@sinceDays IS NULL OR s.DateReceived IS NULL OR s.DateReceived >= DATEADD(DAY, -@sinceDays, GETDATE()))
+    ORDER BY CASE WHEN s.DateReceived IS NULL THEN 1 ELSE 0 END, s.DateReceived DESC;
+  `);
+
+  return rs.recordset
+    .map((row) => ({
+      submissionId: Number(row.submission_id),
+      dateReceived: row.date_received ? row.date_received.toISOString() : null,
+      confirmationNo: row.confirmation_no ? row.confirmation_no.trim() : null,
+      email: row.email ?? null,
+      isSubmittedOnline: parseTruthyFlag(row.submitted_online ?? null),
+      isSubmittedColumnPresent: submittedOnlineColumn !== null,
     }))
     .filter((row) => Number.isFinite(row.submissionId));
 }
@@ -279,35 +358,61 @@ function normalizeConfirmation(value: string): string {
   return value.trim().toLowerCase();
 }
 
-/** In-scope rows always come from SQL with DateReceived IS NOT NULL. */
-function isConfirmationBlank(row: SubmittedRow): boolean {
-  return !row.confirmationNo || row.confirmationNo.trim().length === 0;
-}
-
 /**
- * "Missing confirmation" is a data problem only when the row was received and is treated as submitted online,
- * but ConfirmationNo is null/empty. Drafts marked not submitted online are excluded from this bucket.
+ * Healthy row: DateReceived set, confirmation present, IsSubmitted truthy (1/true).
+ * Any failure is a Web DB issue; reasons list what is wrong (OR logic — multiple reasons per row).
  */
-function isWebDbMissingConfirmationIssue(row: SubmittedRow): boolean {
-  if (!isConfirmationBlank(row)) return false;
-  if (row.isSubmittedOnline === false) return false;
-  return true;
+function analyzeWebDbIntegrityIssues(row: WebDbIntegrityRow): string[] {
+  const reasons: string[] = [];
+  if (row.dateReceived === null) {
+    reasons.push('Missing DateReceived');
+  }
+  if (!row.confirmationNo || row.confirmationNo.trim().length === 0) {
+    reasons.push('Missing confirmation number');
+  }
+  if (row.isSubmittedColumnPresent && row.isSubmittedOnline !== true) {
+    reasons.push(
+      row.isSubmittedOnline === false
+        ? 'IsSubmitted not 1 (false/0)'
+        : 'IsSubmitted not 1 (null/unknown — expect 1/true)'
+    );
+  }
+  return reasons;
 }
 
-function rowHasAnyWebDbIssue(row: SubmittedRow): boolean {
-  return isWebDbMissingConfirmationIssue(row) || row.isSubmittedOnline === false;
+function summarizeWebDbIntegrity(webDbRows: WebDbIntegrityRow[]): {
+  webDbIssueCount: number;
+  webDbMissingDateReceivedCount: number;
+  webDbMissingConfirmationCount: number;
+  webDbNotSubmittedCount: number;
+} {
+  let webDbMissingDateReceivedCount = 0;
+  let webDbMissingConfirmationCount = 0;
+  let webDbNotSubmittedCount = 0;
+  let webDbIssueCount = 0;
+
+  for (const row of webDbRows) {
+    const missDr = row.dateReceived === null;
+    const missConf = !row.confirmationNo || row.confirmationNo.trim().length === 0;
+    const badSubmitted = row.isSubmittedColumnPresent && row.isSubmittedOnline !== true;
+    if (missDr) webDbMissingDateReceivedCount += 1;
+    if (missConf) webDbMissingConfirmationCount += 1;
+    if (badSubmitted) webDbNotSubmittedCount += 1;
+    if (missDr || missConf || badSubmitted) webDbIssueCount += 1;
+  }
+
+  return {
+    webDbIssueCount,
+    webDbMissingDateReceivedCount,
+    webDbMissingConfirmationCount,
+    webDbNotSubmittedCount,
+  };
 }
 
-function getWebDbIssueItems(submittedRows: SubmittedRow[]): WebsiteHealthWebDbIssueItem[] {
+function buildWebDbIssueItems(webDbRows: WebDbIntegrityRow[]): WebsiteHealthWebDbIssueItem[] {
   const items: WebsiteHealthWebDbIssueItem[] = [];
-  for (const row of submittedRows) {
-    const reasons: string[] = [];
-    if (isWebDbMissingConfirmationIssue(row)) {
-      reasons.push('Missing confirmation (DateReceived set, submitted online, no confirmation number)');
-    }
-    if (row.isSubmittedOnline === false) {
-      reasons.push('Not marked submitted online');
-    }
+  for (const row of webDbRows) {
+    const reasons = analyzeWebDbIntegrityIssues(row);
     if (reasons.length > 0) {
       items.push({
         submissionId: row.submissionId,
@@ -450,15 +555,27 @@ async function scanSite(
   }
 > {
   try {
+    const submittedFlagCol = await discoverSubmissionOnlineFlagColumn(websitePool, mapping.websiteDbName);
     const submittedRows = await fetchSubmittedRows(
       websitePool,
       mapping.websiteDbName,
       sinceDays,
-      mapping.deadlineDate
+      mapping.deadlineDate,
+      submittedFlagCol
     );
-    const webDbMissingConfirmationCount = submittedRows.filter((row) => isWebDbMissingConfirmationIssue(row)).length;
-    const webDbNotSubmittedCount = submittedRows.filter((row) => row.isSubmittedOnline === false).length;
-    const webDbIssueCount = submittedRows.filter((row) => rowHasAnyWebDbIssue(row)).length;
+    const webDbRows = await fetchWebDbCandidateRows(
+      websitePool,
+      mapping.websiteDbName,
+      sinceDays,
+      mapping.deadlineDate,
+      submittedFlagCol
+    );
+    const {
+      webDbIssueCount,
+      webDbMissingDateReceivedCount,
+      webDbMissingConfirmationCount,
+      webDbNotSubmittedCount,
+    } = summarizeWebDbIntegrity(webDbRows);
     const webDbStatus = webDbIssueCount > 0 ? 'error' : 'ok';
     const submittedIds = submittedRows.map((row) => row.submissionId);
     const strategy = await discoverCleanClaimsColumns(claimsPool, mapping.cleanClaimsDbName);
@@ -473,7 +590,7 @@ async function scanSite(
             await fetchExistingConfirmationNos(claimsPool, mapping.cleanClaimsDbName)
           );
     const missingItems = includeMissingItems ? allMissingItems : [];
-    const webDbIssueItems = includeMissingItems ? getWebDbIssueItems(submittedRows) : [];
+    const webDbIssueItems = includeMissingItems ? buildWebDbIssueItems(webDbRows) : [];
     const submittedOnlineCount = submittedRows.length;
     const matchedInCleanClaimsCount = Math.max(0, submittedOnlineCount - allMissingItems.length);
 
@@ -485,6 +602,7 @@ async function scanSite(
       status: allMissingItems.length > 0 ? 'warning' : 'ok',
       webDbStatus,
       webDbIssueCount,
+      webDbMissingDateReceivedCount,
       webDbMissingConfirmationCount,
       webDbNotSubmittedCount,
       submittedOnlineCount,
@@ -503,6 +621,7 @@ async function scanSite(
       status: 'error',
       webDbStatus: 'error',
       webDbIssueCount: 0,
+      webDbMissingDateReceivedCount: 0,
       webDbMissingConfirmationCount: 0,
       webDbNotSubmittedCount: 0,
       submittedOnlineCount: 0,
@@ -671,6 +790,7 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
             status: 'error',
             webDbStatus: 'error',
             webDbIssueCount: 0,
+            webDbMissingDateReceivedCount: 0,
             webDbMissingConfirmationCount: 0,
             webDbNotSubmittedCount: 0,
             submittedOnlineCount: 0,
@@ -696,6 +816,7 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
         status: result.status,
         webDbStatus: result.webDbStatus,
         webDbIssueCount: result.webDbIssueCount,
+        webDbMissingDateReceivedCount: result.webDbMissingDateReceivedCount,
         webDbMissingConfirmationCount: result.webDbMissingConfirmationCount,
         webDbNotSubmittedCount: result.webDbNotSubmittedCount,
         submittedOnlineCount: result.submittedOnlineCount,
@@ -746,6 +867,7 @@ export async function getWebsiteHealthSiteDetails(
         status: 'error',
         webDbStatus: 'error',
         webDbIssueCount: 0,
+        webDbMissingDateReceivedCount: 0,
         webDbMissingConfirmationCount: 0,
         webDbNotSubmittedCount: 0,
         submittedOnlineCount: 0,
