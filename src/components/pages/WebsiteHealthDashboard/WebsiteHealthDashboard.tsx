@@ -17,6 +17,7 @@ import type {
   WebsiteHealthSummary,
   WebsiteHealthSummaryResponse,
 } from '@/types';
+import { WebsiteHealthInfoHelp } from './WebsiteHealthInfoHelp';
 import styles from './WebsiteHealthDashboard.module.scss';
 
 interface SinceDaysOption {
@@ -461,6 +462,7 @@ export const WebsiteHealthDashboard = () => {
             {detailsSite.errorMessage ? (
               <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
             ) : null}
+            <WebsiteHealthInfoHelp site={detailsSite} />
           </div>
         ) : detailsSite.errorMessage ? (
           <div className={styles.expansionError}>{detailsSite.errorMessage}</div>
