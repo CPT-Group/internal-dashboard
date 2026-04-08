@@ -36,7 +36,7 @@ If the user did not provide a case identifier, ask for one.
 4. Include target online filter when present:
    - `ClaimFiledOnline` / equivalent truthy logic
 5. Return a concise summary and then post a detailed Teams message.
-6. **Web DB integrity** (if the user asks about website-table data quality, matching the dashboard): treat a row as failing if **any** of — `DateReceived` null, confirmation number blank, or submitted flag not effectively `1`/true — **only when** a submitted-flag column exists on `Submissions` (e.g. `IsSubmitted`, `IsSubmittedOnline`). One row can fail multiple pillars; breakdown counts can overlap.
+6. **Web DB integrity** (if the user asks about website-table data quality, matching the dashboard): treat a row as failing if **any** of — (a) `DateReceived` is present and confirmation is blank, (b) `DateReceived` is present and submitted flag is not effectively `1`/true (**only when** a submitted-flag column exists on `Submissions`, e.g. `IsSubmitted`, `IsSubmittedOnline`), or (c) confirmation exists while `DateReceived` is null. Rows with both `DateReceived` and confirmation null are expected drafts and not errors. One row can fail multiple pillars; breakdown counts can overlap.
 
 ## Mandatory safety checks
 

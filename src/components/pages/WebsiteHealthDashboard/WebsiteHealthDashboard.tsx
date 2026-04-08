@@ -77,6 +77,10 @@ export const WebsiteHealthDashboard = () => {
   const [detailsMode, setDetailsMode] = useState<DetailsViewMode>('missing');
   const [detailsSite, setDetailsSite] = useState<WebsiteHealthDetailsSite | null>(null);
   const [showWebDbIssueRows, setShowWebDbIssueRows] = useState<boolean>(false);
+  const [detailsActionLoading, setDetailsActionLoading] = useState<{
+    siteKey: string;
+    mode: DetailsViewMode;
+  } | null>(null);
 
   const showToast = useCallback((message: ToastMessage) => {
     toastRef.current?.show(message);
@@ -166,6 +170,7 @@ export const WebsiteHealthDashboard = () => {
 
   const openMissingDetails = useCallback(
     async (site: WebsiteHealthSiteResult) => {
+      setDetailsActionLoading({ siteKey: site.siteKey, mode: 'missing' });
       setDetailsMode('missing');
       setDetailsVisible(true);
       setDetailsLoading(true);
@@ -206,6 +211,7 @@ export const WebsiteHealthDashboard = () => {
         });
       } finally {
         setDetailsLoading(false);
+        setDetailsActionLoading(null);
       }
     },
     [showToast, sinceDays]
@@ -213,6 +219,7 @@ export const WebsiteHealthDashboard = () => {
 
   const openInfoDetails = useCallback(
     async (site: WebsiteHealthSiteResult) => {
+      setDetailsActionLoading({ siteKey: site.siteKey, mode: 'info' });
       setDetailsMode('info');
       setDetailsVisible(true);
       setShowWebDbIssueRows(false);
@@ -252,6 +259,7 @@ export const WebsiteHealthDashboard = () => {
         });
       } finally {
         setDetailsLoading(false);
+        setDetailsActionLoading(null);
       }
     },
     [showToast, sinceDays]
@@ -417,6 +425,11 @@ export const WebsiteHealthDashboard = () => {
                       text
                       icon="pi pi-info-circle"
                       className={styles.actionButton}
+                      disabled={detailsActionLoading !== null}
+                      loading={
+                        detailsActionLoading?.siteKey === row.siteKey &&
+                        detailsActionLoading.mode === 'info'
+                      }
                       onClick={() => void openInfoDetails(row)}
                       aria-label={`View info for ${row.siteKey}`}
                       tooltip="View comparison info"
@@ -427,6 +440,11 @@ export const WebsiteHealthDashboard = () => {
                       text
                       icon={row.status === 'error' ? 'pi pi-exclamation-triangle' : 'pi pi-search'}
                       className={styles.actionButton}
+                      disabled={detailsActionLoading !== null}
+                      loading={
+                        detailsActionLoading?.siteKey === row.siteKey &&
+                        detailsActionLoading.mode === 'missing'
+                      }
                       onClick={() => void openMissingDetails(row)}
                       aria-label={`View missing rows for ${row.siteKey}`}
                       tooltip={row.status === 'error' ? 'View error details' : 'View missing rows'}
@@ -487,10 +505,8 @@ export const WebsiteHealthDashboard = () => {
               <strong>Status:</strong> <Tag value={detailsSite.status.toUpperCase()} severity={statusSeverity(detailsSite)} />
             </div>
             <div className={styles.infoRow}>
-              <strong>Web DB Status:</strong> <Tag value={detailsSite.webDbStatus.toUpperCase()} severity={webDbStatusSeverity(detailsSite)} />
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Web DB Issue Count:</strong> <span>{detailsSite.webDbIssueCount.toLocaleString()}</span>
+              <strong>Web DB Status:</strong>{' '}
+              <Tag value={detailsSite.webDbStatus.toUpperCase()} severity={webDbStatusSeverity(detailsSite)} />
               {detailsSite.webDbStatus === 'error' && detailsSite.webDbIssueCount > 0 ? (
                 <Button
                   type="button"
@@ -503,13 +519,16 @@ export const WebsiteHealthDashboard = () => {
                   tooltip={
                     showWebDbIssueRows
                       ? 'Hide Web DB issue rows'
-                      : 'Show rows failing any Web DB check (DateReceived, confirmation, or IsSubmitted=1)'
+                      : 'Show rows with Web DB inconsistencies (submitted rows missing confirmation/IsSubmitted, or confirmation without DateReceived)'
                   }
                   tooltipOptions={{ position: 'left' }}
                   aria-expanded={showWebDbIssueRows}
                   aria-label="Toggle Web DB issue rows"
                 />
               ) : null}
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Web DB Issue Count:</strong> <span>{detailsSite.webDbIssueCount.toLocaleString()}</span>
             </div>
             <div className={styles.infoRow}>
               <strong>Web DB Missing DateReceived:</strong>{' '}
@@ -545,8 +564,8 @@ export const WebsiteHealthDashboard = () => {
             {showWebDbIssueRows && detailsSite.webDbIssueItems.length > 0 ? (
               <div className={styles.webDbIssuesTable}>
                 <div className={styles.webDbIssuesTableTitle}>
-                  Website rows failing at least one Web DB rule (DateReceived set · confirmation · IsSubmitted=1) — issue
-                  column lists all that apply
+                  Website rows with Web DB inconsistencies (submitted rows missing confirmation/IsSubmitted, or
+                  confirmation present while DateReceived is missing) — issue column lists all that apply
                 </div>
                 <DataTable
                   value={detailsSite.webDbIssueItems}

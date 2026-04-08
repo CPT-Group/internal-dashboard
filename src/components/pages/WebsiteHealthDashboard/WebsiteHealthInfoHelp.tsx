@@ -9,8 +9,8 @@ interface WebsiteHealthInfoHelpProps {
 export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
   const webDbProblem =
     site.webDbStatus === 'error'
-      ? `ERROR: ${site.webDbIssueCount.toLocaleString()} website row(s) fail at least one of the three Web DB checks below. The issue list shows every problem that applies per row (OR logic — you can see 1, 2, or 3 reasons). Breakdown counts can overlap the same row. This is separate from 2K16 matching.`
-      : 'OK: every candidate row has DateReceived, a confirmation number, and IsSubmitted effectively 1/true (when the flag column exists).';
+      ? `ERROR: ${site.webDbIssueCount.toLocaleString()} website row(s) fail a Web DB consistency rule below. The issue list shows every applicable reason per row; breakdown counts can overlap. This is separate from 2K16 matching.`
+      : 'OK: no candidate rows violate the Web DB consistency rules.';
 
   const compareProblem =
     site.status === 'warning'
@@ -25,25 +25,24 @@ export function WebsiteHealthInfoHelp({ site }: WebsiteHealthInfoHelpProps) {
         <AccordionTab header="What does Web DB status mean?">
           <div className={styles.infoHelpBody}>
             <p>
-              <strong>Web DB</strong> checks the website <code>Submissions</code> table. A <strong>healthy</strong> row
-              should have all of:
+              <strong>Web DB</strong> checks consistency on website <code>Submissions</code> rows. Rules are:
             </p>
             <ul>
               <li>
-                <strong>DateReceived</strong> — not null (received timestamp).
+                If <strong>DateReceived is present</strong> (submitted-style row), confirmation must be present.
               </li>
               <li>
-                <strong>Confirmation number</strong> — present (not null/empty).
+                If <strong>DateReceived is present</strong>, <strong>IsSubmitted</strong> must be effectively{' '}
+                <code>1</code> / true when a submitted-flag column exists.
               </li>
               <li>
-                <strong>IsSubmitted</strong> — effectively <code>1</code> / true (via <code>IsSubmitted</code>,{' '}
-                <code>IsSubmittedOnline</code>, or similar when present).
+                If <strong>DateReceived is missing</strong> but confirmation exists, that mismatch is an issue.
               </li>
             </ul>
             <p>
-              <strong>If any one of those is wrong, the row is a Web DB error.</strong> A single row can be wrong in
-              multiple ways at once (for example only DateReceived, or missing confirmation and IsSubmitted≠1) — the
-              detail table lists every failing check for that row. If the website schema has no submitted-flag column (
+              <strong>Expected drafts are not errors:</strong> rows with no <code>DateReceived</code> and no confirmation
+              are allowed (for example unsubmitted records). A single row can still be wrong in multiple ways when the
+              submitted-style conditions are met. If the website schema has no submitted-flag column (
               <code>IsSubmitted</code>, <code>IsSubmittedOnline</code>, etc.), the IsSubmitted rule is skipped so we do
               not flag every row.
             </p>

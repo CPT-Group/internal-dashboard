@@ -358,19 +358,30 @@ function normalizeConfirmation(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function hasConfirmation(row: Pick<WebDbIntegrityRow, 'confirmationNo'>): boolean {
+  return !!row.confirmationNo && row.confirmationNo.trim().length > 0;
+}
+
 /**
- * Healthy row: DateReceived set, confirmation present, IsSubmitted truthy (1/true).
- * Any failure is a Web DB issue; reasons list what is wrong (OR logic — multiple reasons per row).
+ * Web DB issue rules:
+ * - Submitted-style rows (DateReceived present): confirmation must be present and IsSubmitted must be true (when column exists).
+ * - Draft/unsubmitted rows with no DateReceived and no confirmation are expected and not issues.
+ * - DateReceived missing while confirmation exists is inconsistent and flagged.
  */
 function analyzeWebDbIntegrityIssues(row: WebDbIntegrityRow): string[] {
   const reasons: string[] = [];
-  if (row.dateReceived === null) {
-    reasons.push('Missing DateReceived');
+  const hasDateReceived = row.dateReceived !== null;
+  const confirmationExists = hasConfirmation(row);
+  const missingConfirmation = !confirmationExists;
+  const badSubmitted = row.isSubmittedColumnPresent && row.isSubmittedOnline !== true;
+
+  if (!hasDateReceived && confirmationExists) {
+    reasons.push('Confirmation exists but DateReceived is missing');
   }
-  if (!row.confirmationNo || row.confirmationNo.trim().length === 0) {
+  if (hasDateReceived && missingConfirmation) {
     reasons.push('Missing confirmation number');
   }
-  if (row.isSubmittedColumnPresent && row.isSubmittedOnline !== true) {
+  if (hasDateReceived && badSubmitted) {
     reasons.push(
       row.isSubmittedOnline === false
         ? 'IsSubmitted not 1 (false/0)'
@@ -392,13 +403,19 @@ function summarizeWebDbIntegrity(webDbRows: WebDbIntegrityRow[]): {
   let webDbIssueCount = 0;
 
   for (const row of webDbRows) {
-    const missDr = row.dateReceived === null;
-    const missConf = !row.confirmationNo || row.confirmationNo.trim().length === 0;
-    const badSubmitted = row.isSubmittedColumnPresent && row.isSubmittedOnline !== true;
-    if (missDr) webDbMissingDateReceivedCount += 1;
-    if (missConf) webDbMissingConfirmationCount += 1;
-    if (badSubmitted) webDbNotSubmittedCount += 1;
-    if (missDr || missConf || badSubmitted) webDbIssueCount += 1;
+    const hasDateReceived = row.dateReceived !== null;
+    const confirmationExists = hasConfirmation(row);
+    const missingDateButHasConfirmation = !hasDateReceived && confirmationExists;
+    const missingConfirmationOnSubmitted = hasDateReceived && !confirmationExists;
+    const notSubmittedOnSubmitted =
+      hasDateReceived && row.isSubmittedColumnPresent && row.isSubmittedOnline !== true;
+
+    if (missingDateButHasConfirmation) webDbMissingDateReceivedCount += 1;
+    if (missingConfirmationOnSubmitted) webDbMissingConfirmationCount += 1;
+    if (notSubmittedOnSubmitted) webDbNotSubmittedCount += 1;
+    if (missingDateButHasConfirmation || missingConfirmationOnSubmitted || notSubmittedOnSubmitted) {
+      webDbIssueCount += 1;
+    }
   }
 
   return {

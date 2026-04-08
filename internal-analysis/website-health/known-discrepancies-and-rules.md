@@ -14,11 +14,15 @@ Treat source records as in-scope only when:
 
 ## Web DB integrity (dashboard)
 
-Separate from the **confirmation compare** (which uses submissions with `DateReceived IS NOT NULL` and other filters). **Web DB integrity** uses an **OR** rule on in-scope candidate rows (same ID/email/deadline/5:15 rules; **allows** `DateReceived IS NULL` so partial rows appear):
+Separate from the **confirmation compare** (which uses submissions with `DateReceived IS NOT NULL` and other filters). **Web DB integrity** uses consistency checks on in-scope candidate rows (same ID/email/deadline/5:15 rules; **allows** `DateReceived IS NULL` so draft rows can be evaluated):
 
-- **Bad** if **any** of: `DateReceived` null, confirmation blank (null/trim-empty), or submitted flag not effectively `1`/true (**only if** a known flag column exists on `Submissions`, e.g. `IsSubmitted` / `IsSubmittedOnline`; otherwise that pillar is skipped).
-- One row can fail **one, two, or all three** checks; the UI lists **every** failing check for that row.
-- Summary **breakdown counts** (missing date / missing confirmation / not submitted) **can overlap** the same row; **issue count** = distinct rows with **at least one** failure.
+- **Bad** if **any** of these checks fail:
+  - `DateReceived` is present and confirmation is blank (null/trim-empty).
+  - `DateReceived` is present and submitted flag is not effectively `1`/true (**only if** a known flag column exists on `Submissions`, e.g. `IsSubmitted` / `IsSubmittedOnline`; otherwise this pillar is skipped).
+  - Confirmation is present while `DateReceived` is null.
+- Expected draft/unsubmitted rows with both `DateReceived` and confirmation null are **not** Web DB issues.
+- One row can fail multiple checks; the UI lists every failing check for that row.
+- Summary **breakdown counts** (missing date / missing confirmation / not submitted) can overlap the same row; **issue count** = distinct rows with at least one failure.
 
 ## Current target-side rules
 
