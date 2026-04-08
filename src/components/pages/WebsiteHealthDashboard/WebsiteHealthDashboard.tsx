@@ -34,6 +34,12 @@ type WebsiteHealthDetailsSite = WebsiteHealthSiteResult & {
   webDbIssueItems: WebsiteHealthWebDbIssueItem[];
 };
 
+interface WebDbMetricItem {
+  label: string;
+  value: string;
+  note?: string;
+}
+
 const SINCE_DAYS_OPTIONS: SinceDaysOption[] = [
   { label: 'Last 1 day', value: 1 },
   { label: 'Last 3 days', value: 3 },
@@ -282,6 +288,28 @@ export const WebsiteHealthDashboard = () => {
     () => (summary?.results ?? []).filter((row) => row.missingCount > 0).length,
     [summary]
   );
+  const webDbMetricItems = useMemo<WebDbMetricItem[]>(() => {
+    if (!detailsSite) return [];
+    return [
+      {
+        label: 'Web DB Issue Count',
+        value: detailsSite.webDbIssueCount.toLocaleString(),
+      },
+      {
+        label: 'Web DB Missing DateReceived',
+        value: detailsSite.webDbMissingDateReceivedCount.toLocaleString(),
+        note: '(breakdown; rows can count in more than one)',
+      },
+      {
+        label: 'Web DB Missing Confirmation',
+        value: detailsSite.webDbMissingConfirmationCount.toLocaleString(),
+      },
+      {
+        label: 'Web DB IsSubmitted≠1',
+        value: detailsSite.webDbNotSubmittedCount.toLocaleString(),
+      },
+    ];
+  }, [detailsSite]);
 
   return (
     <main className={styles.page} aria-label="Website health dashboard">
@@ -527,21 +555,31 @@ export const WebsiteHealthDashboard = () => {
                 />
               ) : null}
             </div>
-            <div className={styles.infoRow}>
-              <strong>Web DB Issue Count:</strong> <span>{detailsSite.webDbIssueCount.toLocaleString()}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Web DB Missing DateReceived:</strong>{' '}
-              <span>{detailsSite.webDbMissingDateReceivedCount.toLocaleString()}</span>
-              <span className={styles.infoRowHint}>(breakdown; rows can count in more than one)</span>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Web DB Missing Confirmation:</strong>{' '}
-              <span>{detailsSite.webDbMissingConfirmationCount.toLocaleString()}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <strong>Web DB IsSubmitted≠1:</strong>{' '}
-              <span>{detailsSite.webDbNotSubmittedCount.toLocaleString()}</span>
+            <div className={styles.webDbMetricsBlock}>
+              <DataTable
+                value={webDbMetricItems}
+                className={styles.webDbMetricsTable}
+                size="small"
+                responsiveLayout="scroll"
+                tableStyle={{ width: '100%' }}
+              >
+                <Column
+                  field="label"
+                  header="Web DB Metric"
+                  style={{ width: '45%' }}
+                  body={(item: WebDbMetricItem) => <span className={styles.webDbMetricLabel}>{item.label}</span>}
+                />
+                <Column
+                  field="value"
+                  header="Value"
+                  body={(item: WebDbMetricItem) => (
+                    <span className={styles.webDbMetricValue}>
+                      {item.value}
+                      {item.note ? <span className={styles.webDbMetricNote}> {item.note}</span> : null}
+                    </span>
+                  )}
+                />
+              </DataTable>
             </div>
             <div className={styles.infoRow}>
               <strong>Submitted:</strong> <span>{detailsSite.submittedOnlineCount.toLocaleString()}</span>

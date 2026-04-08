@@ -173,7 +173,34 @@
   padding: 0;
 }
 
-.infoRowHint {
+.webDbMetricsBlock {
+  margin-top: 0.2rem;
+}
+
+.webDbMetricsTable {
+  :global(.p-datatable-thead > tr > th) {
+    padding: 0.35rem 0.45rem;
+  }
+
+  :global(.p-datatable-tbody > tr > td) {
+    padding: 0.35rem 0.45rem;
+    vertical-align: top;
+  }
+}
+
+.webDbMetricLabel {
+  font-weight: 700;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.webDbMetricValue {
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.webDbMetricNote {
   font-size: 0.78rem;
   font-weight: 400;
   color: var(--text-color-secondary);
