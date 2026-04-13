@@ -16,7 +16,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.4.0",
     "mssql": "^12.2.1",
-    "next": "16.2.1",
+    "next": "^16.2.3",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.7",
@@ -33,7 +33,7 @@
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.56.0",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "^16.2.3",
     "sass": "^1.97.3",
     "typescript": "^5",
     "typescript-eslint": "^8.56.0"
