@@ -10,15 +10,19 @@ import { Dropdown } from 'primereact/dropdown';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import type { ToastMessage } from 'primereact/toast';
 import type {
+  WebsiteHealthCreateJiraTicketResponse,
   WebsiteHealthMissingItem,
   WebsiteHealthSiteDetailsResponse,
   WebsiteHealthSiteResult,
+  WebsiteHealthSubmissionReportResponse,
   WebsiteHealthSummary,
   WebsiteHealthSummaryResponse,
   WebsiteHealthWebDbIssueItem,
 } from '@/types';
+import { CopyToClipboardButton } from '@/components/ui';
 import { WebsiteHealthInfoHelp } from './WebsiteHealthInfoHelp';
 import styles from './WebsiteHealthDashboard.module.scss';
 
@@ -28,6 +32,11 @@ interface SinceDaysOption {
 }
 
 type DetailsViewMode = 'missing' | 'info';
+type DetailsActionMode = DetailsViewMode | 'jira';
+interface CreatedTicketDetails {
+  issueKey: string;
+  issueUrl: string;
+}
 
 type WebsiteHealthDetailsSite = WebsiteHealthSiteResult & {
   missingItems: WebsiteHealthMissingItem[];
@@ -78,21 +87,22 @@ export const WebsiteHealthDashboard = () => {
   const [sinceDays, setSinceDays] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [runningScan, setRunningScan] = useState<boolean>(false);
+  const [runningSubmissionReport, setRunningSubmissionReport] = useState<boolean>(false);
   const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
   const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
   const [detailsMode, setDetailsMode] = useState<DetailsViewMode>('missing');
   const [detailsSite, setDetailsSite] = useState<WebsiteHealthDetailsSite | null>(null);
   const [showWebDbIssueRows, setShowWebDbIssueRows] = useState<boolean>(false);
   const [showMissingRowsInInfo, setShowMissingRowsInInfo] = useState<boolean>(false);
+  const [createdTicket, setCreatedTicket] = useState<CreatedTicketDetails | null>(null);
   const [detailsActionLoading, setDetailsActionLoading] = useState<{
     siteKey: string;
-    mode: DetailsViewMode;
+    mode: DetailsActionMode;
   } | null>(null);
 
   const showToast = useCallback((message: ToastMessage) => {
     toastRef.current?.show(message);
   }, []);
-
   const fetchSummary = useCallback(async (days: number | null) => {
     setLoading(true);
 
@@ -176,6 +186,55 @@ export const WebsiteHealthDashboard = () => {
       setRunningScan(false);
     }
   }, [showToast, sinceDays]);
+
+  const runSubmissionReport = useCallback(async () => {
+    setRunningSubmissionReport(true);
+    try {
+      const res = await fetch('/api/website-health/submission-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notify: true }),
+      });
+      const body = (await res.json()) as
+        | WebsiteHealthSubmissionReportResponse
+        | { ok: false; message?: string };
+
+      if (!res.ok || !body.ok) {
+        const msg = 'message' in body && typeof body.message === 'string' ? body.message : 'Submission report failed.';
+        throw new Error(msg);
+      }
+
+      if (body.alerted) {
+        showToast({
+          severity: 'success',
+          summary: 'Submission report sent',
+          detail:
+            `Posted ${body.report.totalSitesChecked} active site rows to Teams ` +
+            `(Total ${body.report.totalSubmittedCount}, Today ${body.report.totalSubmittedTodayCount}, Yesterday ${body.report.totalSubmittedYesterdayCount}).`,
+          life: 5000,
+        });
+      } else {
+        showToast({
+          severity: 'warn',
+          summary: 'Submission report generated',
+          detail:
+            body.alertMessage ??
+            'Report generated, but Teams webhook is not configured or notification failed.',
+          life: 6000,
+        });
+      }
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      showToast({
+        severity: 'error',
+        summary: 'Submission report failed',
+        detail: `Sorry, we could not send the submission report. ${detail}`,
+        life: 6000,
+      });
+    } finally {
+      setRunningSubmissionReport(false);
+    }
+  }, [showToast]);
 
   const openMissingDetails = useCallback(
     async (site: WebsiteHealthSiteResult) => {
@@ -276,6 +335,92 @@ export const WebsiteHealthDashboard = () => {
     [showToast, sinceDays]
   );
 
+  const createJiraTicket = useCallback(
+    async (site: WebsiteHealthSiteResult) => {
+      setDetailsActionLoading({ siteKey: site.siteKey, mode: 'jira' });
+      try {
+        const qs = new URLSearchParams({
+          siteKey: site.siteKey,
+          sinceDays: toFetchSinceDaysValue(sinceDays),
+        });
+        const detailsRes = await fetch(`/api/website-health/site?${qs.toString()}`, {
+          cache: 'no-store',
+        });
+        const detailsBody = (await detailsRes.json()) as
+          | WebsiteHealthSiteDetailsResponse
+          | { ok: false; message?: string };
+        if (!detailsRes.ok || !detailsBody.ok) {
+          const msg =
+            'message' in detailsBody && typeof detailsBody.message === 'string'
+              ? detailsBody.message
+              : 'Unable to load site details.';
+          throw new Error(msg);
+        }
+
+        const createRes = await fetch('/api/jira/website-health-ticket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            site: detailsBody.site,
+            sinceDays,
+            runAt: summary?.runAt ?? new Date().toISOString(),
+            missingItems: detailsBody.site.missingItems,
+            webDbIssueItems: detailsBody.site.webDbIssueItems,
+          }),
+        });
+        const createBody = (await createRes.json()) as
+          | WebsiteHealthCreateJiraTicketResponse
+          | { ok: false; message?: string };
+        if (!createRes.ok || !createBody.ok) {
+          const msg =
+            'message' in createBody && typeof createBody.message === 'string'
+              ? createBody.message
+              : 'Failed to create Jira ticket.';
+          throw new Error(msg);
+        }
+
+        showToast({
+          severity: 'success',
+          summary: 'Jira ticket created',
+          detail: `${createBody.issueKey} was created for ${site.siteKey}.`,
+          life: 5000,
+        });
+        setCreatedTicket({
+          issueKey: createBody.issueKey,
+          issueUrl: createBody.issueUrl,
+        });
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        showToast({
+          severity: 'error',
+          summary: 'Ticket creation failed',
+          detail,
+          life: 6000,
+        });
+      } finally {
+        setDetailsActionLoading(null);
+      }
+    },
+    [showToast, sinceDays, summary?.runAt]
+  );
+
+  const requestCreateJiraTicket = useCallback(
+    (site: WebsiteHealthSiteResult) => {
+      confirmDialog({
+        header: 'Create Jira ticket?',
+        message: `Create a Jira ticket for ${site.siteKey} with Website Health details and sample rows?`,
+        icon: 'pi pi-ticket',
+        acceptLabel: 'Create',
+        rejectLabel: 'Cancel',
+        acceptClassName: 'p-button-warning',
+        accept: () => {
+          void createJiraTicket(site);
+        },
+      });
+    },
+    [createJiraTicket]
+  );
+
   useEffect(() => {
     void fetchSummary(sinceDays);
   }, [fetchSummary, sinceDays]);
@@ -342,6 +487,7 @@ export const WebsiteHealthDashboard = () => {
   return (
     <main className={styles.page} aria-label="Website health dashboard">
       <Toast ref={toastRef} position="top-right" />
+      <ConfirmDialog />
       <section className={styles.header}>
         <div>
           <h1>Website Health</h1>
@@ -366,6 +512,15 @@ export const WebsiteHealthDashboard = () => {
             loading={runningScan}
             disabled={runningScan || loading}
             tooltip="Run an on-demand Website Health scan for the selected scope."
+            tooltipOptions={{ position: 'top' }}
+          />
+          <Button
+            label={runningSubmissionReport ? 'Sending…' : 'Submission Report'}
+            icon="pi pi-send"
+            onClick={() => void runSubmissionReport()}
+            loading={runningSubmissionReport}
+            disabled={runningSubmissionReport || runningScan || loading}
+            tooltip="Send all active-site submission totals (total/today/yesterday) to Teams."
             tooltipOptions={{ position: 'top' }}
           />
         </div>
@@ -472,8 +627,8 @@ export const WebsiteHealthDashboard = () => {
                 header="Actions"
                 headerClassName={styles.actionsColumn}
                 className={styles.actionsColumn}
-                headerStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
-                bodyStyle={{ width: '5.5rem', minWidth: '5.5rem', maxWidth: '5.5rem' }}
+                headerStyle={{ width: '7rem', minWidth: '7rem', maxWidth: '7rem' }}
+                bodyStyle={{ width: '7rem', minWidth: '7rem', maxWidth: '7rem' }}
                 body={(row: WebsiteHealthSiteResult) => (
                   <div className={styles.actionButtons}>
                     <Button
@@ -506,6 +661,23 @@ export const WebsiteHealthDashboard = () => {
                       tooltip={row.status === 'error' ? 'View error details' : 'View missing rows'}
                       tooltipOptions={{ position: 'top' }}
                     />
+                    {row.status !== 'ok' || row.webDbStatus === 'error' ? (
+                      <Button
+                        size="small"
+                        text
+                        icon="pi pi-plus-circle"
+                        className={styles.actionButton}
+                        disabled={detailsActionLoading !== null}
+                        loading={
+                          detailsActionLoading?.siteKey === row.siteKey &&
+                          detailsActionLoading.mode === 'jira'
+                        }
+                        onClick={() => requestCreateJiraTicket(row)}
+                        aria-label={`Create Jira ticket for ${row.siteKey}`}
+                        tooltip="Create Jira ticket from this issue"
+                        tooltipOptions={{ position: 'top' }}
+                      />
+                    ) : null}
                   </div>
                 )}
               />
@@ -551,9 +723,27 @@ export const WebsiteHealthDashboard = () => {
           <div className={styles.infoPanel}>
             <div className={styles.infoRow}>
               <strong>Website DB:</strong> <span>{detailsSite.websiteDbName}</span>
+              <CopyToClipboardButton
+                value={detailsSite.websiteDbName}
+                valueLabel="Website DB"
+                onToast={showToast}
+                className={styles.copyValueButton}
+                tooltip="Copy Website DB value"
+                tooltipPosition="left"
+                aria-label="Copy Website DB"
+              />
             </div>
             <div className={styles.infoRow}>
               <strong>2K16 CleanClaims DB:</strong> <span>{detailsSite.cleanClaimsDbName}</span>
+              <CopyToClipboardButton
+                value={detailsSite.cleanClaimsDbName}
+                valueLabel="2K16 CleanClaims DB"
+                onToast={showToast}
+                className={styles.copyValueButton}
+                tooltip="Copy 2K16 CleanClaims DB value"
+                tooltipPosition="left"
+                aria-label="Copy 2K16 CleanClaims DB"
+              />
             </div>
             <div className={styles.infoRow}>
               <strong>Deadline Date:</strong> <span>{detailsSite.deadlineDate ?? '(none)'}</span>
@@ -704,6 +894,50 @@ export const WebsiteHealthDashboard = () => {
         ) : (
           renderMissingItemsTable(detailsSite.missingItems)
         )}
+      </Dialog>
+      <Dialog
+        header="Jira ticket created"
+        visible={createdTicket !== null}
+        onHide={() => setCreatedTicket(null)}
+        style={{ width: 'min(96vw, 680px)' }}
+        modal
+      >
+        {createdTicket ? (
+          <div className={styles.createdTicketDialog}>
+            <div className={styles.createdTicketRow}>
+              <strong>Ticket ID:</strong>
+              <span>{createdTicket.issueKey}</span>
+              <CopyToClipboardButton
+                value={createdTicket.issueKey}
+                valueLabel="Jira ticket ID"
+                onToast={showToast}
+                className={styles.copyValueButton}
+                tooltipPosition="left"
+              />
+            </div>
+            <div className={styles.createdTicketRow}>
+              <strong>Ticket URL:</strong>
+              <a href={createdTicket.issueUrl} target="_blank" rel="noreferrer">
+                {createdTicket.issueUrl}
+              </a>
+              <CopyToClipboardButton
+                value={createdTicket.issueUrl}
+                valueLabel="Jira ticket URL"
+                onToast={showToast}
+                className={styles.copyValueButton}
+                tooltipPosition="left"
+              />
+            </div>
+            <div className={styles.createdTicketActions}>
+              <Button
+                type="button"
+                label="Open Ticket"
+                icon="pi pi-external-link"
+                onClick={() => window.open(createdTicket.issueUrl, '_blank', 'noopener,noreferrer')}
+              />
+            </div>
+          </div>
+        ) : null}
       </Dialog>
     </main>
   );

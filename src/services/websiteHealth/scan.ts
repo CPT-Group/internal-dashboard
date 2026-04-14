@@ -2,6 +2,8 @@ import sql, { ConnectionPool } from 'mssql';
 import type {
   WebsiteHealthMissingItem,
   WebsiteHealthSiteMapping,
+  WebsiteHealthSubmissionReport,
+  WebsiteHealthSubmissionReportSiteResult,
   WebsiteHealthSiteResult,
   WebsiteHealthSummary,
   WebsiteHealthWebDbIssueItem,
@@ -213,6 +215,66 @@ async function fetchSubmittedRows(
       isSubmittedOnline: parseTruthyFlag(row.submitted_online ?? null),
     }))
     .filter((row) => Number.isFinite(row.submissionId));
+}
+
+async function fetchSubmissionCounts(
+  websitePool: ConnectionPool,
+  websiteDbName: string,
+  deadlineDate: string | null | undefined
+): Promise<{
+  totalSubmittedCount: number;
+  submittedTodayCount: number;
+  submittedYesterdayCount: number;
+}> {
+  const db = qIdentifier(websiteDbName);
+  const req = websitePool.request();
+  req.input('deadlineDate', sql.Date, deadlineDate ?? null);
+
+  const rs = await req.query<{
+    total_submitted_count: number | null;
+    submitted_today_count: number | null;
+    submitted_yesterday_count: number | null;
+  }>(`
+    SELECT
+      COUNT(1) AS total_submitted_count,
+      SUM(
+        CASE
+          WHEN CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+            AND CAST(s.DateReceived AS time) <= CAST('05:15:00' AS time)
+          THEN 1
+          ELSE 0
+        END
+      ) AS submitted_today_count,
+      SUM(
+        CASE
+          WHEN CAST(s.DateReceived AS date) = DATEADD(DAY, -1, CAST(GETDATE() AS date))
+          THEN 1
+          ELSE 0
+        END
+      ) AS submitted_yesterday_count
+    FROM ${db}.dbo.Submissions s
+    WHERE s.DateReceived IS NOT NULL
+      AND (
+        CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+        OR (
+          CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+          AND CAST(s.DateReceived AS time) <= CAST('05:15:00' AS time)
+        )
+      )
+      AND (s.ID < 2000000 OR s.ID > 2000039)
+      AND (
+        s.Email IS NULL
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(320), s.Email)))) NOT LIKE '%@cptgroup.com%'
+      )
+      AND (@deadlineDate IS NULL OR CAST(s.DateReceived AS date) <= @deadlineDate);
+  `);
+
+  const row = rs.recordset[0];
+  return {
+    totalSubmittedCount: Number(row?.total_submitted_count ?? 0),
+    submittedTodayCount: Number(row?.submitted_today_count ?? 0),
+    submittedYesterdayCount: Number(row?.submitted_yesterday_count ?? 0),
+  };
 }
 
 /**
@@ -852,6 +914,84 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
       },
       results
     );
+  } finally {
+    await Promise.allSettled([websitePool.close(), claimsPool.close()]);
+  }
+}
+
+async function scanSubmissionReportSite(
+  websitePool: ConnectionPool,
+  mapping: WebsiteHealthSiteMapping
+): Promise<WebsiteHealthSubmissionReportSiteResult> {
+  try {
+    const counts = await fetchSubmissionCounts(websitePool, mapping.websiteDbName, mapping.deadlineDate);
+    return {
+      siteKey: mapping.siteKey,
+      websiteDbName: mapping.websiteDbName,
+      status: 'ok',
+      totalSubmittedCount: counts.totalSubmittedCount,
+      submittedTodayCount: counts.submittedTodayCount,
+      submittedYesterdayCount: counts.submittedYesterdayCount,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      siteKey: mapping.siteKey,
+      websiteDbName: mapping.websiteDbName,
+      status: 'error',
+      totalSubmittedCount: 0,
+      submittedTodayCount: 0,
+      submittedYesterdayCount: 0,
+      errorMessage: message,
+    };
+  }
+}
+
+export async function runWebsiteHealthSubmissionReport(options: {
+  refreshActiveSites?: boolean;
+}): Promise<WebsiteHealthSubmissionReport> {
+  const runAt = new Date().toISOString();
+  const prodCfg = readServerConfig('PROD_DB_');
+  const claimsCfg = readServerConfig('DB_');
+  const websitePool = new sql.ConnectionPool(toPool(prodCfg));
+  const claimsPool = new sql.ConnectionPool(toPool(claimsCfg));
+
+  try {
+    await Promise.all([websitePool.connect(), claimsPool.connect()]);
+    const activeMeta = await getActiveSiteMappings(claimsPool, options.refreshActiveSites === true);
+    const mappings = activeMeta.mappings;
+
+    const results: WebsiteHealthSubmissionReportSiteResult[] = [];
+    for (const mapping of mappings) {
+      const result = await scanSubmissionReportSite(websitePool, mapping);
+      results.push(result);
+    }
+
+    const totals = results.reduce(
+      (acc, site) => {
+        acc.totalSubmittedCount += site.totalSubmittedCount;
+        acc.totalSubmittedTodayCount += site.submittedTodayCount;
+        acc.totalSubmittedYesterdayCount += site.submittedYesterdayCount;
+        return acc;
+      },
+      {
+        totalSubmittedCount: 0,
+        totalSubmittedTodayCount: 0,
+        totalSubmittedYesterdayCount: 0,
+      }
+    );
+
+    return {
+      runAt,
+      activeSitesLoadedAt: activeMeta.loadedAt,
+      activeSitesSource: activeMeta.source,
+      activeSitesStale: activeMeta.stale,
+      totalSitesChecked: results.length,
+      totalSubmittedCount: totals.totalSubmittedCount,
+      totalSubmittedTodayCount: totals.totalSubmittedTodayCount,
+      totalSubmittedYesterdayCount: totals.totalSubmittedYesterdayCount,
+      results,
+    };
   } finally {
     await Promise.allSettled([websitePool.close(), claimsPool.close()]);
   }

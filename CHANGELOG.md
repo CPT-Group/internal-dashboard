@@ -39,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Dependency security update**: Upgraded `next` and `eslint-config-next` from `16.2.1` to `16.2.3` to address npm advisory **GHSA-q4gf-8mx6-v5v3** (high-severity DoS risk in Next.js Server Components); `npm audit` now reports zero vulnerabilities.
+- **Website Health Jira action**: Added a third Actions icon for warning/error site rows to create a Jira ticket automatically (via new `/api/jira/website-health-ticket` endpoint) with prefilled summary, scope/run metadata, DB names, status/error context, and sample missing/Web DB issue rows.
+- **Website Health Jira UX + reusable copy button**: Added PrimeReact confirmation before creating Jira tickets and a post-create success dialog with copyable ticket ID/URL; extracted a reusable `CopyToClipboardButton` UI component so copy actions/toasts are consistent.
+- **README agent guidance (copy pattern)**: Documented how to use the shared `CopyToClipboardButton` (path, import, behavior, and usage example) so future work reuses one consistent clipboard/toast UX.
+- **Website Health Jira create default**: Switched auto-created issue type default from `Bug` to `Task` in `/api/jira/website-health-ticket` because NOVA Bugs currently enforce required custom fields not present in Website Health payloads; documented override behavior in `README.md`.
+- **Website Health Submission Report action**: Added a new `Submission Report` button on `/website-health` that posts a full active-site submissions table (total/today/yesterday) to the existing Teams webhook via new `POST /api/website-health/submission-report`, with toast feedback for sent/failed states.
 - **Website Health details dialog**: One scroll container on dialog content (removed nested inner/Web DB table scroll areas); enabled PrimeReact **draggable**, **resizable**, and **maximizable**; **blockScroll** while open.
 - **Website Health details UX**: Moved the Web DB issue toggle button next to **Web DB Status** for cleaner alignment and enabled per-row action-button loading/disable states while details API calls are in flight to prevent repeat clicks.
 - **Website Health details metrics UI**: Switched the Web DB metrics subsection in Comparison Info to a PrimeReact **DataTable** (metric/value) for clearer structure and consistency.

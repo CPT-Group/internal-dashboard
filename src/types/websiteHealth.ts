@@ -69,3 +69,46 @@ export interface WebsiteHealthSiteDetailsResponse {
     webDbIssueItems: WebsiteHealthWebDbIssueItem[];
   };
 }
+
+export interface WebsiteHealthCreateJiraTicketRequest {
+  site: WebsiteHealthSiteResult;
+  sinceDays: number | null;
+  runAt: string;
+  missingItems: WebsiteHealthMissingItem[];
+  webDbIssueItems: WebsiteHealthWebDbIssueItem[];
+}
+
+export interface WebsiteHealthCreateJiraTicketResponse {
+  ok: boolean;
+  issueKey: string;
+  issueUrl: string;
+}
+
+export interface WebsiteHealthSubmissionReportSiteResult {
+  siteKey: string;
+  websiteDbName: string;
+  status: WebsiteHealthStatus;
+  totalSubmittedCount: number;
+  submittedTodayCount: number;
+  submittedYesterdayCount: number;
+  errorMessage?: string;
+}
+
+export interface WebsiteHealthSubmissionReport {
+  runAt: string;
+  activeSitesLoadedAt: string | null;
+  activeSitesSource: 'cache' | 'database' | 'fallback';
+  activeSitesStale: boolean;
+  totalSitesChecked: number;
+  totalSubmittedCount: number;
+  totalSubmittedTodayCount: number;
+  totalSubmittedYesterdayCount: number;
+  results: WebsiteHealthSubmissionReportSiteResult[];
+}
+
+export interface WebsiteHealthSubmissionReportResponse {
+  ok: boolean;
+  report: WebsiteHealthSubmissionReport;
+  alerted: boolean;
+  alertMessage?: string;
+}

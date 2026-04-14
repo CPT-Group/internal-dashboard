@@ -285,3 +285,63 @@ export async function getMyself(): Promise<{
   }>('/myself');
   return data;
 }
+
+interface JiraAdfTextNode {
+  type: 'text';
+  text: string;
+}
+
+interface JiraAdfParagraphNode {
+  type: 'paragraph';
+  content: JiraAdfTextNode[];
+}
+
+interface JiraAdfBulletListNode {
+  type: 'bulletList';
+  content: Array<{
+    type: 'listItem';
+    content: JiraAdfParagraphNode[];
+  }>;
+}
+
+export interface JiraAdfDoc {
+  type: 'doc';
+  version: 1;
+  content: Array<JiraAdfParagraphNode | JiraAdfBulletListNode>;
+}
+
+interface JiraCreateIssueResponse {
+  key: string;
+  self: string;
+}
+
+export interface CreateJiraIssueParams {
+  projectKey: string;
+  issueTypeName: string;
+  summary: string;
+  description: JiraAdfDoc;
+  labels?: string[];
+}
+
+/**
+ * Create a Jira issue with project + issue type names.
+ * Uses POST /rest/api/3/issue.
+ */
+export async function createIssue(
+  params: CreateJiraIssueParams
+): Promise<JiraCreateIssueResponse> {
+  const body = {
+    fields: {
+      project: { key: params.projectKey },
+      issuetype: { name: params.issueTypeName },
+      summary: params.summary,
+      description: params.description,
+      labels: params.labels ?? [],
+    },
+  };
+
+  return jiraFetch<JiraCreateIssueResponse>('/issue', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}

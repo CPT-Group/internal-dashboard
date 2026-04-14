@@ -18,7 +18,7 @@ This is a Next.js-based dashboard application designed to run on internal TVs th
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/                    # Next.js App Router pages
 │   ├── layout.tsx          # Root layout with Providers
@@ -53,7 +53,7 @@ src/
 
 ### Prerequisites
 
-- Node.js 20+ 
+- Node.js 20+
 - npm, yarn, pnpm, or bun
 
 ### Installation
@@ -97,6 +97,7 @@ All data sources return consistent JSON structures, making components source-agn
 ### Theme System
 
 SCSS-based theme system (aligned with cpt-internal-tools):
+
 - **Default theme**: **dark-synth** (synthwave purple/cyan). Also available: dark, light, ms-access-2010.
 - Theme is applied via `data-theme` on `<html>`; one CSS bundle (no dynamic theme link).
 - Theme preference stored in `localStorage` under `cpt-theme`. Invalid or missing value falls back to dark-synth.
@@ -134,6 +135,44 @@ See `docs/pet-peeves.md` for common code smells to avoid:
 ### Best Practices
 
 See `docs/do-donts.md` for do's and don'ts reference.
+
+### Reusable Copy-To-Clipboard UI
+
+Use `CopyToClipboardButton` from `@/components/ui` whenever a view needs to copy IDs, URLs, DB names, or similar values.
+
+- **Component path**: `src/components/ui/CopyToClipboardButton/CopyToClipboardButton.tsx`
+- **Export**: `import { CopyToClipboardButton } from '@/components/ui';`
+- **Behavior**: standard clipboard write logic + consistent success/error toast messages
+- **Current usage reference**: `src/components/pages/WebsiteHealthDashboard/WebsiteHealthDashboard.tsx`
+
+Example:
+
+```tsx
+<CopyToClipboardButton
+  value={ticketUrl}
+  valueLabel="Jira ticket URL"
+  onToast={showToast}
+  className={styles.copyValueButton}
+  tooltipPosition="left"
+/>
+```
+
+### Website Health Jira Ticket Defaults
+
+Website Health creates Jira tickets through `POST /api/jira/website-health-ticket`.
+
+- Default project: `NOVA` (`WEBSITE_HEALTH_JIRA_PROJECT_KEY` to override)
+- Default issue type: `Task` (`WEBSITE_HEALTH_JIRA_ISSUE_TYPE` to override)
+- Note: NOVA `Bug` may require extra custom fields (Actual Results, Expected Results, Frequency, Stage Found, User Impact, etc.). If you set issue type to `Bug`, make sure your automation also supplies all required fields for your Jira screen/workflow.
+
+### Website Health Submission Report
+
+Website Health can also send an active-site submission summary to the same Teams webhook via `POST /api/website-health/submission-report`.
+
+- Uses active-site mappings from OCPAutomation (same source as Website Health scan)
+- Applies Website Health source filters (`DateReceived IS NOT NULL`, test-ID exclusion, `@cptgroup.com` exclusion, and same-day cutoff at 5:15 AM)
+- Teams table columns: site, status, total submitted, submitted today, submitted yesterday
+- Dashboard button: `Submission Report` on `/website-health`
 
 ### Data Architecture
 

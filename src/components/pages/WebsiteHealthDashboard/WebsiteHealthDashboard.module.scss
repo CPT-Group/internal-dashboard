@@ -128,9 +128,9 @@
 }
 
 .actionsColumn {
-  width: 5.5rem !important;
-  min-width: 5.5rem !important;
-  max-width: 5.5rem !important;
+  width: 7rem !important;
+  min-width: 7rem !important;
+  max-width: 7rem !important;
   white-space: nowrap;
 }
 
@@ -171,6 +171,41 @@
   height: 1.6rem;
   min-width: 1.6rem;
   padding: 0;
+}
+
+.copyValueButton {
+  width: 1.6rem;
+  height: 1.6rem;
+  min-width: 1.6rem;
+  padding: 0;
+}
+
+.createdTicketDialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.createdTicketRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  line-height: 1.25;
+
+  a {
+    color: var(--primary-color);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+  }
+}
+
+.createdTicketActions {
+  margin-top: 0.25rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .webDbMetricsBlock {
