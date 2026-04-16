@@ -3,47 +3,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Message } from 'primereact/message';
 import { MeterGroup } from 'primereact/metergroup';
+import { ProgressBar } from 'primereact/progressbar';
 import { Skeleton } from 'primereact/skeleton';
-import { Timeline } from 'primereact/timeline';
 import { DevCornerSlideHero } from '@/components/ui';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
-import { useAutoScroll } from '@/hooks';
-import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
-import {
-  deployTimelineOppositeKind,
-  formatDeployStatusLabel,
-  repoToneForRepo,
-  summarizeDeployRepos,
-} from '@/utils/githubDeployDisplay';
+import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
+import { summarizeDeployRepos } from '@/utils/githubDeployDisplay';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
-
-interface DeployTimelineItem {
-  id: string;
-  repo: string;
-  run: GitHubDeployRunSummary;
-}
-
-function timelineOppositeClass(run: GitHubDeployRunSummary): string {
-  const k = deployTimelineOppositeKind(run);
-  const extra =
-    k === 'success'
-      ? styles.timelineOppositeSuccess
-      : k === 'running'
-        ? styles.timelineOppositeRunning
-        : k === 'failure'
-          ? styles.timelineOppositeFailure
-          : styles.timelineOppositeNeutral;
-  return `${styles.timelineOpposite} ${extra}`;
-}
 
 export const GithubDeployStatusSlide = () => {
   const [repos, setRepos] = useState<GitHubDeployWorkflowStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
-  const timelineScrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 8, pauseMs: 5000 });
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -91,19 +65,6 @@ export const GithubDeployStatusSlide = () => {
     [summary]
   );
 
-  const timelineItems = useMemo<DeployTimelineItem[]>(() => {
-    return repos
-      .flatMap((row) =>
-        (row.recentRuns ?? []).map((run) => ({
-          id: `${row.repo}-${run.id}`,
-          repo: row.shortLabel,
-          run,
-        }))
-      )
-      .sort((a, b) => new Date(b.run.updatedAt).getTime() - new Date(a.run.updatedAt).getTime())
-      .slice(0, 12);
-  }, [repos]);
-
   if (loading && repos.length === 0 && !error && !configError) {
     return (
       <div className={slideStyles.slideContent}>
@@ -149,72 +110,24 @@ export const GithubDeployStatusSlide = () => {
         pillInline
       />
       {repos.length > 0 && (
-        <div className={styles.meterWrap}>
-          <MeterGroup values={meterValues} max={repos.length} labelPosition="start" />
-        </div>
-      )}
-      <div className={styles.contentLayout}>
-        <div className={styles.cardsPane}>
-          <div className={styles.cardsPanel}>
-            <GithubDeployRepoCards repos={repos} />
+        <>
+          <div className={styles.meterWrap}>
+            <MeterGroup values={meterValues} max={repos.length} labelPosition="start" />
           </div>
-          {/* Temporarily hidden: DataView "Recent actions" feed (restore with actionsScrollRef + recentActionItems useMemo). */}
-        </div>
-        <aside className={styles.timelinePane}>
-          <div className={styles.timelineHeader}>Recent deploy runs</div>
-          {timelineItems.length === 0 ? (
-            <div className={styles.emptyTimeline}>No recent runs returned from the API.</div>
-          ) : (
-            <div ref={timelineScrollRef} className={styles.timelineScroll}>
-              <Timeline
-                className={styles.timeline}
-                value={timelineItems}
-                align="left"
-                marker={(item: DeployTimelineItem) => (
-                  <span
-                    className={`${styles.timelineDot} ${
-                      item.run.status === 'completed' && item.run.conclusion === 'success'
-                        ? styles.timelineDotSuccess
-                        : item.run.status !== 'completed'
-                          ? styles.timelineDotRunning
-                          : styles.timelineDotAttention
-                    }`}
-                  />
-                )}
-                opposite={(item: DeployTimelineItem) => (
-                  <div className={timelineOppositeClass(item.run)}>
-                    {formatDeployStatusLabel(item.run.status, item.run.conclusion)}
-                  </div>
-                )}
-                content={(item: DeployTimelineItem) => (
-                  <div className={styles.timelineItem}>
-                    <div className={styles.timelineTop}>
-                      <span
-                        className={`${styles.timelineRepo} ${
-                          repoToneForRepo(item.repo) === 'api'
-                            ? styles.repoPillApi
-                            : repoToneForRepo(item.repo) === 'tools'
-                              ? styles.repoPillTools
-                              : repoToneForRepo(item.repo) === 'nuget'
-                                ? styles.repoPillNuget
-                                : repoToneForRepo(item.repo) === 'migrations'
-                                  ? styles.repoPillMigrations
-                                  : ''
-                        }`}
-                      >
-                        {item.repo}
-                      </span>
-                    </div>
-                    <div className={styles.timelineText}>{item.run.title}</div>
-                    <div className={styles.timelineMeta}>
-                      {item.run.headBranch ?? '—'} · {item.run.updatedAt.slice(5, 19).replace('T', ' ')}
-                    </div>
-                  </div>
-                )}
-              />
+          {(summary.active > 0 || loading) && (
+            <div className={styles.globalActivityWrap}>
+              <div className={styles.globalActivityLabel}>
+                {summary.active > 0 ? `Deployment activity detected (${summary.active} repo)` : 'Refreshing deploy status'}
+              </div>
+              <ProgressBar mode="indeterminate" className={styles.globalActivityBar} style={{ height: '4px' }} />
             </div>
           )}
-        </aside>
+        </>
+      )}
+      <div className={styles.contentLayout}>
+        <div className={styles.cardsPanel}>
+          <GithubDeployRepoCards repos={repos} />
+        </div>
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthForRow,
@@ -17,6 +19,16 @@ import styles from './GithubDeployRepoCards.module.scss';
 export interface GithubDeployRepoCardsProps {
   /** Workflow rows from GET /api/github/deploy-status (typically four CD pipelines). */
   repos: GitHubDeployWorkflowStatus[];
+}
+
+type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
+type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
+
+interface EnvironmentSnapshot {
+  key: DeployEnvironmentKey;
+  label: 'Dev' | 'Tst' | 'Stg' | 'Prod';
+  state: EnvironmentRunState;
+  branch: string | null;
 }
 
 function statusTagWrapClass(
@@ -36,11 +48,82 @@ function statusTagWrapClass(
   }
 }
 
+function detectEnvironment(
+  branch: string | null,
+  title: string
+): DeployEnvironmentKey | null {
+  const b = (branch ?? '').toLowerCase();
+  const t = title.toLowerCase();
+  const tokens = `${b} ${t}`;
+  if (tokens.includes('prod') || tokens.includes('production') || b === 'main' || b === 'master') return 'prod';
+  if (tokens.includes('stag') || tokens.includes('stg') || tokens.includes('uat')) return 'stg';
+  if (tokens.includes('test') || tokens.includes('tst') || tokens.includes('qa')) return 'tst';
+  if (tokens.includes('dev') || tokens.includes('develop') || b === 'development') return 'dev';
+  return null;
+}
+
+function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
+  const envs: Record<DeployEnvironmentKey, EnvironmentSnapshot> = {
+    dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null },
+    tst: { key: 'tst', label: 'Tst', state: 'idle', branch: null },
+    stg: { key: 'stg', label: 'Stg', state: 'idle', branch: null },
+    prod: { key: 'prod', label: 'Prod', state: 'idle', branch: null },
+  };
+
+  const runs = (row.recentRuns ?? []).slice().sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+  for (const run of runs) {
+    const env = detectEnvironment(run.headBranch, run.title);
+    if (!env) continue;
+    if (envs[env].state !== 'idle') continue;
+    if (run.status !== 'completed') {
+      envs[env] = { key: env, label: envs[env].label, state: run.status === 'queued' ? 'queued' : 'running', branch: run.headBranch };
+      continue;
+    }
+    if (run.conclusion === 'success') {
+      envs[env] = { key: env, label: envs[env].label, state: 'ok', branch: run.headBranch };
+      continue;
+    }
+    envs[env] = { key: env, label: envs[env].label, state: 'failed', branch: run.headBranch };
+  }
+  return [envs.dev, envs.tst, envs.stg, envs.prod];
+}
+
+function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger' | 'warning' | 'secondary' | 'info' {
+  if (snapshot.state === 'ok') return 'success';
+  if (snapshot.state === 'failed') return 'danger';
+  if (snapshot.state === 'running' || snapshot.state === 'queued') return 'warning';
+  return 'secondary';
+}
+
+function environmentStatusText(snapshot: EnvironmentSnapshot): string {
+  if (snapshot.state === 'ok') return 'OK';
+  if (snapshot.state === 'failed') return 'Fail';
+  if (snapshot.state === 'running') return 'Run';
+  if (snapshot.state === 'queued') return 'Queue';
+  return 'Idle';
+}
+
 /**
  * Reusable 2×2 grid of CD deploy cards (repo label, status, branch pill, marquee run title, details, footer ticker).
  * Uses PrimeReact Card, Tag, ProgressBar — TV-safe (no button links).
  */
 export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => {
+  const [, setElapsedClock] = useState<number>(Date.now());
+  const hasActiveRuns = useMemo(
+    () => repos.some((row) => Boolean(row.activeRun && row.activeRun.status !== 'completed')),
+    [repos]
+  );
+
+  useEffect(() => {
+    if (!hasActiveRuns) return;
+    const intervalId = window.setInterval(() => {
+      setElapsedClock(Date.now());
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [hasActiveRuns]);
+
   return (
     <div className={styles.root}>
       <div className={styles.grid}>
@@ -62,6 +145,11 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
           const durationLabel = run
             ? formatDeployRunDuration(run.createdAt, run.updatedAt, isRunning)
             : '—';
+          const finishedLabel = run && !isRunning ? formatDeployRunTimestamp(run.updatedAt) : '—';
+          const envSnapshots = deriveEnvironmentSnapshots(row);
+          const activeBranches = (row.recentRuns ?? [])
+            .filter((r) => r.status !== 'completed' && r.headBranch)
+            .map((r) => `${detectEnvironment(r.headBranch, r.title)?.toUpperCase() ?? 'RUN'}:${r.headBranch}`);
 
           return (
             <Card
@@ -81,7 +169,13 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
               }`}
               header={
                 <div className={styles.cardHeader}>
-                  <span className={styles.repoTitle}>{row.shortLabel}</span>
+                  <div className={styles.headerTitleWithMeta}>
+                    <span className={styles.repoTitle}>{row.shortLabel}</span>
+                    <span className={styles.cardHeaderMeta}>
+                      <span className={styles.metaChip}>Elapsed {durationLabel}</span>
+                      <span className={styles.metaChip}>Finished {finishedLabel}</span>
+                    </span>
+                  </div>
                   <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
                     <Tag value={tagValue} severity={severity} rounded />
                   </span>
@@ -94,6 +188,36 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                 <>
                   <div className={styles.branchRow}>
                     <span className={styles.branchPill}>{run.headBranch ?? '—'}</span>
+                    {isRunning ? (
+                      <span className={styles.runningChip}>
+                        <ProgressSpinner className={styles.runningSpinner} strokeWidth="8" />
+                        Active
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className={styles.environmentBoard}>
+                    {envSnapshots.map((env) => (
+                      <div
+                        key={`${row.repo}-${env.key}`}
+                        className={`${styles.environmentRow} ${
+                          env.state === 'ok'
+                            ? styles.environmentOk
+                            : env.state === 'failed'
+                              ? styles.environmentFailed
+                              : env.state === 'running' || env.state === 'queued'
+                                ? styles.environmentRunning
+                                : styles.environmentIdle
+                        }`}
+                      >
+                        <span className={styles.environmentLabel}>{env.label}</span>
+                        <span className={styles.environmentStatusWrap}>
+                          <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
+                        </span>
+                        <span className={styles.environmentBranch} title={env.branch ?? 'No recent run'}>
+                          {env.branch ?? '—'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                   <div className={styles.titleTicker} title={run.title}>
                     <div className={styles.titleTickerTrack}>
@@ -109,28 +233,11 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                       </div>
                     )}
                     {isRunning ? (
-                      <>
-                        <div className={styles.detailRow}>
-                          <dt>Started</dt>
-                          <dd>{formatDeployRunTimestamp(run.createdAt)}</dd>
-                        </div>
-                        <div className={styles.detailRow}>
-                          <dt>Elapsed</dt>
-                          <dd>{durationLabel}</dd>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className={styles.detailRow}>
-                          <dt>Elapsed</dt>
-                          <dd>{durationLabel}</dd>
-                        </div>
-                        <div className={styles.detailRow}>
-                          <dt>Finished</dt>
-                          <dd>{formatDeployRunTimestamp(run.updatedAt)}</dd>
-                        </div>
-                      </>
-                    )}
+                      <div className={styles.detailRow}>
+                        <dt>Started</dt>
+                        <dd>{formatDeployRunTimestamp(run.createdAt)}</dd>
+                      </div>
+                    ) : null}
                   </dl>
                   {showActivityBar && (
                     <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
@@ -138,10 +245,10 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                   <div className={styles.footerTicker} title={run.title}>
                     <div className={styles.footerTickerTrack}>
                       <span className={styles.footerTickerSeg}>
-                        {run.title} · {run.headBranch ?? '—'} · Run #{run.id} · GitHub Actions
+                        {run.title} · {activeBranches.length > 0 ? activeBranches.join(' | ') : run.headBranch ?? '—'} · Run #{run.id} · GitHub Actions
                       </span>
                       <span className={styles.footerTickerSeg}>
-                        {run.title} · {run.headBranch ?? '—'} · Run #{run.id} · GitHub Actions
+                        {run.title} · {activeBranches.length > 0 ? activeBranches.join(' | ') : run.headBranch ?? '—'} · Run #{run.id} · GitHub Actions
                       </span>
                     </div>
                   </div>
