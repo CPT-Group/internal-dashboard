@@ -91,7 +91,7 @@ export function tagSeverityForRow(
     return 'danger';
   }
   if ((row.queuedCount ?? 0) > 0 && (row.inProgressCount ?? 0) === 0) {
-    return 'warning';
+    return 'info';
   }
   if (!run) {
     return 'secondary';

@@ -25,6 +25,7 @@ export interface GitHubDeployRunSummary {
   status: string;
   conclusion: string | null;
   headBranch: string | null;
+  actorLogin: string | null;
   title: string;
   htmlUrl: string;
   createdAt: string;

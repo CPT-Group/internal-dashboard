@@ -2,6 +2,9 @@ import type { GitHubDeployWorkflowMonitor } from '@/constants/GITHUB_DEPLOY_MONI
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 
 interface GitHubWorkflowRunApi {
+  actor?: {
+    login?: string | null;
+  } | null;
   id: number;
   name: string | null;
   status: string;
@@ -35,6 +38,7 @@ function toSummary(run: GitHubWorkflowRunApi): GitHubDeployRunSummary {
     status: run.status,
     conclusion: run.conclusion,
     headBranch: run.head_branch,
+    actorLogin: run.actor?.login ?? null,
     title,
     htmlUrl: run.html_url,
     createdAt: run.created_at,

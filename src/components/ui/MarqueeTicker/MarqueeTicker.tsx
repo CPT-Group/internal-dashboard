@@ -8,6 +8,7 @@ export interface MarqueeTickerProps {
   className?: string;
   durationSeconds?: number;
   gapRem?: number;
+  forceMarquee?: boolean;
 }
 
 export const MarqueeTicker = ({
@@ -15,6 +16,7 @@ export const MarqueeTicker = ({
   className = '',
   durationSeconds = 24,
   gapRem = 2,
+  forceMarquee = false,
 }: MarqueeTickerProps) => {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const segmentRef = useRef<HTMLSpanElement | null>(null);
@@ -57,18 +59,20 @@ export const MarqueeTicker = ({
 
   const renderedText = text.trim() === '' ? '—' : text;
 
+  const shouldAnimate = forceMarquee || isOverflowing;
+
   return (
     <div
       className={rootClass}
       style={cssVars}
-      data-animate={isOverflowing ? 'true' : 'false'}
+      data-animate={shouldAnimate ? 'true' : 'false'}
     >
       <div ref={viewportRef} className={styles.viewport}>
         <div className={styles.track}>
           <span ref={segmentRef} className={styles.segment}>
             {renderedText}
           </span>
-          {isOverflowing ? (
+          {shouldAnimate ? (
             <span className={styles.segment} aria-hidden="true">
               {renderedText}
             </span>

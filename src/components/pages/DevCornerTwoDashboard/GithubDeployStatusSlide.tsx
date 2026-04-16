@@ -184,16 +184,16 @@ export const GithubDeployStatusSlide = () => {
       {
         label: 'In Progress',
         value: environmentTotals.inProgress,
-        color: 'var(--blue-500)',
-        color1: 'var(--blue-500)',
-        color2: 'var(--blue-300)',
+        color: 'var(--yellow-500)',
+        color1: 'var(--yellow-500)',
+        color2: 'var(--yellow-300)',
       },
       {
         label: 'Queued',
         value: environmentTotals.queued,
-        color: 'var(--yellow-500)',
-        color1: 'var(--yellow-500)',
-        color2: 'var(--yellow-300)',
+        color: 'var(--blue-500)',
+        color1: 'var(--blue-500)',
+        color2: 'var(--blue-300)',
       },
       {
         label: 'Failed',
@@ -317,7 +317,7 @@ export const GithubDeployStatusSlide = () => {
       )}
       <div className={styles.contentLayout}>
         <div className={styles.cardsPanel}>
-          <GithubDeployRepoCards repos={repos} />
+          <GithubDeployRepoCards repos={repos} showBranchContext={false} />
         </div>
       </div>
     </div>
