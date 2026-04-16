@@ -5,8 +5,6 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
-import { KpiStrip } from '@/components/ui';
-import type { KpiItem } from '@/components/ui';
 import { InProgressCardsSlide } from './InProgressCardsSlide';
 import { RecentlyCompletedSlide } from './RecentlyCompletedSlide';
 import { RequestedTicketsSlide } from './RequestedTicketsSlide';
@@ -83,14 +81,6 @@ export const DevCornerTwoDashboard = () => {
     completedByDeveloper,
   } = analytics;
 
-  const kpiItems: KpiItem[] = useMemo(() => [
-    { label: 'In Progress', value: inProgressTickets.length },
-    { label: 'Completed (7d)', value: recentlyCompleted.length },
-    { label: 'Requested', value: requestedTickets.length, severity: requestedTickets.length > 10 ? 'warning' : undefined },
-    { label: 'Open (Prod)', value: kpis.openProd },
-    { label: 'Open (NOVA)', value: kpis.openNova },
-  ], [kpis, inProgressTickets.length, recentlyCompleted.length, requestedTickets.length]);
-
   const visibleSlide = IS_CAROUSEL_LOCKED ? lockedIndex! : activeSlide;
 
   const slideClass = (idx: number, slideId: DevCornerTwoSlideId) =>
@@ -150,9 +140,6 @@ export const DevCornerTwoDashboard = () => {
 
   return (
     <div className={styles.dashboard}>
-      <div className={styles.kpiRow}>
-        <KpiStrip items={kpiItems} />
-      </div>
       <div className={styles.carousel}>
         {enabledSlides.map((slide, idx) => (
           <div key={slide.id} className={slideClass(idx, slide.id)}>

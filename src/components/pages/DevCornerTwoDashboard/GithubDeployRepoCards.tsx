@@ -197,9 +197,16 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                       <span className={styles.metaChip}>Finished {finishedLabel}</span>
                     </span>
                   </div>
-                  <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
-                    <Tag value={tagValue} severity={severity} rounded />
-                  </span>
+                  <div className={styles.headerStatusTags}>
+                    <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
+                      <Tag value={tagValue} severity={severity} rounded />
+                    </span>
+                    {queuedCount > 0 ? (
+                      <span className={styles.headerQueueTagWrap}>
+                        <Tag value={`Q ${queuedCount}`} severity="warning" rounded />
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               }
             >

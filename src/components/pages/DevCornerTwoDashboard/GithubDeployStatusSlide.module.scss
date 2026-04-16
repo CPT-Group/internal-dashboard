@@ -39,6 +39,10 @@
     width: 100%;
   }
 
+  :global(.p-metergroup-label-list) {
+    margin-bottom: 0.28rem;
+  }
+
   :global(.p-metergroup-meter-container) {
     position: relative;
     overflow: hidden;
@@ -67,6 +71,85 @@
   }
 }
 
+.customMeterTrack {
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+  border-radius: var(--border-radius);
+  min-height: 0.5rem;
+}
+
+.customMeterSegment {
+  display: inline-block;
+  min-height: 0.5rem;
+}
+
+.meterLabelCards {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
+  width: 100%;
+}
+
+.meterLabelCard {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+
+  :global(.p-card-body) {
+    padding: 0.34rem 0.42rem;
+  }
+
+  :global(.p-card-content) {
+    padding: 0;
+  }
+}
+
+.meterLabelCardInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.38rem;
+}
+
+.meterLabelTextBlock {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.meterLabelTitle {
+  font-size: calc(var(--content-text-size, 1rem) * 0.68);
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+  white-space: nowrap;
+}
+
+.meterLabelValue {
+  font-size: calc(var(--content-text-size, 1rem) * 0.86);
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--text-color);
+  white-space: nowrap;
+}
+
+.meterLabelIcon {
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--surface-0);
+  flex-shrink: 0;
+  font-size: calc(var(--content-text-size, 1rem) * 0.7);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .meterWrap :global(.p-metergroup-meter-container)::after {
     animation: none;
@@ -86,36 +169,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-.globalActivityWrap {
-  flex-shrink: 0;
-  padding: 0 0.06rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
-}
-
-.globalActivityLabel {
-  font-size: calc(var(--content-text-size, 1rem) * 0.76);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-color-secondary);
-}
-
-.globalActivityBar {
-  border-radius: 2px;
-  overflow: hidden;
-
-  &:global(.p-progressbar) {
-    background: rgba(120, 120, 140, 0.2);
-    height: 0.24rem !important;
-  }
-
-  &:global(.p-progressbar) :global(.p-progressbar-value) {
-    background: var(--github-deploy-progressbar-fill) !important;
-  }
 }
 
 .actionsPane {
