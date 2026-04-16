@@ -21,6 +21,7 @@ export const MarqueeTicker = ({
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const segmentRef = useRef<HTMLSpanElement | null>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
+  const [effectiveGapPx, setEffectiveGapPx] = useState<number>(Math.max(0, gapRem) * 16);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -28,8 +29,21 @@ export const MarqueeTicker = ({
     if (!viewport || !segment) return;
 
     const updateOverflow = () => {
-      const overflowing = segment.scrollWidth > viewport.clientWidth + 1;
+      const viewportWidth = viewport.clientWidth;
+      const segmentWidth = segment.scrollWidth;
+      const overflowing = segmentWidth > viewportWidth + 1;
       setIsOverflowing(overflowing);
+
+      const rootFontSize = Number.parseFloat(
+        window.getComputedStyle(document.documentElement).fontSize
+      );
+      const safeRootFontSize = Number.isFinite(rootFontSize) ? rootFontSize : 16;
+      const baseGapPx = Math.max(0, gapRem) * safeRootFontSize;
+      const adaptiveGapPx =
+        forceMarquee && !overflowing
+          ? Math.max(baseGapPx, viewportWidth - segmentWidth + baseGapPx)
+          : baseGapPx;
+      setEffectiveGapPx((prev) => (Math.abs(prev - adaptiveGapPx) < 0.5 ? prev : adaptiveGapPx));
     };
 
     updateOverflow();
@@ -41,7 +55,7 @@ export const MarqueeTicker = ({
     observer.observe(segment);
 
     return () => observer.disconnect();
-  }, [text]);
+  }, [text, gapRem, forceMarquee]);
 
   const rootClass = useMemo(
     () => [styles.root, className].filter(Boolean).join(' '),
@@ -52,9 +66,9 @@ export const MarqueeTicker = ({
     () =>
       ({
         '--marquee-duration': `${durationSeconds}s`,
-        '--marquee-gap': `${gapRem}rem`,
+        '--marquee-gap': `${effectiveGapPx}px`,
       }) as React.CSSProperties,
-    [durationSeconds, gapRem]
+    [durationSeconds, effectiveGapPx]
   );
 
   const renderedText = text.trim() === '' ? '—' : text;

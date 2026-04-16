@@ -288,7 +288,12 @@ export const GithubDeployRepoCards = ({ repos, showBranchContext = true }: Githu
                   {showEnvironmentBadgeRow ? (
                     <div className={styles.environmentBadgeRow}>
                       {activeEnvBadges.map((env) => (
-                        <span key={`${row.repo}-${env.key}-active`} className={styles.activeEnvBadge}>
+                        <span
+                          key={`${row.repo}-${env.key}-active`}
+                          className={`${styles.activeEnvBadge} ${
+                            env.state === 'queued' ? styles.activeEnvBadgeQueued : ''
+                          }`}
+                        >
                           <Tag
                             value={`${env.label.toUpperCase()} ${env.state === 'queued' ? 'Queued' : 'In Progress'}`}
                             severity={env.state === 'queued' ? 'info' : 'warning'}

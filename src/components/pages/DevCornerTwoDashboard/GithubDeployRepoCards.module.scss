@@ -184,6 +184,14 @@
   }
 }
 
+.activeEnvBadgeQueued {
+  :global(.p-tag) {
+    background: var(--orange-500) !important;
+    border: 1px solid var(--orange-400) !important;
+    color: #1f1300 !important;
+  }
+}
+
 .branchPill {
   font-size: calc(var(--content-text-size, 1rem) * 0.78);
   font-weight: 500;
@@ -224,6 +232,9 @@
   align-items: center;
 
   :global(.p-tag) {
+    background: var(--orange-500) !important;
+    border: 1px solid var(--orange-400) !important;
+    color: #1f1300 !important;
     font-size: calc(var(--content-text-size, 1rem) * 0.68);
     font-weight: 700;
     text-transform: uppercase;
@@ -237,6 +248,9 @@
   align-items: center;
 
   :global(.p-tag) {
+    background: var(--orange-500) !important;
+    border: 1px solid var(--orange-400) !important;
+    color: #1f1300 !important;
     font-size: calc(var(--content-text-size, 1rem) * 0.62);
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -330,12 +344,12 @@
 
 .environmentInlineProgressQueued {
   &:global(.p-progressbar) {
-    background: rgba(59, 130, 246, 0.22);
+    background: rgba(249, 115, 22, 0.22);
     height: 0.2rem !important;
   }
 
   &:global(.p-progressbar) :global(.p-progressbar-value) {
-    background: var(--blue-500) !important;
+    background: var(--orange-500) !important;
   }
 }
 
@@ -353,8 +367,14 @@
 }
 
 .environmentQueued {
-  border-color: rgba(59, 130, 246, 0.55);
+  border-color: rgba(249, 115, 22, 0.55);
   animation: deployEnvQueuedPulse 1.9s ease-in-out infinite;
+
+  .environmentStatusWrap :global(.p-tag) {
+    background: var(--orange-500) !important;
+    border: 1px solid var(--orange-400) !important;
+    color: #1f1300 !important;
+  }
 }
 
 .environmentFailed {
@@ -391,13 +411,13 @@
 @keyframes deployEnvQueuedPulse {
   0%,
   100% {
-    box-shadow: inset 0 0 0 0 rgba(59, 130, 246, 0.15);
+    box-shadow: inset 0 0 0 0 rgba(249, 115, 22, 0.15);
   }
 
   50% {
     box-shadow:
-      inset 0 0 12px rgba(59, 130, 246, 0.12),
-      0 0 14px -2px rgba(59, 130, 246, 0.35);
+      inset 0 0 12px rgba(249, 115, 22, 0.12),
+      0 0 14px -2px rgba(249, 115, 22, 0.35);
   }
 }
 
@@ -487,13 +507,13 @@
 @keyframes queuedTagPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.22);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.2);
   }
 
   50% {
     box-shadow:
-      0 0 12px 2px rgba(59, 130, 246, 0.45),
-      inset 0 0 10px rgba(59, 130, 246, 0.1);
+      0 0 12px 2px rgba(249, 115, 22, 0.42),
+      inset 0 0 10px rgba(249, 115, 22, 0.1);
   }
 }
 
@@ -527,6 +547,9 @@
 }
 
 .tagWrapInfo :global(.p-tag) {
+  background: var(--orange-500) !important;
+  border: 1px solid var(--orange-400) !important;
+  color: #1f1300 !important;
   animation: deployTagPulseInfo 2.2s ease-in-out infinite;
 }
 
@@ -578,13 +601,13 @@
 @keyframes deployTagPulseInfo {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.22);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.22);
   }
 
   50% {
     box-shadow:
-      0 0 12px 2px rgba(59, 130, 246, 0.45),
-      inset 0 0 10px rgba(59, 130, 246, 0.12);
+      0 0 12px 2px rgba(249, 115, 22, 0.45),
+      inset 0 0 10px rgba(249, 115, 22, 0.12);
   }
 }
 

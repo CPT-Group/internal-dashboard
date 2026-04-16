@@ -49,10 +49,6 @@ function detectEnvironment(branch: string | null, title: string): DeployEnvironm
   return null;
 }
 
-function queuedLike(status: string): boolean {
-  return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
-}
-
 function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record<DeployEnvironmentState, number> {
   const totals: Record<DeployEnvironmentState, number> = {
     success: 0,
@@ -79,7 +75,7 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
       if (!env || byEnv[env] !== 'noData') continue;
 
       if (run.status !== 'completed') {
-        byEnv[env] = queuedLike(run.status) ? 'queued' : 'inProgress';
+        byEnv[env] = run.status === 'queued' ? 'queued' : 'inProgress';
         continue;
       }
 
@@ -191,9 +187,9 @@ export const GithubDeployStatusSlide = () => {
       {
         label: 'Queued',
         value: environmentTotals.queued,
-        color: 'var(--blue-500)',
-        color1: 'var(--blue-500)',
-        color2: 'var(--blue-300)',
+        color: 'var(--orange-500)',
+        color1: 'var(--orange-500)',
+        color2: 'var(--orange-300)',
       },
       {
         label: 'Failed',
