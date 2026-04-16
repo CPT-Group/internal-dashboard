@@ -11,6 +11,8 @@ interface RunBodyShape {
   notify?: boolean;
 }
 
+const TEAMS_MAX_TEXT_LENGTH = 3900;
+
 function parseSinceDays(raw: string | null): number | null {
   if (!raw) return null;
   if (raw.toLowerCase() === 'all') return null;
@@ -33,6 +35,22 @@ function parseBodyNotify(body: unknown): boolean {
   const shape = body as RunBodyShape;
   if (typeof shape.notify === 'boolean') return shape.notify;
   return true;
+}
+
+function formatTeamsRunAt(value: string): string {
+  const dt = new Date(value);
+  if (Number.isNaN(dt.valueOf())) return value;
+  const time = dt
+    .toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'America/Los_Angeles',
+    })
+    .replace(' AM', 'am')
+    .replace(' PM', 'pm');
+  const date = dt.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
+  return `${time} ${date}`;
 }
 
 function buildAlertText(summary: WebsiteHealthSummaryResponse['summary']): string {
@@ -67,29 +85,26 @@ function buildAlertText(summary: WebsiteHealthSummaryResponse['summary']): strin
     `| Web DB Issues (sites) | ${impactedWebDbSites} |`,
     `| Submitted | ${summary.totalSubmittedOnline} |`,
     `| Missing | ${summary.totalMissingInCleanClaims} [${impactedCompareSites}] |`,
-    `| Last Run | ${summary.runAt} |`,
+    `| Last Run | ${formatTeamsRunAt(summary.runAt)} |`,
     '',
     '| Site | Web DB | Web DB Issues | Status | Submitted | Matched | Missing |',
     '|---|---|---:|---|---:|---:|---:|',
     ...detailLines,
-  ].join('\n').slice(0, 3900);
+  ].join('\n').slice(0, TEAMS_MAX_TEXT_LENGTH);
 }
 
 function buildAllClearText(summary: WebsiteHealthSummaryResponse['summary']): string {
   const scope = summary.sinceDays === null ? 'All submitted records' : `Last ${summary.sinceDays} day(s)`;
-  const sampleSites = summary.results
+  const allSites = summary.results
     .slice()
-    .sort((a, b) => a.siteKey.localeCompare(b.siteKey))
-    .slice(0, 10);
+    .sort((a, b) => a.siteKey.localeCompare(b.siteKey));
 
-  const sampleLines = sampleSites.map((site) => {
+  const allSiteLines = allSites.map((site) => {
     const safeSite = site.siteKey.replace(/\|/g, '/');
     return `| ${safeSite} | ${site.submittedOnlineCount} | ${site.matchedInCleanClaimsCount} | ${site.missingCount} | ${site.webDbIssueCount} |`;
   });
 
-  const remaining = Math.max(summary.results.length - sampleSites.length, 0);
-
-  return [
+  const introLines = [
     '## WEBSITE HEALTH - ALL SYSTEMS CLEAR',
     '',
     'No compare discrepancies or Web DB integrity issues were detected in this run.',
@@ -102,13 +117,37 @@ function buildAllClearText(summary: WebsiteHealthSummaryResponse['summary']): st
     `| Submitted | ${summary.totalSubmittedOnline} |`,
     `| Matched | ${summary.totalMatchedInCleanClaims} |`,
     `| Missing | ${summary.totalMissingInCleanClaims} |`,
-    `| Last Run | ${summary.runAt} |`,
+    `| Last Run | ${formatTeamsRunAt(summary.runAt)} |`,
     '',
-    '| Site (sample) | Submitted | Matched | Missing | Web DB Issues |',
+  ];
+
+  const shownRows: string[] = [];
+  for (const row of allSiteLines) {
+    const candidateShownCount = shownRows.length + 1;
+    const candidateLines = [
+      ...introLines,
+      `| Site (shown ${candidateShownCount}/${allSites.length}) | Submitted | Matched | Missing | Web DB Issues |`,
+      '|---|---:|---:|---:|---:|',
+      ...shownRows,
+      row,
+    ];
+    if (candidateLines.join('\n').length > TEAMS_MAX_TEXT_LENGTH) {
+      break;
+    }
+    shownRows.push(row);
+  }
+
+  const remaining = Math.max(allSites.length - shownRows.length, 0);
+  const lines = [
+    ...introLines,
+    `| Site (shown ${shownRows.length}/${allSites.length}) | Submitted | Matched | Missing | Web DB Issues |`,
     '|---|---:|---:|---:|---:|',
-    ...sampleLines,
-    ...(remaining > 0 ? ['', `_${remaining} additional site(s) omitted for brevity._`] : []),
-  ].join('\n').slice(0, 3900);
+    ...shownRows,
+    ...(remaining > 0
+      ? ['', `_${remaining} additional site(s) omitted due to Teams message length limit._`]
+      : []),
+  ];
+  return lines.join('\n').slice(0, TEAMS_MAX_TEXT_LENGTH);
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
