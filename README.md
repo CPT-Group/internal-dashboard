@@ -6,6 +6,25 @@ Internal TV dashboard application for displaying company stats, heat maps, and o
 
 This is a Next.js-based dashboard application designed to run on internal TVs throughout the office. Each TV can be configured to display different dashboard content via routes like `/tv/conference-room`, `/tv/dev`, etc.
 
+## Agent Skills
+
+Project skills live in `.cursor/skills/`. Use these slash-style prompts in chat when you want guided workflows:
+
+- **`/website-health-check <site>`**
+  - Runs case-level Website Health discrepancy analysis (`Submissions` vs `CleanClaims`) with source filters, missing-row review, and optional Teams-style update wording.
+  - Input can be website DB, clean-claims DB, or case name.
+  - Example: `/website-health-check ColumbiaUniversity_EEOC_C`
+
+- **`/submission-health-check <site>`**
+  - Runs one-site submission-volume report (`total`, `today`, `yesterday`) and supports controlled remediation steps when explicitly requested.
+  - Default output is chat summary; can include Jira/Teams follow-up context if requested.
+  - Example: `/submission-health-check CompassionHealthCare_Allin_C`
+
+- **`/website-error-debug <site>`**
+  - Builds a full one-site issue rundown (grouped error tables, pattern analysis, next-step recommendation) and defines safe fix protocol for confirmation sync / `IsSubmitted` corrections.
+  - Default is chat-only; if a Jira ticket is included, also posts concise ticket updates.
+  - Example: `/website-error-debug CompassionHealthCare_Allin_C NOVA-1282`
+
 ## Tech Stack
 
 - **Framework**: Next.js 16.1.6 (App Router)
