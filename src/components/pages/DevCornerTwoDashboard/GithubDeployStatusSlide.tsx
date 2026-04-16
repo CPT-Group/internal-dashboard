@@ -20,18 +20,14 @@ interface DeployLegendValue {
   color: string;
   color1: string;
   color2: string;
+  meterTemplate?: (props: MeterTemplateItem, attr?: React.HTMLAttributes<HTMLSpanElement>) => React.ReactNode;
 }
 
-interface MeterRenderValue {
-  color?: string;
+interface MeterTemplateItem {
+  index: number;
+  percentage: number;
   color1?: string;
   color2?: string;
-}
-
-interface MeterRenderProps {
-  values: MeterRenderValue[];
-  percentages: number[];
-  totalPercent: number;
 }
 
 interface MeterLabelListProps {
@@ -210,46 +206,24 @@ export const GithubDeployStatusSlide = () => {
     [environmentTotals.failed, environmentTotals.inProgress, environmentTotals.queued, environmentTotals.success]
   );
 
-  const meterGradientByLabel = useMemo<Record<string, { color1: string; color2: string }>>(
-    () =>
-      meterValues.reduce<Record<string, { color1: string; color2: string }>>((acc, item) => {
-        acc[item.label] = { color1: item.color1, color2: item.color2 };
-        return acc;
-      }, {}),
-    [meterValues]
+  const meterTemplate = useCallback(
+    (props: MeterTemplateItem, attr?: React.HTMLAttributes<HTMLSpanElement>) => (
+      <span
+        {...(attr ?? {})}
+        key={props.index}
+        style={{
+          ...(attr?.style ?? {}),
+          background: `linear-gradient(to right, ${props.color1 ?? 'var(--primary-color)'}, ${props.color2 ?? 'var(--primary-color)'})`,
+          width: `${props.percentage}%`,
+        }}
+      />
+    ),
+    []
   );
 
-  const meterTemplate = useCallback(
-    (props?: MeterRenderProps) => {
-      const values = props?.values ?? [];
-      const percentages = props?.percentages ?? [];
-      if (values.length === 0) {
-        return <div className={styles.customMeterTrack} />;
-      }
-
-      return (
-        <div className={styles.customMeterTrack}>
-          {values.map((item, index) => {
-            const widthPercent = percentages[index] ?? 0;
-            const labelText = typeof (item as { label?: string | HTMLElement }).label === 'string'
-              ? (item as { label?: string }).label
-              : '';
-            const gradient = meterGradientByLabel[labelText ?? ''];
-            return (
-              <span
-                key={`${index}-${widthPercent}`}
-                className={styles.customMeterSegment}
-                style={{
-                  width: `${widthPercent}%`,
-                  background: `linear-gradient(to right, ${gradient?.color1 ?? item.color ?? 'var(--primary-color)'}, ${gradient?.color2 ?? item.color ?? 'var(--primary-color)'})`,
-                }}
-              />
-            );
-          })}
-        </div>
-      );
-    },
-    [meterGradientByLabel]
+  const meterValuesWithTemplate = useMemo(
+    () => meterValues.map((item) => ({ ...item, meterTemplate })),
+    [meterTemplate, meterValues]
   );
 
   const meterLabelList = useCallback(
@@ -334,10 +308,9 @@ export const GithubDeployStatusSlide = () => {
       {repos.length > 0 && (
         <div className={styles.meterWrap}>
           <MeterGroup
-            values={meterValues}
+            values={meterValuesWithTemplate}
             max={trackedEnvironmentSlots}
             labelPosition="start"
-            meter={meterTemplate}
             labelList={meterLabelList}
           />
         </div>

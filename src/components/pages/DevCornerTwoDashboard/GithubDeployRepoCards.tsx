@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { MarqueeTicker } from '@/components/ui';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
@@ -120,8 +119,8 @@ function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger
 function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'ok') return 'OK';
   if (snapshot.state === 'failed') return 'Fail';
-  if (snapshot.state === 'running') return 'Run';
-  if (snapshot.state === 'queued') return 'Queue';
+  if (snapshot.state === 'running') return 'In Progress';
+  if (snapshot.state === 'queued') return 'Queued';
   return 'Idle';
 }
 
@@ -152,11 +151,13 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
           const err = row.error;
           const tagValue = err
             ? 'API error'
-            : (row.queuedCount ?? 0) > 0 && (row.inProgressCount ?? 0) === 0
-              ? `queued (${row.queuedCount})`
-            : run
-              ? formatDeployStatusLabel(run.status, run.conclusion)
-              : 'No runs';
+            : (row.inProgressCount ?? 0) > 0
+              ? 'In Progress'
+              : (row.queuedCount ?? 0) > 0
+                ? `Queued (${row.queuedCount})`
+                : run
+                  ? formatDeployStatusLabel(run.status, run.conclusion)
+                  : 'No runs';
           const severity = tagSeverityForRow(row, run);
           const health = cardHealthForRow(row, run);
           const tone = repoToneForRepo(row.repo);
@@ -168,6 +169,9 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
           const finishedLabel = run && !isRunning ? formatDeployRunTimestamp(run.updatedAt) : '—';
           const queuedCount = row.queuedCount ?? 0;
           const envSnapshots = deriveEnvironmentSnapshots(row);
+          const activeEnvBadges = envSnapshots.filter(
+            (env) => env.state === 'running' || env.state === 'queued'
+          );
           const envTickerText = envSnapshots
             .map((env) => `${env.label.toUpperCase()}: ${env.triggerText ?? env.branch ?? 'No recent run'}`)
             .join(' | ');
@@ -216,15 +220,18 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                 <>
                   <div className={styles.branchRow}>
                     <span className={styles.branchPill}>{run.headBranch ?? '—'}</span>
+                    {activeEnvBadges.map((env) => (
+                      <span key={`${row.repo}-${env.key}-active`} className={styles.activeEnvBadge}>
+                        <Tag
+                          value={`${env.label.toUpperCase()} ${env.state === 'queued' ? 'Queued' : 'In Progress'}`}
+                          severity="warning"
+                          rounded
+                        />
+                      </span>
+                    ))}
                     {queuedCount > 0 ? (
                       <span className={styles.queueTagWrap}>
                         <Tag value={`Queued ${queuedCount}`} severity="warning" rounded />
-                      </span>
-                    ) : null}
-                    {isRunning ? (
-                      <span className={styles.runningChip}>
-                        <ProgressSpinner className={styles.runningSpinner} strokeWidth="8" />
-                        Active
                       </span>
                     ) : null}
                   </div>
@@ -246,12 +253,21 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                         <span className={styles.environmentStatusWrap}>
                           <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
                         </span>
-                        <MarqueeTicker
-                          text={env.triggerText ?? env.branch ?? 'No recent run'}
-                          className={styles.environmentTriggerTicker}
-                          durationSeconds={22}
-                          gapRem={1.5}
-                        />
+                        <div className={styles.environmentInfo}>
+                          <MarqueeTicker
+                            text={env.triggerText ?? env.branch ?? 'No recent run'}
+                            className={styles.environmentTriggerTicker}
+                            durationSeconds={22}
+                            gapRem={1.5}
+                          />
+                          {(env.state === 'running' || env.state === 'queued') && (
+                            <ProgressBar
+                              mode="indeterminate"
+                              className={styles.environmentInlineProgress}
+                              style={{ height: '3px' }}
+                            />
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
