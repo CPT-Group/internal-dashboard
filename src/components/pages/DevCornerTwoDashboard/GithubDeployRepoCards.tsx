@@ -232,12 +232,6 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                         <dd>{row.queuedCount}</dd>
                       </div>
                     )}
-                    {isRunning ? (
-                      <div className={styles.detailRow}>
-                        <dt>Started</dt>
-                        <dd>{formatDeployRunTimestamp(run.createdAt)}</dd>
-                      </div>
-                    ) : null}
                   </dl>
                   {showActivityBar && (
                     <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
