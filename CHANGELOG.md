@@ -39,11 +39,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Dependency security update**: Upgraded `next` and `eslint-config-next` from `16.2.1` to `16.2.3` to address npm advisory **GHSA-q4gf-8mx6-v5v3** (high-severity DoS risk in Next.js Server Components); `npm audit` now reports zero vulnerabilities.
+- **Submission remediation guidance**: Expanded `.cursor/skills/submission-health-check/SKILL.md` with a controlled remediation workflow (pre-check, identity classification, explicit approval, transactional updates, post-check validation, and Jira ticket/worklog hygiene) for site-level data fixes.
+- **Leopalace investigation export flow**: Added a local CSV export workflow for Web DB integrity triage (`kyleOutput/LeopalaceGuamCorporation_EEOC_C-webdb-missing-confirmation-records.csv`) and attached it to NOVA-1282 with a site-specific comment documenting affected IDs, missing columns, and likely early-template instability context.
+- **Columbia one-page issue report generation**: Added local report generation for `ColumbiaUniversity_EEOC_C` that outputs a single markdown page with separate tables by error type (`Missing confirmation number` and `IsSubmitted not 1`), reason counts, and issue run-down for inspection-first triage.
+- **Website Health Teams all-clear mode**: `POST /api/website-health` now sends a formatted Teams "all systems clear" update when `notify=true` and no issues are found (instead of skipping Teams entirely). Added a dashboard success toast message confirming the all-clear post.
 - **Website Health Jira action**: Added a third Actions icon for warning/error site rows to create a Jira ticket automatically (via new `/api/jira/website-health-ticket` endpoint) with prefilled summary, scope/run metadata, DB names, status/error context, and sample missing/Web DB issue rows.
 - **Website Health Jira UX + reusable copy button**: Added PrimeReact confirmation before creating Jira tickets and a post-create success dialog with copyable ticket ID/URL; extracted a reusable `CopyToClipboardButton` UI component so copy actions/toasts are consistent.
 - **README agent guidance (copy pattern)**: Documented how to use the shared `CopyToClipboardButton` (path, import, behavior, and usage example) so future work reuses one consistent clipboard/toast UX.
 - **Website Health Jira create default**: Switched auto-created issue type default from `Bug` to `Task` in `/api/jira/website-health-ticket` because NOVA Bugs currently enforce required custom fields not present in Website Health payloads; documented override behavior in `README.md`.
 - **Website Health Submission Report action**: Added a new `Submission Report` button on `/website-health` that posts a full active-site submissions table (total/today/yesterday) to the existing Teams webhook via new `POST /api/website-health/submission-report`, with toast feedback for sent/failed states.
+- **Local analyst output path**: Added `kyleOutput/` to `.gitignore` for local one-off submission/health investigation notes and exports that should not be committed.
 - **Website Health details dialog**: One scroll container on dialog content (removed nested inner/Web DB table scroll areas); enabled PrimeReact **draggable**, **resizable**, and **maximizable**; **blockScroll** while open.
 - **Website Health details UX**: Moved the Web DB issue toggle button next to **Web DB Status** for cleaner alignment and enabled per-row action-button loading/disable states while details API calls are in flight to prevent repeat clicks.
 - **Website Health details metrics UI**: Switched the Web DB metrics subsection in Comparison Info to a PrimeReact **DataTable** (metric/value) for clearer structure and consistency.
@@ -54,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Skill: `website-error-debug`**: Added `.cursor/skills/website-error-debug/SKILL.md` for chat-first one-site Website Health debugging (`/website-error-debug <site>`), including grouped error run-down workflow, optional Jira ticket updates, and controlled remediation rules for confirmation backfill/sync (`Submissions` + `CleanClaims`) and `IsSubmitted` fixes.
+- **Skill: `submission-health-check`**: Added `.cursor/skills/submission-health-check/SKILL.md` for one-case submission-volume investigations (total/today/yesterday) using project/site input (for example `/submission-health-check CompassionHealthCare_Allin_C`), with optional Teams posting guidance and SQL pattern.
 - **Cursor agent skills in repo**: `.gitignore` now allows `.cursor/skills/**` (with `.cursor/rules/`); added `website-health-check` skill (`SKILL.md`, `teams-message-templates.md`). `AGENTS.md` documents versioned Cursor paths.
 - **Website Health**: Home grid tile and blank route `/website-health` (placeholder for future analytics).
 - **Local SQL env**: `.env.local` may include `DB_*` (CPT2K16, aligned with slack-bot-manager) and `PROD_DB_*` (interactive-site **10.0.0.5**) for future DB-backed features — not committed.

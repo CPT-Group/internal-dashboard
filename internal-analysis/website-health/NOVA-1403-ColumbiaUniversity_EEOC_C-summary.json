@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-04-10T15:24:11.516Z",
+  "jiraKey": "NOVA-1403",
+  "caseName": "EEOC v. Trustees of Columbia University in the City of New York",
+  "websiteDbName": "ColumbiaUniversity_EEOC_C",
+  "cleanClaimsDbName": "ColumbiaUniversity_EEOC_C_SQL",
+  "deadlineDate": "2026-06-02",
+  "submittedInScopeCount": 6191,
+  "matchedCount": 6113,
+  "missingCount": 78,
+  "webDbIssueCount": 247,
+  "webDbMissingDateReceivedCount": 0,
+  "webDbMissingConfirmationCount": 31,
+  "webDbNotSubmittedCount": 247,
+  "submittedFlagColumnUsed": "IsSubmitted",
+  "files": {
+    "missingCsvPath": "C:\\local_dev\\Github-CPT-Group\\internal-dashboard\\internal-analysis\\website-health\\NOVA-1403-ColumbiaUniversity_EEOC_C-missing-rows.csv",
+    "issuesCsvPath": "C:\\local_dev\\Github-CPT-Group\\internal-dashboard\\internal-analysis\\website-health\\NOVA-1403-ColumbiaUniversity_EEOC_C-webdb-issues.csv"
+  }
+}

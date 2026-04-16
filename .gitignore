@@ -52,3 +52,6 @@ next-env.d.ts
 # Versioned agent skills (see AGENTS.md)
 !.cursor/skills/
 !.cursor/skills/**
+
+# local analyst output (Kyle-only scratch docs)
+kyleOutput/

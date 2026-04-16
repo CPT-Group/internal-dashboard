@@ -75,6 +75,42 @@ function buildAlertText(summary: WebsiteHealthSummaryResponse['summary']): strin
   ].join('\n').slice(0, 3900);
 }
 
+function buildAllClearText(summary: WebsiteHealthSummaryResponse['summary']): string {
+  const scope = summary.sinceDays === null ? 'All submitted records' : `Last ${summary.sinceDays} day(s)`;
+  const sampleSites = summary.results
+    .slice()
+    .sort((a, b) => a.siteKey.localeCompare(b.siteKey))
+    .slice(0, 10);
+
+  const sampleLines = sampleSites.map((site) => {
+    const safeSite = site.siteKey.replace(/\|/g, '/');
+    return `| ${safeSite} | ${site.submittedOnlineCount} | ${site.matchedInCleanClaimsCount} | ${site.missingCount} | ${site.webDbIssueCount} |`;
+  });
+
+  const remaining = Math.max(summary.results.length - sampleSites.length, 0);
+
+  return [
+    '## WEBSITE HEALTH - ALL SYSTEMS CLEAR',
+    '',
+    'No compare discrepancies or Web DB integrity issues were detected in this run.',
+    '',
+    '| Metric | Value |',
+    '|---|---|',
+    `| Scope | ${scope} |`,
+    `| Active Sites Checked | ${summary.totalSitesChecked} |`,
+    `| Compare Issues (sites) | ${summary.sitesWithIssues} |`,
+    `| Submitted | ${summary.totalSubmittedOnline} |`,
+    `| Matched | ${summary.totalMatchedInCleanClaims} |`,
+    `| Missing | ${summary.totalMissingInCleanClaims} |`,
+    `| Last Run | ${summary.runAt} |`,
+    '',
+    '| Site (sample) | Submitted | Matched | Missing | Web DB Issues |',
+    '|---|---:|---:|---:|---:|',
+    ...sampleLines,
+    ...(remaining > 0 ? ['', `_${remaining} additional site(s) omitted for brevity._`] : []),
+  ].join('\n').slice(0, 3900);
+}
+
 export async function GET(request: NextRequest): Promise<Response> {
   try {
     const sinceDays = parseSinceDays(request.nextUrl.searchParams.get('sinceDays'));
@@ -110,12 +146,13 @@ export async function POST(request: NextRequest): Promise<Response> {
     const notify = parseBodyNotify(body);
 
     const summary = await runWebsiteHealthScan({ sinceDays, refreshActiveSites: true });
-    const shouldNotify = notify && (summary.totalMissingInCleanClaims > 0 || summary.sitesWithIssues > 0);
+    const shouldNotify = notify;
 
     let alerted = false;
     let alertMessage: string | undefined;
     if (shouldNotify) {
-      const alertText = buildAlertText(summary);
+      const hasIssues = summary.totalMissingInCleanClaims > 0 || summary.sitesWithIssues > 0;
+      const alertText = hasIssues ? buildAlertText(summary) : buildAllClearText(summary);
       alerted = await notifyWebsiteHealthTeams(alertText);
       if (!alerted) {
         alertMessage = 'Teams webhook not configured or notification failed.';

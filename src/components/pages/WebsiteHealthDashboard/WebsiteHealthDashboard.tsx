@@ -150,12 +150,20 @@ export const WebsiteHealthDashboard = () => {
       const compareIssueSites = body.summary.results.filter((site) => site.missingCount > 0).length;
       const webDbIssueSites = body.summary.results.filter((site) => site.webDbStatus === 'error').length;
       const sitesWithAnyIssue = body.summary.sitesWithIssues;
-      if (body.alerted) {
+      const hasIssues = body.summary.totalMissingInCleanClaims > 0 || body.summary.sitesWithIssues > 0;
+      if (body.alerted && hasIssues) {
         showToast({
           severity: 'warn',
           summary: 'Scan complete',
           detail: `Issues found in ${sitesWithAnyIssue} site(s) (${compareIssueSites} compare, ${webDbIssueSites} Web DB). Teams alert sent.`,
           life: 5000,
+        });
+      } else if (body.alerted && !hasIssues) {
+        showToast({
+          severity: 'success',
+          summary: 'Scan complete',
+          detail: 'Great news — no discrepancies were found. Teams all-clear update sent.',
+          life: 4000,
         });
       } else if (body.summary.sitesWithIssues > 0) {
         showToast({
