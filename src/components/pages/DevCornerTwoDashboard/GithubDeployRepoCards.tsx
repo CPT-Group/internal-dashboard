@@ -5,6 +5,7 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { MarqueeTicker } from '@/components/ui';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthForRow,
@@ -165,7 +166,11 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
             ? formatDeployRunDuration(run.createdAt, run.updatedAt, isRunning)
             : '—';
           const finishedLabel = run && !isRunning ? formatDeployRunTimestamp(run.updatedAt) : '—';
+          const queuedCount = row.queuedCount ?? 0;
           const envSnapshots = deriveEnvironmentSnapshots(row);
+          const envTickerText = envSnapshots
+            .map((env) => `${env.label.toUpperCase()}: ${env.triggerText ?? env.branch ?? 'No recent run'}`)
+            .join(' | ');
 
           return (
             <Card
@@ -204,6 +209,11 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                 <>
                   <div className={styles.branchRow}>
                     <span className={styles.branchPill}>{run.headBranch ?? '—'}</span>
+                    {queuedCount > 0 ? (
+                      <span className={styles.queueTagWrap}>
+                        <Tag value={`Queued ${queuedCount}`} severity="warning" rounded />
+                      </span>
+                    ) : null}
                     {isRunning ? (
                       <span className={styles.runningChip}>
                         <ProgressSpinner className={styles.runningSpinner} strokeWidth="8" />
@@ -229,26 +239,34 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                         <span className={styles.environmentStatusWrap}>
                           <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
                         </span>
-                        <span
-                          className={styles.environmentTrigger}
-                          title={env.triggerText ?? env.branch ?? 'No recent run'}
-                        >
-                          {env.triggerText ?? env.branch ?? 'No recent run'}
-                        </span>
+                        <MarqueeTicker
+                          text={env.triggerText ?? env.branch ?? 'No recent run'}
+                          className={styles.environmentTriggerTicker}
+                          durationSeconds={22}
+                          gapRem={1.5}
+                        />
                       </div>
                     ))}
                   </div>
                   <dl className={styles.detailList}>
-                    {(row.queuedCount ?? 0) > 0 && (
+                    {queuedCount > 0 && (
                       <div className={styles.detailRow}>
-                        <dt>Queued</dt>
-                        <dd>{row.queuedCount}</dd>
+                        <dt>Waiting</dt>
+                        <dd>{queuedCount} run(s) in queue</dd>
                       </div>
                     )}
                   </dl>
                   {showActivityBar && (
                     <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
                   )}
+                  <div className={styles.footerTicker}>
+                    <MarqueeTicker
+                      text={envTickerText}
+                      className={styles.footerTickerMarquee}
+                      durationSeconds={34}
+                      gapRem={2.25}
+                    />
+                  </div>
                 </>
               ) : (
                 <p className={styles.meta}>No workflow runs returned.</p>
