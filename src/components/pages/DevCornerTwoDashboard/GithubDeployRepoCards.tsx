@@ -24,6 +24,7 @@ export interface GithubDeployRepoCardsProps {
 
 type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
 type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
+const IDLE_AFTER_DAYS = 7;
 
 interface EnvironmentSnapshot {
   key: DeployEnvironmentKey;
@@ -66,6 +67,13 @@ function detectEnvironment(
   return null;
 }
 
+function isWithinIdleWindow(isoTimestamp: string): boolean {
+  const updatedAtMs = Date.parse(isoTimestamp);
+  if (!Number.isFinite(updatedAtMs)) return false;
+  const idleAfterMs = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
+  return Date.now() - updatedAtMs <= idleAfterMs;
+}
+
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
   const envs: Record<DeployEnvironmentKey, EnvironmentSnapshot> = {
     dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
@@ -81,6 +89,7 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
     const env = detectEnvironment(run.headBranch, run.title);
     if (!env) continue;
     if (envs[env].state !== 'idle') continue;
+    if (!isWithinIdleWindow(run.updatedAt)) continue;
     if (run.status !== 'completed') {
       envs[env] = {
         key: env,

@@ -13,6 +13,7 @@ import slideStyles from './DevCornerTwoDashboard.module.scss';
 
 type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
 type DeployEnvironmentState = 'success' | 'inProgress' | 'queued' | 'failed' | 'noData';
+const IDLE_AFTER_DAYS = 7;
 
 interface DeployLegendValue {
   label: string;
@@ -49,6 +50,13 @@ function detectEnvironment(branch: string | null, title: string): DeployEnvironm
   return null;
 }
 
+function isWithinIdleWindow(isoTimestamp: string): boolean {
+  const updatedAtMs = Date.parse(isoTimestamp);
+  if (!Number.isFinite(updatedAtMs)) return false;
+  const idleAfterMs = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
+  return Date.now() - updatedAtMs <= idleAfterMs;
+}
+
 function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record<DeployEnvironmentState, number> {
   const totals: Record<DeployEnvironmentState, number> = {
     success: 0,
@@ -73,6 +81,7 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
     for (const run of sortedRuns) {
       const env = detectEnvironment(run.headBranch, run.title);
       if (!env || byEnv[env] !== 'noData') continue;
+      if (!isWithinIdleWindow(run.updatedAt)) continue;
 
       if (run.status !== 'completed') {
         byEnv[env] = run.status === 'queued' ? 'queued' : 'inProgress';

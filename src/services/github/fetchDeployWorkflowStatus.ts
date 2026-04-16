@@ -83,7 +83,7 @@ export async function fetchDeployWorkflowStatus(
     shortLabel: shortLabel(repo),
   };
 
-  const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=8`;
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=50`;
 
   try {
     const res = await fetch(url, {
@@ -118,7 +118,7 @@ export async function fetchDeployWorkflowStatus(
       activeCount: queuedCount + inProgressCount,
       activeRun: active ? toSummary(active) : undefined,
       lastCompletedRun: lastDone ? toSummary(lastDone) : undefined,
-      recentRuns: runs.slice(0, 6).map(toSummary),
+      recentRuns: runs.slice(0, 30).map(toSummary),
     };
   } catch (e) {
     return {
