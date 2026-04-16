@@ -30,6 +30,8 @@ interface EnvironmentSnapshot {
   state: EnvironmentRunState;
   branch: string | null;
   triggerText: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 function statusTagWrapClass(
@@ -65,10 +67,10 @@ function detectEnvironment(
 
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
   const envs: Record<DeployEnvironmentKey, EnvironmentSnapshot> = {
-    dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null, triggerText: null },
-    tst: { key: 'tst', label: 'Tst', state: 'idle', branch: null, triggerText: null },
-    stg: { key: 'stg', label: 'Stg', state: 'idle', branch: null, triggerText: null },
-    prod: { key: 'prod', label: 'Prod', state: 'idle', branch: null, triggerText: null },
+    dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
+    tst: { key: 'tst', label: 'Tst', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
+    stg: { key: 'stg', label: 'Stg', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
+    prod: { key: 'prod', label: 'Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
   };
 
   const runs = (row.recentRuns ?? []).slice().sort(
@@ -85,6 +87,8 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
         state: run.status === 'queued' ? 'queued' : 'running',
         branch: run.headBranch,
         triggerText: run.title,
+        createdAt: run.createdAt,
+        updatedAt: run.updatedAt,
       };
       continue;
     }
@@ -95,6 +99,8 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
         state: 'ok',
         branch: run.headBranch,
         triggerText: run.title,
+        createdAt: run.createdAt,
+        updatedAt: run.updatedAt,
       };
       continue;
     }
@@ -104,6 +110,8 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
       state: 'failed',
       branch: run.headBranch,
       triggerText: run.title,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
     };
   }
   return [envs.dev, envs.tst, envs.stg, envs.prod];
@@ -122,6 +130,16 @@ function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'running') return 'In Progress';
   if (snapshot.state === 'queued') return 'Queued';
   return 'Idle';
+}
+
+function environmentElapsedText(snapshot: EnvironmentSnapshot): string {
+  if (!snapshot.createdAt) return '—';
+  const isActive = snapshot.state === 'running' || snapshot.state === 'queued';
+  return formatDeployRunDuration(
+    snapshot.createdAt,
+    snapshot.updatedAt ?? snapshot.createdAt,
+    isActive
+  );
 }
 
 /**
@@ -161,7 +179,6 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
           const severity = tagSeverityForRow(row, run);
           const health = cardHealthForRow(row, run);
           const tone = repoToneForRepo(row.repo);
-          const showActivityBar = Boolean(row.activeRun && run && run.status !== 'completed');
           const isRunning = Boolean(row.activeRun && run && run.status !== 'completed');
           const durationLabel = run
             ? formatDeployRunDuration(run.createdAt, run.updatedAt, isRunning)
@@ -253,6 +270,9 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                         <span className={styles.environmentStatusWrap}>
                           <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
                         </span>
+                        <span className={styles.environmentElapsed}>
+                          {environmentElapsedText(env)}
+                        </span>
                         <div className={styles.environmentInfo}>
                           <MarqueeTicker
                             text={env.triggerText ?? env.branch ?? 'No recent run'}
@@ -279,9 +299,6 @@ export const GithubDeployRepoCards = ({ repos }: GithubDeployRepoCardsProps) => 
                       </div>
                     )}
                   </dl>
-                  {showActivityBar && (
-                    <ProgressBar mode="indeterminate" className={styles.activityBar} style={{ height: '4px' }} />
-                  )}
                   <div className={styles.footerTicker}>
                     <MarqueeTicker
                       text={envTickerText}
