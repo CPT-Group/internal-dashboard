@@ -206,7 +206,7 @@
 
 .environmentRow {
   display: grid;
-  grid-template-columns: 2.2rem 3.5rem minmax(0, 1fr);
+  grid-template-columns: 2.2rem 3.2rem minmax(0, 1fr);
   align-items: center;
   gap: 0.28rem;
   border-radius: calc(var(--border-radius) * 0.75);
@@ -235,9 +235,9 @@
   }
 }
 
-.environmentBranch {
+.environmentTrigger {
   min-width: 0;
-  font-size: calc(var(--content-text-size, 1rem) * 0.67);
+  font-size: calc(var(--content-text-size, 1rem) * 0.7);
   font-weight: 500;
   color: var(--text-color);
   white-space: nowrap;
@@ -343,41 +343,6 @@
   margin: 0 0 0.12rem;
 }
 
-/* Main run title — one line, marquee so long messages stay readable without wrapping */
-.titleTicker {
-  overflow: hidden;
-  width: 100%;
-  flex-shrink: 0;
-  min-height: calc(var(--content-text-size, 1rem) * 1.38);
-  display: flex;
-  align-items: center;
-}
-
-.titleTickerTrack {
-  display: inline-flex;
-  width: max-content;
-  animation: githubDeployTitleTicker 48s linear infinite;
-}
-
-.titleTickerSeg {
-  padding: 0 2.25rem 0 0;
-  white-space: nowrap;
-  font-size: var(--content-text-size, 1rem);
-  font-weight: 600;
-  color: var(--text-color);
-  line-height: 1.38;
-}
-
-@keyframes githubDeployTitleTicker {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
 .errorText {
   font-size: 0.72rem;
   color: var(--red-500);
@@ -385,51 +350,11 @@
   margin: 0;
 }
 
-/* Footer ticker — replaces button link on TV; duplicates content for seamless loop */
-.footerTicker {
-  overflow: hidden;
-  width: 100%;
-  margin-top: auto;
-  flex-shrink: 0;
-  border-radius: var(--border-radius);
-  border: 1px solid rgba(255, 79, 216, 0.28);
-  background: rgba(30, 30, 46, 0.9);
-  padding: 0.16rem 0;
-  min-height: 1.45rem;
-}
-
-.footerTickerTrack {
-  display: inline-flex;
-  width: max-content;
-  animation: githubDeployCardTicker 38s linear infinite;
-}
-
-.footerTickerSeg {
-  padding: 0 2.5rem 0 0.45rem;
-  white-space: nowrap;
-  font-size: calc(var(--content-text-size, 1rem) * 0.82);
-  font-weight: 600;
-  color: var(--github-deploy-timeline-meta-color, var(--text-color-secondary));
-  line-height: 1.35;
-}
-
-@keyframes githubDeployCardTicker {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .cardWarning,
   .cardError,
   .environmentRunning,
-  .environmentFailed,
-  .titleTickerTrack,
-  .footerTickerTrack {
+  .environmentFailed {
     animation: none;
   }
 }
