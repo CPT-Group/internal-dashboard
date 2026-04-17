@@ -133,6 +133,17 @@ These are available for future dashboard features (e.g. root-cause trends, bug q
 
 NOVA tickets older than 14 days with no recent updates should be closed periodically to keep metrics accurate (avg age, oldest, open count). A cleanup was performed 2026-02-24 closing 36 stale tickets. If counts drift again, run a similar JQL: `project = NOVA AND statusCategory != Done AND updated < "-14d"` and transition to Done.
 
+### Jira automation REST API (CRUD from terminal)
+
+Automation rules (the "When / If / Then" rules you see under Jira Project Settings → Automation) are managed through the **Automation REST API**, *not* the Jira platform REST API. Reference: `https://developer.atlassian.com/cloud/automation/rest/intro/`.
+
+- **Base URL**: `https://api.atlassian.com/automation/public/jira/<cloudId>/rest/v1` — tenant cloudId for this org is `aa81968a-8fe6-4aeb-8986-3992717fdee3` (also fetchable via `GET <site>/_edge/tenant_info`).
+- **Auth**: Basic auth with an **API token** from `.env.local`. **The caller must have global `ADMINISTER` (Jira Admin) permission** — `KYLE_*` is project-admin only (returns 403) so use **`JAMES_*`** for automation CRUD.
+- **Core endpoints**: `GET /rule/summary` (paginated list, cursor-based), `GET /rule/{uuid}` (full rule payload), `POST /rule` (create), `PUT /rule/{uuid}` (full-replace update — body is the same `{rule, connections}` shape as GET), `POST /rule/{uuid}/enable` / `/disable`.
+- **Smart-value assign gotcha**: `assignType: SMART_VALUE` with `|default` pipes (e.g. `{{issue.customfield_10194.accountId|<fallback-id>}}`) is flaky in practice — if the field is empty the assign silently unassigns the ticket. Use two explicit `jira.issue.assign` ACTIONs gated by JQL `conditions: [{type:'jira.jql.condition', value:'cf[10194] is not EMPTY'}]` vs `is EMPTY` instead. The COPY helper `{type:'COPY', value:'customfield_10194'}` is the reliable way to assign to whoever is in a user-picker custom field.
+- **Tech Owner via `jira.issue.edit`**: set with `operations: [{field:{type:'ID',value:'customfield_10193'}, fieldType:'com.atlassian.jira.plugin.system.customfieldtypes:userpicker', type:'SET', value:{type:'ID', value:'<accountId>'}}]`.
+- **Helpers in repo**: `scripts/jira/_jiraAuto.mjs` (auth + `getRule`/`putRule` wrappers, Roy/Brandon IDs, custom-field IDs), `scripts/jira/list-rules.ps1` (paginate all rules → `kyleOutput/jira-automation-rules.json`), `scripts/jira/fetch-rule.ps1 -Uuid <uuid> -Label <name>` (dump one rule config), `scripts/jira/fetch-rules-backup.mjs` + `fetch-rules-after.mjs` (before/after snapshots to `kyleOutput/jira-automation-backup|after/`). Always snapshot a rule before mutating so you can PUT the backup body back if anything goes sideways.
+
 ## Dev environment
 
 - **Install**: `npm install`

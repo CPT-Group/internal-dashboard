@@ -1,5 +1,7 @@
 import sql, { ConnectionPool } from 'mssql';
 import type {
+  WebsiteHealthDailyReport,
+  WebsiteHealthDailyReportSiteResult,
   WebsiteHealthMissingItem,
   WebsiteHealthSiteMapping,
   WebsiteHealthSubmissionReport,
@@ -994,6 +996,133 @@ export async function runWebsiteHealthSubmissionReport(options: {
     };
   } finally {
     await Promise.allSettled([websitePool.close(), claimsPool.close()]);
+  }
+}
+
+function toTruthySqlExpr(columnName: string): string {
+  const col = qIdentifier(columnName);
+  return `(
+    TRY_CONVERT(int, cc.${col}) = 1
+    OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(16), cc.${col})))) IN ('true', 'yes', 'y')
+  )`;
+}
+
+async function discoverDailyReportColumns(
+  claimsPool: ConnectionPool,
+  cleanClaimsDbName: string
+): Promise<{ deficientColumn: string; disputedColumn: string }> {
+  const db = qIdentifier(cleanClaimsDbName);
+  const rs = await claimsPool.request().query<{ column_name: string }>(`
+    SELECT c.COLUMN_NAME AS column_name
+    FROM ${db}.INFORMATION_SCHEMA.COLUMNS c
+    WHERE c.TABLE_SCHEMA = 'dbo'
+      AND c.TABLE_NAME = 'CleanClaims';
+  `);
+
+  const byLower = new Map<string, string>();
+  rs.recordset.forEach((row) => {
+    byLower.set(row.column_name.toLowerCase(), row.column_name);
+  });
+
+  const deficientColumn = byLower.get('deficient');
+  const disputedColumn = byLower.get('disputed');
+  if (!deficientColumn || !disputedColumn) {
+    throw new Error(
+      `Missing required CleanClaims columns on ${cleanClaimsDbName}.dbo.CleanClaims (Deficient and/or Disputed).`
+    );
+  }
+
+  return {
+    deficientColumn,
+    disputedColumn,
+  };
+}
+
+async function scanDailyReportSite(
+  claimsPool: ConnectionPool,
+  mapping: WebsiteHealthSiteMapping
+): Promise<WebsiteHealthDailyReportSiteResult> {
+  try {
+    const { deficientColumn, disputedColumn } = await discoverDailyReportColumns(
+      claimsPool,
+      mapping.cleanClaimsDbName
+    );
+    const db = qIdentifier(mapping.cleanClaimsDbName);
+    const deficientExpr = toTruthySqlExpr(deficientColumn);
+    const disputedExpr = toTruthySqlExpr(disputedColumn);
+    const rs = await claimsPool.request().query<{
+      deficient_true_count: number | null;
+      disputed_true_count: number | null;
+    }>(`
+      SELECT
+        SUM(CASE WHEN ${deficientExpr} THEN 1 ELSE 0 END) AS deficient_true_count,
+        SUM(CASE WHEN ${disputedExpr} THEN 1 ELSE 0 END) AS disputed_true_count
+      FROM ${db}.dbo.CleanClaims cc;
+    `);
+
+    const row = rs.recordset[0];
+    return {
+      siteKey: mapping.siteKey,
+      cleanClaimsDbName: mapping.cleanClaimsDbName,
+      status: 'ok',
+      deficientTrueCount: Number(row?.deficient_true_count ?? 0),
+      disputedTrueCount: Number(row?.disputed_true_count ?? 0),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      siteKey: mapping.siteKey,
+      cleanClaimsDbName: mapping.cleanClaimsDbName,
+      status: 'error',
+      deficientTrueCount: 0,
+      disputedTrueCount: 0,
+      errorMessage: message,
+    };
+  }
+}
+
+export async function runWebsiteHealthDailyReport(options: {
+  refreshActiveSites?: boolean;
+}): Promise<WebsiteHealthDailyReport> {
+  const runAt = new Date().toISOString();
+  const claimsCfg = readServerConfig('DB_');
+  const claimsPool = new sql.ConnectionPool(toPool(claimsCfg));
+
+  try {
+    await claimsPool.connect();
+    const activeMeta = await getActiveSiteMappings(claimsPool, options.refreshActiveSites === true);
+    const mappings = activeMeta.mappings;
+
+    const results: WebsiteHealthDailyReportSiteResult[] = [];
+    for (const mapping of mappings) {
+      const result = await scanDailyReportSite(claimsPool, mapping);
+      results.push(result);
+    }
+
+    const totals = results.reduce(
+      (acc, site) => {
+        acc.totalDeficientTrueCount += site.deficientTrueCount;
+        acc.totalDisputedTrueCount += site.disputedTrueCount;
+        return acc;
+      },
+      {
+        totalDeficientTrueCount: 0,
+        totalDisputedTrueCount: 0,
+      }
+    );
+
+    return {
+      runAt,
+      activeSitesLoadedAt: activeMeta.loadedAt,
+      activeSitesSource: activeMeta.source,
+      activeSitesStale: activeMeta.stale,
+      totalSitesChecked: results.length,
+      totalDeficientTrueCount: totals.totalDeficientTrueCount,
+      totalDisputedTrueCount: totals.totalDisputedTrueCount,
+      results,
+    };
+  } finally {
+    await Promise.allSettled([claimsPool.close()]);
   }
 }
 

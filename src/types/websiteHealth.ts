@@ -112,3 +112,30 @@ export interface WebsiteHealthSubmissionReportResponse {
   alerted: boolean;
   alertMessage?: string;
 }
+
+export interface WebsiteHealthDailyReportSiteResult {
+  siteKey: string;
+  cleanClaimsDbName: string;
+  status: WebsiteHealthStatus;
+  deficientTrueCount: number;
+  disputedTrueCount: number;
+  errorMessage?: string;
+}
+
+export interface WebsiteHealthDailyReport {
+  runAt: string;
+  activeSitesLoadedAt: string | null;
+  activeSitesSource: 'cache' | 'database' | 'fallback';
+  activeSitesStale: boolean;
+  totalSitesChecked: number;
+  totalDeficientTrueCount: number;
+  totalDisputedTrueCount: number;
+  results: WebsiteHealthDailyReportSiteResult[];
+}
+
+export interface WebsiteHealthDailyReportResponse {
+  ok: boolean;
+  report: WebsiteHealthDailyReport;
+  alerted: boolean;
+  alertMessage?: string;
+}

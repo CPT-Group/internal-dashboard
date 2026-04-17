@@ -14,6 +14,7 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import type { ToastMessage } from 'primereact/toast';
 import type {
   WebsiteHealthCreateJiraTicketResponse,
+  WebsiteHealthDailyReportResponse,
   WebsiteHealthMissingItem,
   WebsiteHealthSiteDetailsResponse,
   WebsiteHealthSiteResult,
@@ -88,6 +89,7 @@ export const WebsiteHealthDashboard = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [runningScan, setRunningScan] = useState<boolean>(false);
   const [runningSubmissionReport, setRunningSubmissionReport] = useState<boolean>(false);
+  const [runningDailyReport, setRunningDailyReport] = useState<boolean>(false);
   const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
   const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
   const [detailsMode, setDetailsMode] = useState<DetailsViewMode>('missing');
@@ -241,6 +243,55 @@ export const WebsiteHealthDashboard = () => {
       });
     } finally {
       setRunningSubmissionReport(false);
+    }
+  }, [showToast]);
+
+  const runDailyReport = useCallback(async () => {
+    setRunningDailyReport(true);
+    try {
+      const res = await fetch('/api/website-health/daily-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notify: true }),
+      });
+      const body = (await res.json()) as
+        | WebsiteHealthDailyReportResponse
+        | { ok: false; message?: string };
+
+      if (!res.ok || !body.ok) {
+        const msg = 'message' in body && typeof body.message === 'string' ? body.message : 'Daily report failed.';
+        throw new Error(msg);
+      }
+
+      if (body.alerted) {
+        showToast({
+          severity: 'success',
+          summary: 'Daily report sent',
+          detail:
+            `Posted ${body.report.totalSitesChecked} active site rows to Teams ` +
+            `(Deficient TRUE ${body.report.totalDeficientTrueCount}, Disputed TRUE ${body.report.totalDisputedTrueCount}).`,
+          life: 5000,
+        });
+      } else {
+        showToast({
+          severity: 'warn',
+          summary: 'Daily report generated',
+          detail:
+            body.alertMessage ??
+            'Report generated, but Teams webhook is not configured or notification failed.',
+          life: 6000,
+        });
+      }
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      showToast({
+        severity: 'error',
+        summary: 'Daily report failed',
+        detail: `Sorry, we could not send the daily report. ${detail}`,
+        life: 6000,
+      });
+    } finally {
+      setRunningDailyReport(false);
     }
   }, [showToast]);
 
@@ -529,6 +580,15 @@ export const WebsiteHealthDashboard = () => {
             loading={runningSubmissionReport}
             disabled={runningSubmissionReport || runningScan || loading}
             tooltip="Send all active-site submission totals (total/today/yesterday) to Teams."
+            tooltipOptions={{ position: 'top' }}
+          />
+          <Button
+            label={runningDailyReport ? 'Sending…' : 'Daily Report'}
+            icon="pi pi-calendar"
+            onClick={() => void runDailyReport()}
+            loading={runningDailyReport}
+            disabled={runningDailyReport || runningSubmissionReport || runningScan || loading}
+            tooltip="Send active-site CleanClaims daily totals (Deficient=TRUE and Disputed=TRUE) to Teams."
             tooltipOptions={{ position: 'top' }}
           />
         </div>
