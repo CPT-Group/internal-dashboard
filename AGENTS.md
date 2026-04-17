@@ -166,6 +166,12 @@ These run automatically before `dev` and `build`:
 
 Add/remove images in those folders and re-run `npm run dev` or `npm run build` to refresh. Generated `.generated.ts` files are committed. All background image folders live under `public/backgrounds/`.
 
+## Jira automation tooling
+
+Scripts for editing Jira automation rules via the Atlassian Automation REST API live in `scripts/jira/`. See **`scripts/jira/README.md`** for the full how-to: auth requirements (James's token — global **Administer Jira** needed, Kyle's token returns 403), endpoint cheat sheet, the IF/ELSE block pattern we use for conditional assigns (`jira.condition.container.block` + `jira.condition.if.block`), and shape gotchas that silently no-op on the API (e.g. `SPECIFY_USER` with `assignee.type: "COPY"` does nothing — use `assignType: "SMART_VALUE"` + `{{issue.customfield_X.accountId}}`; `jira.issue.edit` must use `operations[]` not `fields{}`).
+
+Keep generic tooling in `scripts/jira/` (helpers, verifiers, the if/else pattern scanner) and one-off migration/diagnostic scripts in `kyleJira/` (gitignored). Always `node scripts/jira/backup-rules.mjs <uuid>:label` before editing — snapshots land in `kyleOutput/jira-rule-backups/`.
+
 ## Code layout
 
 - **Paths**: Use `@/` for `src/` (e.g. `@/components/ui/...`, `@/styles/...`).

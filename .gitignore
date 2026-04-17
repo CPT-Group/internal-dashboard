@@ -55,3 +55,6 @@ next-env.d.ts
 
 # local analyst output (Kyle-only scratch docs)
 kyleOutput/
+
+# local Jira automation one-off scripts (see scripts/jira/README.md)
+kyleJira/
