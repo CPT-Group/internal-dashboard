@@ -1,5 +1,14 @@
 import { getRule } from './_jiraAuto.mjs';
 
+/** Depth-first walk of rule components (including IF/ELSE `children`). */
+function* walkComponents(components) {
+  if (!Array.isArray(components)) return;
+  for (const c of components) {
+    yield c;
+    if (c.children?.length) yield* walkComponents(c.children);
+  }
+}
+
 const rules = [
   { label: 'nova-uat-reassign', uuid: '019d556a-689f-72b8-9ebb-c1ccc83deea2' },
   { label: 'oprd-uat-reassign', uuid: '019d556a-72df-7233-b88e-f2be5d296e5e' },
@@ -11,7 +20,7 @@ const rules = [
 for (const r of rules) {
   const full = await getRule(r.uuid);
   console.log(`\n=== ${r.label} ===`);
-  for (const c of full.rule.components) {
+  for (const c of walkComponents(full.rule.components)) {
     if (c.type === 'jira.issue.comment') {
       console.log(JSON.stringify(c.value, null, 2));
     }

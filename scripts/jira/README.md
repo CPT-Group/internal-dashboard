@@ -236,8 +236,8 @@ Snapshot of what's in scope as of this doc (see `CHANGELOG.md` for history):
 | `019d3183-076e-7e15-9fc7-d8bae4831e18` | NOVA | ENABLED | Move template-cloned tickets to the sprint on Backlog → To Do; **IF** `component in ("NCOA/ACS")` **THEN** assign Jeremy Romero + Tech Owner + internal comment; **ELSE** assign Roy + Tech Owner=Roy. |
 | `019d356a-ebd3-7b6e-b1f6-6a76d4449a53` | NOVA | ENABLED | Case Update Requests & Bugs auto-add to sprint, assign Roy + Tech Owner=Roy. |
 | `019bb332-09dc-7358-a710-4fedff499888` | OPRD | ENABLED | OPRD intake auto-assign Roy + Tech Owner=Roy on issue created. |
-| `019d98b7-e981-7c94-8a29-d161d13e0a37` | NOVA | ENABLED | Transition → QA (10003): assign Brandon, post `@brandon fay` review comment. |
-| `019d556a-689f-72b8-9ebb-c1ccc83deea2` | NOVA | ENABLED | Transition → UAT (10012): IF/ELSE — Case Manager (cf[10194]) or Brandon fallback, plus NOVA handoff comment. |
+| `019d98b7-e981-7c94-8a29-d161d13e0a37` | NOVA | ENABLED | Transition → QA (10003): assign **Kyle**, post QA handoff comment with `[~accountid:…]` mention. |
+| `019d556a-689f-72b8-9ebb-c1ccc83deea2` | NOVA | ENABLED | Transition → UAT (10012): **Actor = user who triggered**; IF/ELSE assign — Case Manager (`cf[10194]`) or Brandon fallback; then IF initiator is **Kyle** → handoff comment begins with **L3 PASSED** (full prefix in Jira is `L3 PASSED | `) plus **5m** `jira.worklog.add`, ELSE handoff comment only (unchanged wording). |
 | `019d556a-72df-7233-b88e-f2be5d296e5e` | OPRD | ENABLED | Transition → UAT (10012): same IF/ELSE as NOVA, OPRD comment text preserved. |
 | `019d556a-6dae-7e90-be20-d0982cc3d50b` | CM | **DISABLED** | Dead code — CM workflow has no UAT status. Kept disabled instead of deleted. |
 | `0193d5ab-6e19-75d2-90d8-55fca6824592` | CM | ENABLED | Data Team Testing → Data Team Complete: auto-transition to Request Complete + IF/ELSE assign. NCOA-only watcher + comment retained. |
@@ -251,7 +251,8 @@ Documented centrally in `_jiraAuto.mjs`:
 | Constant | Value | Notes |
 |---|---|---|
 | `ROY_ID` | `712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f` | `royr`, NOVA team. |
-| `BRANDON_ID` | `712020:384111d1-8f9d-4155-8420-37ff1888d6c3` | Brandon Fay, QA + fallback. |
+| `KYLE_ID` | `712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837` | Kyle Dilbeck, NOVA QA intake + UAT initiator branch. |
+| `BRANDON_ID` | `712020:384111d1-8f9d-4155-8420-37ff1888d6c3` | Brandon Fay, UAT assignee fallback. |
 | `CF_TECH_OWNER` | `customfield_10193` | Tech Owner (userpicker). |
 | `CF_CASE_MANAGER` | `customfield_10194` | Case Manager (userpicker, required on most NOVA issue types). |
 
