@@ -150,7 +150,15 @@ For a custom-field SET you need the `operations` shape (note `schemaVersion: 12`
 A `{ "fields": { "customfield_xxxxx": {...} } }` shape posts fine (200 OK) but is
 **silently stripped** server-side on the next GET.
 
-### 5. CM "UAT" is not a thing
+### 5. New `jira.condition.container.block` branches — omit nested `id` fields
+
+PUTting a rule whose **new** IF/ELSE tree includes freshly generated UUIDs on every
+nested `CONDITION`, `CONDITION_BLOCK`, and `ACTION` often returns **400** *"Component ids do not match the existing rule or there are duplicate ids"*.
+Copy the **minimal** shape from `refactor-uat-ifelse.mjs` (no `id` / `connectionId` /
+`parentId` on nested nodes); Jira assigns stable ids on save. Keep only components
+that already existed (e.g. `jira.board.issue.move`) exactly as returned from `GET /rule/{uuid}`.
+
+### 6. CM "UAT" is not a thing
 
 CM workflow has no UAT status. Anything triggered on `toStatus = 10012` (UAT)
 will never fire for CM tickets. We left the CM UAT rule `DISABLED` rather than
@@ -225,7 +233,7 @@ Snapshot of what's in scope as of this doc (see `CHANGELOG.md` for history):
 
 | UUID | Scope | State | Purpose |
 |---|---|---|---|
-| `019d3183-076e-7e15-9fc7-d8bae4831e18` | NOVA | ENABLED | Move template-cloned tickets to the sprint on Backlog → To Do; assign Roy + Tech Owner=Roy. |
+| `019d3183-076e-7e15-9fc7-d8bae4831e18` | NOVA | ENABLED | Move template-cloned tickets to the sprint on Backlog → To Do; **IF** `component in ("NCOA/ACS")` **THEN** assign Jeremy Romero + Tech Owner + internal comment; **ELSE** assign Roy + Tech Owner=Roy. |
 | `019d356a-ebd3-7b6e-b1f6-6a76d4449a53` | NOVA | ENABLED | Case Update Requests & Bugs auto-add to sprint, assign Roy + Tech Owner=Roy. |
 | `019bb332-09dc-7358-a710-4fedff499888` | OPRD | ENABLED | OPRD intake auto-assign Roy + Tech Owner=Roy on issue created. |
 | `019d98b7-e981-7c94-8a29-d161d13e0a37` | NOVA | ENABLED | Transition → QA (10003): assign Brandon, post `@brandon fay` review comment. |

@@ -32,6 +32,8 @@ export async function putRule(uuid, payload) {
 }
 
 export const ROY_ID = '712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f';
+/** Jeremy Romero — NCOA/ACS intake on NOVA “move to sprint” automation (verified user search 2026-04-17). */
+export const JEREMY_ROMERO_ID = '62475f051da0e100713b08f2';
 export const BRANDON_ID = '712020:384111d1-8f9d-4155-8420-37ff1888d6c3';
 export const CF_TECH_OWNER = 'customfield_10193';
 export const CF_CASE_MANAGER = 'customfield_10194';
