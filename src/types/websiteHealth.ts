@@ -139,3 +139,72 @@ export interface WebsiteHealthDailyReportResponse {
   alerted: boolean;
   alertMessage?: string;
 }
+
+/**
+ * Report-by-date scoping — the downloader runs at 05:15 every day, so a "day" D
+ * actually covers `[D 05:15:00, D+1 05:15:00)` in SQL-server local time.
+ */
+export type WebsiteHealthReportByDateKind = 'submission' | 'daily';
+
+export interface WebsiteHealthReportByDateWindow {
+  /** YYYY-MM-DD inclusive start date (day whose 05:15 AM kicks the window off). */
+  startDate: string;
+  /** YYYY-MM-DD inclusive end date (window closes at `endDate + 1 @ 05:15`). */
+  endDate: string;
+  /** ISO timestamp for the window lower bound — `startDate` at 05:15 local. */
+  startDateTime: string;
+  /** ISO timestamp for the window upper bound (exclusive) — `endDate + 1` at 05:15 local. */
+  endDateTimeExclusive: string;
+}
+
+export interface WebsiteHealthSubmissionByDateSiteResult {
+  siteKey: string;
+  websiteDbName: string;
+  status: WebsiteHealthStatus;
+  /** Total submissions with `DateReceived` inside the 5:15-anchored window. */
+  windowSubmittedCount: number;
+  errorMessage?: string;
+}
+
+export interface WebsiteHealthSubmissionByDateReport {
+  runAt: string;
+  window: WebsiteHealthReportByDateWindow;
+  activeSitesLoadedAt: string | null;
+  activeSitesSource: 'cache' | 'database' | 'fallback';
+  activeSitesStale: boolean;
+  totalSitesChecked: number;
+  totalWindowSubmittedCount: number;
+  results: WebsiteHealthSubmissionByDateSiteResult[];
+}
+
+export interface WebsiteHealthDailyByDateSiteResult {
+  siteKey: string;
+  cleanClaimsDbName: string;
+  status: WebsiteHealthStatus;
+  /** Column name used to filter CleanClaims by date (e.g. `DateReceived`, `DateAdded`). */
+  dateColumnUsed: string | null;
+  windowDeficientTrueCount: number;
+  windowDisputedTrueCount: number;
+  errorMessage?: string;
+}
+
+export interface WebsiteHealthDailyByDateReport {
+  runAt: string;
+  window: WebsiteHealthReportByDateWindow;
+  activeSitesLoadedAt: string | null;
+  activeSitesSource: 'cache' | 'database' | 'fallback';
+  activeSitesStale: boolean;
+  totalSitesChecked: number;
+  totalWindowDeficientTrueCount: number;
+  totalWindowDisputedTrueCount: number;
+  results: WebsiteHealthDailyByDateSiteResult[];
+}
+
+export interface WebsiteHealthReportByDateResponse {
+  ok: boolean;
+  window: WebsiteHealthReportByDateWindow;
+  submission: WebsiteHealthSubmissionByDateReport | null;
+  daily: WebsiteHealthDailyByDateReport | null;
+  alerted: boolean;
+  alertMessage?: string;
+}

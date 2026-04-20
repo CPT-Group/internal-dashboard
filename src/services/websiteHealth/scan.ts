@@ -1,9 +1,14 @@
 import sql, { ConnectionPool } from 'mssql';
 import type {
+  WebsiteHealthDailyByDateReport,
+  WebsiteHealthDailyByDateSiteResult,
   WebsiteHealthDailyReport,
   WebsiteHealthDailyReportSiteResult,
   WebsiteHealthMissingItem,
+  WebsiteHealthReportByDateWindow,
   WebsiteHealthSiteMapping,
+  WebsiteHealthSubmissionByDateReport,
+  WebsiteHealthSubmissionByDateSiteResult,
   WebsiteHealthSubmissionReport,
   WebsiteHealthSubmissionReportSiteResult,
   WebsiteHealthSiteResult,
@@ -1169,6 +1174,291 @@ export async function getWebsiteHealthSiteDetails(
     return siteDetails;
   } finally {
     await Promise.allSettled([websitePool.close(), claimsPool.close()]);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Report-by-date scans (5:15 AM downloader-anchored window)
+// ---------------------------------------------------------------------------
+
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+/** Candidate columns on `CleanClaims` used to date-scope the daily (Deficient/Disputed) totals. */
+const CLEAN_CLAIMS_DATE_COLUMN_CANDIDATES = [
+  'DateReceived',
+  'DateAdded',
+  'DateEntered',
+  'EnteredDate',
+  'CreatedDate',
+  'CreatedOn',
+  'DateCreated',
+  'RecordDate',
+] as const;
+
+/** Build a 5:15-anchored window from `YYYY-MM-DD` inputs. `endDate` defaults to `startDate`. */
+export function buildWebsiteHealthReportByDateWindow(
+  startDate: string,
+  endDate?: string | null
+): WebsiteHealthReportByDateWindow {
+  if (!DATE_ONLY_PATTERN.test(startDate)) {
+    throw new Error(`startDate must be YYYY-MM-DD (got '${startDate}').`);
+  }
+  const resolvedEnd = endDate && endDate.length > 0 ? endDate : startDate;
+  if (!DATE_ONLY_PATTERN.test(resolvedEnd)) {
+    throw new Error(`endDate must be YYYY-MM-DD (got '${resolvedEnd}').`);
+  }
+  if (resolvedEnd < startDate) {
+    throw new Error(`endDate (${resolvedEnd}) must be on or after startDate (${startDate}).`);
+  }
+
+  // Treat the input dates as SQL-server local wall-clock days. The window runs from
+  // `startDate 05:15:00` local up to `endDate + 1 day 05:15:00` local (exclusive).
+  const [sy, sm, sd] = startDate.split('-').map((v) => Number.parseInt(v, 10));
+  const [ey, em, ed] = resolvedEnd.split('-').map((v) => Number.parseInt(v, 10));
+  const startLocal = new Date(sy, sm - 1, sd, 5, 15, 0, 0);
+  const endLocalExclusive = new Date(ey, em - 1, ed + 1, 5, 15, 0, 0);
+
+  return {
+    startDate,
+    endDate: resolvedEnd,
+    startDateTime: startLocal.toISOString(),
+    endDateTimeExclusive: endLocalExclusive.toISOString(),
+  };
+}
+
+async function fetchSubmissionCountByDate(
+  websitePool: ConnectionPool,
+  websiteDbName: string,
+  window: WebsiteHealthReportByDateWindow,
+  deadlineDate: string | null | undefined
+): Promise<number> {
+  const db = qIdentifier(websiteDbName);
+  const req = websitePool.request();
+  req.input('startDateTime', sql.DateTime2, new Date(window.startDateTime));
+  req.input('endDateTime', sql.DateTime2, new Date(window.endDateTimeExclusive));
+  req.input('deadlineDate', sql.Date, deadlineDate ?? null);
+
+  const rs = await req.query<{ window_count: number | null }>(`
+    SELECT COUNT(1) AS window_count
+    FROM ${db}.dbo.Submissions s
+    WHERE s.DateReceived IS NOT NULL
+      AND s.DateReceived >= @startDateTime
+      AND s.DateReceived <  @endDateTime
+      AND (s.ID < 2000000 OR s.ID > 2000039)
+      AND (
+        s.Email IS NULL
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(320), s.Email)))) NOT LIKE '%@cptgroup.com%'
+      )
+      AND (@deadlineDate IS NULL OR CAST(s.DateReceived AS date) <= @deadlineDate);
+  `);
+
+  return Number(rs.recordset[0]?.window_count ?? 0);
+}
+
+async function scanSubmissionByDateSite(
+  websitePool: ConnectionPool,
+  mapping: WebsiteHealthSiteMapping,
+  window: WebsiteHealthReportByDateWindow
+): Promise<WebsiteHealthSubmissionByDateSiteResult> {
+  try {
+    const windowSubmittedCount = await fetchSubmissionCountByDate(
+      websitePool,
+      mapping.websiteDbName,
+      window,
+      mapping.deadlineDate
+    );
+    return {
+      siteKey: mapping.siteKey,
+      websiteDbName: mapping.websiteDbName,
+      status: 'ok',
+      windowSubmittedCount,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      siteKey: mapping.siteKey,
+      websiteDbName: mapping.websiteDbName,
+      status: 'error',
+      windowSubmittedCount: 0,
+      errorMessage: message,
+    };
+  }
+}
+
+export async function runWebsiteHealthSubmissionReportByDate(options: {
+  window: WebsiteHealthReportByDateWindow;
+  refreshActiveSites?: boolean;
+}): Promise<WebsiteHealthSubmissionByDateReport> {
+  const runAt = new Date().toISOString();
+  const prodCfg = readServerConfig('PROD_DB_');
+  const claimsCfg = readServerConfig('DB_');
+  const websitePool = new sql.ConnectionPool(toPool(prodCfg));
+  const claimsPool = new sql.ConnectionPool(toPool(claimsCfg));
+
+  try {
+    await Promise.all([websitePool.connect(), claimsPool.connect()]);
+    const activeMeta = await getActiveSiteMappings(claimsPool, options.refreshActiveSites === true);
+    const mappings = activeMeta.mappings;
+
+    const results: WebsiteHealthSubmissionByDateSiteResult[] = [];
+    for (const mapping of mappings) {
+      const result = await scanSubmissionByDateSite(websitePool, mapping, options.window);
+      results.push(result);
+    }
+
+    const totalWindowSubmittedCount = results.reduce(
+      (acc, site) => acc + site.windowSubmittedCount,
+      0
+    );
+
+    return {
+      runAt,
+      window: options.window,
+      activeSitesLoadedAt: activeMeta.loadedAt,
+      activeSitesSource: activeMeta.source,
+      activeSitesStale: activeMeta.stale,
+      totalSitesChecked: results.length,
+      totalWindowSubmittedCount,
+      results,
+    };
+  } finally {
+    await Promise.allSettled([websitePool.close(), claimsPool.close()]);
+  }
+}
+
+async function discoverCleanClaimsDateColumn(
+  claimsPool: ConnectionPool,
+  cleanClaimsDbName: string
+): Promise<string | null> {
+  const db = qIdentifier(cleanClaimsDbName);
+  const rs = await claimsPool.request().query<{ column_name: string }>(`
+    SELECT c.COLUMN_NAME AS column_name
+    FROM ${db}.INFORMATION_SCHEMA.COLUMNS c
+    WHERE c.TABLE_SCHEMA = 'dbo'
+      AND c.TABLE_NAME = 'CleanClaims';
+  `);
+
+  const byLower = new Map<string, string>();
+  rs.recordset.forEach((row) => {
+    byLower.set(row.column_name.toLowerCase(), row.column_name);
+  });
+  for (const candidate of CLEAN_CLAIMS_DATE_COLUMN_CANDIDATES) {
+    const match = byLower.get(candidate.toLowerCase());
+    if (match) return match;
+  }
+  return null;
+}
+
+async function scanDailyByDateSite(
+  claimsPool: ConnectionPool,
+  mapping: WebsiteHealthSiteMapping,
+  window: WebsiteHealthReportByDateWindow
+): Promise<WebsiteHealthDailyByDateSiteResult> {
+  try {
+    const dateColumn = await discoverCleanClaimsDateColumn(claimsPool, mapping.cleanClaimsDbName);
+    if (!dateColumn) {
+      return {
+        siteKey: mapping.siteKey,
+        cleanClaimsDbName: mapping.cleanClaimsDbName,
+        status: 'error',
+        dateColumnUsed: null,
+        windowDeficientTrueCount: 0,
+        windowDisputedTrueCount: 0,
+        errorMessage:
+          `No recognizable date column found on ${mapping.cleanClaimsDbName}.dbo.CleanClaims ` +
+          `(tried: ${CLEAN_CLAIMS_DATE_COLUMN_CANDIDATES.join(', ')}).`,
+      };
+    }
+
+    const { deficientColumn, disputedColumn } = await discoverDailyReportColumns(
+      claimsPool,
+      mapping.cleanClaimsDbName
+    );
+    const db = qIdentifier(mapping.cleanClaimsDbName);
+    const dateExpr = `cc.${qIdentifier(dateColumn)}`;
+    const deficientExpr = toTruthySqlExpr(deficientColumn);
+    const disputedExpr = toTruthySqlExpr(disputedColumn);
+
+    const req = claimsPool.request();
+    req.input('startDateTime', sql.DateTime2, new Date(window.startDateTime));
+    req.input('endDateTime', sql.DateTime2, new Date(window.endDateTimeExclusive));
+
+    const rs = await req.query<{
+      deficient_true_count: number | null;
+      disputed_true_count: number | null;
+    }>(`
+      SELECT
+        SUM(CASE WHEN ${deficientExpr} THEN 1 ELSE 0 END) AS deficient_true_count,
+        SUM(CASE WHEN ${disputedExpr} THEN 1 ELSE 0 END) AS disputed_true_count
+      FROM ${db}.dbo.CleanClaims cc
+      WHERE ${dateExpr} IS NOT NULL
+        AND ${dateExpr} >= @startDateTime
+        AND ${dateExpr} <  @endDateTime;
+    `);
+
+    const row = rs.recordset[0];
+    return {
+      siteKey: mapping.siteKey,
+      cleanClaimsDbName: mapping.cleanClaimsDbName,
+      status: 'ok',
+      dateColumnUsed: dateColumn,
+      windowDeficientTrueCount: Number(row?.deficient_true_count ?? 0),
+      windowDisputedTrueCount: Number(row?.disputed_true_count ?? 0),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      siteKey: mapping.siteKey,
+      cleanClaimsDbName: mapping.cleanClaimsDbName,
+      status: 'error',
+      dateColumnUsed: null,
+      windowDeficientTrueCount: 0,
+      windowDisputedTrueCount: 0,
+      errorMessage: message,
+    };
+  }
+}
+
+export async function runWebsiteHealthDailyReportByDate(options: {
+  window: WebsiteHealthReportByDateWindow;
+  refreshActiveSites?: boolean;
+}): Promise<WebsiteHealthDailyByDateReport> {
+  const runAt = new Date().toISOString();
+  const claimsCfg = readServerConfig('DB_');
+  const claimsPool = new sql.ConnectionPool(toPool(claimsCfg));
+
+  try {
+    await claimsPool.connect();
+    const activeMeta = await getActiveSiteMappings(claimsPool, options.refreshActiveSites === true);
+    const mappings = activeMeta.mappings;
+
+    const results: WebsiteHealthDailyByDateSiteResult[] = [];
+    for (const mapping of mappings) {
+      const result = await scanDailyByDateSite(claimsPool, mapping, options.window);
+      results.push(result);
+    }
+
+    const totals = results.reduce(
+      (acc, site) => {
+        acc.totalWindowDeficientTrueCount += site.windowDeficientTrueCount;
+        acc.totalWindowDisputedTrueCount += site.windowDisputedTrueCount;
+        return acc;
+      },
+      { totalWindowDeficientTrueCount: 0, totalWindowDisputedTrueCount: 0 }
+    );
+
+    return {
+      runAt,
+      window: options.window,
+      activeSitesLoadedAt: activeMeta.loadedAt,
+      activeSitesSource: activeMeta.source,
+      activeSitesStale: activeMeta.stale,
+      totalSitesChecked: results.length,
+      totalWindowDeficientTrueCount: totals.totalWindowDeficientTrueCount,
+      totalWindowDisputedTrueCount: totals.totalWindowDisputedTrueCount,
+      results,
+    };
+  } finally {
+    await Promise.allSettled([claimsPool.close()]);
   }
 }
 

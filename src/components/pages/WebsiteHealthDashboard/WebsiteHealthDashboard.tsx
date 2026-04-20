@@ -11,13 +11,22 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { Calendar } from 'primereact/calendar';
+import { SelectButton } from 'primereact/selectbutton';
+import { Checkbox } from 'primereact/checkbox';
 import type { ToastMessage } from 'primereact/toast';
 import type {
   WebsiteHealthCreateJiraTicketResponse,
+  WebsiteHealthDailyByDateReport,
+  WebsiteHealthDailyByDateSiteResult,
   WebsiteHealthDailyReportResponse,
   WebsiteHealthMissingItem,
+  WebsiteHealthReportByDateKind,
+  WebsiteHealthReportByDateResponse,
   WebsiteHealthSiteDetailsResponse,
   WebsiteHealthSiteResult,
+  WebsiteHealthSubmissionByDateReport,
+  WebsiteHealthSubmissionByDateSiteResult,
   WebsiteHealthSubmissionReportResponse,
   WebsiteHealthSummary,
   WebsiteHealthSummaryResponse,
@@ -82,6 +91,28 @@ function toFetchSinceDaysValue(value: number | null): string {
   return value === null ? 'all' : String(value);
 }
 
+/** Format a local Date as `YYYY-MM-DD` (avoids UTC shift vs `toISOString`). */
+function toYmd(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+type ReportByDateChoice = 'submission' | 'daily' | 'both';
+
+const REPORT_BY_DATE_CHOICE_OPTIONS: { label: string; value: ReportByDateChoice }[] = [
+  { label: 'Submission', value: 'submission' },
+  { label: 'Deficiency', value: 'daily' },
+  { label: 'Both', value: 'both' },
+];
+
+function choiceToTypes(choice: ReportByDateChoice): WebsiteHealthReportByDateKind[] {
+  if (choice === 'submission') return ['submission'];
+  if (choice === 'daily') return ['daily'];
+  return ['submission', 'daily'];
+}
+
 export const WebsiteHealthDashboard = () => {
   const toastRef = useRef<Toast | null>(null);
   const [summary, setSummary] = useState<WebsiteHealthSummary | null>(null);
@@ -101,6 +132,16 @@ export const WebsiteHealthDashboard = () => {
     siteKey: string;
     mode: DetailsActionMode;
   } | null>(null);
+
+  // Report-by-date (5:15 AM anchored) state.
+  const [reportByDateOpen, setReportByDateOpen] = useState<boolean>(false);
+  const [reportByDateRange, setReportByDateRange] = useState<(Date | null)[] | null>(null);
+  const [reportByDateChoice, setReportByDateChoice] = useState<ReportByDateChoice>('both');
+  const [reportByDateNotify, setReportByDateNotify] = useState<boolean>(true);
+  const [reportByDateRunning, setReportByDateRunning] = useState<boolean>(false);
+  const [reportByDateResult, setReportByDateResult] =
+    useState<WebsiteHealthReportByDateResponse | null>(null);
+  const [reportByDateResultOpen, setReportByDateResultOpen] = useState<boolean>(false);
 
   const showToast = useCallback((message: ToastMessage) => {
     toastRef.current?.show(message);
@@ -210,14 +251,14 @@ export const WebsiteHealthDashboard = () => {
         | { ok: false; message?: string };
 
       if (!res.ok || !body.ok) {
-        const msg = 'message' in body && typeof body.message === 'string' ? body.message : 'Submission report failed.';
+        const msg = 'message' in body && typeof body.message === 'string' ? body.message : 'Submission scan failed.';
         throw new Error(msg);
       }
 
       if (body.alerted) {
         showToast({
           severity: 'success',
-          summary: 'Submission report sent',
+          summary: 'Submission scan sent',
           detail:
             `Posted ${body.report.totalSitesChecked} active site rows to Teams ` +
             `(Total ${body.report.totalSubmittedCount}, Today ${body.report.totalSubmittedTodayCount}, Yesterday ${body.report.totalSubmittedYesterdayCount}).`,
@@ -226,10 +267,10 @@ export const WebsiteHealthDashboard = () => {
       } else {
         showToast({
           severity: 'warn',
-          summary: 'Submission report generated',
+          summary: 'Submission scan generated',
           detail:
             body.alertMessage ??
-            'Report generated, but Teams webhook is not configured or notification failed.',
+            'Scan generated, but Teams webhook is not configured or notification failed.',
           life: 6000,
         });
       }
@@ -237,8 +278,8 @@ export const WebsiteHealthDashboard = () => {
       const detail = error instanceof Error ? error.message : String(error);
       showToast({
         severity: 'error',
-        summary: 'Submission report failed',
-        detail: `Sorry, we could not send the submission report. ${detail}`,
+        summary: 'Submission scan failed',
+        detail: `Sorry, we could not send the submission scan. ${detail}`,
         life: 6000,
       });
     } finally {
@@ -266,7 +307,7 @@ export const WebsiteHealthDashboard = () => {
       if (body.alerted) {
         showToast({
           severity: 'success',
-          summary: 'Daily report sent',
+          summary: 'Deficiency scan sent',
           detail:
             `Posted ${body.report.totalSitesChecked} active site rows to Teams ` +
             `(Deficient TRUE ${body.report.totalDeficientTrueCount}, Disputed TRUE ${body.report.totalDisputedTrueCount}).`,
@@ -275,10 +316,10 @@ export const WebsiteHealthDashboard = () => {
       } else {
         showToast({
           severity: 'warn',
-          summary: 'Daily report generated',
+          summary: 'Deficiency scan generated',
           detail:
             body.alertMessage ??
-            'Report generated, but Teams webhook is not configured or notification failed.',
+            'Scan generated, but Teams webhook is not configured or notification failed.',
           life: 6000,
         });
       }
@@ -286,14 +327,105 @@ export const WebsiteHealthDashboard = () => {
       const detail = error instanceof Error ? error.message : String(error);
       showToast({
         severity: 'error',
-        summary: 'Daily report failed',
-        detail: `Sorry, we could not send the daily report. ${detail}`,
+        summary: 'Deficiency scan failed',
+        detail: `Sorry, we could not send the deficiency scan. ${detail}`,
         life: 6000,
       });
     } finally {
       setRunningDailyReport(false);
     }
   }, [showToast]);
+
+  const runReportByDate = useCallback(async () => {
+    const range = reportByDateRange ?? [];
+    const start = range[0] ?? null;
+    const end = range[1] ?? range[0] ?? null;
+    if (!start) {
+      showToast({
+        severity: 'warn',
+        summary: 'Pick a date',
+        detail: 'Please select a single day or a date range before running.',
+        life: 4000,
+      });
+      return;
+    }
+    const reportTypes = choiceToTypes(reportByDateChoice);
+    if (reportTypes.length === 0) {
+      showToast({
+        severity: 'warn',
+        summary: 'Pick at least one report',
+        detail: 'Choose Submission, Daily, or Both.',
+        life: 4000,
+      });
+      return;
+    }
+
+    setReportByDateRunning(true);
+    try {
+      const body = {
+        startDate: toYmd(start),
+        endDate: end ? toYmd(end) : toYmd(start),
+        reportTypes,
+        notify: reportByDateNotify,
+      };
+      const res = await fetch('/api/website-health/report-by-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = (await res.json()) as
+        | WebsiteHealthReportByDateResponse
+        | { ok: false; message?: string };
+
+      if (!res.ok || !payload.ok) {
+        const msg =
+          'message' in payload && typeof payload.message === 'string'
+            ? payload.message
+            : 'Report-by-date run failed.';
+        throw new Error(msg);
+      }
+
+      setReportByDateResult(payload);
+      setReportByDateOpen(false);
+      setReportByDateResultOpen(true);
+
+      const scope = body.startDate === body.endDate ? body.startDate : `${body.startDate} → ${body.endDate}`;
+      if (payload.alerted) {
+        showToast({
+          severity: 'success',
+          summary: 'Report by date sent',
+          detail: `Posted ${reportTypes.join(' + ')} report for ${scope} to Teams.`,
+          life: 5000,
+        });
+      } else if (reportByDateNotify) {
+        showToast({
+          severity: 'warn',
+          summary: 'Report by date generated',
+          detail:
+            payload.alertMessage ??
+            'Report generated, but Teams webhook is not configured or notification failed.',
+          life: 6000,
+        });
+      } else {
+        showToast({
+          severity: 'success',
+          summary: 'Report by date generated',
+          detail: `Report ready for ${scope} (Teams post skipped).`,
+          life: 4000,
+        });
+      }
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      showToast({
+        severity: 'error',
+        summary: 'Report by date failed',
+        detail,
+        life: 6000,
+      });
+    } finally {
+      setReportByDateRunning(false);
+    }
+  }, [reportByDateChoice, reportByDateNotify, reportByDateRange, showToast]);
 
   const openMissingDetails = useCallback(
     async (site: WebsiteHealthSiteResult) => {
@@ -519,6 +651,167 @@ export const WebsiteHealthDashboard = () => {
       },
     ];
   }, [detailsSite]);
+  const renderReportByDateResult = useCallback(
+    (payload: WebsiteHealthReportByDateResponse) => {
+      const { window: dateWindow, submission, daily } = payload;
+      const scopeLabel =
+        dateWindow.startDate === dateWindow.endDate
+          ? dateWindow.startDate
+          : `${dateWindow.startDate} → ${dateWindow.endDate}`;
+
+      return (
+        <div className={styles.reportByDateResult}>
+          <Card className={styles.reportByDateSummaryCard}>
+            <div className={styles.infoRow}>
+              <strong>Scope:</strong> <span>{scopeLabel}</span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Window (5:15 anchor):</strong>{' '}
+              <span>
+                {formatDateTime(dateWindow.startDateTime)} → {formatDateTime(dateWindow.endDateTimeExclusive)}{' '}
+                (exclusive)
+              </span>
+            </div>
+            <div className={styles.infoRow}>
+              <strong>Teams:</strong>{' '}
+              <Tag
+                value={payload.alerted ? 'SENT' : 'NOT SENT'}
+                severity={payload.alerted ? 'success' : 'warning'}
+              />
+              {payload.alertMessage ? (
+                <span className={styles.webDbMetricNote}>{payload.alertMessage}</span>
+              ) : null}
+            </div>
+          </Card>
+
+          {submission ? (
+            <Card className={styles.tableCard}>
+              <div className={styles.tableHeader}>
+                <strong>Submission Scan · {scopeLabel}</strong>
+                <span>
+                  Active sites: {submission.totalSitesChecked} · Total submitted in window:{' '}
+                  {submission.totalWindowSubmittedCount.toLocaleString()} · Run at:{' '}
+                  {formatDateTime(submission.runAt)}
+                </span>
+              </div>
+              <DataTable
+                value={[...submission.results].sort((a, b) => a.siteKey.localeCompare(b.siteKey))}
+                size="small"
+                responsiveLayout="scroll"
+                showGridlines
+                stripedRows
+                emptyMessage="No sites returned."
+                tableStyle={{ width: '100%' }}
+              >
+                <Column field="siteKey" header="Site" style={{ width: '40%' }} />
+                <Column
+                  header="Status"
+                  body={(row: WebsiteHealthSubmissionByDateSiteResult) => (
+                    <Tag
+                      value={row.status.toUpperCase()}
+                      severity={row.status === 'error' ? 'danger' : 'success'}
+                    />
+                  )}
+                  style={{ width: '6rem' }}
+                />
+                <Column
+                  field="websiteDbName"
+                  header="Website DB"
+                  style={{ width: '26%' }}
+                />
+                <Column
+                  field="windowSubmittedCount"
+                  header="Submitted in window"
+                  body={(row: WebsiteHealthSubmissionByDateSiteResult) =>
+                    row.windowSubmittedCount.toLocaleString()
+                  }
+                  style={{ width: '12rem' }}
+                />
+                <Column
+                  field="errorMessage"
+                  header="Notes"
+                  body={(row: WebsiteHealthSubmissionByDateSiteResult) => row.errorMessage ?? '—'}
+                />
+              </DataTable>
+            </Card>
+          ) : null}
+
+          {daily ? (() => {
+            const dateColumns = Array.from(
+              new Set(
+                daily.results
+                  .map((r) => r.dateColumnUsed)
+                  .filter((v): v is string => typeof v === 'string' && v.length > 0)
+              )
+            );
+            const dateColLabel = dateColumns.length === 0
+              ? '—'
+              : dateColumns.length === 1
+                ? dateColumns[0]
+                : `${dateColumns.length} columns (${dateColumns.join(', ')})`;
+            return (
+              <Card className={styles.tableCard}>
+                <div className={styles.tableHeader}>
+                  <strong>Deficiency Scan · {scopeLabel}</strong>
+                  <span>
+                    Active sites: {daily.totalSitesChecked} · Deficient TRUE:{' '}
+                    {daily.totalWindowDeficientTrueCount.toLocaleString()} · Disputed TRUE:{' '}
+                    {daily.totalWindowDisputedTrueCount.toLocaleString()} · Date column:{' '}
+                    {dateColLabel} · Run at: {formatDateTime(daily.runAt)}
+                  </span>
+                </div>
+                <DataTable
+                  value={[...daily.results].sort((a, b) => a.siteKey.localeCompare(b.siteKey))}
+                  size="small"
+                  responsiveLayout="scroll"
+                  showGridlines
+                  stripedRows
+                  emptyMessage="No sites returned."
+                  tableStyle={{ width: '100%' }}
+                >
+                  <Column field="siteKey" header="Site" style={{ width: '32%' }} />
+                  <Column
+                    header="Status"
+                    body={(row: WebsiteHealthDailyByDateSiteResult) => (
+                      <Tag
+                        value={row.status.toUpperCase()}
+                        severity={row.status === 'error' ? 'danger' : 'success'}
+                      />
+                    )}
+                    style={{ width: '6rem' }}
+                  />
+                  <Column field="cleanClaimsDbName" header="2K16 CleanClaims DB" style={{ width: '28%' }} />
+                  <Column
+                    field="windowDeficientTrueCount"
+                    header="Deficient TRUE"
+                    body={(row: WebsiteHealthDailyByDateSiteResult) =>
+                      row.windowDeficientTrueCount.toLocaleString()
+                    }
+                    style={{ width: '9rem' }}
+                  />
+                  <Column
+                    field="windowDisputedTrueCount"
+                    header="Disputed TRUE"
+                    body={(row: WebsiteHealthDailyByDateSiteResult) =>
+                      row.windowDisputedTrueCount.toLocaleString()
+                    }
+                    style={{ width: '9rem' }}
+                  />
+                  <Column
+                    field="errorMessage"
+                    header="Notes"
+                    body={(row: WebsiteHealthDailyByDateSiteResult) => row.errorMessage ?? '—'}
+                  />
+                </DataTable>
+              </Card>
+            );
+          })() : null}
+        </div>
+      );
+    },
+    []
+  );
+
   const renderMissingItemsTable = useCallback((items: WebsiteHealthMissingItem[]) => {
     if (items.length === 0) {
       return <div className={styles.expansionEmpty}>No missing items for this site.</div>;
@@ -542,6 +835,13 @@ export const WebsiteHealthDashboard = () => {
       </DataTable>
     );
   }, []);
+
+  const anyBusy =
+    runningScan ||
+    runningSubmissionReport ||
+    runningDailyReport ||
+    reportByDateRunning ||
+    loading;
 
   return (
     <main className={styles.page} aria-label="Website health dashboard">
@@ -568,27 +868,43 @@ export const WebsiteHealthDashboard = () => {
             label={runningScan ? 'Running…' : 'Run Scan'}
             icon="pi pi-play"
             onClick={() => void runScan()}
-            loading={runningScan}
-            disabled={runningScan || loading}
+            loading={anyBusy}
+            disabled={anyBusy}
             tooltip="Run an on-demand Website Health scan for the selected scope."
             tooltipOptions={{ position: 'top' }}
           />
           <Button
-            label={runningSubmissionReport ? 'Sending…' : 'Submission Report'}
+            label={runningSubmissionReport ? 'Sending…' : 'Submission Scan'}
             icon="pi pi-send"
             onClick={() => void runSubmissionReport()}
-            loading={runningSubmissionReport}
-            disabled={runningSubmissionReport || runningScan || loading}
+            loading={runningSubmissionReport ? true : anyBusy}
+            disabled={anyBusy}
             tooltip="Send all active-site submission totals (total/today/yesterday) to Teams."
             tooltipOptions={{ position: 'top' }}
           />
           <Button
-            label={runningDailyReport ? 'Sending…' : 'Daily Report'}
+            label={runningDailyReport ? 'Sending…' : 'Deficiency Scan'}
             icon="pi pi-calendar"
             onClick={() => void runDailyReport()}
-            loading={runningDailyReport}
-            disabled={runningDailyReport || runningSubmissionReport || runningScan || loading}
-            tooltip="Send active-site CleanClaims daily totals (Deficient=TRUE and Disputed=TRUE) to Teams."
+            loading={runningDailyReport ? true : anyBusy}
+            disabled={anyBusy}
+            tooltip="Send active-site CleanClaims deficiency totals (Deficient=TRUE and Disputed=TRUE) to Teams."
+            tooltipOptions={{ position: 'top' }}
+          />
+          <Button
+            label="Scan by Date"
+            icon="pi pi-calendar-plus"
+            onClick={() => {
+              setReportByDateOpen(true);
+              if (!reportByDateRange) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                setReportByDateRange([today, null]);
+              }
+            }}
+            loading={reportByDateRunning ? true : anyBusy && !reportByDateOpen}
+            disabled={anyBusy}
+            tooltip="Run a Submission and/or Deficiency scan scoped to a specific day or date range (5:15 AM downloader window)."
             tooltipOptions={{ position: 'top' }}
           />
         </div>
@@ -1006,6 +1322,109 @@ export const WebsiteHealthDashboard = () => {
             </div>
           </div>
         ) : null}
+      </Dialog>
+
+      <Dialog
+        header="Scan by Date"
+        visible={reportByDateOpen}
+        onHide={() => (reportByDateRunning ? undefined : setReportByDateOpen(false))}
+        style={{ width: 'min(96vw, 560px)' }}
+        modal
+      >
+        <div className={styles.reportByDateForm}>
+          <div className={styles.reportByDateHint}>
+            A day is the downloader window — starts <strong>5:15 AM</strong> and ends at{' '}
+            <strong>5:14:59 AM</strong> the next day. Pick a single day or a range.
+          </div>
+          <div className={styles.reportByDateField}>
+            <label>Date (single or range)</label>
+            <Calendar
+              value={reportByDateRange as Date[] | null}
+              onChange={(e) => {
+                const v: unknown = e.value;
+                if (Array.isArray(v)) {
+                  setReportByDateRange(v as (Date | null)[]);
+                } else if (v instanceof Date) {
+                  setReportByDateRange([v, null]);
+                } else {
+                  setReportByDateRange(null);
+                }
+              }}
+              selectionMode="range"
+              readOnlyInput
+              showIcon
+              dateFormat="yy-mm-dd"
+              placeholder="YYYY-MM-DD (click again for range)"
+              maxDate={new Date()}
+            />
+          </div>
+          <div className={styles.reportByDateField}>
+            <label>Report type</label>
+            <SelectButton
+              value={reportByDateChoice}
+              onChange={(e) => {
+                const next = e.value as ReportByDateChoice | null;
+                if (next) setReportByDateChoice(next);
+              }}
+              options={REPORT_BY_DATE_CHOICE_OPTIONS}
+              optionLabel="label"
+              allowEmpty={false}
+            />
+          </div>
+          <div className={styles.reportByDateField}>
+            <label htmlFor="report-by-date-notify" className={styles.reportByDateCheckboxRow}>
+              <Checkbox
+                inputId="report-by-date-notify"
+                checked={reportByDateNotify}
+                onChange={(e) => setReportByDateNotify(e.checked ?? false)}
+              />
+              <span>Post results to Teams webhook</span>
+            </label>
+          </div>
+          <div className={styles.reportByDateActions}>
+            <Button
+              type="button"
+              label="Cancel"
+              severity="secondary"
+              text
+              onClick={() => setReportByDateOpen(false)}
+              disabled={reportByDateRunning}
+            />
+            <Button
+              type="button"
+              label={reportByDateRunning ? 'Running…' : 'Run Scan'}
+              icon="pi pi-play"
+              loading={reportByDateRunning}
+              onClick={() => void runReportByDate()}
+              disabled={reportByDateRunning}
+            />
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog
+        header={
+          reportByDateResult
+            ? `Scan by Date · ${reportByDateResult.window.startDate}${
+                reportByDateResult.window.endDate !== reportByDateResult.window.startDate
+                  ? ` → ${reportByDateResult.window.endDate}`
+                  : ''
+              }`
+            : 'Scan by Date'
+        }
+        visible={reportByDateResultOpen}
+        onHide={() => setReportByDateResultOpen(false)}
+        style={{ width: 'min(98vw, 1120px)' }}
+        contentClassName={styles.dialogContentSingleScroll}
+        draggable
+        resizable
+        maximizable
+        blockScroll
+        modal
+      >
+        {reportByDateResult
+          ? renderReportByDateResult(reportByDateResult)
+          : (<div className={styles.expansionEmpty}>No results yet.</div>)}
       </Dialog>
     </main>
   );
