@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fetched each new rule back and confirmed: correct `actor.type = EVENT_INITIATOR`, correct `ruleScopeARIs` per project, three IF branches with the right JQL, each branch has a single `jira.worklog.add` action with the right `timeSpent`.
   - **Docs updated**: added the 3 rules to the `scripts/jira/README.md` rule table; added a new **gotcha #6** documenting the `jira.worklog.add` component shape (string `timeSpent`, `adjustEstimate` options, and the EVENT_INITIATOR fail-silent behaviour) so future automations don't have to reverse-engineer it.
 
+### Operations (Jira — not shipped in repo)
+
+- **Kyle worklog day trim (2026-04-20 PT)**: Used Jira REST API v3 `PUT …/worklog/{id}` with **Strategy C** — only the **10 largest** same-day worklogs were shortened so their combined time matched a **6.9 h** day total (`24,840` seconds) while all smaller entries stayed untouched. Jira rounded one planned value to the nearest minute; a **+10m** worklog logged after the first pass briefly pushed the day to **7.0 h**, then a single follow-up adjustment on **NOVA-1650** worklog `29874` restored the aggregate to exactly **6.9 h**. Helper scripts and JSON audit trails live under `kyleJira/` and `kyleOutput/` (both gitignored).
+
 ### Changed
 
 - **Deleted `primereact-overrides.scss` stub + documentation refresh + Button icon-gap fix**: Completed the refactor started yesterday — the decommission stub file was kept only as a breadcrumb, now removed entirely.
