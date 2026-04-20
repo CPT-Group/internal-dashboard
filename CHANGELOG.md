@@ -36,6 +36,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **New Jira automation: `[Time Tracking] Auto-log on Create` (NOVA / OPRD / CM)** — three new rules (one per project, identical shape) that add a small worklog to every newly-created ticket, **attributed to the real human who created it** (Actor = `EVENT_INITIATOR`, not an automation service account).
+  - **Trigger**: `jira.issue.event.trigger:created`, scoped per project via `eventFilters` + `ruleScopeARIs` (NOVA `projectId=10183`, OPRD `10002`, CM `10017`).
+  - **Branches (mutually-exclusive JQL, per README gotcha #5):**
+    - `type = Epic` → `jira.worklog.add 15m`
+    - `type IN (Bug, "Bug Sub-Task")` → `jira.worklog.add 10m`
+    - `type NOT IN (Epic, Bug, "Bug Sub-Task")` → `jira.worklog.add 5m` (catchall for Task, Story, Sub-task, and NOVA's 14 template-cloned types)
+  - **Worklog description**: intentionally terse — `"Auto-logged on create"`. `adjustEstimate: "ADJUST_AUTOMATICALLY"` so the remaining-estimate gets decremented; `dateStarted: {{now}}`.
+  - **Failure mode**: if the creator is a service account / integration user that lacks "Work On Issues" permission, the worklog action silently fails on that one execution — no other automation is affected, no data is written, the rule log just notes the miss. This matches the user's requirement "attempt with a fallback if it fails".
+  - **Why three rules instead of one multi-project rule**: each rule ties cleanly to its own project scope in Jira Automation (simpler to audit in the UI, easier to disable per-project if ever needed). NOVA is the primary; OPRD + CM are best-effort mirrors since those projects are being deprecated, but the identical structure keeps reporting consistent while they're still alive.
+  - **UUIDs (captured in `scripts/jira/README.md` rule table):**
+    - NOVA: `019daca7-a0c6-7e42-979c-385b551d8261`
+    - OPRD: `019daca8-3dca-7bc2-b89e-abad27ed6c6c`
+    - CM:   `019daca8-43ff-7710-8c32-70b7788e3fc7`
+  - **Implementation**: new creation script at `kyleJira/one-off-migrations/create-auto-log-on-create.mjs` (gitignored, kept for rerun/reference). Usage: `node kyleJira/one-off-migrations/create-auto-log-on-create.mjs NOVA|OPRD|CM|ALL`. Uses `POST /rule` on the Jira Automation REST API, authenticating via James's token (per README — Kyle's token lacks Administer Jira). No `id` / `connectionId` / `parentId` / `conditionParentId` fields on new nested components per gotcha #5 (Jira assigned stable ids on save — verified by re-fetching the rules).
+  - **Safety verification**:
+    - Took a full `backup-rules.mjs` snapshot of all 8 pre-existing rules **before** POSTing (→ `kyleOutput/jira-rule-backups/*__2026-04-20T20-48-35*.json`), and another snapshot **after** all 3 POSTs completed. PowerShell diff (ignoring the auto-stamped `updated` field) confirmed every pre-existing rule is **byte-for-byte unchanged** — zero collateral damage on `nova-move-to-sprint`, `nova-case-update-bug-intake`, `oprd-intake`, `nova-qa`, `nova-uat`, `oprd-uat`, `cm-uat-dead`, `cm-data-team`.
+    - `list-rules.mjs --filter "Auto-log"` shows exactly 3 matches, all three `[ENABLED]`, total rule count went from 51 → 54.
+    - Fetched each new rule back and confirmed: correct `actor.type = EVENT_INITIATOR`, correct `ruleScopeARIs` per project, three IF branches with the right JQL, each branch has a single `jira.worklog.add` action with the right `timeSpent`.
+  - **Docs updated**: added the 3 rules to the `scripts/jira/README.md` rule table; added a new **gotcha #6** documenting the `jira.worklog.add` component shape (string `timeSpent`, `adjustEstimate` options, and the EVENT_INITIATOR fail-silent behaviour) so future automations don't have to reverse-engineer it.
+
 ### Changed
 
 - **Deleted `primereact-overrides.scss` stub + documentation refresh + Button icon-gap fix**: Completed the refactor started yesterday — the decommission stub file was kept only as a breadcrumb, now removed entirely.
