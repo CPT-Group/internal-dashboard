@@ -20,20 +20,25 @@ This document is the **canonical reference** for how the internal-dashboard them
 | `src/app/layout.tsx` | Imports PrimeReact theme CSS, then `main.scss`. Renders `<html data-theme="dark-synth">` by default and runs the theme-init script. |
 | `src/app/main.scss` | **Orchestration only.** `@use` in order: variables → base → utilities → theme files (dark, light, dark-synth, ms-access-2010). |
 | `src/styles/variables.scss` | **Default design tokens** on `:root` (dark-synth values). All theme files override these when `[data-theme='...']` matches. |
-| `src/styles/base.scss` | Resets, `html`/`body`, Lato fonts, progress-spinner/chart utility classes, layout/page styles. Uses `var(--...)` only; no hardcoded colors. |
+| `src/styles/base.scss` | **Single source of truth** for resets, `html`/`body`, Lato fonts, progress-spinner/chart utility classes, layout/page styles, **and all PrimeReact component structural overrides** (Card, DataTable, Dialog, Button, Calendar, MultiSelect, SelectButton, Toast, Tag, Skeleton, etc.). Uses `var(--...)` only; no hardcoded colors. |
 | `src/styles/utilities.scss` | Focus-visible, `.sr-only`, etc. |
-| `src/styles/themes/dark.scss` | Variable overrides for `html[data-theme='dark']` (and `[data-theme='dark']`). |
-| `src/styles/themes/light.scss` | Variable overrides for `data-theme='light'`. |
-| `src/styles/themes/dark-synth.scss` | Variable overrides for `data-theme='dark-synth'` + `.p-dialog` overrides. |
-| `src/styles/themes/ms-access-2010.scss` | Variable overrides for `data-theme='ms-access-2010'`. |
-| `src/styles/primereact-overrides.scss` | **Shared** overrides for PrimeReact components that lara-dark-blue hardcodes. Uses theme variables only; loaded after theme files. |
+| `src/styles/themes/dark.scss` | **Palette-only** overrides for `html[data-theme='dark']` (and `[data-theme='dark']`). No structural rules. |
+| `src/styles/themes/light.scss` | **Palette-only** overrides for `data-theme='light'`. |
+| `src/styles/themes/dark-synth.scss` | **Palette-only** overrides for `data-theme='dark-synth'` (plus a handful of palette-driven component tweaks that are theme-specific, e.g. synth accents). |
+| `src/styles/themes/ms-access-2010.scss` | **Palette-only** overrides for `data-theme='ms-access-2010'`. |
 
-**PrimeReact hardcoded components:** The lara-dark-blue theme uses **hardcoded** colors for some components (e.g. `.p-card` background/color, `.p-dialog`). Variable overrides alone are not enough for those. Each theme file therefore includes explicit component overrides (e.g. `.p-card`, `.p-dialog`) that set `background`, `color`, `border`, `box-shadow` from our theme variables. If a PrimeReact component doesn’t pick up the theme. Overrides live in primereact-overrides.scss for Card, DataTable, Message, Tag, Button, Skeleton. Theme-specific overrides (e.g. .p-dialog in dark-synth) stay in the theme file. Charts use Chart.js; colors come from JS options/data.
+> **Architecture rule (mirrors `cpt-internal-tools`):** `base.scss` owns every PrimeReact *structural / behavioural / layout* override (sizing, spacing, borders, flex/gap, component composition) driven off `var(--…)` tokens. `themes/*.scss` files only override those palette variables — they do **not** re-declare structural selectors. This makes theme switching a pure recolour with zero layout drift.
+>
+> The old `src/styles/primereact-overrides.scss` file was **decommissioned (2026-04-20)** and its contents migrated into `base.scss`. Do not recreate it.
+
+**PrimeReact hardcoded components:** The lara-dark-blue theme uses **hardcoded** colors for some components (e.g. `.p-card` background/color, `.p-dialog`). Variable overrides alone are not enough — `base.scss` contains explicit selectors (`.p-card`, `.p-datatable`, `.p-dialog`, `.p-button`, `.p-tag`, `.p-skeleton`, `.p-message`, `.p-calendar`, `.p-multiselect`, `.p-selectbutton`, `.p-toast`, `.p-progress-spinner`, …) that wire `background`/`color`/`border`/`box-shadow` off our theme tokens with `!important`. Charts use Chart.js; colors come from JS options/data, not CSS.
 
 **Load order (conceptual):**
 
-1. `primereact/resources/themes/lara-dark-blue/theme.css` (in layout)
-2. `main.scss` → variables → base → utilities → dark → light → dark-synth → ms-access-2010 → primereact-overrides
+1. `primereact/resources/themes/lara-dark-blue/theme.css` (imported in `layout.tsx`)
+2. `main.scss` → variables → base (**including all PrimeReact overrides**) → utilities → dark → light → dark-synth → ms-access-2010
+
+Because our SCSS loads **after** Lara and `base.scss` uses `!important` on structural overrides, our tokens determine the final look on every theme.
 
 Our SCSS runs **after** the PrimeReact theme, so our `:root` and `[data-theme='...']` overrides determine the final look.
 
@@ -93,6 +98,13 @@ const { theme, setTheme, cycleTheme } = useTheme();
 1. **Define the default** in `src/styles/variables.scss` (`:root`).
 2. **Override in every theme file** that should differ from that default (e.g. `src/styles/themes/dark.scss`, `light.scss`, `dark-synth.scss`, `ms-access-2010.scss`). Use the same variable name and `!important` so theme wins over `:root`.
 3. Use the variable in `base.scss` or components via `var(--variable-name)`.
+
+### Add a new PrimeReact component override
+
+1. Put the structural selector(s) in `src/styles/base.scss` (in the PrimeReact overrides section near the bottom of the file). Drive every color off `var(--…)` tokens.
+2. If the component needs a new palette knob, add the token to `variables.scss` and override it in each theme file that should differ.
+3. **Do not** add structural selectors to `themes/*.scss` — theme files are palette-only. A theme file adding, say, `.p-button { padding: … }` is an architecture smell and should be moved to `base.scss`.
+4. For icon ↔ label spacing on PrimeReact Buttons, use the `--button-icon-gap` token (applied as flex `gap` on `.p-button` in `base.scss`). Don't re-add per-side `margin` rules elsewhere.
 
 ### Match cpt-internal-tools
 

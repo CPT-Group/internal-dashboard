@@ -110,4 +110,24 @@ html[data-theme='light'],
   --progress-spinner-size-sm: 14px !important;
   --progress-spinner-size-md: 18px !important;
   --progress-spinner-color: var(--primary-color) !important;
+
+  // Ported from cpt-internal-tools for PrimeReact parity (2026-04-20)
+  --multiselect-chip-bg: #e2e8f0 !important;
+  --multiselect-chip-fg: #0f1a28 !important;
+  --multiselect-chip-icon-fg: #64748b !important;
+  --multiselect-chip-border: 1px solid #cbd5e1 !important;
+  --toast-success-bg: #dcfce7 !important;
+  --toast-success-border: #22c55e !important;
+  --toast-success-text: #166534 !important;
+  --toast-info-bg: #dbeafe !important;
+  --toast-info-border: #3b82f6 !important;
+  --toast-info-text: #1e40af !important;
+  --toast-warn-bg: #fef9c3 !important;
+  --toast-warn-border: #eab308 !important;
+  --toast-warn-text: #854d0e !important;
+  --toast-error-bg: #fee2e2 !important;
+  --toast-error-border: #dc2626 !important;
+  --toast-error-text: #991b1b !important;
+  --cpt-skeleton-bg: #dbe4ef !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.8) !important;
 }

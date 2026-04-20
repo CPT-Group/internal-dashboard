@@ -105,4 +105,27 @@ html[data-theme='ms-access-2010'],
   --progress-spinner-size-sm: 14px !important;
   --progress-spinner-size-md: 18px !important;
   --progress-spinner-color: var(--primary-color) !important;
+
+  // Ported from cpt-internal-tools for PrimeReact parity (2026-04-20)
+  --multiselect-chip-bg: #e4e7ed !important;
+  --multiselect-chip-fg: #1f1f1f !important;
+  --multiselect-chip-icon-fg: #5c5c5c !important;
+  --multiselect-chip-border: 1px solid #ababab !important;
+  --toast-success-bg: #dff0d8 !important;
+  --toast-success-border: #5ea86f !important;
+  --toast-success-text: #2d662d !important;
+  --toast-info-bg: #d9edf7 !important;
+  --toast-info-border: #4183c4 !important;
+  --toast-info-text: #17365d !important;
+  --toast-warn-bg: #fcf8e3 !important;
+  --toast-warn-border: #e0a000 !important;
+  --toast-warn-text: #8a6d3b !important;
+  --toast-error-bg: #f2dede !important;
+  --toast-error-border: #c0392b !important;
+  --toast-error-text: #711f1f !important;
+  --border-radius-sm: 2px !important;
+  --border-radius-lg: 4px !important;
+  --dm-filter-input-border-radius: 3px !important;
+  --cpt-skeleton-bg: #e4e7ed !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.75) !important;
 }

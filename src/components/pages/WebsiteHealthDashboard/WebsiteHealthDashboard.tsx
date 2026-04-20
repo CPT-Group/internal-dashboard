@@ -113,6 +113,36 @@ function choiceToTypes(choice: ReportByDateChoice): WebsiteHealthReportByDateKin
   return ['submission', 'daily'];
 }
 
+type SendReportMode = 'submission' | 'deficiency' | 'by-date';
+
+interface SendReportModeDescriptor {
+  value: SendReportMode;
+  label: string;
+  description: string;
+  icon: string;
+}
+
+const SEND_REPORT_MODE_OPTIONS: SendReportModeDescriptor[] = [
+  {
+    value: 'submission',
+    label: 'Submission',
+    description: 'All active sites · total / today / yesterday submission counts.',
+    icon: 'pi pi-send',
+  },
+  {
+    value: 'deficiency',
+    label: 'Deficiency',
+    description: 'All active sites · CleanClaims Deficient=TRUE and Disputed=TRUE totals.',
+    icon: 'pi pi-calendar',
+  },
+  {
+    value: 'by-date',
+    label: 'Scan by Date',
+    description: 'Submission and/or Deficiency scoped to a single day or range (05:15 AM downloader window).',
+    icon: 'pi pi-calendar-plus',
+  },
+];
+
 export const WebsiteHealthDashboard = () => {
   const toastRef = useRef<Toast | null>(null);
   const [summary, setSummary] = useState<WebsiteHealthSummary | null>(null);
@@ -133,11 +163,13 @@ export const WebsiteHealthDashboard = () => {
     mode: DetailsActionMode;
   } | null>(null);
 
-  // Report-by-date (5:15 AM anchored) state.
-  const [reportByDateOpen, setReportByDateOpen] = useState<boolean>(false);
+  // Unified "Send Report" dialog state (consolidates Submission / Deficiency / Scan-by-Date).
+  // Date fields keep their `reportByDate*` names because they are only used by the by-date mode.
+  const [sendReportOpen, setSendReportOpen] = useState<boolean>(false);
+  const [sendReportMode, setSendReportMode] = useState<SendReportMode>('submission');
+  const [sendReportNotify, setSendReportNotify] = useState<boolean>(true);
   const [reportByDateRange, setReportByDateRange] = useState<(Date | null)[] | null>(null);
   const [reportByDateChoice, setReportByDateChoice] = useState<ReportByDateChoice>('both');
-  const [reportByDateNotify, setReportByDateNotify] = useState<boolean>(true);
   const [reportByDateRunning, setReportByDateRunning] = useState<boolean>(false);
   const [reportByDateResult, setReportByDateResult] =
     useState<WebsiteHealthReportByDateResponse | null>(null);
@@ -238,13 +270,14 @@ export const WebsiteHealthDashboard = () => {
     }
   }, [showToast, sinceDays]);
 
-  const runSubmissionReport = useCallback(async () => {
+  const runSubmissionReport = useCallback(async (opts: { notify?: boolean } = {}) => {
+    const notify = opts.notify ?? true;
     setRunningSubmissionReport(true);
     try {
       const res = await fetch('/api/website-health/submission-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notify: true }),
+        body: JSON.stringify({ notify }),
       });
       const body = (await res.json()) as
         | WebsiteHealthSubmissionReportResponse
@@ -287,13 +320,14 @@ export const WebsiteHealthDashboard = () => {
     }
   }, [showToast]);
 
-  const runDailyReport = useCallback(async () => {
+  const runDailyReport = useCallback(async (opts: { notify?: boolean } = {}) => {
+    const notify = opts.notify ?? true;
     setRunningDailyReport(true);
     try {
       const res = await fetch('/api/website-health/daily-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notify: true }),
+        body: JSON.stringify({ notify }),
       });
       const body = (await res.json()) as
         | WebsiteHealthDailyReportResponse
@@ -366,7 +400,7 @@ export const WebsiteHealthDashboard = () => {
         startDate: toYmd(start),
         endDate: end ? toYmd(end) : toYmd(start),
         reportTypes,
-        notify: reportByDateNotify,
+        notify: sendReportNotify,
       };
       const res = await fetch('/api/website-health/report-by-date', {
         method: 'POST',
@@ -386,7 +420,7 @@ export const WebsiteHealthDashboard = () => {
       }
 
       setReportByDateResult(payload);
-      setReportByDateOpen(false);
+      setSendReportOpen(false);
       setReportByDateResultOpen(true);
 
       const scope = body.startDate === body.endDate ? body.startDate : `${body.startDate} → ${body.endDate}`;
@@ -397,7 +431,7 @@ export const WebsiteHealthDashboard = () => {
           detail: `Posted ${reportTypes.join(' + ')} report for ${scope} to Teams.`,
           life: 5000,
         });
-      } else if (reportByDateNotify) {
+      } else if (sendReportNotify) {
         showToast({
           severity: 'warn',
           summary: 'Report by date generated',
@@ -425,7 +459,22 @@ export const WebsiteHealthDashboard = () => {
     } finally {
       setReportByDateRunning(false);
     }
-  }, [reportByDateChoice, reportByDateNotify, reportByDateRange, showToast]);
+  }, [reportByDateChoice, sendReportNotify, reportByDateRange, showToast]);
+
+  const runSendReport = useCallback(async () => {
+    const notify = sendReportNotify;
+    if (sendReportMode === 'submission') {
+      setSendReportOpen(false);
+      await runSubmissionReport({ notify });
+      return;
+    }
+    if (sendReportMode === 'deficiency') {
+      setSendReportOpen(false);
+      await runDailyReport({ notify });
+      return;
+    }
+    await runReportByDate();
+  }, [sendReportMode, sendReportNotify, runSubmissionReport, runDailyReport, runReportByDate]);
 
   const openMissingDetails = useCallback(
     async (site: WebsiteHealthSiteResult) => {
@@ -874,37 +923,32 @@ export const WebsiteHealthDashboard = () => {
             tooltipOptions={{ position: 'top' }}
           />
           <Button
-            label={runningSubmissionReport ? 'Sending…' : 'Submission Scan'}
+            label={
+              runningSubmissionReport
+                ? 'Sending…'
+                : runningDailyReport
+                  ? 'Sending…'
+                  : reportByDateRunning
+                    ? 'Running…'
+                    : 'Send Report…'
+            }
             icon="pi pi-send"
-            onClick={() => void runSubmissionReport()}
-            loading={runningSubmissionReport ? true : anyBusy}
-            disabled={anyBusy}
-            tooltip="Send all active-site submission totals (total/today/yesterday) to Teams."
-            tooltipOptions={{ position: 'top' }}
-          />
-          <Button
-            label={runningDailyReport ? 'Sending…' : 'Deficiency Scan'}
-            icon="pi pi-calendar"
-            onClick={() => void runDailyReport()}
-            loading={runningDailyReport ? true : anyBusy}
-            disabled={anyBusy}
-            tooltip="Send active-site CleanClaims deficiency totals (Deficient=TRUE and Disputed=TRUE) to Teams."
-            tooltipOptions={{ position: 'top' }}
-          />
-          <Button
-            label="Scan by Date"
-            icon="pi pi-calendar-plus"
+            severity="secondary"
             onClick={() => {
-              setReportByDateOpen(true);
               if (!reportByDateRange) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 setReportByDateRange([today, null]);
               }
+              setSendReportOpen(true);
             }}
-            loading={reportByDateRunning ? true : anyBusy && !reportByDateOpen}
+            loading={
+              runningSubmissionReport || runningDailyReport || reportByDateRunning
+                ? true
+                : anyBusy && !sendReportOpen
+            }
             disabled={anyBusy}
-            tooltip="Run a Submission and/or Deficiency scan scoped to a specific day or date range (5:15 AM downloader window)."
+            tooltip="Pick a scan type — Submission, Deficiency, or a custom date range — and post it to Teams."
             tooltipOptions={{ position: 'top' }}
           />
         </div>
@@ -1325,78 +1369,124 @@ export const WebsiteHealthDashboard = () => {
       </Dialog>
 
       <Dialog
-        header="Scan by Date"
-        visible={reportByDateOpen}
-        onHide={() => (reportByDateRunning ? undefined : setReportByDateOpen(false))}
-        style={{ width: 'min(96vw, 560px)' }}
+        header="Send Report"
+        visible={sendReportOpen}
+        onHide={() => {
+          if (runningSubmissionReport || runningDailyReport || reportByDateRunning) return;
+          setSendReportOpen(false);
+        }}
+        style={{ width: 'min(96vw, 620px)' }}
         modal
       >
-        <div className={styles.reportByDateForm}>
-          <div className={styles.reportByDateHint}>
-            A day is the downloader window — starts <strong>5:15 AM</strong> and ends at{' '}
-            <strong>5:14:59 AM</strong> the next day. Pick a single day or a range.
+        <div className={styles.sendReportForm}>
+          <div className={styles.sendReportModePicker} role="radiogroup" aria-label="Report type">
+            {SEND_REPORT_MODE_OPTIONS.map((opt) => {
+              const selected = sendReportMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  className={`${styles.sendReportModeCard} ${
+                    selected ? styles.sendReportModeCardActive : ''
+                  }`}
+                  onClick={() => setSendReportMode(opt.value)}
+                  disabled={
+                    runningSubmissionReport || runningDailyReport || reportByDateRunning
+                  }
+                >
+                  <i className={`${opt.icon} ${styles.sendReportModeIcon}`} aria-hidden="true" />
+                  <span className={styles.sendReportModeLabel}>{opt.label}</span>
+                  <span className={styles.sendReportModeDescription}>{opt.description}</span>
+                </button>
+              );
+            })}
           </div>
+
+          {sendReportMode === 'by-date' ? (
+            <>
+              <div className={styles.reportByDateHint}>
+                A day is the downloader window — starts <strong>5:15 AM</strong> and ends at{' '}
+                <strong>5:14:59 AM</strong> the next day. Pick a single day or a range.
+              </div>
+              <div className={styles.reportByDateField}>
+                <label>Date (single or range)</label>
+                <Calendar
+                  value={reportByDateRange as Date[] | null}
+                  onChange={(e) => {
+                    const v: unknown = e.value;
+                    if (Array.isArray(v)) {
+                      setReportByDateRange(v as (Date | null)[]);
+                    } else if (v instanceof Date) {
+                      setReportByDateRange([v, null]);
+                    } else {
+                      setReportByDateRange(null);
+                    }
+                  }}
+                  selectionMode="range"
+                  readOnlyInput
+                  showIcon
+                  dateFormat="yy-mm-dd"
+                  placeholder="YYYY-MM-DD (click again for range)"
+                  maxDate={new Date()}
+                />
+              </div>
+              <div className={styles.reportByDateField}>
+                <label>Report type</label>
+                <SelectButton
+                  value={reportByDateChoice}
+                  onChange={(e) => {
+                    const next = e.value as ReportByDateChoice | null;
+                    if (next) setReportByDateChoice(next);
+                  }}
+                  options={REPORT_BY_DATE_CHOICE_OPTIONS}
+                  optionLabel="label"
+                  allowEmpty={false}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={styles.sendReportLiveHint}>
+              <i className="pi pi-info-circle" aria-hidden="true" />
+              <span>
+                Live totals across all active sites — no date picker needed. Uses current downloader
+                windows for “today” and “yesterday”.
+              </span>
+            </div>
+          )}
+
           <div className={styles.reportByDateField}>
-            <label>Date (single or range)</label>
-            <Calendar
-              value={reportByDateRange as Date[] | null}
-              onChange={(e) => {
-                const v: unknown = e.value;
-                if (Array.isArray(v)) {
-                  setReportByDateRange(v as (Date | null)[]);
-                } else if (v instanceof Date) {
-                  setReportByDateRange([v, null]);
-                } else {
-                  setReportByDateRange(null);
-                }
-              }}
-              selectionMode="range"
-              readOnlyInput
-              showIcon
-              dateFormat="yy-mm-dd"
-              placeholder="YYYY-MM-DD (click again for range)"
-              maxDate={new Date()}
-            />
-          </div>
-          <div className={styles.reportByDateField}>
-            <label>Report type</label>
-            <SelectButton
-              value={reportByDateChoice}
-              onChange={(e) => {
-                const next = e.value as ReportByDateChoice | null;
-                if (next) setReportByDateChoice(next);
-              }}
-              options={REPORT_BY_DATE_CHOICE_OPTIONS}
-              optionLabel="label"
-              allowEmpty={false}
-            />
-          </div>
-          <div className={styles.reportByDateField}>
-            <label htmlFor="report-by-date-notify" className={styles.reportByDateCheckboxRow}>
+            <label htmlFor="send-report-notify" className={styles.reportByDateCheckboxRow}>
               <Checkbox
-                inputId="report-by-date-notify"
-                checked={reportByDateNotify}
-                onChange={(e) => setReportByDateNotify(e.checked ?? false)}
+                inputId="send-report-notify"
+                checked={sendReportNotify}
+                onChange={(e) => setSendReportNotify(e.checked ?? false)}
               />
               <span>Post results to Teams webhook</span>
             </label>
           </div>
+
           <div className={styles.reportByDateActions}>
             <Button
               type="button"
               label="Cancel"
               severity="secondary"
               text
-              onClick={() => setReportByDateOpen(false)}
-              disabled={reportByDateRunning}
+              onClick={() => setSendReportOpen(false)}
+              disabled={runningSubmissionReport || runningDailyReport || reportByDateRunning}
             />
             <Button
               type="button"
-              label={reportByDateRunning ? 'Running…' : 'Run Scan'}
+              label={
+                runningSubmissionReport || runningDailyReport || reportByDateRunning
+                  ? 'Running…'
+                  : 'Run Scan'
+              }
               icon="pi pi-play"
-              loading={reportByDateRunning}
-              onClick={() => void runReportByDate()}
-              disabled={reportByDateRunning}
+              loading={runningSubmissionReport || runningDailyReport || reportByDateRunning}
+              onClick={() => void runSendReport()}
+              disabled={runningSubmissionReport || runningDailyReport || reportByDateRunning}
             />
           </div>
         </div>

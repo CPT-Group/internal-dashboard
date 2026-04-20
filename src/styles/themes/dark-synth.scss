@@ -113,6 +113,26 @@ html[data-theme='dark-synth'],
   --progress-spinner-size-sm: 14px !important;
   --progress-spinner-size-md: 18px !important;
   --progress-spinner-color: var(--primary-color) !important;
+
+  // Ported from cpt-internal-tools for PrimeReact parity (2026-04-20)
+  --multiselect-chip-bg: #2a1f4e !important;
+  --multiselect-chip-fg: #dbd4fa !important;
+  --multiselect-chip-icon-fg: #9d8fbd !important;
+  --multiselect-chip-border: 1px solid #3d2a5c !important;
+  --toast-success-bg: rgba(34, 197, 94, 0.2) !important;
+  --toast-success-border: #22c55e !important;
+  --toast-success-text: #bbf7d0 !important;
+  --toast-info-bg: rgba(36, 205, 197, 0.2) !important;
+  --toast-info-border: #24cdc5 !important;
+  --toast-info-text: #a7f3d0 !important;
+  --toast-warn-bg: rgba(234, 179, 8, 0.2) !important;
+  --toast-warn-border: #eab308 !important;
+  --toast-warn-text: #fef9c3 !important;
+  --toast-error-bg: rgba(244, 114, 182, 0.22) !important;
+  --toast-error-border: #f472b6 !important;
+  --toast-error-text: #fbcfe8 !important;
+  --cpt-skeleton-bg: #2a1f4e !important;
+  --cpt-skeleton-sheen: rgba(184, 114, 249, 0.28) !important;
 }
 
 // Dialog – theme colors (from cpt-internal-tools)

@@ -47,12 +47,11 @@ All values use `!important` so they override `:root` from `variables.scss`.
 
 ## 3. Load order (target)
 
-**In `main.tsx`:**
+**In `main.tsx` (cpt-internal-tools):**
 
 1. `primereact/resources/themes/lara-dark-blue/theme.css` – PrimeReact theme (component rules + vars).
-2. `./main.scss` – our SCSS bundle (see below).
+2. `./main.scss` – its SCSS bundle (see below). **All PrimeReact component overrides live inside `base.scss`** — there is no separate `primereact-overrides` file in the current target architecture.
 3. Later: `primeflex`, `primeicons`, `primereact.min.css`, `rc-dock/dist/rc-dock.css`.
-4. **Last**: `@/styles/primereact-overrides.css` – so it overrides PrimeReact and rc-dock.
 
 **Inside `main.scss`:**
 
@@ -85,8 +84,8 @@ We mirror this as follows:
 | **Dark-synth colors** | `src/styles/themes/dark-synth.scss` only | Same: `src/styles/themes/dark-synth.scss` (same vars and values) |
 | **Base/default** | `variables.scss` `:root` (navy) | `variables.scss` `:root` (we use dark-synth as default for first paint; theme file still overrides when `data-theme='dark-synth'`) |
 | **Base styles** | `base.scss` uses `--page-background`, `--text-primary` for body | `base.scss` uses same vars for body |
-| **Load order** | variables → base → utilities → themes | Same in `main.scss`; then we add `primereact-overrides.scss` at end of same bundle |
-| **PrimeReact overrides** | Separate `primereact-overrides.css` loaded last in main.tsx | `primereact-overrides.scss` last in `main.scss` (same effect: our overrides win) |
+| **Load order** | variables → base → utilities → themes | **Identical** in `main.scss` (2026-04-20 refactor — the extra `primereact-overrides.scss` tail file was decommissioned and folded into `base.scss`). |
+| **PrimeReact overrides** | Live inside `base.scss` (structural) + `themes/*.scss` (palette only) | **Same architecture.** All structural PrimeReact rules (Card, DataTable, Dialog, Button, Calendar, MultiSelect, SelectButton, Toast, Tag, Skeleton, ProgressSpinner, Message, …) live in `base.scss`; `themes/*.scss` only override palette variables. |
 | **Theme application** | `data-theme` on `<html>` via ThemeProvider | Same; layout has default `data-theme="dark-synth"` and theme-init script |
 
 When adding or changing a theme (e.g. dark-synth), update the **theme file** in `src/styles/themes/` and keep **variables.scss** as the base/fallback. This matches the target and keeps “where are dark-synth colors?” answered by: **themes/dark-synth.scss**.

@@ -1,5 +1,19 @@
 // Global style orchestration. Load order: variables → base → utilities → theme overrides.
 // PrimeReact theme CSS is imported in layout.tsx before this file.
+//
+// Architecture mirrors `cpt-internal-tools`:
+//   - variables.scss     → design tokens (CSS custom properties only)
+//   - base.scss          → single source of truth for structure + sizing +
+//                          layout + PrimeReact component overrides (drives
+//                          every override off `var(--…)` tokens)
+//   - utilities.scss     → helper classes (.sr-only, :focus-visible, etc.)
+//   - themes/*.scss      → palette-only overrides (set the variables above;
+//                          no structural rules live here)
+//
+// `primereact-overrides.scss` was decommissioned and deleted 2026-04-20.
+// Its contents now live in base.scss (structural rules) and themes/*.scss
+// (palette overrides). Do not recreate the file — add new PrimeReact
+// component overrides directly to base.scss.
 
 @use '../styles/variables.scss' as *;
 @use '../styles/base.scss' as *;
@@ -8,4 +22,3 @@
 @use '../styles/themes/light.scss';
 @use '../styles/themes/dark-synth.scss';
 @use '../styles/themes/ms-access-2010.scss';
-@use '../styles/primereact-overrides.scss';
