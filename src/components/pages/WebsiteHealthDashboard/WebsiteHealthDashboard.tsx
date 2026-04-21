@@ -33,6 +33,7 @@ import type {
   WebsiteHealthWebDbIssueItem,
 } from '@/types';
 import { CopyToClipboardButton } from '@/components/ui';
+import { formatWebsiteHealthPacificDateTime as formatDateTime } from '@/lib/formatWebsiteHealthPacificDateTime';
 import { WebsiteHealthInfoHelp } from './WebsiteHealthInfoHelp';
 import styles from './WebsiteHealthDashboard.module.scss';
 
@@ -66,12 +67,6 @@ const SINCE_DAYS_OPTIONS: SinceDaysOption[] = [
   { label: 'Last 14 days', value: 14 },
   { label: 'All submitted', value: null },
 ];
-
-function formatDateTime(value: string): string {
-  const dt = new Date(value);
-  if (Number.isNaN(dt.valueOf())) return value;
-  return dt.toLocaleString();
-}
 
 function formatScopeLabel(sinceDays: number | null): string {
   return sinceDays === null ? 'All submitted records' : `Last ${sinceDays} day(s)`;

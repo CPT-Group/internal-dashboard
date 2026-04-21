@@ -58,3 +58,9 @@ kyleOutput/
 
 # local Jira automation one-off scripts (see scripts/jira/README.md)
 kyleJira/
+
+# local Cursor agent one-off scripts (Jira JSON payloads, per-task helpers)
+cursorScripts/
+
+# one-off archival snapshots / deletion-audit artifacts / retired script bundles
+ArchivedReports_TestingArchive/

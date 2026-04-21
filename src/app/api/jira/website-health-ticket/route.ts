@@ -6,6 +6,7 @@ import type {
   WebsiteHealthSiteResult,
   WebsiteHealthWebDbIssueItem,
 } from '@/types';
+import { formatWebsiteHealthPacificDateTime } from '@/lib/formatWebsiteHealthPacificDateTime';
 import type { JiraAdfDoc } from '@/services/api/jiraService';
 import { createIssue } from '@/services/api/jiraService';
 
@@ -29,14 +30,17 @@ function formatMissingSampleRows(items: WebsiteHealthMissingItem[]): string[] {
   if (items.length === 0) return ['No missing sample rows in details payload'];
   return items.slice(0, 10).map((item) => {
     const email = item.email?.trim() || '(no email)';
-    return `Submission ${item.submissionId} | DateReceived ${item.dateReceived} | ${email}`;
+    return `Submission ${item.submissionId} | DateReceived ${formatWebsiteHealthPacificDateTime(item.dateReceived)} | ${email}`;
   });
 }
 
 function formatWebDbSampleRows(items: WebsiteHealthWebDbIssueItem[]): string[] {
   if (items.length === 0) return ['No Web DB issue sample rows in details payload'];
   return items.slice(0, 10).map((item) => {
-    const dateReceived = item.dateReceived ?? '(null DateReceived)';
+    const dateReceived =
+      item.dateReceived === null
+        ? '(null DateReceived)'
+        : formatWebsiteHealthPacificDateTime(item.dateReceived);
     const reasons = item.reasons.length > 0 ? item.reasons.join(', ') : '(no reasons)';
     return `Submission ${item.submissionId} | DateReceived ${dateReceived} | Reasons: ${reasons}`;
   });
@@ -76,7 +80,7 @@ function buildDescription(body: WebsiteHealthCreateJiraTicketRequest): JiraAdfDo
     `2K16 CleanClaims DB: ${site.cleanClaimsDbName}`,
     `Deadline: ${site.deadlineDate ?? '(none)'}`,
     `Scan scope: ${formatScopeLabel(body.sinceDays)}`,
-    `Scan run timestamp: ${body.runAt}`,
+    `Scan run timestamp: ${formatWebsiteHealthPacificDateTime(body.runAt)}`,
     `Scanner error detail: ${formatErrorLine(site)}`,
   ];
 
