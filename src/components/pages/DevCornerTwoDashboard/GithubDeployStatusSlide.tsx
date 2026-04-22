@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { Card } from 'primereact/card';
 import { Message } from 'primereact/message';
 import { MeterGroup } from 'primereact/metergroup';
@@ -8,6 +9,7 @@ import { Skeleton } from 'primereact/skeleton';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
+import { useTheme } from '@/providers/ThemeProvider';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
 
@@ -131,6 +133,7 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
 }
 
 export const GithubDeployStatusSlide = () => {
+  const { cycleTheme } = useTheme();
   const [repos, setRepos] = useState<GitHubDeployWorkflowStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -240,39 +243,60 @@ export const GithubDeployStatusSlide = () => {
         <div className={styles.meterLabelCards}>
           {values.map((item, index) => {
             const labelText = typeof item.label === 'string' ? item.label : 'Status';
-            return (
-              <Card key={`${labelText}-${index}`} className={styles.meterLabelCard}>
-                <div className={styles.meterLabelCardInner}>
-                  <div className={styles.meterLabelTextBlock}>
-                    <span className={styles.meterLabelTitle}>{labelText}</span>
-                    <span className={styles.meterLabelValue}>
-                      {item.value ?? 0} / {trackedEnvironmentSlots}
-                    </span>
-                  </div>
-                  <span
-                    className={styles.meterLabelIcon}
-                    style={{ backgroundColor: item.color ?? 'var(--surface-400)' }}
-                  >
-                    <i
-                      className={
-                        labelText === 'Successful'
-                          ? 'pi pi-check-circle'
-                          : labelText === 'In Progress'
-                            ? 'pi pi-spin pi-spinner'
-                            : labelText === 'Queued'
-                              ? 'pi pi-clock'
-                              : 'pi pi-times-circle'
-                      }
-                    />
+            const isThemeHit = labelText === 'Successful';
+            const inner = (
+              <div className={styles.meterLabelCardInner}>
+                <div className={styles.meterLabelTextBlock}>
+                  <span className={styles.meterLabelTitle}>{labelText}</span>
+                  <span className={styles.meterLabelValue}>
+                    {item.value ?? 0} / {trackedEnvironmentSlots}
                   </span>
                 </div>
+                <span
+                  className={styles.meterLabelIcon}
+                  style={{ backgroundColor: item.color ?? 'var(--surface-400)' }}
+                >
+                  <i
+                    className={
+                      labelText === 'Successful'
+                        ? 'pi pi-check-circle'
+                        : labelText === 'In Progress'
+                          ? 'pi pi-spin pi-spinner'
+                          : labelText === 'Queued'
+                            ? 'pi pi-clock'
+                            : 'pi pi-times-circle'
+                    }
+                  />
+                </span>
+              </div>
+            );
+            return (
+              <Card
+                key={`${labelText}-${index}`}
+                className={`${styles.meterLabelCard}${isThemeHit ? ` ${styles.meterLabelCardThemeHit}` : ''}`}
+                {...(isThemeHit
+                  ? {
+                      onClick: () => cycleTheme(),
+                      onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          cycleTheme();
+                        }
+                      },
+                      role: 'button' as const,
+                      tabIndex: 0,
+                      'aria-label': 'Next visual style',
+                    }
+                  : {})}
+              >
+                {inner}
               </Card>
             );
           })}
         </div>
       );
     },
-    [trackedEnvironmentSlots]
+    [cycleTheme, trackedEnvironmentSlots]
   );
 
 

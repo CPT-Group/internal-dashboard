@@ -38,7 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Shared `ThemeCycleHitTarget` + more hidden theme tiles**: New `src/components/ui/ThemeCycleHitTarget/` (`strip` = silent KPI-bar tile, `title` = heading-sized with label text) calls `useTheme().cycleTheme()` with the same **dark → light → dark-synth → ms-access-2010** order as `appThemeCycle.ts`. **Website Health** uses the `title` variant for the main heading. **Dev Corner One** adds a `strip` tile **left** of the KPI row (including loading/error). **Dev Corner Two** adds a slim top bar with a `strip` tile on the **right** (all states, including loading/error/warn).
+- **Shared `ThemeCycleHitTarget` + hidden theme on existing tiles**: `ThemeCycleHitTarget` (`strip` / `title`) lives in `src/components/ui/ThemeCycleHitTarget/`. **Website Health** uses the `title` variant on the page heading. **Dev Corner One** uses **`KpiStrip`** optional **`onActivate`** on the existing **Limbo** KPI card only (no extra column). **Dev Corner Two** attaches **`cycleTheme`** to the existing **Successful** deploy summary card in **`GithubDeployStatusSlide`** (no separate top bar tile).
+
+### Fixed
+
+- **Dev Corner theme hit targets**: Removed the extra empty strip tiles; theme cycling is on the existing **Limbo** KPI (`KpiStrip` / `onActivate`) and **Successful** GitHub deploy summary card (`GithubDeployStatusSlide`), matching the intended UX.
 
 ### Changed
 

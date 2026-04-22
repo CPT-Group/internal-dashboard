@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { Card } from 'primereact/card';
 import styles from './KpiStrip.module.scss';
 
@@ -9,6 +9,8 @@ export interface KpiItem {
   value: string | number;
   severity?: 'success' | 'danger' | 'warning' | 'info';
   badge?: ReactNode;
+  /** When set, the whole KPI card acts as a silent hit target (e.g. global theme cycle). */
+  onActivate?: () => void;
 }
 
 export interface KpiStripProps {
@@ -33,13 +35,39 @@ const severityClass = (severity?: KpiItem['severity']): string => {
 export const KpiStrip = ({ items }: KpiStripProps) => {
   return (
     <div className={styles.strip}>
-      {items.map((item) => (
-        <Card key={item.label} className={`${styles.kpiCard} ${severityClass(item.severity)}`}>
-          <div className={styles.label}>{item.label}</div>
-          <div className={styles.value}>{item.value}</div>
-          {item.badge && <div className={styles.badge}>{item.badge}</div>}
-        </Card>
-      ))}
+      {items.map((item) => {
+        const interactive = item.onActivate != null;
+        const cardClass = `${styles.kpiCard} ${severityClass(item.severity)}${interactive ? ` ${styles.kpiCardInteractive}` : ''}`;
+        const body = (
+          <>
+            <div className={styles.label}>{item.label}</div>
+            <div className={styles.value}>{item.value}</div>
+            {item.badge ? <div className={styles.badge}>{item.badge}</div> : null}
+          </>
+        );
+        return (
+          <Card
+            key={item.label}
+            className={cardClass}
+            {...(interactive
+              ? {
+                  onClick: item.onActivate,
+                  onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      item.onActivate?.();
+                    }
+                  },
+                  role: 'button' as const,
+                  tabIndex: 0,
+                  'aria-label': 'Next visual style',
+                }
+              : {})}
+          >
+            {body}
+          </Card>
+        );
+      })}
     </div>
   );
 };

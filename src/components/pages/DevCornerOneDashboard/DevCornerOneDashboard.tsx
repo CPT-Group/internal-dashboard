@@ -5,8 +5,9 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
-import { KpiStrip, ThemeCycleHitTarget } from '@/components/ui';
+import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
+import { useTheme } from '@/providers/ThemeProvider';
 import { WorkHoursTodayPanel } from './WorkHoursTodayPanel';
 import { ComponentActivityPanel } from './ComponentActivityPanel';
 import { TeamActivityPanel } from './TeamActivityPanel';
@@ -21,6 +22,7 @@ const formatCloseTime = (hours: number | null): string => {
 };
 
 export const DevCornerOneDashboard = () => {
+  const { cycleTheme } = useTheme();
   const { fetchOperationalData, isStale, loading, error, getAnalytics } =
     useOperationalJiraStore();
 
@@ -36,7 +38,12 @@ export const DevCornerOneDashboard = () => {
   const { kpis, throughputRatio, componentActivity, teamActivity } = analytics;
 
   const kpiItems: KpiItem[] = useMemo(() => [
-    { label: 'Limbo', value: kpis.limboCount, severity: kpis.limboCount > 0 ? 'warning' : 'success' },
+    {
+      label: 'Limbo',
+      value: kpis.limboCount,
+      severity: kpis.limboCount > 0 ? 'warning' : 'success',
+      onActivate: cycleTheme,
+    },
     { label: 'Landed Today', value: kpis.landedToday },
     { label: 'Closed Today', value: kpis.closedToday },
     {
@@ -50,15 +57,11 @@ export const DevCornerOneDashboard = () => {
       value: `${throughputRatio}x`,
       severity: throughputRatio >= 1 ? 'success' : throughputRatio >= 0.7 ? 'warning' : 'danger',
     },
-  ], [kpis, throughputRatio]);
+  ], [kpis, throughputRatio, cycleTheme]);
 
   if (loading && kpis.openCount === 0) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.kpiRow}>
-          <ThemeCycleHitTarget variant="strip" />
-          <div className={styles.kpiStripWrap} />
-        </div>
         <div className={`${styles.loadingWrap} ${styles.loadingOverlay}`} role="status" aria-live="polite" aria-busy="true">
           <ProgressSpinner aria-hidden />
           <span>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
@@ -70,11 +73,7 @@ export const DevCornerOneDashboard = () => {
   if (error) {
     return (
       <div className={styles.dashboard}>
-        <div className={styles.kpiRow}>
-          <ThemeCycleHitTarget variant="strip" />
-          <div className={styles.kpiStripWrap} />
-        </div>
-        <Message severity="error" text={error} className={`w-full ${styles.dashboardMessage}`} />
+        <Message severity="error" text={error} className="w-full" />
       </div>
     );
   }
@@ -82,10 +81,7 @@ export const DevCornerOneDashboard = () => {
   return (
     <div className={styles.dashboard}>
       <div className={styles.kpiRow}>
-        <ThemeCycleHitTarget variant="strip" />
-        <div className={styles.kpiStripWrap}>
-          <KpiStrip items={kpiItems} />
-        </div>
+        <KpiStrip items={kpiItems} />
       </div>
       <div className={styles.middleRow}>
         <div className={styles.leftCol}>

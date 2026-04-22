@@ -13,7 +13,6 @@ import { RequestedTicketsSlide } from './RequestedTicketsSlide';
 // import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
 import { CompletedByDevSlide } from './CompletedByDevSlide';
 import { GithubDeployStatusSlide } from './GithubDeployStatusSlide';
-import { ThemeCycleHitTarget } from '@/components/ui';
 import { DEV_CORNER_TWO_SLIDE_TOGGLES } from './devCornerTwoSlides.config';
 import type { DevCornerTwoSlideId } from './devCornerTwoSlides.config';
 import styles from './DevCornerTwoDashboard.module.scss';
@@ -108,17 +107,9 @@ export const DevCornerTwoDashboard = () => {
     }
   };
 
-  const topBar = (
-    <div className={styles.topBar}>
-      <div className={styles.topBarSpacer} />
-      <ThemeCycleHitTarget variant="strip" />
-    </div>
-  );
-
   if (loading && kpis.openCount === 0) {
     return (
       <div className={styles.dashboard}>
-        {topBar}
         <div
           className={`${styles.loadingWrap} ${styles.loadingOverlay}`}
           role="status"
@@ -135,8 +126,7 @@ export const DevCornerTwoDashboard = () => {
   if (error) {
     return (
       <div className={styles.dashboard}>
-        {topBar}
-        <Message severity="error" text={error} className={`w-full m-2 ${styles.dashboardMessage}`} />
+        <Message severity="error" text={error} className="w-full m-2" />
       </div>
     );
   }
@@ -144,11 +134,10 @@ export const DevCornerTwoDashboard = () => {
   if (numSlides === 0) {
     return (
       <div className={styles.dashboard}>
-        {topBar}
         <Message
           severity="warn"
           text="No Dev Corner Two slides are enabled. Turn on at least one slide in devCornerTwoSlides.config.ts."
-          className={`w-full m-2 ${styles.dashboardMessage}`}
+          className="w-full m-2"
         />
       </div>
     );
@@ -156,7 +145,6 @@ export const DevCornerTwoDashboard = () => {
 
   return (
     <div className={styles.dashboard}>
-      {topBar}
       <div className={styles.carousel}>
         {enabledSlides.map((slide, idx) => (
           <div key={slide.id} className={slideClass(idx, slide.id)}>
