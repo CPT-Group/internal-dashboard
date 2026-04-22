@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Shared `ThemeCycleHitTarget` + more hidden theme tiles**: New `src/components/ui/ThemeCycleHitTarget/` (`strip` = silent KPI-bar tile, `title` = heading-sized with label text) calls `useTheme().cycleTheme()` with the same **dark → light → dark-synth → ms-access-2010** order as `appThemeCycle.ts`. **Website Health** uses the `title` variant for the main heading. **Dev Corner One** adds a `strip` tile **left** of the KPI row (including loading/error). **Dev Corner Two** adds a slim top bar with a `strip` tile on the **right** (all states, including loading/error/warn).
+
+### Changed
+
+- **`cycleTheme()` order**: `ThemeProvider` (and the home sticky switcher) now cycle **dark → light → dark-synth → ms-access-2010** instead of starting the sequence at dark-synth; `layout.tsx` theme-init `valid` list is documented to stay in sync with `APP_THEME_CYCLE_ORDER` in `appThemeCycle.ts`.
+
 - **NOVA-1631 complete — 254 / 257 pre-2025 `www` folders removed from `\\10.0.0.5\www`**: The delete manifest (257 folders, SHA256-verified) finished at **98.8% removed**, reclaiming **+223.73 GB on F:\\** (17.75 GB free → 241.48 GB free; drive fullness 99.1% → 88.2%). Phased execution:
   - **Phase 1 — serial run** (4/17, `scripts/delete-www-old-sites.cjs`, `rd /s /q` in a Node single-threaded loop): 25 folders deleted before the process exited on its own after one ~6.5h outlier (`bamboosettlementfiles`) dominated its run.
   - **Phase 2 — parallel run** (4/20, new `scripts/delete-www-parallel.cjs`, concurrency 4, 15-min per-folder cap, shared worker pool using `cmd /c rd /s /q`, resume mode skips folders already logged as `deleted` in any prior exec CSV): 224 folders deleted in **1 h 44 min**, 7 timed-out, 0 errored. Timeout was the right call — every timeout was a single oversized folder and freeing the slot kept the queue flowing.

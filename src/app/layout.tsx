@@ -47,6 +47,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
+                  /* Keep in sync with src/constants/appThemeCycle.ts (APP_THEME_CYCLE_ORDER). */
                   var valid = ['dark', 'light', 'dark-synth', 'ms-access-2010'];
                   var stored = localStorage.getItem('cpt-theme');
                   var theme = (stored && valid.indexOf(stored) >= 0) ? stored : 'dark-synth';

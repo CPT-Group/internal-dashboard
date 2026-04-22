@@ -23,8 +23,14 @@
 }
 
 .loadingOverlay {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  min-height: calc(100vh - 1.1rem);
+}
+
+.dashboardMessage {
+  flex: 1;
+  min-height: 0;
 }
 
 .loadingWrapStacked {
@@ -43,6 +49,16 @@
 
 .kpiRow {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.4rem;
+  min-height: 0;
+}
+
+.kpiStripWrap {
+  flex: 1;
+  min-width: 0;
 }
 
 /* Middle row: throughput + component activity — 40% of remaining space */

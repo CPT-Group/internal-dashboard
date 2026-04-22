@@ -4,6 +4,7 @@ export * from './BackgroundSlideshow';
 export * from './CornerInfoCard';
 export * from './TrendBadge';
 export * from './KpiStrip';
+export * from './ThemeCycleHitTarget';
 export * from './DevCornerSlideHero/DevCornerSlideHero';
 export * from './LimboTicketsTable';
 export * from './CopyToClipboardButton';

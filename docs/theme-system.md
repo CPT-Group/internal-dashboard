@@ -8,8 +8,8 @@ This document is the **canonical reference** for how the internal-dashboard them
 
 - **Pattern**: Matches **cpt-internal-tools**: one PrimeReact theme CSS + app SCSS (variables → base → utilities → **theme overrides**). Theme is applied via the `data-theme` attribute on `<html>`; there is **no** dynamic `<link>` swap.
 - **Default theme**: **dark-synth** (synthwave purple/cyan). First paint and unknown/invalid stored values use dark-synth.
-- **Available themes**: `dark-synth`, `dark`, `light`, `ms-access-2010`.
-- **Where you can change theme**: **Home page only** – a sticky button at the top cycles themes. TV and other routes do not show a theme switcher.
+- **Available themes**: `dark`, `light`, `dark-synth`, `ms-access-2010` (same set as `APP_THEME_CYCLE_ORDER` in `src/constants/appThemeCycle.ts`).
+- **Where you can change theme**: **Home page** – a sticky button at the top cycles themes and shows the active id. **Website Health** (`/website-health`) – the page title uses the shared `ThemeCycleHitTarget` (`title` variant). **Dev Corner One** – narrow strip tile to the **left** of the KPI row (also on loading/error). **Dev Corner Two** – same strip tile on the **right** of a slim top bar (all states). Other routes do not expose a switcher unless added later.
 
 ---
 
@@ -59,10 +59,11 @@ const { theme, setTheme, cycleTheme } = useTheme();
 
 // theme: 'dark' | 'light' | 'dark-synth' | 'ms-access-2010'
 // setTheme('dark-synth') – set a specific theme
-// cycleTheme() – cycle: dark-synth → dark → light → ms-access-2010 → dark-synth
+// cycleTheme() – cycle: dark → light → dark-synth → ms-access-2010 → dark → …
+// Order is defined once in `src/constants/appThemeCycle.ts` (`APP_THEME_CYCLE_ORDER`).
 ```
 
-- **Theme switcher UI**: Only the **home page** (`src/components/pages/HomePage/HomePage.tsx`) renders the sticky theme button and calls `cycleTheme()`. Other pages do not expose a switcher.
+- **Theme switcher UI**: The **home page** (`src/components/pages/HomePage/HomePage.tsx`) renders the sticky theme button. **Website Health**, **Dev Corner One**, and **Dev Corner Two** use the shared **`ThemeCycleHitTarget`** component (`src/components/ui/ThemeCycleHitTarget/` — `strip` = silent tile, `title` = heading-sized with children). You can also call `useTheme().cycleTheme()` or helpers from `appThemeCycle.ts` directly.
 
 ### Styling components (no inline theme colors)
 
@@ -135,7 +136,7 @@ const { theme, setTheme, cycleTheme } = useTheme();
 - **To add a variable**: add to `variables.scss` and to each theme file that should override it.
 - **To add a theme**: new file under `src/styles/themes/<id>.scss`, extend Theme and THEME_ORDER and parseStoredTheme in ThemeProvider, add `@use` in main.scss, add id to theme-init `valid` array.
 - **No inline theme colors**: use `var(--...)` and, if needed, new variables in variables + theme files.
-- **Theme switcher**: home page only; use `useTheme().cycleTheme()` or `setTheme(id)`.
+- **Theme switcher**: home page (labeled); Website Health title; Dev Corner One (left strip) and Dev Corner Two (right strip). Use `ThemeCycleHitTarget`, `useTheme().cycleTheme()`, or `setTheme(id)`.
 
 ---
 

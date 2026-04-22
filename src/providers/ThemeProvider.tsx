@@ -1,10 +1,13 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  type AppTheme,
+  nextAppThemeAfter,
+  parsePersistedAppTheme,
+} from '@/constants/appThemeCycle';
 
-export type Theme = 'dark' | 'light' | 'dark-synth' | 'ms-access-2010';
-
-const THEME_ORDER: Theme[] = ['dark-synth', 'dark', 'light', 'ms-access-2010'];
+export type Theme = AppTheme;
 
 interface ThemeContextType {
   theme: Theme;
@@ -26,19 +29,12 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-function parseStoredTheme(stored: string | null): Theme {
-  if (stored === 'dark' || stored === 'light' || stored === 'dark-synth' || stored === 'ms-access-2010') {
-    return stored;
-  }
-  return 'dark-synth';
-}
-
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setThemeState] = useState<Theme>('dark-synth');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedTheme = parseStoredTheme(localStorage.getItem('cpt-theme'));
+    const savedTheme = parsePersistedAppTheme(localStorage.getItem('cpt-theme'));
     setThemeState(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
     setMounted(true);
@@ -55,9 +51,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   };
 
   const cycleTheme = () => {
-    const idx = THEME_ORDER.indexOf(theme);
-    const next = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
-    setThemeState(next);
+    setThemeState((prev) => nextAppThemeAfter(prev));
   };
 
   return (

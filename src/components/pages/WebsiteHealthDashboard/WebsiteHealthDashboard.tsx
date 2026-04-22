@@ -15,6 +15,7 @@ import { Calendar } from 'primereact/calendar';
 import { SelectButton } from 'primereact/selectbutton';
 import { Checkbox } from 'primereact/checkbox';
 import type { ToastMessage } from 'primereact/toast';
+import { ThemeCycleHitTarget } from '@/components/ui';
 import type {
   WebsiteHealthCreateJiraTicketResponse,
   WebsiteHealthDailyByDateReport,
@@ -893,7 +894,7 @@ export const WebsiteHealthDashboard = () => {
       <ConfirmDialog />
       <section className={styles.header}>
         <div>
-          <h1>Website Health</h1>
+          <ThemeCycleHitTarget variant="title">Website Health</ThemeCycleHitTarget>
           <p>Read-only downloader integrity checks: submissions on 10.0.0.5 vs CleanClaims on 2K16.</p>
         </div>
         <div className={styles.controls}>
