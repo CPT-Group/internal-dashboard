@@ -63,7 +63,8 @@ const { theme, setTheme, cycleTheme } = useTheme();
 // Order is defined once in `src/constants/appThemeCycle.ts` (`APP_THEME_CYCLE_ORDER`).
 ```
 
-- **Theme switcher UI**: The **home page** (`src/components/pages/HomePage/HomePage.tsx`) renders the sticky theme button. **Website Health** uses **`ThemeCycleHitTarget`**. **Dev Corner One** passes **`onActivate`** on the Limbo row via **`KpiStrip`**. **Dev Corner Two** wires **`cycleTheme`** onto the **Successful** meter label card in **`GithubDeployStatusSlide`**. You can also call `useTheme().cycleTheme()` or helpers from `appThemeCycle.ts` directly.
+- **Theme switcher UI**: The **home page** (`src/components/pages/HomePage/HomePage.tsx`) renders the sticky theme button. **Website Health** uses **`ThemeCycleHitTarget`**. **Dev Corner One** passes **`onActivate`** on the Limbo row via **`KpiStrip`**. **Dev Corner Two** wires **`cycleTheme`** onto the **Successful** meter label card in **`GithubDeployStatusSlide`**. You can also call `useTheme().cycleTheme()` or helpers from `appThemeCycle.ts` directly.  
+  - **User feedback**: every theme change dispatches `cpt-theme-toast`; `ThemeChangeToast` shows **“Theme changed to: <name>”** for 3 seconds (bottom-right).
 
 ### Styling components (no inline theme colors)
 

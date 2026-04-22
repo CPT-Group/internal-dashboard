@@ -5,6 +5,7 @@ import { Chart } from 'primereact/chart';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import type { Plugin } from 'chart.js';
 import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
+import { useTheme } from '@/providers/ThemeProvider';
 import styles from './HorizontalBarChart.module.scss';
 
 export interface HorizontalBarChartProps {
@@ -159,6 +160,7 @@ function profileForLevel(level: BarFlashLevel): FlashProfile {
  * glow animation (per-bar flash levels), and optional suffix on data labels.
  */
 export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
+  const { theme: activeTheme } = useTheme();
   const [theme, setTheme] = useState<ChartTheme | null>(null);
   const chartRef = useRef<Chart>(null);
   const phaseRef = useRef(0);
@@ -174,7 +176,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       barPrimaryBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
       labelColor: s.getPropertyValue('--chart-label-color').trim() || '#ffffff',
     });
-  }, []);
+  }, [activeTheme]);
 
   const hasAnimation = useMemo(
     () => (data.flashLevels ?? []).some((l) => l !== 'none') || data.values.some((v) => v <= 0),

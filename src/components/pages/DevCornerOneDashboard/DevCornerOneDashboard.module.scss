@@ -126,35 +126,35 @@
 }
 
 .badgeDanger {
-  background: rgba(239, 68, 68, 0.28);
+  background: var(--work-hours-badge-danger-bg);
   border-color: var(--red-500);
-  color: #fff;
+  color: var(--work-hours-badge-danger-text);
   animation: workHoursDangerBadgePulse 1.4s ease-in-out infinite;
 }
 
 .badgeZero {
-  background: rgba(239, 68, 68, 0.4);
+  background: var(--work-hours-badge-zero-bg);
   border-color: var(--red-500);
-  color: #fff;
+  color: var(--work-hours-badge-zero-text);
   animation: workHoursDangerBadgePulse 0.95s ease-in-out infinite;
 }
 
 .badgeSuccess {
-  background: rgba(34, 197, 94, 0.24);
+  background: var(--work-hours-badge-success-bg);
   border-color: var(--green-500);
-  color: #fff;
+  color: var(--work-hours-badge-success-text);
 }
 
 .badgeOver {
-  background: rgba(249, 115, 22, 0.24);
+  background: var(--work-hours-badge-over-bg);
   border-color: var(--orange-500);
-  color: #fff;
+  color: var(--work-hours-badge-over-text);
 }
 
 .badgeSuper {
-  background: rgba(34, 211, 238, 0.28);
+  background: var(--work-hours-badge-super-bg);
   border-color: rgb(34, 211, 238);
-  color: #fff;
+  color: var(--work-hours-badge-super-text);
 }
 
 @keyframes workHoursDangerBadgePulse {
@@ -164,7 +164,7 @@
   }
 
   50% {
-    box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 10px 2px var(--work-hours-badge-danger-shadow);
   }
 }
 
@@ -218,15 +218,15 @@
 }
 
 .countBadge.info {
-  background: var(--chart-info);
-  border: 1.5px solid var(--chart-info-border);
-  color: var(--chart-label-color);
+  background: var(--activity-badge-info-bg);
+  border: 1.5px solid var(--activity-badge-info-border);
+  color: var(--activity-badge-info-text);
 }
 
 .countBadge.warning {
-  background: var(--chart-orange);
-  border: 1.5px solid var(--chart-orange-border);
-  color: var(--chart-label-color);
+  background: var(--activity-badge-warning-bg);
+  border: 1.5px solid var(--activity-badge-warning-border);
+  color: var(--activity-badge-warning-text);
 }
 
 .countBadge.muted {
@@ -308,6 +308,9 @@
     font-weight: 800;
     min-width: 1.5rem;
     text-align: center;
+    background: var(--activity-badge-info-bg) !important;
+    border: 1px solid var(--activity-badge-info-border) !important;
+    color: var(--activity-badge-info-text) !important;
   }
 }
 
@@ -341,7 +344,7 @@
 }
 
 .ticketChipNova {
-  background: rgba(36, 205, 197, 0.35) !important;
+  background: var(--nova-accent-bg) !important;
   color: var(--nova-accent-text) !important;
   border: 1.5px solid var(--nova-accent-border) !important;
   backdrop-filter: blur(4px);
@@ -368,7 +371,7 @@
 }
 
 .ticketChipBug {
-  background: rgba(239, 68, 68, 0.35) !important;
+  background: var(--bug-accent-bg) !important;
   border: 3px solid var(--red-500) !important;
   animation: bugChipPulse 2.1s ease-in-out infinite;
   transition:
@@ -377,7 +380,7 @@
     transform 250ms ease;
 
   :global(.p-chip-text) {
-    color: #fff !important;
+    color: var(--bug-accent-text) !important;
     font-weight: 700;
   }
 }

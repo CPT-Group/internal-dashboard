@@ -33,6 +33,11 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [theme, setThemeState] = useState<Theme>('dark-synth');
   const [mounted, setMounted] = useState(false);
 
+  const emitThemeToast = (nextTheme: Theme) => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('cpt-theme-toast', { detail: { theme: nextTheme } }));
+  };
+
   useEffect(() => {
     const savedTheme = parsePersistedAppTheme(localStorage.getItem('cpt-theme'));
     setThemeState(savedTheme);
@@ -48,10 +53,13 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
   const setTheme = (next: Theme) => {
     setThemeState(next);
+    emitThemeToast(next);
   };
 
   const cycleTheme = () => {
-    setThemeState((prev) => nextAppThemeAfter(prev));
+    const next = nextAppThemeAfter(theme);
+    setThemeState(next);
+    emitThemeToast(next);
   };
 
   return (

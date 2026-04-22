@@ -7,6 +7,7 @@ import { HorizontalBarChart } from '@/components/charts';
 import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
 import { LOADING_NOVA_DATA_PLEASE_WAIT, NOVA_CORE_DEVS } from '@/constants';
 import { useWorkHoursToday } from '@/hooks';
+import { useTheme } from '@/providers/ThemeProvider';
 import styles from './DevCornerOneDashboard.module.scss';
 
 interface HourThemeColors {
@@ -99,32 +100,34 @@ function getFlashLevel(zone: HourZone, hours: number): BarFlashLevel {
 }
 
 export const WorkHoursTodayPanel = () => {
+  const { theme } = useTheme();
   const { hours, loading } = useWorkHoursToday();
   const [themeColors, setThemeColors] = useState<HourThemeColors | null>(null);
   const [now, setNow] = useState<Date>(new Date());
 
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
+    const readToken = (name: string, fallback: string): string => {
+      const value = s.getPropertyValue(name).trim();
+      return value || fallback;
+    };
     setThemeColors({
-      successFill: 'rgba(34,197,94,0.35)',
-      warningFill: 'rgba(234,179,8,0.35)',
-      orangeFill: 'rgba(249,115,22,0.35)',
-      aheadFill: 'rgba(36,205,197,0.35)',
-      superFill: 'rgba(34,211,238,0.45)',
-      dangerFill: s.getPropertyValue('--chart-danger').trim() || 'rgba(239,68,68,0.78)',
-      neutralFill: 'rgba(36,205,197,0.35)',
-      successBorder: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
-      warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
-      orangeBorder: s.getPropertyValue('--chart-orange-border').trim() || 'rgb(249,115,22)',
-      aheadBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
-      superBorder: 'rgb(34,211,238)',
-      dangerBorder: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
-      markerColor:
-        s.getPropertyValue('--work-hours-target-line-color').trim()
-        || s.getPropertyValue('--primary-color').trim()
-        || 'rgb(36,205,197)',
+      successFill: readToken('--work-hours-success-fill', 'rgba(34,197,94,0.35)'),
+      warningFill: readToken('--work-hours-warning-fill', 'rgba(234,179,8,0.35)'),
+      orangeFill: readToken('--work-hours-orange-fill', 'rgba(249,115,22,0.35)'),
+      aheadFill: readToken('--work-hours-ahead-fill', 'rgba(36,205,197,0.35)'),
+      superFill: readToken('--work-hours-super-fill', 'rgba(34,211,238,0.45)'),
+      dangerFill: readToken('--work-hours-danger-fill', 'rgba(239,68,68,0.78)'),
+      neutralFill: readToken('--work-hours-neutral-fill', 'rgba(36,205,197,0.35)'),
+      successBorder: readToken('--chart-success-border', 'rgb(34,197,94)'),
+      warningBorder: readToken('--chart-warning-border', 'rgb(234,179,8)'),
+      orangeBorder: readToken('--chart-orange-border', 'rgb(249,115,22)'),
+      aheadBorder: readToken('--chart-bar-primary-border', 'rgb(36,205,197)'),
+      superBorder: readToken('--work-hours-super-border', 'rgb(34,211,238)'),
+      dangerBorder: readToken('--chart-danger-border', 'rgb(239,68,68)'),
+      markerColor: readToken('--work-hours-target-line-color', readToken('--primary-color', 'rgb(36,205,197)')),
     });
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
@@ -175,7 +178,7 @@ export const WorkHoursTodayPanel = () => {
       values: members.map((m) => m.hours),
       colors: zones.map((z) => getBarFill(z, themeColors)),
       borderColors: zones.map((z) => getBorderColor(z, themeColors)),
-      labelColors: members.map((m) => (m.hours <= 0 ? 'rgb(239,68,68)' : '')),
+      labelColors: members.map((m) => (m.hours <= 0 ? themeColors.dangerBorder : '')),
       targetMarker: {
         value: targetHours,
         color: themeColors.markerColor,

@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import { PrimeReactProvider } from './PrimeReactProvider';
 import { ThemeProvider } from './ThemeProvider';
+import { ThemeChangeToast } from './ThemeChangeToast';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -11,7 +12,10 @@ interface ProvidersProps {
 export const Providers = ({ children }: ProvidersProps) => {
   return (
     <ThemeProvider>
-      <PrimeReactProvider>{children}</PrimeReactProvider>
+      <PrimeReactProvider>
+        {children}
+        <ThemeChangeToast />
+      </PrimeReactProvider>
     </ThemeProvider>
   );
 };

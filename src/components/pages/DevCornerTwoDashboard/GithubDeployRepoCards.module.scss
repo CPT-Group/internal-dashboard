@@ -142,8 +142,8 @@
   font-size: calc(var(--content-text-size, 1rem) * 0.74);
   font-weight: 700;
   color: var(--text-color);
-  background: rgba(120, 120, 140, 0.2);
-  border: 1px solid rgba(120, 120, 140, 0.35);
+  background: var(--github-deploy-surface-muted-bg);
+  border: 1px solid var(--github-deploy-surface-muted-border);
   border-radius: 999px;
   padding: 0.08rem 0.36rem;
   line-height: 1.15;
@@ -186,9 +186,9 @@
 
 .activeEnvBadgeQueued {
   :global(.p-tag) {
-    background: var(--orange-500) !important;
-    border: 1px solid var(--orange-400) !important;
-    color: #1f1300 !important;
+    background: var(--github-deploy-queue-chip-bg) !important;
+    border: 1px solid var(--github-deploy-queue-chip-border) !important;
+    color: var(--github-deploy-queue-chip-text) !important;
   }
 }
 
@@ -197,9 +197,9 @@
   font-weight: 500;
   padding: 0.12rem 0.4rem;
   border-radius: var(--border-radius);
-  border: 1px solid var(--surface-border);
-  background: rgba(30, 30, 46, 0.85);
-  color: var(--text-color);
+  border: 1px solid var(--github-deploy-branch-pill-border);
+  background: var(--github-deploy-branch-pill-bg);
+  color: var(--github-deploy-branch-pill-text);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -214,9 +214,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--yellow-300);
-  border: 1px solid rgba(234, 179, 8, 0.45);
-  background: rgba(234, 179, 8, 0.12);
+  color: var(--github-deploy-running-chip-text);
+  border: 1px solid var(--github-deploy-running-chip-border);
+  background: var(--github-deploy-running-chip-bg);
   border-radius: 999px;
   padding: 0.1rem 0.4rem;
 }
@@ -232,9 +232,9 @@
   align-items: center;
 
   :global(.p-tag) {
-    background: var(--orange-500) !important;
-    border: 1px solid var(--orange-400) !important;
-    color: #1f1300 !important;
+    background: var(--github-deploy-queue-chip-bg) !important;
+    border: 1px solid var(--github-deploy-queue-chip-border) !important;
+    color: var(--github-deploy-queue-chip-text) !important;
     font-size: calc(var(--content-text-size, 1rem) * 0.68);
     font-weight: 700;
     text-transform: uppercase;
@@ -248,9 +248,9 @@
   align-items: center;
 
   :global(.p-tag) {
-    background: var(--orange-500) !important;
-    border: 1px solid var(--orange-400) !important;
-    color: #1f1300 !important;
+    background: var(--github-deploy-queue-chip-bg) !important;
+    border: 1px solid var(--github-deploy-queue-chip-border) !important;
+    color: var(--github-deploy-queue-chip-text) !important;
     font-size: calc(var(--content-text-size, 1rem) * 0.62);
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -260,9 +260,9 @@
 }
 
 .environmentBoard {
-  border: 1px solid rgba(120, 120, 140, 0.35);
+  border: 1px solid var(--github-deploy-surface-muted-border);
   border-radius: var(--border-radius);
-  background: rgba(25, 25, 35, 0.52);
+  background: var(--github-deploy-surface-muted-bg);
   padding: 0.18rem 0.2rem;
   display: flex;
   flex-direction: column;
@@ -333,7 +333,7 @@
 
 .environmentInlineProgressRunning {
   &:global(.p-progressbar) {
-    background: rgba(234, 179, 8, 0.2);
+    background: var(--github-deploy-inline-running-track);
     height: 0.2rem !important;
   }
 
@@ -344,7 +344,7 @@
 
 .environmentInlineProgressQueued {
   &:global(.p-progressbar) {
-    background: rgba(249, 115, 22, 0.22);
+    background: var(--github-deploy-inline-queued-track);
     height: 0.2rem !important;
   }
 
@@ -395,9 +395,9 @@
   animation: deployEnvQueuedPulse 1.9s ease-in-out infinite;
 
   .environmentStatusWrap :global(.p-tag) {
-    background: var(--orange-500) !important;
-    border: 1px solid var(--orange-400) !important;
-    color: #1f1300 !important;
+    background: var(--github-deploy-queue-chip-bg) !important;
+    border: 1px solid var(--github-deploy-queue-chip-border) !important;
+    color: var(--github-deploy-queue-chip-text) !important;
   }
 }
 
@@ -540,8 +540,8 @@
   margin-top: auto;
   flex-shrink: 0;
   border-radius: var(--border-radius);
-  border: 1px solid rgba(255, 79, 216, 0.34);
-  background: rgba(30, 30, 46, 0.9);
+  border: 1px solid var(--github-deploy-footer-ticker-border);
+  background: var(--github-deploy-footer-ticker-bg);
   padding: 0.16rem 0;
   min-height: 1.45rem;
 }
@@ -550,8 +550,8 @@
   padding: 0 0.45rem;
   font-size: calc(var(--content-text-size, 1rem) * 0.82);
   font-weight: 800;
-  color: var(--github-deploy-timeline-meta-color, #ff4fd8);
-  text-shadow: 0 0 8px rgba(255, 79, 216, 0.35);
+  color: var(--github-deploy-footer-ticker-text, var(--github-deploy-timeline-meta-color));
+  text-shadow: var(--github-deploy-footer-ticker-shadow);
   line-height: 1.35;
 }
 
@@ -600,9 +600,9 @@
 }
 
 .tagWrapInfo :global(.p-tag) {
-  background: var(--orange-500) !important;
-  border: 1px solid var(--orange-400) !important;
-  color: #1f1300 !important;
+  background: var(--github-deploy-queue-chip-bg) !important;
+  border: 1px solid var(--github-deploy-queue-chip-border) !important;
+  color: var(--github-deploy-queue-chip-text) !important;
   animation: deployTagPulseInfo 2.2s ease-in-out infinite;
 }
 

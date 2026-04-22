@@ -43,10 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Dev Corner theme hit targets**: Removed the extra empty strip tiles; theme cycling is on the existing **Limbo** KPI (`KpiStrip` / `onActivate`) and **Successful** GitHub deploy summary card (`GithubDeployStatusSlide`), matching the intended UX.
+- **Light-theme contrast regressions in Dev Corner cards/tickers**: Replaced remaining hardcoded dark surfaces and fixed text colors in Dev Corner One/Two with theme tokens (NOVA chip fills, work-hours badges, activity number badges, GitHub deploy branch/env board/ticker chips), so `light` and `ms-access-2010` no longer render dark gray “leftover” blocks or low-contrast text.
+- **Theme-switch polish fixes**: `HorizontalBarChart` now re-reads theme tokens when `data-theme` changes (fixes Work Hours axis/target marker colors after switching themes), Team Activity `x / y open` badges now use theme badge tokens, and duplicate “Theme changed” toasts were removed by making `cycleTheme()` emit exactly once per action.
 
 ### Changed
 
 - **`cycleTheme()` order**: `ThemeProvider` (and the home sticky switcher) now cycle **dark → light → dark-synth → ms-access-2010** instead of starting the sequence at dark-synth; `layout.tsx` theme-init `valid` list is documented to stay in sync with `APP_THEME_CYCLE_ORDER` in `appThemeCycle.ts`.
+- **Theme-change feedback toast (3s)**: Added global `ThemeChangeToast` listener (`cpt-theme-toast`) and emit-on-change in `ThemeProvider` so cycling themes now shows a bottom-right confirmation: **Theme changed to: <name>** for 3 seconds.
 
 - **NOVA-1631 complete — 254 / 257 pre-2025 `www` folders removed from `\\10.0.0.5\www`**: The delete manifest (257 folders, SHA256-verified) finished at **98.8% removed**, reclaiming **+223.73 GB on F:\\** (17.75 GB free → 241.48 GB free; drive fullness 99.1% → 88.2%). Phased execution:
   - **Phase 1 — serial run** (4/17, `scripts/delete-www-old-sites.cjs`, `rd /s /q` in a Node single-threaded loop): 25 folders deleted before the process exited on its own after one ~6.5h outlier (`bamboosettlementfiles`) dominated its run.

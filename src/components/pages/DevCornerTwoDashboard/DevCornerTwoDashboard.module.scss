@@ -99,7 +99,7 @@
 .ticketCardNova {
   border-color: var(--nova-accent-border);
   box-shadow: inset 3px 0 0 0 var(--nova-accent-border);
-  background: rgba(36, 205, 197, 0.35);
+  background: var(--nova-accent-bg);
 }
 
 /* ── Bug ticket alert ── */
@@ -120,7 +120,7 @@
 
 .ticketCardBug {
   border: 3px solid var(--red-500);
-  background: rgba(239, 68, 68, 0.6);
+  background: var(--bug-accent-bg);
   animation: bugBorderPulse 2.1s ease-in-out infinite;
   transition:
     box-shadow 250ms ease,
@@ -128,14 +128,14 @@
     transform 250ms ease;
 
   :global(.p-card-body) {
-    color: #fff;
+    color: var(--bug-accent-text);
   }
 }
 
 .ticketCardBug .ticketKey,
 .ticketCardBug .ticketSummary,
 .ticketCardBug .ticketMetaItem {
-  color: #fff !important;
+  color: var(--bug-accent-text) !important;
   font-weight: 700;
 }
 
@@ -220,13 +220,13 @@
 }
 
 .tableRowBug {
-  background: rgba(239, 68, 68, 0.55) !important;
+  background: var(--bug-accent-bg) !important;
   animation: bugRowPulse 2.1s ease-in-out infinite;
   border-top: 3px solid var(--red-500);
   border-bottom: 3px solid var(--red-500);
 
   :global(td) {
-    color: #fff !important;
+    color: var(--bug-accent-text) !important;
     font-weight: 700;
     border-color: rgba(239, 68, 68, 0.4);
   }
