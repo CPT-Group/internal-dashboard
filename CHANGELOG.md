@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [0.1.61] - 2026-04-23
+
+### Added
+
+- **analytics-api successfully deployed to VM `CPT-Dash-API` (10.24.20.181)** as the `dashboard.svc` service account. Self-service deploy (no IT/admin needed for the app itself): Node 22.11.0 portable zip extracted to `C:\ProgramData\analytics-api\node\`, source pushed via `Copy-Item -ToSession`, `npm ci` + `npm run build` on the VM, `.env.local` composed from `internal-dashboard/.env.local` SQL credentials + a fresh bearer token.
+
+### Verified (end-to-end against real production SQL)
+
+- `GET /api/v1/health` returns `sqlClaims: "ok"` and `sqlWebsite: "ok"` — both pools (`CPT2K16` for claims, `10.0.0.5` for websites) connecting cleanly.
+- `GET /api/v1/submission-report` returns real per-site totals matching `internal-dashboard`'s Website Health button (e.g. Dermacare: 621 total / 50 today / 555 yesterday).
+- `GET /api/v1/website-health/summary` returns 17 active sites, each with the correct `websiteDbName` / `cleanClaimsDbName` mappings and submitted-vs-matched counts.
+- `GET /api/v1/website-health/daily-report` returns per-site `deficientTrueCount` / `disputedTrueCount` counts.
+- `POST /api/v1/website-health/report-by-date` returns correct per-date windows (5:15 AM PT boundary → `12:15:00 UTC` during DST) for both single-day and date-range inputs; 400 on invalid payloads (Zod validation wired).
+- Security hardening confirmed live: helmet headers (CSP, HSTS, frame-ancestors 'self', etc.), express-rate-limit (`120 requests / 60s`), bearer-only access (unauthenticated hits rejected), request-id propagation, pino structured logs.
+
+### Known remaining blockers (IT tickets, not code)
+
+- **Public ingress path for Netlify-hosted dashboard.** Netlify functions run on AWS us-east-1 and cannot reach a private `10.x.x.x` IP. Read-only Azure discovery (2026-04-23) confirmed CPT already runs an enterprise API gateway stack — `apim-cpt-prod` (StandardV2, External VNet), Front Door `CPT-WESTUS2-AZFrontDoor01-PROD` with WAF (`cptwestus2waf02`, `Premium`), Key Vault `cptapim`, and custom domain `int.cptgroup.com` already pointing at APIM. Decision: publish `analytics-api` as a new API under `apim-cpt-prod` (path `/analytics-api/v1/...`, backend `http://10.24.20.181:8080/api/v1`, product `unlimited`, bearer token stored as APIM named value sourced from `cptapim` Key Vault). Open network-layer question for IT: whether `CPT_Group-vnet/cpt-apim` subnet has hybrid connectivity to the corporate 10.24.20.0/24 network; if not, fallback is the APIM self-hosted gateway container on a corp VM. This replaces the original "Entra Application Proxy" proposal — APIM is the purpose-built fit and already paid for.
+- **Process persistence across reboot on `CPT-Dash-API`**: `Register-ScheduledTask` requires CIM and `schtasks.exe /create /RU /RP` requires "Log on as a batch job", neither of which `dashboard.svc` currently has. Need IT to either (a) register a Scheduled Task/Windows Service that auto-runs `C:\ProgramData\analytics-api\node\node.exe dist\index.js` from `C:\ProgramData\analytics-api\src` as `dashboard.svc` at boot, or (b) grant "Log on as a batch job" so we can self-register the task.
+- **Firewall scope for port 8080** on `CPT-Dash-API` (only required if the "APIM via VNet" path is taken; moot if self-hosted gateway runs on the same VM): Allow-rule exists but needs to include the APIM subnet's source range.
+- Full IT request drafted at `analytics-api/docs/it-cutover-request.md` consolidating all three asks.
+
+### Changed — analytics-api companion repo
+
+- `analytics-api` commit `1cbd584` (`fix: load .env.local and default SQL pools to [master]`) — two runtime bugs surfaced during the VM smoke, both silent locally: (1) `dotenv.config()` only read `.env` so the canonical `.env.local` was silently skipped; (2) the `PROD_DB` pool tried to attach to a database (`CPTMaster`) that only exists on `CPT2K16`, not on the production WEB DB `10.0.0.5`. Pools now always connect to `[master]` and per-case DBs are fully-qualified in queries (e.g. `[FashionNova_Alcazar_C].dbo.Submissions`), matching `internal-dashboard`'s `scan.ts` `toPool()` exactly.
+
 ## [0.1.60] - 2026-03-30
 
 ### Changed
@@ -40,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Shared `ThemeCycleHitTarget` + hidden theme on existing tiles**: `ThemeCycleHitTarget` (`strip` / `title`) lives in `src/components/ui/ThemeCycleHitTarget/`. **Website Health** uses the `title` variant on the page heading. **Dev Corner One** uses **`KpiStrip`** optional **`onActivate`** on the existing **Limbo** KPI card only (no extra column). **Dev Corner Two** attaches **`cycleTheme`** to the existing **Successful** deploy summary card in **`GithubDeployStatusSlide`** (no separate top bar tile).
 - **Julie + Jackie name-card theme cycle**: `CornerInfoCard` now supports optional hidden activation (`onActivate`) with keyboard support, and both `JuliesOfficeDashboard` and `JackiesOfficeDashboard` wire their floating name cards to `cycleTheme` (same behavior as the hidden controls on Website Health/Dev dashboards).
+- **Julie + Jackie Completed Today corner card (not committed yet)**: Added shared `useCompletedTodayCount` hook backed by `operationalJiraStore` polling/cache and rendered a top-right `CornerInfoCard` on both office dashboards showing `Completed Today: <count>` from NOVA `closedToday`.
 
 ### Fixed
 
