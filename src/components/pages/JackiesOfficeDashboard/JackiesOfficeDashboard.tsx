@@ -2,6 +2,7 @@
 
 import { BackgroundSlideshow, CornerInfoCard } from '@/components/ui';
 import { JACKIES_BACKGROUND_SLIDES } from '@/constants';
+import { useTheme } from '@/providers/ThemeProvider';
 import styles from './JackiesOfficeDashboard.module.css';
 
 /**
@@ -9,6 +10,8 @@ import styles from './JackiesOfficeDashboard.module.css';
  * public/backgrounds/jackies-cute-backgrounds/. Floating corner card with name/title.
  */
 export const JackiesOfficeDashboard = () => {
+  const { cycleTheme } = useTheme();
+
   return (
     <div className={styles.jackiesDashboardContent}>
       <BackgroundSlideshow
@@ -22,6 +25,7 @@ export const JackiesOfficeDashboard = () => {
           name="Jackie"
           title="Vice President, Operations"
           widgetType="none"
+          onActivate={cycleTheme}
         />
       </div>
     </div>

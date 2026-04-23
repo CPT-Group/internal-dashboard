@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Shared `ThemeCycleHitTarget` + hidden theme on existing tiles**: `ThemeCycleHitTarget` (`strip` / `title`) lives in `src/components/ui/ThemeCycleHitTarget/`. **Website Health** uses the `title` variant on the page heading. **Dev Corner One** uses **`KpiStrip`** optional **`onActivate`** on the existing **Limbo** KPI card only (no extra column). **Dev Corner Two** attaches **`cycleTheme`** to the existing **Successful** deploy summary card in **`GithubDeployStatusSlide`** (no separate top bar tile).
+- **Julie + Jackie name-card theme cycle**: `CornerInfoCard` now supports optional hidden activation (`onActivate`) with keyboard support, and both `JuliesOfficeDashboard` and `JackiesOfficeDashboard` wire their floating name cards to `cycleTheme` (same behavior as the hidden controls on Website Health/Dev dashboards).
 
 ### Fixed
 

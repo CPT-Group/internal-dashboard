@@ -11,6 +11,8 @@ export interface CornerInfoCardProps {
   title: string;
   /** Optional widget slot; 'none' shows only name/title. 'weather' and 'cpt' reserved for future content. */
   widgetType?: CornerInfoCardWidgetType;
+  /** Optional hidden action (e.g. theme cycle) when the card is clicked. */
+  onActivate?: () => void;
 }
 
 /**
@@ -21,9 +23,28 @@ export const CornerInfoCard = ({
   name,
   title,
   widgetType = 'none',
+  onActivate,
 }: CornerInfoCardProps) => {
+  const interactive = typeof onActivate === 'function';
+
   return (
-    <div className={styles.card} role="complementary" aria-label={`${name}, ${title}`}>
+    <div
+      className={`${styles.card}${interactive ? ` ${styles.cardInteractive}` : ''}`}
+      role={interactive ? 'button' : 'complementary'}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? 'Next visual style' : `${name}, ${title}`}
+      onClick={interactive ? onActivate : undefined}
+      onKeyDown={
+        interactive
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onActivate();
+              }
+            }
+          : undefined
+      }
+    >
       <div className={styles.main}>
         <div className={styles.name}>{name}</div>
         <div className={styles.title}>{title}</div>

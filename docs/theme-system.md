@@ -9,7 +9,7 @@ This document is the **canonical reference** for how the internal-dashboard them
 - **Pattern**: Matches **cpt-internal-tools**: one PrimeReact theme CSS + app SCSS (variables → base → utilities → **theme overrides**). Theme is applied via the `data-theme` attribute on `<html>`; there is **no** dynamic `<link>` swap.
 - **Default theme**: **dark-synth** (synthwave purple/cyan). First paint and unknown/invalid stored values use dark-synth.
 - **Available themes**: `dark`, `light`, `dark-synth`, `ms-access-2010` (same set as `APP_THEME_CYCLE_ORDER` in `src/constants/appThemeCycle.ts`).
-- **Where you can change theme**: **Home page** – a sticky button at the top cycles themes and shows the active id. **Website Health** (`/website-health`) – the page title uses the shared `ThemeCycleHitTarget` (`title` variant). **Dev Corner One** – click the **Limbo** KPI card (first tile in the strip; `KpiItem.onActivate`). **Dev Corner Two** – on the GitHub deploy slide, click the **Successful** summary card (`GithubDeployStatusSlide`). Other routes do not expose a switcher unless added later.
+- **Where you can change theme**: **Home page** – a sticky button at the top cycles themes and shows the active id. **Website Health** (`/website-health`) – the page title uses the shared `ThemeCycleHitTarget` (`title` variant). **Dev Corner One** – click the **Limbo** KPI card (first tile in the strip; `KpiItem.onActivate`). **Dev Corner Two** – on the GitHub deploy slide, click the **Successful** summary card (`GithubDeployStatusSlide`). **Julie/Jackie office dashboards** – click the floating name card (`CornerInfoCard` `onActivate`).
 
 ---
 

@@ -2,6 +2,7 @@
 
 import { BackgroundSlideshow, CornerInfoCard } from '@/components/ui';
 import { JULIES_BACKGROUND_SLIDES } from '@/constants';
+import { useTheme } from '@/providers/ThemeProvider';
 import styles from './JuliesOfficeDashboard.module.css';
 
 /**
@@ -9,6 +10,8 @@ import styles from './JuliesOfficeDashboard.module.css';
  * public/backgrounds/julies-unicorns/. Floating corner card with name/title; widgetType supports weather/cpt later.
  */
 export const JuliesOfficeDashboard = () => {
+  const { cycleTheme } = useTheme();
+
   return (
     <div className={styles.juliesDashboardContent}>
       <BackgroundSlideshow
@@ -22,6 +25,7 @@ export const JuliesOfficeDashboard = () => {
           name="Julie Green"
           title="CPT President & Unicorn Expert"
           widgetType="none"
+          onActivate={cycleTheme}
         />
       </div>
     </div>
