@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [0.1.62] - 2026-04-23
+
+### analytics-api published to production via existing Azure API Management
+
+- **`analytics-api` is now live at `https://int.cptgroup.com/analytics-api/*`**, published through the existing `apim-cpt-prod` API Management instance. Entirely self-serve — Azure work done by Kyle, IT was not involved in this step. All changes are additive (no existing APIM API, policy, product, named value, or subscription was modified).
+- **What got created in APIM** (all new, under `CPT_Group / apim-cpt-prod`):
+  - `api analytics-api` — imported from `analytics-api/docs/openapi.yaml`, path `analytics-api`, backend `http://10.24.20.181:8080/api/v1`, protocols `https` only.
+  - `namedValue analytics-api-bearer-token` — secret, inline (will rotate into Key Vault `cptapim` once Kyle's RBAC on that vault is restored; inline is fine operationally — APIM encrypts at rest).
+  - API-scope **inbound policy** attaches `Authorization: Bearer {{analytics-api-bearer-token}}` to every request forwarded to the backend VM. Source-of-truth copy lives at `analytics-api/docs/apim-inbound-policy.xml`.
+  - Linked to product `unlimited` (subscription required).
+  - New subscription `internal-dashboard-analytics-api` scoped to `/apis/analytics-api` only (least-privilege — the subscription key cannot call any other APIM API).
+- **Network path (confirmed live)**: `client → int.cptgroup.com (Front Door `CPT-WESTUS2-AZFrontDoor01-PROD` + WAF `cptwestus2waf02`) → APIM `apim-cpt-prod` in subnet `CPT_Group-vnet/cpt-apim` → existing `CPTOffice` S2S VPN → `CPT-VPN-Office` local gateway (`10.24.0.0/16`) → `CPT-Dash-API` (10.24.20.181:8080) → Node/Express → SQL (`CPT2K16` + `10.0.0.5`)`. No self-hosted gateway, no new firewall rules, no ExpressRoute, no new ingress — the VPN already advertised the corporate subnet.
+- **End-to-end smoke (through `https://int.cptgroup.com/*`, with APIM subscription key)**: all five endpoints return 200 with real production data. Unauthenticated requests (no `Ocp-Apim-Subscription-Key`) return 401 — APIM subscription enforcement is verified working. Same behavior as the VM-localhost smoke from 0.1.61.
+
+### Open items remaining
+
+- **Windows-level persistence on `CPT-Dash-API`** (single IT ticket — see `analytics-api/docs/it-cutover-request.md`): the Node process currently only runs while a WinRM session is open. `dashboard.svc` lacks both CIM access and the "Log on as a batch job" right, so we can't self-register a Scheduled Task. IT to register a startup task/service, OR grant the batch-logon right and we'll self-register. Until then, a human has to log in and start the service after any reboot.
+- **Dashboard consumer wiring** (tracked under `NOVA-1677`, not yet in code): Website Health Next.js routes still hit SQL directly. Planned env vars for the switchover (local + Netlify): `ANALYTICS_API_BASE_URL=https://int.cptgroup.com/analytics-api` and `ANALYTICS_API_SUBSCRIPTION_KEY=<primary key of APIM subscription `internal-dashboard-analytics-api`>`. The dashboard never sees the backend bearer token — APIM's inbound policy handles that internally.
+- **Key Vault-sourced named value** (low priority): migrate `analytics-api-bearer-token` out of inline APIM storage and into `cptapim` Key Vault once Kyle's RBAC on that vault is restored. Purely a hardening step; operationally identical.
+
 ## [0.1.61] - 2026-04-23
 
 ### Added
@@ -74,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CornerInfoCard theme bleed in office dashboards**: Removed hardcoded purple card background and switched `CornerInfoCard` to dedicated theme variables (`--corner-info-card-*`) with per-theme values, so light/MS Access themes no longer retain dark-synth styling after theme changes.
 - **Clock card subtitle cleanup**: Removed the literal `(server synced)` suffix from Julie/Jackie clock card UI text while preserving server time re-sync behavior behind the scenes.
 - **Completed Today loading UX**: `CornerInfoCard` now supports a built-in skeleton loading state, and Julie/Jackie “Completed Today” cards render skeleton placeholders while the Jira operational query is still loading.
+- **Clock subtitle format**: Replaced the timezone subtitle (e.g. `PDT`) with compact date text (`M/D`) on Julie/Jackie clock cards for cleaner TV readability.
 
 ### Fixed
 
