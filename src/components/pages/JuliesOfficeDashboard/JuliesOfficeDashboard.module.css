@@ -19,3 +19,29 @@
 .cornerWrap > * {
   pointer-events: auto;
 }
+
+/* KPI companion card (top-right), same visual component as name tag. */
+.completedWrap {
+  position: absolute;
+  top: 3.5rem;
+  right: 3.5rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.completedWrap > * {
+  pointer-events: auto;
+}
+
+/* Clock card in bottom-left for balance against bottom-right name card. */
+.clockWrap {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 3.5rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.clockWrap > * {
+  pointer-events: auto;
+}

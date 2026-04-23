@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Shared `ThemeCycleHitTarget` + hidden theme on existing tiles**: `ThemeCycleHitTarget` (`strip` / `title`) lives in `src/components/ui/ThemeCycleHitTarget/`. **Website Health** uses the `title` variant on the page heading. **Dev Corner One** uses **`KpiStrip`** optional **`onActivate`** on the existing **Limbo** KPI card only (no extra column). **Dev Corner Two** attaches **`cycleTheme`** to the existing **Successful** deploy summary card in **`GithubDeployStatusSlide`** (no separate top bar tile).
 - **Julie + Jackie name-card theme cycle**: `CornerInfoCard` now supports optional hidden activation (`onActivate`) with keyboard support, and both `JuliesOfficeDashboard` and `JackiesOfficeDashboard` wire their floating name cards to `cycleTheme` (same behavior as the hidden controls on Website Health/Dev dashboards).
 - **Julie + Jackie Completed Today corner card (not committed yet)**: Added shared `useCompletedTodayCount` hook backed by `operationalJiraStore` polling/cache and rendered a top-right `CornerInfoCard` on both office dashboards showing `Completed Today: <count>` from NOVA `closedToday`.
+- **Julie + Jackie server-synced clock card (not committed yet)**: Added bottom-left clock cards to both office dashboards powered by `useSyncedClock` and `/api/time`, with one-second local ticks plus periodic server re-sync to limit drift on long-running displays.
+
+### Fixed
+
+- **CornerInfoCard theme bleed in office dashboards**: Removed hardcoded purple card background and switched `CornerInfoCard` to dedicated theme variables (`--corner-info-card-*`) with per-theme values, so light/MS Access themes no longer retain dark-synth styling after theme changes.
+- **Clock card subtitle cleanup**: Removed the literal `(server synced)` suffix from Julie/Jackie clock card UI text while preserving server time re-sync behavior behind the scenes.
+- **Completed Today loading UX**: `CornerInfoCard` now supports a built-in skeleton loading state, and Julie/Jackie “Completed Today” cards render skeleton placeholders while the Jira operational query is still loading.
 
 ### Fixed
 
