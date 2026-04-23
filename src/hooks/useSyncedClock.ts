@@ -11,8 +11,9 @@ const TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
   second: '2-digit',
 });
 
-const TIMEZONE_FORMATTER = new Intl.DateTimeFormat('en-US', {
-  timeZoneName: 'short',
+const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  month: 'numeric',
+  day: 'numeric',
 });
 
 interface TimeResponse {
@@ -23,12 +24,6 @@ const isTimeResponse = (value: unknown): value is TimeResponse => {
   if (typeof value !== 'object' || value == null) return false;
   const candidate = value as { nowMs?: unknown };
   return typeof candidate.nowMs === 'number';
-};
-
-const getTimeZoneLabel = (date: Date): string => {
-  const parts = TIMEZONE_FORMATTER.formatToParts(date);
-  const zonePart = parts.find((part) => part.type === 'timeZoneName');
-  return zonePart?.value ?? '';
 };
 
 /**
@@ -90,7 +85,7 @@ export const useSyncedClock = () => {
     const nowDate = new Date(nowMs);
     return {
       timeLabel: TIME_FORMATTER.format(nowDate),
-      timeZoneLabel: getTimeZoneLabel(nowDate),
+      dateLabel: DATE_FORMATTER.format(nowDate),
     };
   }, [baseEpochAtMono, tick]);
 };

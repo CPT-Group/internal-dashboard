@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Clock card subtitle cleanup**: Removed the literal `(server synced)` suffix from Julie/Jackie clock card UI text while preserving server time re-sync behavior behind the scenes.
 - **Completed Today loading UX**: `CornerInfoCard` now supports a built-in skeleton loading state, and Julie/Jackie “Completed Today” cards render skeleton placeholders while the Jira operational query is still loading.
 - **Clock subtitle format**: Replaced the timezone subtitle (e.g. `PDT`) with compact date text (`M/D`) on Julie/Jackie clock cards for cleaner TV readability.
+- **Clock date display preference**: Updated office clock subtitle to show date (`M/D`) instead of timezone text to match TV readability feedback.
 
 ### Fixed
 

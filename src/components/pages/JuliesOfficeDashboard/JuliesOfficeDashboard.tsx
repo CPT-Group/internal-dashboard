@@ -13,7 +13,7 @@ import styles from './JuliesOfficeDashboard.module.css';
 export const JuliesOfficeDashboard = () => {
   const { cycleTheme } = useTheme();
   const { completedToday, loading: completedTodayLoading } = useCompletedTodayCount();
-  const { timeLabel, timeZoneLabel } = useSyncedClock();
+  const { timeLabel, dateLabel } = useSyncedClock();
 
   return (
     <div className={styles.juliesDashboardContent}>
@@ -42,7 +42,7 @@ export const JuliesOfficeDashboard = () => {
       <div className={styles.clockWrap}>
         <CornerInfoCard
           name={timeLabel}
-          title={timeZoneLabel}
+          title={dateLabel}
           widgetType="none"
         />
       </div>

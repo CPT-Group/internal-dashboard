@@ -13,7 +13,7 @@ import styles from './JackiesOfficeDashboard.module.css';
 export const JackiesOfficeDashboard = () => {
   const { cycleTheme } = useTheme();
   const { completedToday, loading: completedTodayLoading } = useCompletedTodayCount();
-  const { timeLabel, timeZoneLabel } = useSyncedClock();
+  const { timeLabel, dateLabel } = useSyncedClock();
 
   return (
     <div className={styles.jackiesDashboardContent}>
@@ -42,7 +42,7 @@ export const JackiesOfficeDashboard = () => {
       <div className={styles.clockWrap}>
         <CornerInfoCard
           name={timeLabel}
-          title={timeZoneLabel}
+          title={dateLabel}
           widgetType="none"
         />
       </div>
