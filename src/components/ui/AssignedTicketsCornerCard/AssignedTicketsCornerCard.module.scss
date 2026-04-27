@@ -1,0 +1,70 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  width: min(26rem, 38vw);
+  max-height: 15.5rem;
+  background: var(--corner-info-card-bg, rgba(26, 10, 46, 0.65));
+  border: 1px solid var(--corner-info-card-border, var(--surface-400, #5c4d7a));
+  border-radius: 0.35rem;
+  box-shadow: var(--corner-info-card-shadow, 0 2px 8px rgba(0, 0, 0, 0.15));
+}
+
+.header {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color, #dbd4fa);
+}
+
+.loadingWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.listWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 12.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.2rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--corner-info-card-divider, rgba(184, 114, 249, 0.08));
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:hover .key,
+.row:hover .detail {
+  color: var(--primary-color, #24cdc5);
+}
+
+.key {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-color, #dbd4fa);
+}
+
+.detail {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 0.78rem;
+  color: var(--text-color-secondary, #9d8fbd);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

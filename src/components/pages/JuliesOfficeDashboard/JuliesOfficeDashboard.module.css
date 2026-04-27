@@ -45,3 +45,16 @@
 .clockWrap > * {
   pointer-events: auto;
 }
+
+/* Assigned Jira list card in the last open corner (top-left). */
+.assignedWrap {
+  position: absolute;
+  top: 3.5rem;
+  left: 3.5rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.assignedWrap > * {
+  pointer-events: auto;
+}

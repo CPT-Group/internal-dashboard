@@ -84,6 +84,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Office dashboards assigned-ticket corner card (top-left, reusable)**: Added a shared `AssignedTicketsCornerCard` component + `useAssignedJiraTickets` hook and wired both `JackiesOfficeDashboard` (`6170ed0ef6da6a006aa38240`) and `JuliesOfficeDashboard` (`70121:35744a1b-356c-45c7-8a12-156352d60ddb`) to it. Card rows are click-through Jira links with compact `key + component` display (summary fallback with ellipsis), max-size constrained auto-scroll, and PrimeReact skeleton while loading; card is hidden entirely when assigned-ticket count resolves to `0`. Query scope excludes backlog and done tickets.
+- **NOVA-1282 attachment reset + canonical CSV package**: Rebuilt the Jira attachment set to only include the three non-zero missing-row exports (`Regents=459`, `Netgain=36,285`, `Keenan=2`) plus a compact overall summary CSV (`WebsiteHealth_MissingRows_OverallSummary_2026-04-24.csv`) to eliminate prior duplicate-version confusion.
+- **Website Health missing-row CSV package for legacy backfill review (NOVA-1282)**: Generated and attached per-case missing exports for `RegentsOfTheUniversityOfCalifornia_Fields_C`, `ProgressiveLeasingBreachLitigation_C`, `RheemManufacturingCompany_West_C`, `NetgainTechnologyConsumerDataBreachLitigation_C`, and `KeenanAndAssociates_Heath_C` as `<WebsiteDB>_MissingRows.csv` files. Export flow is read-only (no SQL updates), and each attachment was gated by missing-count parity checks before Jira upload.
 - **Shared `ThemeCycleHitTarget` + hidden theme on existing tiles**: `ThemeCycleHitTarget` (`strip` / `title`) lives in `src/components/ui/ThemeCycleHitTarget/`. **Website Health** uses the `title` variant on the page heading. **Dev Corner One** uses **`KpiStrip`** optional **`onActivate`** on the existing **Limbo** KPI card only (no extra column). **Dev Corner Two** attaches **`cycleTheme`** to the existing **Successful** deploy summary card in **`GithubDeployStatusSlide`** (no separate top bar tile).
 - **Julie + Jackie name-card theme cycle**: `CornerInfoCard` now supports optional hidden activation (`onActivate`) with keyboard support, and both `JuliesOfficeDashboard` and `JackiesOfficeDashboard` wire their floating name cards to `cycleTheme` (same behavior as the hidden controls on Website Health/Dev dashboards).
 - **Julie + Jackie Completed Today corner card (not committed yet)**: Added shared `useCompletedTodayCount` hook backed by `operationalJiraStore` polling/cache and rendered a top-right `CornerInfoCard` on both office dashboards showing `Completed Today: <count>` from NOVA `closedToday`.
@@ -96,6 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Completed Today loading UX**: `CornerInfoCard` now supports a built-in skeleton loading state, and Julie/Jackie “Completed Today” cards render skeleton placeholders while the Jira operational query is still loading.
 - **Clock subtitle format**: Replaced the timezone subtitle (e.g. `PDT`) with compact date text (`M/D`) on Julie/Jackie clock cards for cleaner TV readability.
 - **Clock date display preference**: Updated office clock subtitle to show date (`M/D`) instead of timezone text to match TV readability feedback.
+- **Website Health deficiency report row filtering parity**: Daily and scan-by-date report result rows now hide sites where both deficiency and disputed counts are `0`, while `totalSitesChecked` still reflects all active sites scanned.
+- **Website Health deficiency case-list source parity**: Deficiency scans now use the broader active-case list from `CPTMaster.dbo.OCPAutomation` (`Active=1` + `SQLName`) instead of requiring `WebServerDBName`, so active non-website cases are included in deficiency reporting.
 
 ### Fixed
 
@@ -105,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **NOVA-1282 Jira artifact cleanup (description + attachment canonicalization)**: Corrected Website Health CSV discrepancy documentation by replacing stale assumption counts with canonical attachment IDs/counts and removing duplicate stale CSV attachments from the ticket to prevent filename-version ambiguity during QA review.
 - **`cycleTheme()` order**: `ThemeProvider` (and the home sticky switcher) now cycle **dark → light → dark-synth → ms-access-2010** instead of starting the sequence at dark-synth; `layout.tsx` theme-init `valid` list is documented to stay in sync with `APP_THEME_CYCLE_ORDER` in `appThemeCycle.ts`.
 - **Theme-change feedback toast (3s)**: Added global `ThemeChangeToast` listener (`cpt-theme-toast`) and emit-on-change in `ThemeProvider` so cycling themes now shows a bottom-right confirmation: **Theme changed to: <name>** for 3 seconds.
 
@@ -140,6 +146,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Docs updated**: added the 3 rules to the `scripts/jira/README.md` rule table; added a new **gotcha #6** documenting the `jira.worklog.add` component shape (string `timeSpent`, `adjustEstimate` options, and the EVENT_INITIATOR fail-silent behaviour) so future automations don't have to reverse-engineer it.
 
 ### Changed
+
+- **Website Health backfill traceability rollout (selected legacy case DBs)**: Added `dbo.CleanClaims.added_2026_4_24` (`bit NOT NULL DEFAULT 0`) to five legacy case databases lacking a per-row backfill marker (`RegentsOfTheUniversityOfCalifornia_Fields_C_SQL`, `ProgressiveLeasingBreachLitigation_C_SQL`, `RheemManufacturingCompany_West_C_SQL`, `NetgainTechnologyConsumerDataBreachLitigation_C_SQL`, `KeenanAndAssociates_Heath_C_SQL`). Applied a constrained update only on the new marker column (`SET added_2026_4_24 = 1`) where existing operational signatures indicate manual sync provenance (`EnteredBy='manual-sync'` OR `LastUpdateBy='manual-sync'`). Result: all five DBs now have the marker column; current marker-true counts are `0` in each (no matching manual-sync signatures found), and no other columns/rows were modified.
+
+- **Website Health backfill marker validation policy pass (proof-only true flags)**: Ran a post-deploy signature audit on the same six case DBs (five new-marker targets + FashionNova baseline) to ensure `true` values are only applied when provenance is explicit. FashionNova remains the reference dataset (`added_2026_4_3=1` rows align with `EnteredBy/LastUpdateBy='manual-sync'`, count `11,500`). For the five newly marked legacy DBs, no `manual-sync` signatures were found in either `EnteredBy` or `LastUpdateBy`, so `added_2026_4_24` stays `0` for all rows by design (uncertain rows remain default-false). This confirms the intended rule: **unknown provenance must not be auto-labeled as backfilled**.
 
 - **Website Health — Pacific timestamps in Teams titles, tables, UI, and Jira**: Added shared `formatWebsiteHealthPacificDateTime` (`America/Los_Angeles`, e.g. `9:53am 4/21/2026`). Teams webhook markdown H2 lines for main scan (alert / all clear), submission report, deficiency (daily) report, and scan-by-date now append that same run stamp; `Last Run` / `Run at` / 5:15 window bounds use it instead of raw ISO. The Website Health dashboard imports the same helper for all prior `toLocaleString()` call sites (summary, by-date, missing rows, Web DB issues). Jira auto-tickets from the dashboard format scan time and sample `DateReceived` values the same way.
 

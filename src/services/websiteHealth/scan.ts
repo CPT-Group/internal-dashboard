@@ -67,6 +67,11 @@ const activeSiteCache: ActiveSiteCache = {
   mappings: [],
 };
 
+const activeDeficiencyCaseCache: ActiveSiteCache = {
+  loadedAt: 0,
+  mappings: [],
+};
+
 interface DbServerConfig {
   server: string;
   user: string;
@@ -766,8 +771,9 @@ function getActiveSitesTtlMs(): number {
   return safeMin * 60 * 1000;
 }
 
-async function fetchActiveSiteMappingsFromDb(
-  claimsPool: ConnectionPool
+async function fetchActiveMappingsFromDb(
+  claimsPool: ConnectionPool,
+  options: { requireWebsiteDbName: boolean }
 ): Promise<WebsiteHealthSiteMapping[]> {
   const activeDb = process.env.WEBSITE_HEALTH_ACTIVE_CASES_DATABASE?.trim() || 'CPTMaster';
   const db = qIdentifier(activeDb);
@@ -799,7 +805,23 @@ async function fetchActiveSiteMappingsFromDb(
       cleanClaimsDbName: (row.sql_name ?? '').trim(),
       deadlineDate: row.deadline_date ? row.deadline_date.toISOString().slice(0, 10) : null,
     }))
-    .filter((row) => row.siteKey.length > 0 && row.websiteDbName.length > 0 && row.cleanClaimsDbName.length > 0);
+    .filter((row) => {
+      if (row.siteKey.length === 0 || row.cleanClaimsDbName.length === 0) return false;
+      if (options.requireWebsiteDbName && row.websiteDbName.length === 0) return false;
+      return true;
+    });
+}
+
+async function fetchActiveSiteMappingsFromDb(
+  claimsPool: ConnectionPool
+): Promise<WebsiteHealthSiteMapping[]> {
+  return fetchActiveMappingsFromDb(claimsPool, { requireWebsiteDbName: true });
+}
+
+async function fetchActiveDeficiencyMappingsFromDb(
+  claimsPool: ConnectionPool
+): Promise<WebsiteHealthSiteMapping[]> {
+  return fetchActiveMappingsFromDb(claimsPool, { requireWebsiteDbName: false });
 }
 
 async function getActiveSiteMappings(
@@ -840,6 +862,54 @@ async function getActiveSiteMappings(
     source: 'fallback',
     loadedAt: activeSiteCache.loadedAt > 0 ? new Date(activeSiteCache.loadedAt).toISOString() : null,
     stale: activeSiteCache.mappings.length > 0,
+  };
+}
+
+async function getActiveDeficiencyMappings(
+  claimsPool: ConnectionPool,
+  refreshActiveSites: boolean
+): Promise<ActiveMappingsWithMeta> {
+  const now = Date.now();
+  const ttlMs = getActiveSitesTtlMs();
+
+  if (
+    !refreshActiveSites &&
+    activeDeficiencyCaseCache.mappings.length > 0 &&
+    now - activeDeficiencyCaseCache.loadedAt < ttlMs
+  ) {
+    return {
+      mappings: activeDeficiencyCaseCache.mappings,
+      source: 'cache',
+      loadedAt: new Date(activeDeficiencyCaseCache.loadedAt).toISOString(),
+      stale: false,
+    };
+  }
+
+  try {
+    const mappings = await fetchActiveDeficiencyMappingsFromDb(claimsPool);
+    if (mappings.length > 0) {
+      activeDeficiencyCaseCache.mappings = mappings;
+      activeDeficiencyCaseCache.loadedAt = now;
+      return {
+        mappings,
+        source: 'database',
+        loadedAt: new Date(now).toISOString(),
+        stale: false,
+      };
+    }
+  } catch {
+    // Fall back below.
+  }
+
+  const fallback = getWebsiteHealthSiteMappings();
+  return {
+    mappings: fallback,
+    source: 'fallback',
+    loadedAt:
+      activeDeficiencyCaseCache.loadedAt > 0
+        ? new Date(activeDeficiencyCaseCache.loadedAt).toISOString()
+        : null,
+    stale: activeDeficiencyCaseCache.mappings.length > 0,
   };
 }
 
@@ -1095,16 +1165,16 @@ export async function runWebsiteHealthDailyReport(options: {
 
   try {
     await claimsPool.connect();
-    const activeMeta = await getActiveSiteMappings(claimsPool, options.refreshActiveSites === true);
+    const activeMeta = await getActiveDeficiencyMappings(claimsPool, options.refreshActiveSites === true);
     const mappings = activeMeta.mappings;
 
-    const results: WebsiteHealthDailyReportSiteResult[] = [];
+    const allResults: WebsiteHealthDailyReportSiteResult[] = [];
     for (const mapping of mappings) {
       const result = await scanDailyReportSite(claimsPool, mapping);
-      results.push(result);
+      allResults.push(result);
     }
 
-    const totals = results.reduce(
+    const totals = allResults.reduce(
       (acc, site) => {
         acc.totalDeficientTrueCount += site.deficientTrueCount;
         acc.totalDisputedTrueCount += site.disputedTrueCount;
@@ -1115,13 +1185,19 @@ export async function runWebsiteHealthDailyReport(options: {
         totalDisputedTrueCount: 0,
       }
     );
+    const results = allResults.filter(
+      (site) =>
+        site.status !== 'ok' ||
+        site.deficientTrueCount > 0 ||
+        site.disputedTrueCount > 0
+    );
 
     return {
       runAt,
       activeSitesLoadedAt: activeMeta.loadedAt,
       activeSitesSource: activeMeta.source,
       activeSitesStale: activeMeta.stale,
-      totalSitesChecked: results.length,
+      totalSitesChecked: allResults.length,
       totalDeficientTrueCount: totals.totalDeficientTrueCount,
       totalDisputedTrueCount: totals.totalDisputedTrueCount,
       results,
@@ -1428,22 +1504,28 @@ export async function runWebsiteHealthDailyReportByDate(options: {
 
   try {
     await claimsPool.connect();
-    const activeMeta = await getActiveSiteMappings(claimsPool, options.refreshActiveSites === true);
+    const activeMeta = await getActiveDeficiencyMappings(claimsPool, options.refreshActiveSites === true);
     const mappings = activeMeta.mappings;
 
-    const results: WebsiteHealthDailyByDateSiteResult[] = [];
+    const allResults: WebsiteHealthDailyByDateSiteResult[] = [];
     for (const mapping of mappings) {
       const result = await scanDailyByDateSite(claimsPool, mapping, options.window);
-      results.push(result);
+      allResults.push(result);
     }
 
-    const totals = results.reduce(
+    const totals = allResults.reduce(
       (acc, site) => {
         acc.totalWindowDeficientTrueCount += site.windowDeficientTrueCount;
         acc.totalWindowDisputedTrueCount += site.windowDisputedTrueCount;
         return acc;
       },
       { totalWindowDeficientTrueCount: 0, totalWindowDisputedTrueCount: 0 }
+    );
+    const results = allResults.filter(
+      (site) =>
+        site.status !== 'ok' ||
+        site.windowDeficientTrueCount > 0 ||
+        site.windowDisputedTrueCount > 0
     );
 
     return {
@@ -1452,7 +1534,7 @@ export async function runWebsiteHealthDailyReportByDate(options: {
       activeSitesLoadedAt: activeMeta.loadedAt,
       activeSitesSource: activeMeta.source,
       activeSitesStale: activeMeta.stale,
-      totalSitesChecked: results.length,
+      totalSitesChecked: allResults.length,
       totalWindowDeficientTrueCount: totals.totalWindowDeficientTrueCount,
       totalWindowDisputedTrueCount: totals.totalWindowDisputedTrueCount,
       results,

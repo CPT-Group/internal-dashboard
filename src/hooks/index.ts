@@ -6,3 +6,4 @@ export * from './usePageAutoRefresh';
 export * from './useWorkHoursToday';
 export * from './useCompletedTodayCount';
 export * from './useSyncedClock';
+export * from './useAssignedJiraTickets';
