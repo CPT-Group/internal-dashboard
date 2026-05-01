@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) with custom increment rules.
 
+## [Unreleased]
+
+### Added
+
+- **`scripts/jira/create-nova-consultant-prep-task.mjs`** — creates NOVA **Task** “AZ Consultant Prep” (ADF description: ~23-doc infra pack + pain-points/blockers doc), assigns Kyle, adds the issue to the **active** Jira Software sprint. Same auth as `jiraService` (`.env.jira.temp` then `.env.local`). Used to create [NOVA-1926](https://cptgroup.atlassian.net/browse/NOVA-1926) (Sprint 13).
+- **`scripts/jira-adjust-worklogs-today.cjs`** — one-off Jira helper (same auth as `jiraService`): lists Pacific-today worklogs for the user in `.env.local`, optionally scales **bug / bug sub-task** worklogs down first to hit a target total (default **7.3 h**), otherwise scales all entries. Use `node scripts/jira-adjust-worklogs-today.cjs --dry-run` or `--apply`.
+
+### Fixed
+
+- **Dev Corner Two GitHub environment detection now uses GitHub branch as source-of-truth**: Replaced title+branch substring parsing with a shared branch-only mapper (`dev`, `test/tst/qa`, `staging/stg/uat`, `main/master/prod`) for both `GithubDeployStatusSlide` and `GithubDeployRepoCards`, preventing false `STG` classifications when PR titles contain strings like `-stg-` even though the run is on `development`.
+
 ## [0.1.62] - 2026-04-23
 
 ### analytics-api published to production via existing Azure API Management

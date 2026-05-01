@@ -8,12 +8,15 @@ import { MeterGroup } from 'primereact/metergroup';
 import { Skeleton } from 'primereact/skeleton';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
+import {
+  detectDeployEnvironmentFromBranch,
+  type DeployEnvironmentKey,
+} from '@/utils/githubDeployEnvironment';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
 
-type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
 type DeployEnvironmentState = 'success' | 'inProgress' | 'queued' | 'failed' | 'noData';
 const IDLE_AFTER_DAYS = 7;
 
@@ -39,17 +42,6 @@ interface MeterLabelListProps {
     value?: number;
     color?: string;
   }>;
-}
-
-function detectEnvironment(branch: string | null, title: string): DeployEnvironmentKey | null {
-  const b = (branch ?? '').toLowerCase();
-  const t = title.toLowerCase();
-  const tokens = `${b} ${t}`;
-  if (tokens.includes('prod') || tokens.includes('production') || b === 'main' || b === 'master') return 'prod';
-  if (tokens.includes('stag') || tokens.includes('stg') || tokens.includes('uat')) return 'stg';
-  if (tokens.includes('test') || tokens.includes('tst') || tokens.includes('qa')) return 'tst';
-  if (tokens.includes('dev') || tokens.includes('develop') || b === 'development') return 'dev';
-  return null;
 }
 
 function isWithinIdleWindow(isoTimestamp: string): boolean {
@@ -81,7 +73,7 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     for (const run of sortedRuns) {
-      const env = detectEnvironment(run.headBranch, run.title);
+      const env = detectDeployEnvironmentFromBranch(run.headBranch);
       if (!env || byEnv[env] !== 'noData') continue;
       if (!isWithinIdleWindow(run.updatedAt)) continue;
 

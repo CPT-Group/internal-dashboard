@@ -13,6 +13,10 @@ import {
   repoToneForRepo,
   tagSeverityForRow,
 } from '@/utils/githubDeployDisplay';
+import {
+  detectDeployEnvironmentFromBranch,
+  type DeployEnvironmentKey,
+} from '@/utils/githubDeployEnvironment';
 import styles from './GithubDeployRepoCards.module.scss';
 
 export interface GithubDeployRepoCardsProps {
@@ -22,7 +26,6 @@ export interface GithubDeployRepoCardsProps {
   showBranchContext?: boolean;
 }
 
-type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
 type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
 const IDLE_AFTER_DAYS = 7;
 
@@ -53,20 +56,6 @@ function statusTagWrapClass(
   }
 }
 
-function detectEnvironment(
-  branch: string | null,
-  title: string
-): DeployEnvironmentKey | null {
-  const b = (branch ?? '').toLowerCase();
-  const t = title.toLowerCase();
-  const tokens = `${b} ${t}`;
-  if (tokens.includes('prod') || tokens.includes('production') || b === 'main' || b === 'master') return 'prod';
-  if (tokens.includes('stag') || tokens.includes('stg') || tokens.includes('uat')) return 'stg';
-  if (tokens.includes('test') || tokens.includes('tst') || tokens.includes('qa')) return 'tst';
-  if (tokens.includes('dev') || tokens.includes('develop') || b === 'development') return 'dev';
-  return null;
-}
-
 function isWithinIdleWindow(isoTimestamp: string): boolean {
   const updatedAtMs = Date.parse(isoTimestamp);
   if (!Number.isFinite(updatedAtMs)) return false;
@@ -86,7 +75,7 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
   for (const run of runs) {
-    const env = detectEnvironment(run.headBranch, run.title);
+    const env = detectDeployEnvironmentFromBranch(run.headBranch);
     if (!env) continue;
     if (envs[env].state !== 'idle') continue;
     if (!isWithinIdleWindow(run.updatedAt)) continue;
