@@ -9,12 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cursor analytics**: **`Analytics_Team_*.csv`** (team daily rollup) → **`byMonth`** (usage-based requests), **`byRepo`** / **`byMonthRepo`** (file extensions from embedded JSON; not Git remotes). Generic tabular CSVs still supported. **`npm run cursor-analytics:regen`** → **`kyleOutput/cursor-analytics-summary.json`**. **`/cursor-analytics`** + **`GET /api/cursor-analytics`**; optional **`CURSOR_ADMIN_API_KEY`** (Enterprise) fetches **`/analytics/team/agent-edits`** with **6h disk cache** (`kyleOutput/cursor-analytics-enterprise-cache.json` or **`CURSOR_ANALYTICS_ENTERPRISE_CACHE_JSON`**). **`CURSOR_ANALYTICS_SKIP_ENTERPRISE=1`** disables live calls. **`.gitignore`**: `cursor-analytics-new-screen/**` except **`README.md`** + **`.gitkeep`** so pasted exports stay local.
+- **Website Health — “Submitted Online (Today)” KPI** on `/website-health`: sums per-site website-only counts for the submission-report “today” window (same 5:15 rule as other Website Health queries), distinct from scope-total **Submitted Online** and from CleanClaims matching.
+- **Website Health submission report** (`POST /api/website-health/submission-report`): Teams table and JSON now include **Downloaded today** and **Downloaded yesterday** (rows that also match `CleanClaims` with the main scan’s online filter), alongside **Submitted today/yesterday** (website DB only).
+- **`scripts/jira/create-nova-check-screen-kt.mjs`** — creates NOVA **Task** “Check screen KT” (ADF description: James → Roy knowledge transfer for check-screen tickets; links [NOVA-2216](https://cptgroup.atlassian.net/browse/NOVA-2216) as example), assigns **James** as assignee and **Tech Owner**, adds the issue to the **active sprint on NOVA Scrum Board** (board `153`; Kanban board `516` has no sprints). Same auth as other `scripts/jira/*` helpers. Used to create [NOVA-2242](https://cptgroup.atlassian.net/browse/NOVA-2242).
 - **`scripts/jira/create-nova-consultant-prep-task.mjs`** — creates NOVA **Task** “AZ Consultant Prep” (ADF description: ~23-doc infra pack + pain-points/blockers doc), assigns Kyle, adds the issue to the **active** Jira Software sprint. Same auth as `jiraService` (`.env.jira.temp` then `.env.local`). Used to create [NOVA-1926](https://cptgroup.atlassian.net/browse/NOVA-1926) (Sprint 13).
 - **`scripts/jira-adjust-worklogs-today.cjs`** — one-off Jira helper (same auth as `jiraService`): lists Pacific-today worklogs for the user in `.env.local`, optionally scales **bug / bug sub-task** worklogs down first to hit a target total (default **7.3 h**), otherwise scales all entries. Use `node scripts/jira-adjust-worklogs-today.cjs --dry-run` or `--apply`.
 
 ### Fixed
 
 - **Dev Corner Two GitHub environment detection now uses GitHub branch as source-of-truth**: Replaced title+branch substring parsing with a shared branch-only mapper (`dev`, `test/tst/qa`, `staging/stg/uat`, `main/master/prod`) for both `GithubDeployStatusSlide` and `GithubDeployRepoCards`, preventing false `STG` classifications when PR titles contain strings like `-stg-` even though the run is on `development`.
+
+### Changed
+
+- **`GET /api/github/deploy-status` token order**: First attempt uses **`GITHUB_TOKEN_3`**, then **`GITHUB_TOKEN_2`**, then **`GITHUB_DEPLOY_READ_TOKEN`** on rate-limit / `401` / `403` / bad-credentials errors (same detection as before). Response `tokenUsed` values are now the env var names (`GITHUB_TOKEN_3` | `GITHUB_TOKEN_2` | `GITHUB_DEPLOY_READ_TOKEN`) instead of `primary` / `fallback2` / `fallback3`.
+- **Dev Corner One — Work Hours Today**: The strongest bar flash tier (`full`) now starts at **≥100%** of the rolling day target (removed separate 125% / 150% animation tiers). **≥200%** adds an optional **red/green diagonal plaid** overlay drawn in Canvas (not CSS) so older Tizen TVs still animate; chart clipping uses `quadraticCurveTo` paths instead of `ctx.roundRect` for legacy WebKit compatibility.
+- **Home dashboard grid**: **Trevor's Screen** tile disabled (`DASHBOARD_LIST` `enabled: false`); route **`/tv/trevor`** unchanged for direct links.
+- **Home — Website Health tile**: Hidden on **production** builds (e.g. Netlify); still shown under **`next dev`** (local). Route **`/website-health`** unchanged — bookmark or type the URL. Optional **`NEXT_PUBLIC_WEBSITE_HEALTH_HOME=1`** on a deploy to show the tile there.
+- **Home dashboard cards** (`DASHBOARD_LIST`): **NOVA Daily** label for `/tv/dev-corner-one` (was “Dev Corner One”). **GitHub activity** label and GitHub icon for `/tv/dev-corner-two` (was “Dev Corner Two”); removed the duplicate home tile for `/tv/github-activity` (route still works when opened directly).
+- **`/cursor-analytics`**: Top **KpiStrip** (same shared component as Dev Corner One / Trevor) with six **placeholder** metrics; **first card** is the hidden **theme cycle** hit target (`onActivate: cycleTheme`). Page layout shell in `CursorAnalyticsDashboard.module.scss` (`.root` / `.layout` / `.kpiRow`).
+- **Trevor's Screen — Work Hours Today chart**: Uses the same rolling-target zones, colors, flash tiers, target marker, and **200% plaid** overlay as Dev Corner One via shared **`src/utils/workHoursRollingTarget.ts`**.
 
 ## [0.1.62] - 2026-04-23
 

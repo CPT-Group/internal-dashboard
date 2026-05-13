@@ -153,8 +153,24 @@ Automation rules (the "When / If / Then" rules you see under Jira Project Settin
 - **Build**: `npm run build` — same scripts then production build.
 - **Lint**: `npm run lint` (ESLint; type-aware rules on `src/**`).
 - **SQL connectivity check**: `npm run test:sql` — loads `.env.local` and probes `DB_*` (CPT2K16) and `PROD_DB_*` (interactive-site prod) with a read-only query; run from a machine/VPN that can reach both hosts.
+- **Cursor analytics (`/cursor-analytics`)**: Top row uses shared **`KpiStrip`** (same as Dev Corner One / Trevor): placeholder KPI cards plus **first card** = hidden **theme cycle** (`onActivate`). Styles in **`CursorAnalyticsDashboard.module.scss`** (scoped under `.root`). **Handoff comments** in `CursorAnalyticsDashboard.tsx`. Data path: **`kyleOutput/cursor-analytics-summary.json`** (**`npm run cursor-analytics:regen`**), optional **`CURSOR_ANALYTICS_SUMMARY_JSON`**, **`GET /api/cursor-analytics`**; **no Cursor cloud analytics API** (see also Enterprise cache / `CURSOR_ADMIN_API_KEY` in changelog).
 
 Do **not** run `next dev` (or `next build`) directly without the scripts; slide lists and other generated data can be stale.
+
+### Gitignored local paths (scratch, secrets, exports)
+
+Several **repo-root** paths are intentionally **gitignored** so local testing, analyst output, and secrets never land in production commits. **Default IDE / agent search often hides gitignored files** — if something “should be there” but does not show up in search, read `.gitignore`, open the path explicitly, or list from a shell (e.g. PowerShell `Get-ChildItem -Force <path>`).
+
+Authoritative list is **`.gitignore`**; common entries include:
+
+- **`.env*`** — secrets and local env (never commit).
+- **`kyleOutput/`** — local analyst / automation snapshots.
+- **`kyleJira/`** — one-off Jira scripts (see `scripts/jira/README.md`).
+- **`cursorScripts/`** — local Cursor one-off payloads/helpers.
+- **`cursor-analytics-new-screen/*.csv`** — Cursor dashboard CSV exports (may contain emails); the folder **README** stays in git; CSVs stay local. **`npm run cursor-analytics:regen`** rewrites **`kyleOutput/cursor-analytics-summary.json`** for **`/cursor-analytics`**.
+- **`ArchivedReports_TestingArchive/`** — retired bundles / audits.
+
+You may have **additional** gitignored root folders on disk for local experiments; treat `.gitignore` + an explicit directory listing as the source of truth, not repo search alone.
 
 ## Build-time scripts
 
@@ -190,8 +206,10 @@ Keep generic tooling in `scripts/jira/` (helpers, verifiers, the if/else pattern
 - **Website Health**: `/website-health` is intentionally **not a TV dashboard**. It is the only planned mobile-first/responsive dashboard for desktop/laptop/phone usage.
 - **Website Health data intent**: read-only discrepancy checks between website `Submissions` on `10.0.0.5` and mapped 2K16 `CleanClaims` rows; source scope requires `DateReceived IS NOT NULL`, excludes test IDs `2000000-2000039`, excludes `@cptgroup.com` emails, and includes same-day rows only through **5:15 AM** (later same-day submissions are excluded until next downloader window).
 - **Website Health API**: `GET /api/website-health?sinceDays=...` for scan summaries, `POST /api/website-health` (`{ sinceDays, notify }`) for on-demand scan + optional Teams alert (refreshes active-case list), and `GET /api/website-health/site?siteKey=...&sinceDays=...` for on-demand missing-row details.
+- **Website Health submission report** (`POST /api/website-health/submission-report`): per active site, **Submitted today/yesterday** counts are website `Submissions` only (same in-scope rules as the main scanner, including the 5:15 “today” slice). **Downloaded today/yesterday** counts are those rows that also appear in 2K16 `CleanClaims` using the same online filter as the main compare.
 - **Website Health active cases source**: `CPTMaster.dbo.OCPAutomation` (`Active = 1`) on CPT2K16. Use `CaseName` for UI label, `WebServerDBName` for website DB (`10.0.0.5`), and `SQLName` for 2K16 clean-claims DB. Do **not** assume `_SQL` suffix derivation only; active-case exceptions exist.
 - **Website Health active-case caching**: in-memory TTL cache for active mappings (`WEBSITE_HEALTH_ACTIVE_CASES_TTL_MIN`, default 20). Optional override DB name: `WEBSITE_HEALTH_ACTIVE_CASES_DATABASE` (default `CPTMaster`).
+- **Website Health home tile**: On **production** builds (e.g. Netlify), the `/` grid **hides** the Website Health card; **`next dev`** (local port 3333) **shows** it. Set **`NEXT_PUBLIC_WEBSITE_HEALTH_HOME=1`** (or `true`) in deploy env to show the tile on a published site.
 
 ### GitHub webhooks (receiver + TV)
 
@@ -202,7 +220,7 @@ Keep generic tooling in `scripts/jira/` (helpers, verifiers, the if/else pattern
 
 ### GitHub Actions — CD deploy status (Dev Corner Two)
 
-- **Env**: **`GITHUB_DEPLOY_READ_TOKEN`** — Personal Access Token (server only; never `NEXT_PUBLIC_*`). Needs **`actions:read`** on the monitored repos (and **`repo`** if they are private). Used by **`GET /api/github/deploy-status`**, which calls the GitHub REST API for each CD workflow listed in **`GITHUB_DEPLOY_WORKFLOW_MONITORS`** (`src/constants/GITHUB_DEPLOY_MONITORS.ts`).
+- **Env** (deploy status / Actions API): **`GITHUB_TOKEN_3`** is tried first, then **`GITHUB_TOKEN_2`**, then **`GITHUB_DEPLOY_READ_TOKEN`** (any subset may be set; server only; never `NEXT_PUBLIC_*`). Tokens need **`actions:read`** on the monitored repos (and **`repo`** if private). **`GET /api/github/deploy-status`** calls the GitHub REST API for each CD workflow in **`GITHUB_DEPLOY_WORKFLOW_MONITORS`** (`src/constants/GITHUB_DEPLOY_MONITORS.ts`).
 - **Dev Corner Two** GitHub slide (`GithubDeployStatusSlide`): **`MeterGroup`** summary strip (idle OK / running / attention; shimmer + opacity pulse on `.p-metergroup-meter-container::after`, respects `prefers-reduced-motion`), reusable **`GithubDeployRepoCards`** — 2×2 **PrimeReact Card** grid (equal-height rows filling the left column) for the four main deploy pipelines (Azure Functions API, internal tools SWA, NuGet publish, EF migrations): each card shows **owner/repo**, **run id**, **branch**, workflow title (multi-line), **started / finished or elapsed** timestamps, **duration**, and GitHub workflow id; and right-side **Timeline** of recent runs across monitored repos. **Temporary (2026-03):** the left-column **DataView** “Recent actions” feed is removed; restore from the comment in `GithubDeployStatusSlide.tsx` if needed. Cards use **Tag** status, indeterminate **ProgressBar** when a run is active (track/fill: **`--github-deploy-progressbar-track-bg`** / **`--github-deploy-progressbar-fill`** in `variables.scss` + theme files), compact padding for TV, left-border health cues (green/yellow/red), and link to the run. Timeline/status spacing is tuned with an opposite-column status label. Timeline uses **`useAutoScroll`**. API includes `recentRuns` per monitored workflow so history widgets can render without extra GitHub calls. Repo color coding is theme-driven via `--github-repo-*` tokens in `variables.scss` + theme overrides (dark-synth/dark/light/ms-access). Helpers in **`githubDeployDisplay.ts`**. Polls every **`GITHUB_ACTIVITY_POLL_INTERVAL_MS`** (60s). Not the same as the webhook delivery feed on `/tv/github-activity`. **Timeline typography** uses **`--content-text-size`** (global TV/card scale) and **`--github-deploy-timeline-*`** derived from it in `variables.scss`. **`--github-deploy-timeline-meta-color`** tints only the **branch · time** line under the run title (neon pink on **dark-synth**; per-theme elsewhere). The **left column** status labels (SUCCESS, IN PROGRESS, etc.) use **semantic colors** (green / yellow / red / orange) via `deployTimelineOppositeKind()` — not the meta pink. **Repo cards**: header status **Tag** has subtle pulse/glow (faster pulse on failure); footer **ticker** replaces the Open run button for TV; top **MeterGroup** shimmer is slow for readability.
 
 ### Dev Corner physical layout and dashboard philosophy
@@ -220,7 +238,7 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
   - **Recently Completed** table (last 7 days, **Completed by** = Tech Owner, filtered to NOVA team devs); `NOVA-` rows highlighted.
   - **Requested** — Not Yet Started table (**Tech owner** + **Assignee**); `NOVA-` rows highlighted.
   - **Completions by developer** (`CompletedByDevSlide`): per NOVA team member, tickets completed **today** and **earlier this week** (Mon–Fri window through today, from `resolvedLast14`; excludes today’s keys in the “earlier” list). Developer name + Today/Week header row is **sticky** within the slide scroll.
-  - **GitHub — CD deploy status** (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** (Actions API + `GITHUB_DEPLOY_READ_TOKEN`).
+  - **GitHub — CD deploy status** (`GithubDeployStatusSlide`): **`GET /api/github/deploy-status`** (Actions API; token chain `GITHUB_TOKEN_3` → `GITHUB_TOKEN_2` → `GITHUB_DEPLOY_READ_TOKEN`).
   - **Not yet in `devCornerTwoSlides.config`**: **Today** close times by component (`TodayComponentVelocitySlide`); **Developer Load Matrix** (`DevLoadMatrixSlide`) — add entries + render cases in `DevCornerTwoDashboard.tsx` when restoring.
   - KPI strip: In Progress, Completed (7d), Requested, Open (Prod), Open (NOVA). **No total "Open"** — that's on Dev 1 (non-redundancy rule). Prod = CM + OPRD.
   - Components in repo (carousel subset active): `InProgressCardsSlide`, `RecentlyCompletedSlide`, `RequestedTicketsSlide`, `CompletedByDevSlide`, `GithubDeployStatusSlide`; plus **`TodayComponentVelocitySlide`**, **`DevLoadMatrixSlide`** when re-added.

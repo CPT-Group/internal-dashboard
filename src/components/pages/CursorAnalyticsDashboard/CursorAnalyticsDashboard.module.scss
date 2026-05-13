@@ -1,0 +1,30 @@
+/**
+ * /cursor-analytics — page-local styles only.
+ *
+ * Every rule MUST live under `.root` so this route never leaks globals into
+ * TV dashboards, `/website-health`, or `src/app/main.scss` / `base.scss`.
+ *
+ * KPI row rhythm aligns with Dev Corner One (`.kpiRow` + shared `KpiStrip`).
+ * Add `@media` and content-area layout only inside `.root { ... }`.
+ */
+
+.root {
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-sizing: border-box;
+  min-height: 100vh;
+  width: 100%;
+  padding: 0.55rem;
+}
+
+.kpiRow {
+  flex-shrink: 0;
+}
