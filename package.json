@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:sql": "node scripts/test-sql-connections.cjs",
+    "test:github-deploy-tokens": "node scripts/test-github-deploy-tokens.mjs",
     "cursor-analytics:summarize": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen",
     "cursor-analytics:regen": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen --out kyleOutput/cursor-analytics-summary.json"
   },

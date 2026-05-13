@@ -7,20 +7,34 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Aggregates latest CD workflow runs for monitored CPT-Group repos (Actions API).
- * Token order (first success wins; on rate-limit / 401 / 403 / bad credentials, try next):
- * 1) `GITHUB_TOKEN_3`
- * 2) `GITHUB_TOKEN_2`
- * 3) `GITHUB_DEPLOY_READ_TOKEN` (legacy deploy PAT)
+ * Token order: **`GITHUB_TOKEN_3`** → **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`**.
+ * **Rotation:** try the next token when the current one clearly cannot serve the board:
+ * - **Any** repo returns hard auth / rate-limit (`401`, `bad credentials`, `rate limit`), or
+ * - **Every** repo fails with a retryable error (`401`, `403`, `404`, rate limit, bad credentials) —
+ *   e.g. fine-grained PAT with `/user` OK but **no Actions** access → **404** on all workflow-run URLs.
  */
-function hasTokenApiError(repos: GitHubDeployWorkflowStatus[]): boolean {
-  return repos.some((row) => {
+function errorText(row: GitHubDeployWorkflowStatus): string {
+  return (row.error ?? '').toLowerCase();
+}
+
+function hasHardTokenFailure(row: GitHubDeployWorkflowStatus): boolean {
+  if (!row.error) return false;
+  const m = errorText(row);
+  return m.includes('github 401') || m.includes('bad credentials') || m.includes('rate limit');
+}
+
+function shouldAdvanceTokenInChain(repos: GitHubDeployWorkflowStatus[]): boolean {
+  if (repos.length === 0) return false;
+  if (repos.some((row) => hasHardTokenFailure(row))) return true;
+  return repos.every((row) => {
     if (!row.error) return false;
-    const message = row.error.toLowerCase();
+    const m = errorText(row);
     return (
-      message.includes('rate limit') ||
-      message.includes('gitHub 403'.toLowerCase()) ||
-      message.includes('gitHub 401'.toLowerCase()) ||
-      message.includes('bad credentials')
+      m.includes('rate limit') ||
+      m.includes('github 401') ||
+      m.includes('github 403') ||
+      m.includes('github 404') ||
+      m.includes('bad credentials')
     );
   });
 }
@@ -99,9 +113,9 @@ async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry
   for (let i = 0; i < tokenChain.length; i += 1) {
     const chainEntry = tokenChain[i];
     const repos = await fetchAllDeployWorkflowStatuses(chainEntry.token, GITHUB_DEPLOY_WORKFLOW_MONITORS);
-    const hasApiError = hasTokenApiError(repos);
+    const advance = shouldAdvanceTokenInChain(repos);
     const hasNextToken = i < tokenChain.length - 1;
-    if (!hasApiError || !hasNextToken) {
+    if (!advance || !hasNextToken) {
       return { repos, tokenUsed: chainEntry.tokenUsed, fetchedAtMs: Date.now() };
     }
   }

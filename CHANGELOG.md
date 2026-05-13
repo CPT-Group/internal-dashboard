@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`GET /api/github/deploy-status` token chain**: Rotates **`GITHUB_TOKEN_3`** → **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`** when the current token cannot serve the board: **any** repo with `401` / rate-limit / bad-credentials, **or** **every** repo with retryable errors including **404** (e.g. PAT lacks Actions scope on CD repos). Previously 404-all did not advance, so Dev Corner Two stuck on the first token. **`npm run test:github-deploy-tokens`** probes all set tokens against the four workflow URLs (reads `.env.local`, never prints secrets).
 - **`GET /api/cursor-analytics` Turbopack NFT trace**: `path.join(process.cwd(), …)` paths use `turbopackIgnore` so the route does not drag the whole workspace into the NFT graph (addresses the Turbopack “unexpected file in NFT list” warning for this handler).
 
 - **Dev Corner Two GitHub environment detection now uses GitHub branch as source-of-truth**: Replaced title+branch substring parsing with a shared branch-only mapper (`dev`, `test/tst/qa`, `staging/stg/uat`, `main/master/prod`) for both `GithubDeployStatusSlide` and `GithubDeployRepoCards`, preventing false `STG` classifications when PR titles contain strings like `-stg-` even though the run is on `development`.
