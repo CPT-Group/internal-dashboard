@@ -356,11 +356,19 @@ async function fetchChargedByDay(
       if (!row || typeof row !== 'object') continue;
       const r = row as Record<string, unknown>;
       const ts = r.timestamp;
-      const ch = r.chargedCents;
+      const chRaw = r.chargedCents;
       if (typeof ts !== 'string' && typeof ts !== 'number') continue;
-      if (typeof ch !== 'number' || !Number.isFinite(ch)) continue;
-      const tms = typeof ts === 'string' ? Number.parseInt(ts, 10) : ts;
-      if (!Number.isFinite(tms)) continue;
+      const ch =
+        typeof chRaw === 'number'
+          ? chRaw
+          : typeof chRaw === 'string'
+            ? Number.parseFloat(chRaw)
+            : Number.NaN;
+      if (!Number.isFinite(ch)) continue;
+      const tmsRaw = typeof ts === 'string' ? Number.parseInt(ts, 10) : ts;
+      if (!Number.isFinite(tmsRaw)) continue;
+      /** Admin API uses ms strings; guard epoch-seconds if a client ever sends 10-digit values. */
+      const tms = tmsRaw < 1_000_000_000_000 ? tmsRaw * 1000 : tmsRaw;
       const day = new Date(tms).toISOString().slice(0, 10);
       const month = day.slice(0, 7);
       byDay[day] = (byDay[day] ?? 0) + ch;

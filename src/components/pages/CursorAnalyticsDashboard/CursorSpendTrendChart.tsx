@@ -7,9 +7,14 @@ import { formatUsdNumber } from '@/utils/cursorBillingFormat';
 
 import styles from './CursorAnalyticsDashboard.module.scss';
 
+export type CursorSpendTrendDataSource = 'cycle_usage_share' | 'usage_events';
+
 export interface CursorSpendTrendChartProps {
-  billingChargedByDay: Record<string, number>;
-  /** Shown under legend when usage-events pagination capped the series */
+  /** Daily team cost in USD (already converted from cents where applicable). */
+  usdByDay: Record<string, number>;
+  /** How `usdByDay` was produced — drives footer copy. */
+  dataSource: CursorSpendTrendDataSource;
+  /** Shown under legend when usage-events pagination capped the series (only relevant for `usage_events`). */
   chargedTruncated?: boolean;
 }
 
@@ -20,16 +25,14 @@ interface ChartTheme {
   lineChargedUsd: string;
 }
 
-function sortedDayKeys(
-  a: Record<string, number>,
-): string[] {
+function sortedDayKeys(a: Record<string, number>): string[] {
   const s = new Set<string>([...Object.keys(a)]);
   return [...s].sort();
 }
 
-/** Daily team cost trend from Cursor billing events (`chargedCents / 100`). */
 export const CursorSpendTrendChart = ({
-  billingChargedByDay,
+  usdByDay,
+  dataSource,
   chargedTruncated,
 }: CursorSpendTrendChartProps) => {
   const [theme, setTheme] = useState<ChartTheme | null>(null);
@@ -51,23 +54,23 @@ export const CursorSpendTrendChart = ({
     });
   }, []);
 
-  const { labels, chargedUsdSeries } = useMemo(() => {
-    const keys = sortedDayKeys(billingChargedByDay);
-    const chargedUsdSeriesInner = keys.map((k) => {
-      const v = billingChargedByDay[k];
+  const { labels, usdSeries } = useMemo(() => {
+    const keys = sortedDayKeys(usdByDay);
+    const usdSeriesInner = keys.map((k) => {
+      const v = usdByDay[k];
       if (v === undefined || v === 0) return null;
-      return v / 100;
+      return v;
     });
     return {
       labels: keys,
-      chargedUsdSeries: chargedUsdSeriesInner,
+      usdSeries: usdSeriesInner,
     };
-  }, [billingChargedByDay]);
+  }, [usdByDay]);
 
   const hasAnyPoint = useMemo(() => {
     const nz = (arr: (number | null)[]) => arr.some((x) => x != null && x !== 0);
-    return nz(chargedUsdSeries);
-  }, [chargedUsdSeries]);
+    return nz(usdSeries);
+  }, [usdSeries]);
 
   const chartData = useMemo(() => {
     if (!theme) return null;
@@ -75,7 +78,7 @@ export const CursorSpendTrendChart = ({
       {
         type: 'line' as const,
         label: 'Team cost',
-        data: chargedUsdSeries,
+        data: usdSeries,
         borderColor: theme.lineChargedUsd,
         backgroundColor: 'transparent',
         borderWidth: 2,
@@ -86,7 +89,7 @@ export const CursorSpendTrendChart = ({
       },
     ];
     return { labels, datasets };
-  }, [theme, labels, chargedUsdSeries]);
+  }, [theme, labels, usdSeries]);
 
   const options = useMemo(() => {
     if (!theme) return null;
@@ -122,7 +125,7 @@ export const CursorSpendTrendChart = ({
           beginAtZero: true,
           title: {
             display: true,
-            text: 'USD (team charged cost)',
+            text: 'USD (team)',
             color: theme.textColorSecondary,
             font: { size: 10 },
           },
@@ -141,17 +144,30 @@ export const CursorSpendTrendChart = ({
   }
   if (!chartData || !options) return null;
 
+  const costHint =
+    dataSource === 'cycle_usage_share' ? (
+      <>
+        <strong>Cost source:</strong> team total from Cursor billing <code>/teams/spend</code> (sum of per-member{' '}
+        <code>overallSpendCents</code>), split across calendar days by combined usage + included request counts from{' '}
+        <code>/teams/daily-usage-data</code>. Daily values sum to the current cycle invoice total over days on or after{' '}
+        <code>subscriptionCycleStart</code> in the selected range.
+      </>
+    ) : (
+      <>
+        <strong>Cost source:</strong> sum of <code>chargedCents</code> from <code>/teams/filtered-usage-events</code>{' '}
+        (÷ 100 for USD). This is metered line-item charges only and can be much smaller than full team subscription
+        spend; prefer the spend-shaped series when billing data loads.
+      </>
+    );
+
   return (
     <div className={styles.trendWrap}>
       <Chart type="line" data={chartData} options={options} className={styles.trendChart} />
-      <p className={styles.hint}>
-        <strong>Cost source:</strong> values come from Cursor billing usage events (
-        <code>chargedCents</code>) converted as <code>cents / 100</code>.
-      </p>
-      {chargedTruncated ? (
+      <p className={styles.hint}>{costHint}</p>
+      {dataSource === 'usage_events' && chargedTruncated ? (
         <p className={styles.hint}>
-          Charged series may be incomplete — increase{' '}
-          <code>CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES</code> (100 events per page).
+          Event series may be incomplete — increase <code>CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES</code> (100 events per
+          page).
         </p>
       ) : null}
     </div>

@@ -42,25 +42,25 @@ function deriveRange(searchParams: URLSearchParams): { startDate: string; endDat
 function resolveSummaryPath(): string {
   const raw = process.env.CURSOR_ANALYTICS_SUMMARY_JSON;
   if (!raw || raw.trim() === '') {
-    return path.join(process.cwd(), 'kyleOutput', 'cursor-analytics-summary.json');
+    return path.join(/* turbopackIgnore: true */ process.cwd(), 'kyleOutput', 'cursor-analytics-summary.json');
   }
-  return path.isAbsolute(raw) ? raw : path.join(process.cwd(), raw);
+  return path.isAbsolute(raw) ? raw : path.join(/* turbopackIgnore: true */ process.cwd(), raw);
 }
 
 function enterpriseCachePath(): string {
   const raw = process.env.CURSOR_ANALYTICS_ENTERPRISE_CACHE_JSON;
   if (raw && raw.trim() !== '') {
-    return path.isAbsolute(raw) ? raw : path.join(process.cwd(), raw);
+    return path.isAbsolute(raw) ? raw : path.join(/* turbopackIgnore: true */ process.cwd(), raw);
   }
-  return path.join(process.cwd(), 'kyleOutput', 'cursor-analytics-enterprise-cache.json');
+  return path.join(/* turbopackIgnore: true */ process.cwd(), 'kyleOutput', 'cursor-analytics-enterprise-cache.json');
 }
 
 function billingCachePath(): string {
   const raw = process.env.CURSOR_ANALYTICS_BILLING_CACHE_JSON;
   if (raw && raw.trim() !== '') {
-    return path.isAbsolute(raw) ? raw : path.join(process.cwd(), raw);
+    return path.isAbsolute(raw) ? raw : path.join(/* turbopackIgnore: true */ process.cwd(), raw);
   }
-  return path.join(process.cwd(), 'kyleOutput', 'cursor-admin-billing-cache.json');
+  return path.join(/* turbopackIgnore: true */ process.cwd(), 'kyleOutput', 'cursor-admin-billing-cache.json');
 }
 
 export async function GET(request: Request) {

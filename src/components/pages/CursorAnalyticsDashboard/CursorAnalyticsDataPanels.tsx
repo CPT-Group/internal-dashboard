@@ -1,32 +1,36 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable } from 'primereact/datatable';
 import { Message } from 'primereact/message';
 import { TabPanel, TabView } from 'primereact/tabview';
 
 import type { CursorBillingSnapshot, CursorTeamMemberSpend } from '@/lib/cursorAdminApi';
-import type { CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
+import type { CursorEnterpriseAgentEditDay, CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
 import type { CursorAnalyticsSummary } from '@/types/cursorAnalytics';
 import { formatUsdFromCents } from '@/utils/cursorBillingFormat';
+import { teamCostUsdByDayFromSpendShape } from '@/utils/cursorAnalyticsTeamTrend';
+import { downloadCsv, rowsToCsv } from '@/utils/csvDownload';
 
 import { CursorSpendTrendChart } from './CursorSpendTrendChart';
+import type { CursorSpendTrendDataSource } from './CursorSpendTrendChart';
 import styles from './CursorAnalyticsDashboard.module.scss';
+
+function rangeFileToken(r: { startDate: string; endDate: string }): string {
+  return `${r.startDate.replace(/:/g, '-')}_${r.endDate.replace(/:/g, '-')}`;
+}
+
+function recordHasPositiveUsd(rec: Record<string, number>): boolean {
+  return Object.values(rec).some((v) => Number.isFinite(v) && v > 0);
+}
 
 export interface CursorAnalyticsDataPanelsProps {
   summary: CursorAnalyticsSummary;
   enterprise: CursorEnterpriseFetchResult | undefined;
   billing: CursorBillingSnapshot | undefined;
   range: { startDate: string; endDate: string };
-}
-
-function requestsBody(row: { usageReqs: number; includedReqs: number }) {
-  return `${row.usageReqs.toLocaleString()} / ${row.includedReqs.toLocaleString()}`;
-}
-
-function linesBody(row: { total_lines_accepted: number; total_lines_suggested: number }) {
-  return `${row.total_lines_accepted.toLocaleString()} / ${row.total_lines_suggested.toLocaleString()}`;
 }
 
 function spendCell(row: CursorTeamMemberSpend) {
@@ -41,12 +45,30 @@ function centsCell<T extends { chargedCents: number }>(row: T) {
   return formatUsdFromCents(row.chargedCents);
 }
 
+function pctRepoBody(row: { pctOfRepo: number | null }) {
+  if (row.pctOfRepo == null) return '—';
+  return `${row.pctOfRepo.toFixed(1)}%`;
+}
+
 export const CursorAnalyticsDataPanels = ({
   summary,
   enterprise,
   billing,
   range,
 }: CursorAnalyticsDataPanelsProps) => {
+  const spendMembersDtRef = useRef<DataTable<CursorTeamMemberSpend[]> | null>(null);
+  const requestsByDevDtRef = useRef<
+    DataTable<{ developer: string; usageReqs: number; includedReqs: number; chargedCents: number }[]> | null
+  >(null);
+  const chargedByDevDtRef = useRef<DataTable<{ developer: string; chargedCents: number }[]> | null>(null);
+  const reposDtRef = useRef<DataTable<{ repo: string; chargedCents: number }[]> | null>(null);
+  const repoDevDtRef = useRef<
+    DataTable<{ repo: string; developer: string; chargedCents: number; pctOfRepo: number | null }[]> | null
+  >(null);
+  const monthDevDtRef = useRef<DataTable<{ month: string; developer: string; chargedCents: number }[]> | null>(null);
+  const byMonthDtRef = useRef<DataTable<{ month: string; chargedCents: number }[]> | null>(null);
+  const enterpriseDtRef = useRef<DataTable<CursorEnterpriseAgentEditDay[]> | null>(null);
+
   const csvBaselinePeriod = useMemo(() => {
     const months = Object.keys(summary.byMonth).sort();
     if (months.length === 0) return '—';
@@ -163,6 +185,14 @@ export const CursorAnalyticsDataPanels = ({
     return totals;
   }, [effectiveRepoDeveloperRows]);
 
+  const repoDeveloperRowsWithPct = useMemo(() => {
+    return effectiveRepoDeveloperRows.map((row) => {
+      const total = repoTotals[row.repo] ?? 0;
+      const pctOfRepo = total > 0 ? (row.chargedCents / total) * 100 : null;
+      return { ...row, pctOfRepo };
+    });
+  }, [effectiveRepoDeveloperRows, repoTotals]);
+
   const chargedByMonthDeveloper = useMemo(() => {
     if (!billing?.chargedByDay.ok) return [];
     return Object.entries(billing.chargedByDay.data.byMonthDeveloper)
@@ -185,6 +215,42 @@ export const CursorAnalyticsDataPanels = ({
     return [...enterprise.agentEdits].sort((a, b) => b.event_date.localeCompare(a.event_date));
   }, [enterprise]);
 
+  const spendShapedUsdByDay = useMemo(() => {
+    if (!billing) return null;
+    return teamCostUsdByDayFromSpendShape({
+      range,
+      spend: billing.spend,
+      daily: billing.dailyByDay,
+    });
+  }, [billing, range]);
+
+  const eventUsdByDay = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const [d, cents] of Object.entries(billingChargedByDay)) {
+      out[d] = cents / 100;
+    }
+    return out;
+  }, [billingChargedByDay]);
+
+  const trendUsdByDay = useMemo(() => {
+    if (spendShapedUsdByDay && recordHasPositiveUsd(spendShapedUsdByDay)) return spendShapedUsdByDay;
+    return eventUsdByDay;
+  }, [spendShapedUsdByDay, eventUsdByDay]);
+
+  const trendDataSource = useMemo((): CursorSpendTrendDataSource => {
+    if (spendShapedUsdByDay && recordHasPositiveUsd(spendShapedUsdByDay)) return 'cycle_usage_share';
+    return 'usage_events';
+  }, [spendShapedUsdByDay]);
+
+  const exportTrendDailyCsv = useCallback(() => {
+    const keys = [...Object.keys(trendUsdByDay)].sort();
+    const rows = keys.map((date) => [date, trendUsdByDay[date] ?? 0] as [string, number]);
+    downloadCsv(
+      `cursor-analytics-trend-daily_${rangeFileToken(range)}.csv`,
+      rowsToCsv(['date', 'team_cost_usd'], rows),
+    );
+  }, [trendUsdByDay, range]);
+
   return (
     <section className={styles.dataSection} aria-label="Cursor analytics detail">
       {billingMessages.map((text) => (
@@ -200,13 +266,25 @@ export const CursorAnalyticsDataPanels = ({
       <TabView className={styles.tabView}>
         <TabPanel header="Trend (daily)">
           <p className={styles.hint}>
-            Range: <strong>{range.startDate}</strong> → <strong>{range.endDate}</strong>. This chart is team cost
-            only (charged USD from billing usage events). CSV is baseline-only ({csvBaselinePeriod}) and not used
-            for cost calculations.
+            Range: <strong>{range.startDate}</strong> → <strong>{range.endDate}</strong>. CSV baseline in summary covers{' '}
+            <strong>{csvBaselinePeriod}</strong> (usage rows only — not the chart source).
           </p>
+          <div className={styles.tabExportBar}>
+            <Button
+              type="button"
+              size="small"
+              severity="secondary"
+              outlined
+              icon="pi pi-download"
+              label="Export CSV"
+              disabled={Object.keys(trendUsdByDay).length === 0}
+              onClick={exportTrendDailyCsv}
+            />
+          </div>
           <CursorSpendTrendChart
-            billingChargedByDay={billingChargedByDay}
-            chargedTruncated={chargedTruncated}
+            usdByDay={trendUsdByDay}
+            dataSource={trendDataSource}
+            chargedTruncated={trendDataSource === 'usage_events' ? chargedTruncated : false}
           />
         </TabPanel>
         <TabPanel header="Developers">
@@ -216,7 +294,26 @@ export const CursorAnalyticsDataPanels = ({
                 Current subscription cycle from Cursor billing <code>/teams/spend</code> — official per-member USD
                 (integer cents from billing events).
               </p>
-              <DataTable value={spendMembers} paginator rows={20} sortMode="multiple" removableSort size="small">
+              <div className={styles.tabExportBar}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export cycle spend"
+                  onClick={() => spendMembersDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={spendMembersDtRef}
+                value={spendMembers}
+                paginator
+                rows={20}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
                 <Column field="name" header="Name" sortable />
                 <Column field="email" header="Email" sortable />
                 <Column field="role" header="Role" sortable />
@@ -227,21 +324,64 @@ export const CursorAnalyticsDataPanels = ({
             </>
           ) : null}
           {requestsByDeveloper.length > 0 ? (
-            <DataTable value={requestsByDeveloper} paginator rows={20} sortMode="multiple" removableSort size="small">
-              <Column field="developer" header="Developer" sortable />
-              <Column header="Usage / included reqs" body={requestsBody} sortable />
-              <Column field="chargedCents" header="Charged" sortable body={centsCell} />
-            </DataTable>
+            <>
+              <div className={`${styles.tabExportBar} ${styles.devTableBlock}`}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export usage by developer"
+                  onClick={() => requestsByDevDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={requestsByDevDtRef}
+                value={requestsByDeveloper}
+                paginator
+                rows={20}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
+                <Column field="developer" header="Developer" sortable />
+                <Column field="usageReqs" header="Usage reqs" sortable />
+                <Column field="includedReqs" header="Included reqs" sortable />
+                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+              </DataTable>
+            </>
           ) : (
             <p className={styles.hint}>
               Developer usage data is empty for this range.
             </p>
           )}
           {chargedByDeveloper.length > 0 ? (
-            <DataTable value={chargedByDeveloper} paginator rows={20} sortMode="multiple" removableSort size="small">
-              <Column field="developer" header="Developer (events)" sortable />
-              <Column field="chargedCents" header="Charged" sortable body={centsCell} />
-            </DataTable>
+            <>
+              <div className={`${styles.tabExportBar} ${styles.devTableBlock}`}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export charged (events)"
+                  onClick={() => chargedByDevDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={chargedByDevDtRef}
+                value={chargedByDeveloper}
+                paginator
+                rows={20}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
+                <Column field="developer" header="Developer (events)" sortable />
+                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+              </DataTable>
+            </>
           ) : null}
         </TabPanel>
         <TabPanel header="Repos">
@@ -250,10 +390,31 @@ export const CursorAnalyticsDataPanels = ({
             this falls back to allocation by AI-edits share from repo export CSV.
           </p>
           {effectiveRepoRows.length > 0 ? (
-            <DataTable value={effectiveRepoRows} paginator rows={25} sortMode="multiple" removableSort size="small">
-              <Column field="repo" header="Repo" sortable />
-              <Column field="chargedCents" header="Charged" sortable body={centsCell} />
-            </DataTable>
+            <>
+              <div className={styles.tabExportBar}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export CSV"
+                  onClick={() => reposDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={reposDtRef}
+                value={effectiveRepoRows}
+                paginator
+                rows={25}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
+                <Column field="repo" header="Repo" sortable />
+                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+              </DataTable>
+            </>
           ) : (
             <p className={styles.hint}>
               No repo metadata returned by usage events for this range, and no repo export CSV was found.
@@ -262,19 +423,33 @@ export const CursorAnalyticsDataPanels = ({
         </TabPanel>
         <TabPanel header="Repo × developer">
           {effectiveRepoDeveloperRows.length > 0 ? (
-            <DataTable value={effectiveRepoDeveloperRows} paginator rows={25} sortMode="multiple" removableSort size="small">
-              <Column field="repo" header="Repo" sortable />
-              <Column field="developer" header="Dev" sortable />
-              <Column field="chargedCents" header="Charged" sortable body={centsCell} />
-              <Column
-                header="% of repo"
-                body={(row: { repo: string; chargedCents: number }) => {
-                  const total = repoTotals[row.repo] ?? 0;
-                  if (total <= 0) return '—';
-                  return `${((row.chargedCents / total) * 100).toFixed(1)}%`;
-                }}
-              />
-            </DataTable>
+            <>
+              <div className={styles.tabExportBar}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export CSV"
+                  onClick={() => repoDevDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={repoDevDtRef}
+                value={repoDeveloperRowsWithPct}
+                paginator
+                rows={25}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
+                <Column field="repo" header="Repo" sortable />
+                <Column field="developer" header="Dev" sortable />
+                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+                <Column field="pctOfRepo" header="% of repo" sortable body={pctRepoBody} />
+              </DataTable>
+            </>
           ) : (
             <p className={styles.hint}>
               No repo+developer pairs available in usage events for this range, and no repo×developer export CSV was
@@ -284,11 +459,32 @@ export const CursorAnalyticsDataPanels = ({
         </TabPanel>
         <TabPanel header="Month × developer">
           {chargedByMonthDeveloper.length > 0 ? (
-            <DataTable value={chargedByMonthDeveloper} paginator rows={25} sortMode="multiple" removableSort size="small">
-              <Column field="month" header="Month" sortable />
-              <Column field="developer" header="Dev" sortable />
-              <Column field="chargedCents" header="Charged" sortable body={centsCell} />
-            </DataTable>
+            <>
+              <div className={styles.tabExportBar}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export CSV"
+                  onClick={() => monthDevDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={monthDevDtRef}
+                value={chargedByMonthDeveloper}
+                paginator
+                rows={25}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
+                <Column field="month" header="Month" sortable />
+                <Column field="developer" header="Dev" sortable />
+                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+              </DataTable>
+            </>
           ) : (
             <p className={styles.hint}>No month+developer pairs available in usage events for this range.</p>
           )}
@@ -298,10 +494,31 @@ export const CursorAnalyticsDataPanels = ({
             Charged totals grouped by month for the selected range.
           </p>
           {chargedByMonth.length > 0 ? (
-            <DataTable value={chargedByMonth} paginator rows={20} sortMode="multiple" removableSort size="small">
-              <Column field="month" header="Month" sortable />
-              <Column field="chargedCents" header="Charged" sortable body={centsCell} />
-            </DataTable>
+            <>
+              <div className={styles.tabExportBar}>
+                <Button
+                  type="button"
+                  size="small"
+                  severity="secondary"
+                  outlined
+                  icon="pi pi-download"
+                  label="Export CSV"
+                  onClick={() => byMonthDtRef.current?.exportCSV({ selectionOnly: false })}
+                />
+              </div>
+              <DataTable
+                ref={byMonthDtRef}
+                value={chargedByMonth}
+                paginator
+                rows={20}
+                sortMode="multiple"
+                removableSort
+                size="small"
+              >
+                <Column field="month" header="Month" sortable />
+                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+              </DataTable>
+            </>
           ) : (
             <p className={styles.hint}>No monthly charges in this range.</p>
           )}
@@ -312,9 +529,29 @@ export const CursorAnalyticsDataPanels = ({
               Line counts only — no USD from this Enterprise endpoint. {enterprise.fetchedAt}
               {enterprise.fromCache ? ' · cached (6h)' : ''}
             </p>
-            <DataTable value={enterpriseRows} paginator rows={31} sortMode="multiple" removableSort size="small">
+            <div className={styles.tabExportBar}>
+              <Button
+                type="button"
+                size="small"
+                severity="secondary"
+                outlined
+                icon="pi pi-download"
+                label="Export CSV"
+                onClick={() => enterpriseDtRef.current?.exportCSV({ selectionOnly: false })}
+              />
+            </div>
+            <DataTable
+              ref={enterpriseDtRef}
+              value={enterpriseRows}
+              paginator
+              rows={31}
+              sortMode="multiple"
+              removableSort
+              size="small"
+            >
               <Column field="event_date" header="Date" sortable />
-              <Column header="Accepted / suggested" body={linesBody} />
+              <Column field="total_lines_accepted" header="Lines accepted" sortable />
+              <Column field="total_lines_suggested" header="Lines suggested" sortable />
             </DataTable>
           </TabPanel>
         ) : null}

@@ -74,6 +74,18 @@
   min-height: 0;
 }
 
+.tabExportBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.devTableBlock {
+  margin-top: 0.65rem;
+}
+
 .dataSection {
   flex: 1;
   min-height: 0;
