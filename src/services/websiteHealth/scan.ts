@@ -289,6 +289,105 @@ async function fetchSubmissionCounts(
   };
 }
 
+type SubmissionReportDateWindow = 'today' | 'yesterday';
+
+/**
+ * Website rows for the submission report’s calendar “today” or “yesterday” slice (same in-scope rules as
+ * `fetchSubmissionCounts`, including the 5:15 same-day cutoff for “today”).
+ */
+async function fetchSubmittedRowsForSubmissionReportWindow(
+  websitePool: ConnectionPool,
+  websiteDbName: string,
+  deadlineDate: string | null | undefined,
+  window: SubmissionReportDateWindow,
+  submittedOnlineColumn: string | null
+): Promise<SubmittedRow[]> {
+  const db = qIdentifier(websiteDbName);
+  const submittedOnlineExpr = submittedOnlineColumn
+    ? `TRY_CONVERT(nvarchar(32), s.${qIdentifier(submittedOnlineColumn)})`
+    : `CAST(NULL AS nvarchar(32))`;
+  const req = websitePool.request();
+  req.input('deadlineDate', sql.Date, deadlineDate ?? null);
+
+  const windowPredicate =
+    window === 'today'
+      ? `(
+          CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+          AND CAST(s.DateReceived AS time) <= CAST('05:15:00' AS time)
+        )`
+      : `CAST(s.DateReceived AS date) = DATEADD(DAY, -1, CAST(GETDATE() AS date))`;
+
+  const rs = await req.query<{
+    submission_id: number;
+    confirmation_no: string | null;
+    date_received: Date;
+    email: string | null;
+    submitted_online: string | null;
+  }>(`
+    SELECT
+      s.ID AS submission_id,
+      TRY_CONVERT(nvarchar(256), s.ConfirmationNo) AS confirmation_no,
+      s.DateReceived AS date_received,
+      TRY_CONVERT(nvarchar(320), s.Email) AS email,
+      ${submittedOnlineExpr} AS submitted_online
+    FROM ${db}.dbo.Submissions s
+    WHERE s.DateReceived IS NOT NULL
+      AND ${windowPredicate}
+      AND (
+        CAST(s.DateReceived AS date) < CAST(GETDATE() AS date)
+        OR (
+          CAST(s.DateReceived AS date) = CAST(GETDATE() AS date)
+          AND CAST(s.DateReceived AS time) <= CAST('05:15:00' AS time)
+        )
+      )
+      AND (s.ID < 2000000 OR s.ID > 2000039)
+      AND (
+        s.Email IS NULL
+        OR LOWER(LTRIM(RTRIM(TRY_CONVERT(nvarchar(320), s.Email)))) NOT LIKE '%@cptgroup.com%'
+      )
+      AND (@deadlineDate IS NULL OR CAST(s.DateReceived AS date) <= @deadlineDate)
+    ORDER BY s.DateReceived DESC;
+  `);
+
+  return rs.recordset
+    .map((row) => ({
+      submissionId: Number(row.submission_id),
+      confirmationNo: row.confirmation_no ? row.confirmation_no.trim() : null,
+      dateReceived: row.date_received.toISOString(),
+      email: row.email ?? null,
+      isSubmittedOnline: parseTruthyFlag(row.submitted_online ?? null),
+    }))
+    .filter((row) => Number.isFinite(row.submissionId));
+}
+
+function countSubmittedRowsMatchedInCleanClaims(
+  rows: SubmittedRow[],
+  strategy: CleanClaimsMatchStrategy,
+  existingSubmissionIds: Set<number>,
+  existingConfirmations: Set<string>
+): number {
+  if (rows.length === 0) {
+    return 0;
+  }
+  if (strategy.mode === 'submissionId' && strategy.idColumn) {
+    return rows.filter((r) => existingSubmissionIds.has(r.submissionId)).length;
+  }
+  if (strategy.mode === 'confirmationNo' && strategy.confirmationColumn) {
+    let matched = 0;
+    for (const row of rows) {
+      const confirmation = row.confirmationNo?.trim();
+      if (!confirmation) {
+        continue;
+      }
+      if (existingConfirmations.has(normalizeConfirmation(confirmation))) {
+        matched += 1;
+      }
+    }
+    return matched;
+  }
+  return 0;
+}
+
 /**
  * Same filters as compare rows, but allows `DateReceived IS NULL` so Web DB integrity can flag incomplete rows.
  */
@@ -684,6 +783,11 @@ async function scanSite(
     const webDbIssueItems = includeMissingItems ? buildWebDbIssueItems(webDbRows) : [];
     const submittedOnlineCount = submittedRows.length;
     const matchedInCleanClaimsCount = Math.max(0, submittedOnlineCount - allMissingItems.length);
+    const submissionDayCounts = await fetchSubmissionCounts(
+      websitePool,
+      mapping.websiteDbName,
+      mapping.deadlineDate
+    );
 
     return {
       siteKey: mapping.siteKey,
@@ -697,6 +801,7 @@ async function scanSite(
       webDbMissingConfirmationCount,
       webDbNotSubmittedCount,
       submittedOnlineCount,
+      submittedOnlineTodayCount: submissionDayCounts.submittedTodayCount,
       matchedInCleanClaimsCount,
       missingCount: allMissingItems.length,
       missingItems,
@@ -716,6 +821,7 @@ async function scanSite(
       webDbMissingConfirmationCount: 0,
       webDbNotSubmittedCount: 0,
       submittedOnlineCount: 0,
+      submittedOnlineTodayCount: 0,
       matchedInCleanClaimsCount: 0,
       missingCount: 0,
       missingItems: [],
@@ -734,6 +840,7 @@ function buildSummary(
   const totals = results.reduce(
     (acc, site) => {
       acc.totalSubmittedOnline += site.submittedOnlineCount;
+      acc.totalSubmittedOnlineToday += site.submittedOnlineTodayCount;
       acc.totalMatchedInCleanClaims += site.matchedInCleanClaimsCount;
       acc.totalMissingInCleanClaims += site.missingCount;
       if (site.status === 'warning' || site.status === 'error' || site.webDbStatus === 'error') {
@@ -744,6 +851,7 @@ function buildSummary(
     {
       sitesWithIssues: 0,
       totalSubmittedOnline: 0,
+      totalSubmittedOnlineToday: 0,
       totalMatchedInCleanClaims: 0,
       totalMissingInCleanClaims: 0,
     }
@@ -758,6 +866,7 @@ function buildSummary(
     totalSitesChecked: results.length,
     sitesWithIssues: totals.sitesWithIssues,
     totalSubmittedOnline: totals.totalSubmittedOnline,
+    totalSubmittedOnlineToday: totals.totalSubmittedOnlineToday,
     totalMatchedInCleanClaims: totals.totalMatchedInCleanClaims,
     totalMissingInCleanClaims: totals.totalMissingInCleanClaims,
     results,
@@ -936,6 +1045,7 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
         totalSitesChecked: 0,
         sitesWithIssues: 1,
         totalSubmittedOnline: 0,
+        totalSubmittedOnlineToday: 0,
         totalMatchedInCleanClaims: 0,
         totalMissingInCleanClaims: 0,
         results: [
@@ -950,6 +1060,7 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
             webDbMissingConfirmationCount: 0,
             webDbNotSubmittedCount: 0,
             submittedOnlineCount: 0,
+            submittedOnlineTodayCount: 0,
             matchedInCleanClaimsCount: 0,
             missingCount: 0,
             errorMessage:
@@ -976,6 +1087,7 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
         webDbMissingConfirmationCount: result.webDbMissingConfirmationCount,
         webDbNotSubmittedCount: result.webDbNotSubmittedCount,
         submittedOnlineCount: result.submittedOnlineCount,
+        submittedOnlineTodayCount: result.submittedOnlineTodayCount,
         matchedInCleanClaimsCount: result.matchedInCleanClaimsCount,
         missingCount: result.missingCount,
         errorMessage: result.errorMessage,
@@ -998,17 +1110,85 @@ export async function runWebsiteHealthScan(options: ScanOptions): Promise<Websit
 
 async function scanSubmissionReportSite(
   websitePool: ConnectionPool,
+  claimsPool: ConnectionPool,
   mapping: WebsiteHealthSiteMapping
 ): Promise<WebsiteHealthSubmissionReportSiteResult> {
   try {
-    const counts = await fetchSubmissionCounts(websitePool, mapping.websiteDbName, mapping.deadlineDate);
+    const submittedFlagCol = await discoverSubmissionOnlineFlagColumn(websitePool, mapping.websiteDbName);
+    const [counts, todayRows, yesterdayRows, strategy] = await Promise.all([
+      fetchSubmissionCounts(websitePool, mapping.websiteDbName, mapping.deadlineDate),
+      fetchSubmittedRowsForSubmissionReportWindow(
+        websitePool,
+        mapping.websiteDbName,
+        mapping.deadlineDate,
+        'today',
+        submittedFlagCol
+      ),
+      fetchSubmittedRowsForSubmissionReportWindow(
+        websitePool,
+        mapping.websiteDbName,
+        mapping.deadlineDate,
+        'yesterday',
+        submittedFlagCol
+      ),
+      discoverCleanClaimsColumns(claimsPool, mapping.cleanClaimsDbName),
+    ]);
+
+    let downloadedTodayCount = 0;
+    let downloadedYesterdayCount = 0;
+
+    if (strategy.mode === 'submissionId' && strategy.idColumn) {
+      const allIds = [
+        ...new Set([
+          ...todayRows.map((r) => r.submissionId),
+          ...yesterdayRows.map((r) => r.submissionId),
+        ]),
+      ];
+      const existingSubmissionIds = await fetchExistingSubmissionIds(
+        claimsPool,
+        mapping.cleanClaimsDbName,
+        allIds
+      );
+      downloadedTodayCount = countSubmittedRowsMatchedInCleanClaims(
+        todayRows,
+        strategy,
+        existingSubmissionIds,
+        new Set()
+      );
+      downloadedYesterdayCount = countSubmittedRowsMatchedInCleanClaims(
+        yesterdayRows,
+        strategy,
+        existingSubmissionIds,
+        new Set()
+      );
+    } else if (strategy.mode === 'confirmationNo' && strategy.confirmationColumn) {
+      const existingConfirmations = await fetchExistingConfirmationNos(
+        claimsPool,
+        mapping.cleanClaimsDbName
+      );
+      downloadedTodayCount = countSubmittedRowsMatchedInCleanClaims(
+        todayRows,
+        strategy,
+        new Set(),
+        existingConfirmations
+      );
+      downloadedYesterdayCount = countSubmittedRowsMatchedInCleanClaims(
+        yesterdayRows,
+        strategy,
+        new Set(),
+        existingConfirmations
+      );
+    }
+
     return {
       siteKey: mapping.siteKey,
       websiteDbName: mapping.websiteDbName,
       status: 'ok',
       totalSubmittedCount: counts.totalSubmittedCount,
       submittedTodayCount: counts.submittedTodayCount,
+      downloadedTodayCount,
       submittedYesterdayCount: counts.submittedYesterdayCount,
+      downloadedYesterdayCount,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -1018,7 +1198,9 @@ async function scanSubmissionReportSite(
       status: 'error',
       totalSubmittedCount: 0,
       submittedTodayCount: 0,
+      downloadedTodayCount: 0,
       submittedYesterdayCount: 0,
+      downloadedYesterdayCount: 0,
       errorMessage: message,
     };
   }
@@ -1040,7 +1222,7 @@ export async function runWebsiteHealthSubmissionReport(options: {
 
     const results: WebsiteHealthSubmissionReportSiteResult[] = [];
     for (const mapping of mappings) {
-      const result = await scanSubmissionReportSite(websitePool, mapping);
+      const result = await scanSubmissionReportSite(websitePool, claimsPool, mapping);
       results.push(result);
     }
 
@@ -1048,13 +1230,17 @@ export async function runWebsiteHealthSubmissionReport(options: {
       (acc, site) => {
         acc.totalSubmittedCount += site.totalSubmittedCount;
         acc.totalSubmittedTodayCount += site.submittedTodayCount;
+        acc.totalDownloadedTodayCount += site.downloadedTodayCount;
         acc.totalSubmittedYesterdayCount += site.submittedYesterdayCount;
+        acc.totalDownloadedYesterdayCount += site.downloadedYesterdayCount;
         return acc;
       },
       {
         totalSubmittedCount: 0,
         totalSubmittedTodayCount: 0,
+        totalDownloadedTodayCount: 0,
         totalSubmittedYesterdayCount: 0,
+        totalDownloadedYesterdayCount: 0,
       }
     );
 
@@ -1066,7 +1252,9 @@ export async function runWebsiteHealthSubmissionReport(options: {
       totalSitesChecked: results.length,
       totalSubmittedCount: totals.totalSubmittedCount,
       totalSubmittedTodayCount: totals.totalSubmittedTodayCount,
+      totalDownloadedTodayCount: totals.totalDownloadedTodayCount,
       totalSubmittedYesterdayCount: totals.totalSubmittedYesterdayCount,
+      totalDownloadedYesterdayCount: totals.totalDownloadedYesterdayCount,
       results,
     };
   } finally {
@@ -1238,6 +1426,7 @@ export async function getWebsiteHealthSiteDetails(
         webDbMissingConfirmationCount: 0,
         webDbNotSubmittedCount: 0,
         submittedOnlineCount: 0,
+        submittedOnlineTodayCount: 0,
         matchedInCleanClaimsCount: 0,
         missingCount: 0,
         missingItems: [],

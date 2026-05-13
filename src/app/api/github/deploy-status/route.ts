@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Aggregates latest CD workflow runs for monitored CPT-Group repos (Actions API).
- * Preferred token order:
- * 1) `GITHUB_TOKEN_2` (current primary),
- * 2) `GITHUB_TOKEN_3`,
- * 3) `GITHUB_DEPLOY_READ_TOKEN` (legacy fallback).
+ * Token order (first success wins; on rate-limit / 401 / 403 / bad credentials, try next):
+ * 1) `GITHUB_TOKEN_3`
+ * 2) `GITHUB_TOKEN_2`
+ * 3) `GITHUB_DEPLOY_READ_TOKEN` (legacy deploy PAT)
  */
 function hasTokenApiError(repos: GitHubDeployWorkflowStatus[]): boolean {
   return repos.some((row) => {
@@ -25,7 +25,11 @@ function hasTokenApiError(repos: GitHubDeployWorkflowStatus[]): boolean {
   });
 }
 
-type DeployStatusTokenUsed = 'primary' | 'fallback2' | 'fallback3';
+/** Which env token produced the successful fetch (telemetry only). */
+type DeployStatusTokenUsed =
+  | 'GITHUB_TOKEN_3'
+  | 'GITHUB_TOKEN_2'
+  | 'GITHUB_DEPLOY_READ_TOKEN';
 type DeployStatusSource = 'live' | 'cache' | 'stale-cache';
 
 interface DeployStatusSuccessResponse {
@@ -77,17 +81,19 @@ function toSuccessResponse(
 }
 
 async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry> {
-  const primaryToken = process.env.GITHUB_TOKEN_2?.trim();
-  const fallbackToken2 = process.env.GITHUB_TOKEN_3?.trim();
-  const fallbackToken3 = process.env.GITHUB_DEPLOY_READ_TOKEN?.trim();
+  const token3 = process.env.GITHUB_TOKEN_3?.trim();
+  const token2 = process.env.GITHUB_TOKEN_2?.trim();
+  const deployRead = process.env.GITHUB_DEPLOY_READ_TOKEN?.trim();
   const tokenChain: Array<{ tokenUsed: DeployStatusTokenUsed; token: string }> = [
-    primaryToken ? { tokenUsed: 'primary', token: primaryToken } : null,
-    fallbackToken2 ? { tokenUsed: 'fallback2', token: fallbackToken2 } : null,
-    fallbackToken3 ? { tokenUsed: 'fallback3', token: fallbackToken3 } : null,
+    token3 ? { tokenUsed: 'GITHUB_TOKEN_3', token: token3 } : null,
+    token2 ? { tokenUsed: 'GITHUB_TOKEN_2', token: token2 } : null,
+    deployRead ? { tokenUsed: 'GITHUB_DEPLOY_READ_TOKEN', token: deployRead } : null,
   ].filter((entry): entry is { tokenUsed: DeployStatusTokenUsed; token: string } => Boolean(entry));
 
   if (tokenChain.length === 0) {
-    throw new Error('Missing deploy tokens (expected order: GITHUB_TOKEN_2, GITHUB_TOKEN_3, GITHUB_DEPLOY_READ_TOKEN)');
+    throw new Error(
+      'Missing deploy tokens (set at least one of: GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)'
+    );
   }
 
   for (let i = 0; i < tokenChain.length; i += 1) {
@@ -100,7 +106,7 @@ async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry
     }
   }
 
-  return { repos: [], tokenUsed: 'primary', fetchedAtMs: Date.now() };
+  return { repos: [], tokenUsed: tokenChain[tokenChain.length - 1]!.tokenUsed, fetchedAtMs: Date.now() };
 }
 
 async function getFreshDeployStatus(nowMs: number): Promise<DeployStatusCacheEntry> {
@@ -144,7 +150,8 @@ export async function GET(): Promise<Response> {
     return Response.json(
       {
         ok: false,
-        message: 'Missing deploy tokens (expected order: GITHUB_TOKEN_2, GITHUB_TOKEN_3, GITHUB_DEPLOY_READ_TOKEN)',
+        message:
+          'Missing deploy tokens (set at least one of: GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)',
         repos: [],
       },
       { status: 503 }

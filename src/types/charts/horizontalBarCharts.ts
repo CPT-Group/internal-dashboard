@@ -28,4 +28,9 @@ export interface HorizontalBarChartData {
   flashIndices?: number[];
   /** Per-bar flash level. Length must match values if provided. */
   flashLevels?: BarFlashLevel[];
+  /**
+   * Per-bar plaid overlay (drawn in Canvas after the bar), e.g. at 200%+ of target.
+   * Length must match values if provided. Keeps TV/Tizen-friendly visuals in canvas, not CSS.
+   */
+  plaidOverlay?: boolean[];
 }

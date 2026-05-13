@@ -4,100 +4,30 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from 'primereact/card';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { HorizontalBarChart } from '@/components/charts';
-import type { HorizontalBarChartData, BarFlashLevel } from '@/types/charts';
+import type { HorizontalBarChartData } from '@/types/charts';
 import { LOADING_NOVA_DATA_PLEASE_WAIT, NOVA_CORE_DEVS } from '@/constants';
 import { useWorkHoursToday } from '@/hooks';
 import { useTheme } from '@/providers/ThemeProvider';
+import {
+  getCurrentTargetHours,
+  getWorkHoursBarBorder,
+  getWorkHoursBarFill,
+  getWorkHoursFlashLevel,
+  getWorkHoursZone,
+} from '@/utils/workHoursRollingTarget';
+import type { WorkHoursChartTheme } from '@/utils/workHoursRollingTarget';
 import styles from './DevCornerOneDashboard.module.scss';
 
-interface HourThemeColors {
-  successFill: string;
-  warningFill: string;
+interface HourThemeColors extends WorkHoursChartTheme {
   orangeFill: string;
   aheadFill: string;
-  superFill: string;
-  dangerFill: string;
-  neutralFill: string;
-  successBorder: string;
-  warningBorder: string;
   orangeBorder: string;
   aheadBorder: string;
-  superBorder: string;
-  dangerBorder: string;
   markerColor: string;
 }
 
-type HourZone = 'critical' | 'warn' | 'onTrack' | 'ahead' | 'high' | 'super';
-
 const formatHours = (seconds: number): number =>
   Math.round((seconds / 3600) * 100) / 100;
-
-function getCurrentTargetHours(now: Date): number {
-  const minutesNow = now.getHours() * 60 + now.getMinutes();
-  const startMinutes = 9 * 60;
-  const endMinutes = 17 * 60;
-
-  if (minutesNow <= startMinutes) return 0.1;
-  if (minutesNow >= endMinutes) return 8;
-  return Math.max(0.1, (minutesNow - startMinutes) / 60);
-}
-
-function getHourZone(hours: number, targetHours: number): HourZone {
-  const ratio = targetHours > 0 ? hours / targetHours : Number.POSITIVE_INFINITY;
-  if (ratio <= 0.5) return 'critical';
-  if (ratio <= 0.75) return 'warn';
-  if (ratio <= 1) return 'onTrack';
-  if (ratio <= 1.25) return 'ahead';
-  if (ratio <= 1.5) return 'high';
-  return 'super';
-}
-
-function getBarFill(zone: HourZone, t: HourThemeColors): string {
-  switch (zone) {
-    case 'critical':
-      return t.dangerFill;
-    case 'warn':
-      return t.warningFill;
-    case 'onTrack':
-      return t.successFill;
-    case 'ahead':
-      return t.aheadFill;
-    case 'high':
-      return t.orangeFill;
-    case 'super':
-      return t.superFill;
-    default:
-      return t.neutralFill;
-  }
-}
-
-function getBorderColor(zone: HourZone, t: HourThemeColors): string {
-  switch (zone) {
-    case 'critical':
-      return t.dangerBorder;
-    case 'warn':
-      return t.warningBorder;
-    case 'onTrack':
-      return t.successBorder;
-    case 'ahead':
-      return t.aheadBorder;
-    case 'high':
-      return t.orangeBorder;
-    case 'super':
-      return t.superBorder;
-    default:
-      return t.warningBorder;
-  }
-}
-
-function getFlashLevel(zone: HourZone, hours: number): BarFlashLevel {
-  if (hours <= 0) return 'none';
-  if (zone === 'critical' || zone === 'super') return 'full';
-  if (zone === 'warn') return 'full';
-  if (zone === 'high') return 'intense';
-  if (zone === 'ahead') return 'medium';
-  return 'subtle';
-}
 
 export const WorkHoursTodayPanel = () => {
   const { theme } = useTheme();
@@ -147,19 +77,19 @@ export const WorkHoursTodayPanel = () => {
   const zoneSummary = useMemo(() => {
     return members.reduce(
       (acc, m) => {
-        const zone = getHourZone(m.hours, targetHours);
+        const zone = getWorkHoursZone(m.hours, targetHours);
         if (m.hours <= 0) acc.zero += 1;
         if (zone === 'critical') acc.critical += 1;
         if (zone === 'onTrack') acc.onTrack += 1;
-        if (zone === 'super') acc.super += 1;
+        if (zone === 'overTarget' || zone === 'plaid') acc.atOrAboveTarget += 1;
         return acc;
       },
-      { zero: 0, critical: 0, onTrack: 0, super: 0 }
+      { zero: 0, critical: 0, onTrack: 0, atOrAboveTarget: 0 }
     );
   }, [members, targetHours]);
 
   const chartData: HorizontalBarChartData = useMemo(() => {
-    const zones = members.map((m) => getHourZone(m.hours, targetHours));
+    const zones = members.map((m) => getWorkHoursZone(m.hours, targetHours));
 
     if (!themeColors) {
       return {
@@ -176,8 +106,8 @@ export const WorkHoursTodayPanel = () => {
     return {
       labels: members.map((m) => m.name),
       values: members.map((m) => m.hours),
-      colors: zones.map((z) => getBarFill(z, themeColors)),
-      borderColors: zones.map((z) => getBorderColor(z, themeColors)),
+      colors: zones.map((z) => getWorkHoursBarFill(z, themeColors)),
+      borderColors: zones.map((z) => getWorkHoursBarBorder(z, themeColors)),
       labelColors: members.map((m) => (m.hours <= 0 ? themeColors.dangerBorder : '')),
       targetMarker: {
         value: targetHours,
@@ -185,7 +115,8 @@ export const WorkHoursTodayPanel = () => {
         label: `Target ${targetHours.toFixed(1)}h`,
       },
       suffix: 'h',
-      flashLevels: zones.map((z, i) => getFlashLevel(z, members[i]?.hours ?? 0)),
+      flashLevels: zones.map((z, i) => getWorkHoursFlashLevel(z, members[i]?.hours ?? 0)),
+      plaidOverlay: zones.map((z) => z === 'plaid'),
     };
   }, [members, targetHours, themeColors]);
 
@@ -203,8 +134,10 @@ export const WorkHoursTodayPanel = () => {
           {zoneSummary.onTrack > 0 && (
             <span className={`${styles.workHoursBadge} ${styles.badgeSuccess}`}>75-100% {zoneSummary.onTrack}</span>
           )}
-          {zoneSummary.super > 0 && (
-            <span className={`${styles.workHoursBadge} ${styles.badgeSuper}`}>150%+ {zoneSummary.super}</span>
+          {zoneSummary.atOrAboveTarget > 0 && (
+            <span className={`${styles.workHoursBadge} ${styles.badgeSuper}`}>
+              ≥100% target {zoneSummary.atOrAboveTarget}
+            </span>
           )}
         </div>
       </div>

@@ -153,7 +153,7 @@ Automation rules (the "When / If / Then" rules you see under Jira Project Settin
 - **Build**: `npm run build` — same scripts then production build.
 - **Lint**: `npm run lint` (ESLint; type-aware rules on `src/**`).
 - **SQL connectivity check**: `npm run test:sql` — loads `.env.local` and probes `DB_*` (CPT2K16) and `PROD_DB_*` (interactive-site prod) with a read-only query; run from a machine/VPN that can reach both hosts.
-- **Cursor analytics (`/cursor-analytics`)**: Top row uses shared **`KpiStrip`** (same as Dev Corner One / Trevor): placeholder KPI cards plus **first card** = hidden **theme cycle** (`onActivate`). Styles in **`CursorAnalyticsDashboard.module.scss`** (scoped under `.root`). **Handoff comments** in `CursorAnalyticsDashboard.tsx`. Data path: **`kyleOutput/cursor-analytics-summary.json`** (**`npm run cursor-analytics:regen`**), optional **`CURSOR_ANALYTICS_SUMMARY_JSON`**, **`GET /api/cursor-analytics`**; **no Cursor cloud analytics API** (see also Enterprise cache / `CURSOR_ADMIN_API_KEY` in changelog).
+- **Cursor analytics (`/cursor-analytics`)**: **`CursorAnalyticsDashboard`** + **`CursorAnalyticsDataPanels`** — **`KpiStrip`** (first card = theme cycle), **Refresh** only (**no background polling**; unlike TV dashboards). **`GET /api/cursor-analytics`** reads **`kyleOutput/cursor-analytics-summary.json`** and, with **`CURSOR_ADMIN_API_KEY`**, **Team Admin API** billing (`/teams/spend`, `/teams/daily-usage-data`, `/teams/filtered-usage-events`) cached under **`kyleOutput/cursor-admin-billing-cache.json`** (TTL **`CURSOR_ANALYTICS_BILLING_CACHE_MS`**, default 15m). **Enterprise** agent-edits is **opt-in**: **`CURSOR_ANALYTICS_AGENT_EDITS=1`** (401 on non-Enterprise orgs otherwise). Env: **`CURSOR_ANALYTICS_SUMMARY_JSON`**, **`CURSOR_ANALYTICS_BILLING_CACHE_JSON`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES`**, **`CURSOR_ANALYTICS_SKIP_ADMIN_API`**, **`CURSOR_ANALYTICS_SKIP_CLOUD`**, **`CURSOR_ANALYTICS_SKIP_ENTERPRISE`** (blocks agent-edits only), **`CURSOR_ANALYTICS_ENTERPRISE_CACHE_JSON`**. Styles only in **`CursorAnalyticsDashboard.module.scss`** (`.root`).
 
 Do **not** run `next dev` (or `next build`) directly without the scripts; slide lists and other generated data can be stale.
 
@@ -167,7 +167,7 @@ Authoritative list is **`.gitignore`**; common entries include:
 - **`kyleOutput/`** — local analyst / automation snapshots.
 - **`kyleJira/`** — one-off Jira scripts (see `scripts/jira/README.md`).
 - **`cursorScripts/`** — local Cursor one-off payloads/helpers.
-- **`cursor-analytics-new-screen/*.csv`** — Cursor dashboard CSV exports (may contain emails); the folder **README** stays in git; CSVs stay local. **`npm run cursor-analytics:regen`** rewrites **`kyleOutput/cursor-analytics-summary.json`** for **`/cursor-analytics`**.
+- **`cursor-analytics-new-screen/**`** (except **`README.md`** + **`.gitkeep`**) — gitignored; CSV dumps stay local. **`npm run cursor-analytics:regen`** → **`kyleOutput/cursor-analytics-summary.json`** for **`/cursor-analytics`**.
 - **`ArchivedReports_TestingArchive/`** — retired bundles / audits.
 
 You may have **additional** gitignored root folders on disk for local experiments; treat `.gitignore` + an explicit directory listing as the source of truth, not repo search alone.

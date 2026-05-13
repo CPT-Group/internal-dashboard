@@ -8,3 +8,4 @@ export * from './OperationalJiraDashboard';
 export * from './JuliesOfficeDashboard';
 export * from './GithubActivityDashboard/GithubActivityDashboard';
 export * from './WebsiteHealthDashboard';
+export * from './CursorAnalyticsDashboard';

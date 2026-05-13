@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { BarFlashLevel } from '@/types/charts';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -18,6 +17,15 @@ import { toByBoardByComponentChartData } from '@/utils/chartDataMappers';
 import type { HorizontalBarChartData } from '@/types/charts';
 import { NOVA_TEAM_ORDERED, NOVA_CORE_DEVS } from '@/constants';
 import { useAutoScroll, useWorkHoursToday } from '@/hooks';
+import { useTheme } from '@/providers/ThemeProvider';
+import {
+  getCurrentTargetHours,
+  getWorkHoursBarBorder,
+  getWorkHoursBarFill,
+  getWorkHoursFlashLevel,
+  getWorkHoursZone,
+} from '@/utils/workHoursRollingTarget';
+import type { WorkHoursChartTheme } from '@/utils/workHoursRollingTarget';
 import styles from './TrevorDashboard.module.scss';
 
 const POLL_INTERVAL_MS = 60_000;
@@ -45,7 +53,15 @@ const statusBody = (row: InProgressTicket) => (
 const componentBody = (row: InProgressTicket) =>
   row.component.length > 18 ? row.component.slice(0, 16) + '…' : row.component;
 
+const formatHoursDecimal = (seconds: number): number =>
+  Math.round((seconds / 3600) * 100) / 100;
+
+interface TrevorHourThemeColors extends WorkHoursChartTheme {
+  markerColor: string;
+}
+
 export const TrevorDashboard = () => {
+  const { theme } = useTheme();
   const { fetchOperationalData, isStale, loading, error, getAnalytics } =
     useOperationalJiraStore();
 
@@ -113,54 +129,72 @@ export const TrevorDashboard = () => {
 
   const { hours: workHours } = useWorkHoursToday();
 
-  const [hourThemeColors, setHourThemeColors] = useState<{
-    success: string; warning: string; orange: string; danger: string;
-  } | null>(null);
+  const [hourThemeColors, setHourThemeColors] = useState<TrevorHourThemeColors | null>(null);
+  const [now, setNow] = useState<Date>(() => new Date());
 
   useEffect(() => {
     const s = getComputedStyle(document.documentElement);
+    const readToken = (name: string, fallback: string): string => {
+      const value = s.getPropertyValue(name).trim();
+      return value || fallback;
+    };
     setHourThemeColors({
-      success: s.getPropertyValue('--chart-success-border').trim() || 'rgb(34,197,94)',
-      warning: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
-      orange: s.getPropertyValue('--chart-orange-border').trim() || 'rgb(249,115,22)',
-      danger: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
+      successFill: readToken('--work-hours-success-fill', 'rgba(34,197,94,0.35)'),
+      warningFill: readToken('--work-hours-warning-fill', 'rgba(234,179,8,0.35)'),
+      superFill: readToken('--work-hours-super-fill', 'rgba(34,211,238,0.45)'),
+      dangerFill: readToken('--work-hours-danger-fill', 'rgba(239,68,68,0.78)'),
+      neutralFill: readToken('--work-hours-neutral-fill', 'rgba(36,205,197,0.35)'),
+      successBorder: readToken('--chart-success-border', 'rgb(34,197,94)'),
+      warningBorder: readToken('--chart-warning-border', 'rgb(234,179,8)'),
+      superBorder: readToken('--work-hours-super-border', 'rgb(34,211,238)'),
+      dangerBorder: readToken('--chart-danger-border', 'rgb(239,68,68)'),
+      markerColor: readToken('--work-hours-target-line-color', readToken('--primary-color', 'rgb(36,205,197)')),
     });
+  }, [theme]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(id);
   }, []);
+
+  const targetHours = useMemo(() => getCurrentTargetHours(now), [now]);
 
   const workHoursData: HorizontalBarChartData = useMemo(() => {
     const members = NOVA_CORE_DEVS.map((m) => ({
       name: m.displayName.split(' ')[0],
-      hours: Math.round(((workHours.get(m.accountId) ?? 0) / 3600) * 100) / 100,
+      hours: formatHoursDecimal(workHours.get(m.accountId) ?? 0),
     })).sort((a, b) => b.hours - a.hours);
 
-    const getBorderColor = (h: number) => {
-      if (!hourThemeColors) return undefined;
-      if (h < 4) return hourThemeColors.danger;
-      if (h < 6) return hourThemeColors.warning;
-      if (h <= 7) return hourThemeColors.success;
-      if (h <= 8) return hourThemeColors.warning;
-      if (h <= 9) return hourThemeColors.orange;
-      return hourThemeColors.danger;
-    };
+    const zones = members.map((m) => getWorkHoursZone(m.hours, targetHours));
 
-    const getFlashLevel = (h: number): BarFlashLevel => {
-      if (h <= 0) return 'none';
-      if (h < 4) return 'full';
-      if (h < 6) return 'subtle';
-      if (h <= 7) return 'none';
-      if (h <= 8) return 'subtle';
-      if (h <= 9) return 'full';
-      return 'full';
-    };
+    if (!hourThemeColors) {
+      return {
+        labels: members.map((m) => m.name),
+        values: members.map((m) => m.hours),
+        targetMarker: {
+          value: targetHours,
+          label: `Target ${targetHours.toFixed(1)}h`,
+          color: undefined,
+        },
+        suffix: 'h',
+      };
+    }
 
     return {
       labels: members.map((m) => m.name),
       values: members.map((m) => m.hours),
-      borderColors: hourThemeColors ? members.map((m) => getBorderColor(m.hours)!) : undefined,
+      colors: zones.map((z) => getWorkHoursBarFill(z, hourThemeColors)),
+      borderColors: zones.map((z) => getWorkHoursBarBorder(z, hourThemeColors)),
+      targetMarker: {
+        value: targetHours,
+        label: `Target ${targetHours.toFixed(1)}h`,
+        color: hourThemeColors.markerColor,
+      },
       suffix: 'h',
-      flashLevels: members.map((m) => getFlashLevel(m.hours)),
+      flashLevels: zones.map((z, i) => getWorkHoursFlashLevel(z, members[i]?.hours ?? 0)),
+      plaidOverlay: zones.map((z) => z === 'plaid'),
     };
-  }, [workHours, hourThemeColors]);
+  }, [workHours, hourThemeColors, targetHours]);
 
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
 

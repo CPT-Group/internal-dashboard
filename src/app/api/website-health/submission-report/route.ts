@@ -25,23 +25,30 @@ function buildSubmissionReportAlertText(report: WebsiteHealthSubmissionReport): 
   const lines: string[] = [
     '## WEBSITE HEALTH SUBMISSION REPORT',
     '',
+    '_**Submitted** (today/yesterday)_ = in-scope rows in the website `Submissions` table for that calendar window (5:15 same-day rule for “today”).',
+    '_**Downloaded** (today/yesterday)_ = those rows also found in 2K16 `CleanClaims` with the same online filter as the main Website Health scan.',
+    '',
     '| Metric | Value |',
     '|---|---|',
     `| Active Sites Checked | ${report.totalSitesChecked} |`,
     `| Total Submitted | ${report.totalSubmittedCount} |`,
-    `| Submitted Today | ${report.totalSubmittedTodayCount} |`,
-    `| Submitted Yesterday | ${report.totalSubmittedYesterdayCount} |`,
+    `| Submitted Today (web) | ${report.totalSubmittedTodayCount} |`,
+    `| Downloaded Today | ${report.totalDownloadedTodayCount} |`,
+    `| Submitted Yesterday (web) | ${report.totalSubmittedYesterdayCount} |`,
+    `| Downloaded Yesterday | ${report.totalDownloadedYesterdayCount} |`,
     `| Last Run | ${report.runAt} |`,
     '',
-    '| Site | Status | Total Submitted | Submitted Today | Submitted Yesterday |',
-    '|---|---|---:|---:|---:|',
+    '| Site | Status | Total | Sub today | DL today | Sub yest | DL yest |',
+    '|---|---|---:|---:|---:|---:|---:|',
   ];
 
   let includedCount = 0;
   for (const site of sorted) {
     const status = site.status.toUpperCase();
     const safeSite = site.siteKey.replace(/\|/g, '/');
-    const row = `| ${safeSite} | ${status} | ${site.totalSubmittedCount} | ${site.submittedTodayCount} | ${site.submittedYesterdayCount} |`;
+    const row =
+      `| ${safeSite} | ${status} | ${site.totalSubmittedCount} | ${site.submittedTodayCount} | ` +
+      `${site.downloadedTodayCount} | ${site.submittedYesterdayCount} | ${site.downloadedYesterdayCount} |`;
     const candidate = [...lines, row].join('\n');
     if (candidate.length > 3900) break;
     lines.push(row);

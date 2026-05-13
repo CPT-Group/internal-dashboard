@@ -40,6 +40,67 @@ function rgbaStr(rgb: [number, number, number], a: number): string {
   return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a.toFixed(2)})`;
 }
 
+/**
+ * Rounded rect for legacy WebKit / older Tizen browsers without `ctx.roundRect`.
+ */
+function pathRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+): void {
+  const rr = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+  ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y);
+  ctx.closePath();
+}
+
+const PLAID_RED = 'rgba(220, 38, 38, 0.44)';
+const PLAID_GREEN = 'rgba(34, 197, 94, 0.4)';
+
+/** Red/green diagonal plaid drawn in Canvas (no CSS) for 200%+ target tiers on TV. */
+function drawPlaidOverlay(
+  ctx: CanvasRenderingContext2D,
+  bx: number,
+  by: number,
+  bw: number,
+  bh: number,
+  phase01: number
+): void {
+  if (bw <= 0 || bh <= 0) return;
+  const step = 8;
+  const shift = phase01 * step;
+  ctx.save();
+  pathRoundedRect(ctx, bx, by, bw, bh, 3);
+  ctx.clip();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = PLAID_RED;
+  for (let k = -bh - shift; k < bw + bh; k += step) {
+    ctx.beginPath();
+    ctx.moveTo(bx + k, by);
+    ctx.lineTo(bx + k + bh, by + bh);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = PLAID_GREEN;
+  for (let k = -bh - shift + step * 0.5; k < bw + bh; k += step) {
+    ctx.beginPath();
+    ctx.moveTo(bx + k, by + bh);
+    ctx.lineTo(bx + k + bh, by);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawHazardTriangle(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -179,8 +240,11 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
   }, [activeTheme]);
 
   const hasAnimation = useMemo(
-    () => (data.flashLevels ?? []).some((l) => l !== 'none') || data.values.some((v) => v <= 0),
-    [data.flashLevels, data.values]
+    () =>
+      (data.flashLevels ?? []).some((l) => l !== 'none') ||
+      data.values.some((v) => v <= 0) ||
+      (data.plaidOverlay?.some(Boolean) ?? false),
+    [data.flashLevels, data.plaidOverlay, data.values]
   );
 
   const applyFlash = useCallback(() => {
@@ -264,8 +328,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       ctx.shadowBlur = blur;
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = rgbaStr(rgb, 0.45 * pulse);
-      ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, 3);
+      pathRoundedRect(ctx, bx, by, bw, bh, 3);
       ctx.stroke();
       ctx.restore();
 
@@ -286,13 +349,17 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
 
       ctx.save();
       ctx.fillStyle = shimmer;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, 3);
+      pathRoundedRect(ctx, bx, by, bw, bh, 3);
       ctx.clip();
       ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = surge;
       ctx.fillRect(bx, by, bw, bh);
       ctx.restore();
+
+      const plaidFlags = data.plaidOverlay;
+      if (plaidFlags?.[i]) {
+        drawPlaidOverlay(ctx, bx, by, bw, bh, sweep);
+      }
 
       // Red/full bars get a blinking hazard icon near the bar end.
       if (level === 'full' && pulse > 0.55) {
@@ -301,7 +368,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         drawHazardTriangle(ctx, iconX, iconY, 10, rgbaStr(rgb, 0.95));
       }
     }
-  }, [data.flashLevels, data.borderColors, data.colors, theme?.barPrimary]);
+  }, [data.flashLevels, data.borderColors, data.colors, data.plaidOverlay, theme?.barPrimary]);
 
   useEffect(() => {
     if (!hasAnimation) return;

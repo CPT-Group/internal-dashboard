@@ -62,5 +62,10 @@ kyleJira/
 # local Cursor agent one-off scripts (Jira JSON payloads, per-task helpers)
 cursorScripts/
 
+# Cursor analytics workspace (CSVs/JSON dumps); only README + .gitkeep are tracked
+/cursor-analytics-new-screen/**
+!/cursor-analytics-new-screen/README.md
+!/cursor-analytics-new-screen/.gitkeep
+
 # one-off archival snapshots / deletion-audit artifacts / retired script bundles
 ArchivedReports_TestingArchive/

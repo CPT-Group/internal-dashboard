@@ -10,17 +10,17 @@ export interface DashboardItem {
 
 export const DASHBOARD_LIST: DashboardItem[] = [
   {
-    title: 'Dev Corner One',
-    description: 'Development team dashboard - Analytics & Metrics',
+    title: 'NOVA Daily',
+    description: 'NOVA team TV — KPIs, work hours, throughput & activity',
     route: '/tv/dev-corner-one',
     icon: 'pi pi-code',
     enabled: true,
   },
   {
-    title: 'Dev Corner Two',
-    description: 'Development team dashboard - Performance & Stats',
+    title: 'GitHub activity',
+    description: 'Org/repo webhooks · feed & Teams mirror',
     route: '/tv/dev-corner-two',
-    icon: 'pi pi-chart-line',
+    icon: 'pi pi-github',
     enabled: true,
   },
   {
@@ -35,7 +35,8 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     description: 'Dev team totals & Gantt – mobile-friendly',
     route: '/tv/trevor',
     icon: 'pi pi-chart-bar',
-    enabled: true,
+    /** Hidden from home grid; `/tv/trevor` remains bookmarkable. */
+    enabled: false,
   },
   {
     title: "Jackie's Office",
@@ -53,17 +54,17 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     enabled: true,
   },
   {
-    title: 'GitHub activity',
-    description: 'Org/repo webhooks · feed & Teams mirror',
-    route: '/tv/github-activity',
-    icon: 'pi pi-github',
-    enabled: true,
-  },
-  {
     title: 'Website Health',
     description: 'Interactive / production DB analytics (in development)',
     route: '/website-health',
     icon: 'pi pi-heart',
+    enabled: true,
+  },
+  {
+    title: 'Cursor analytics',
+    description: 'Local CSV summary — month, repo, developer (no Cursor API calls)',
+    route: '/cursor-analytics',
+    icon: 'pi pi-chart-line',
     enabled: true,
   },
 ];

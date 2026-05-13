@@ -7,7 +7,9 @@
     "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:sql": "node scripts/test-sql-connections.cjs"
+    "test:sql": "node scripts/test-sql-connections.cjs",
+    "cursor-analytics:summarize": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen",
+    "cursor-analytics:regen": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen --out kyleOutput/cursor-analytics-summary.json"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

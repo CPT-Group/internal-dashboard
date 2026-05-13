@@ -290,7 +290,8 @@ export const WebsiteHealthDashboard = () => {
           summary: 'Submission scan sent',
           detail:
             `Posted ${body.report.totalSitesChecked} active site rows to Teams ` +
-            `(Total ${body.report.totalSubmittedCount}, Today ${body.report.totalSubmittedTodayCount}, Yesterday ${body.report.totalSubmittedYesterdayCount}).`,
+            `(Total ${body.report.totalSubmittedCount}; today web ${body.report.totalSubmittedTodayCount} / DL ${body.report.totalDownloadedTodayCount}; ` +
+            `yesterday web ${body.report.totalSubmittedYesterdayCount} / DL ${body.report.totalDownloadedYesterdayCount}).`,
           life: 5000,
         });
       } else {
@@ -976,6 +977,15 @@ export const WebsiteHealthDashboard = () => {
               <div className={styles.kpiLabel}>Submitted Online</div>
               <div className={styles.kpiValue} title="Total in-scope source submissions considered.">
                 {summary?.totalSubmittedOnline ?? 0}
+              </div>
+            </Card>
+            <Card className={styles.kpiCard}>
+              <div className={styles.kpiLabel}>Submitted Online (Today)</div>
+              <div
+                className={styles.kpiValue}
+                title="Website Submissions in the submission-report “today” window (5:15 same-day cutoff); not required to appear in CleanClaims yet."
+              >
+                {summary?.totalSubmittedOnlineToday ?? 0}
               </div>
             </Card>
             <Card className={styles.kpiCard}>

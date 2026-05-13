@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Ripple } from 'primereact/ripple';
 import { useTheme } from '@/providers/ThemeProvider';
 import { DASHBOARD_LIST } from '@/constants/DASHBOARD_LIST';
+import { isWebsiteHealthHomeTileVisible } from '@/utils/websiteHealthHomeTile';
 import styles from './HomePage.module.scss';
 
 const UnicornIcon = () => (
@@ -31,7 +32,11 @@ const UnicornIcon = () => (
 export const HomePage = () => {
   const { theme, cycleTheme } = useTheme();
   const router = useRouter();
-  const enabled = DASHBOARD_LIST.filter((d) => d.enabled);
+  const enabled = DASHBOARD_LIST.filter((d) => {
+    if (!d.enabled) return false;
+    if (d.route === '/website-health' && !isWebsiteHealthHomeTileVisible()) return false;
+    return true;
+  });
 
   return (
     <div className={styles.container}>

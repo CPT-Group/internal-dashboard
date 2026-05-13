@@ -36,6 +36,8 @@ export interface WebsiteHealthSiteResult {
   webDbMissingConfirmationCount: number;
   webDbNotSubmittedCount: number;
   submittedOnlineCount: number;
+  /** In-scope website rows with `DateReceived` in the submission-report “today” window (same rules as 5:15 cutoff). */
+  submittedOnlineTodayCount: number;
   matchedInCleanClaimsCount: number;
   missingCount: number;
   errorMessage?: string;
@@ -50,6 +52,8 @@ export interface WebsiteHealthSummary {
   totalSitesChecked: number;
   sitesWithIssues: number;
   totalSubmittedOnline: number;
+  /** Sum of `submittedOnlineTodayCount` across sites (website `Submissions` only; not CleanClaims match). */
+  totalSubmittedOnlineToday: number;
   totalMatchedInCleanClaims: number;
   totalMissingInCleanClaims: number;
   results: WebsiteHealthSiteResult[];
@@ -89,8 +93,12 @@ export interface WebsiteHealthSubmissionReportSiteResult {
   websiteDbName: string;
   status: WebsiteHealthStatus;
   totalSubmittedCount: number;
+  /** Rows in website `Submissions` in the “today” window (in-scope; not yet necessarily in CleanClaims). */
   submittedTodayCount: number;
+  /** Rows in that window that match CleanClaims using the same online rules as the main health scan. */
+  downloadedTodayCount: number;
   submittedYesterdayCount: number;
+  downloadedYesterdayCount: number;
   errorMessage?: string;
 }
 
@@ -102,7 +110,9 @@ export interface WebsiteHealthSubmissionReport {
   totalSitesChecked: number;
   totalSubmittedCount: number;
   totalSubmittedTodayCount: number;
+  totalDownloadedTodayCount: number;
   totalSubmittedYesterdayCount: number;
+  totalDownloadedYesterdayCount: number;
   results: WebsiteHealthSubmissionReportSiteResult[];
 }
 
