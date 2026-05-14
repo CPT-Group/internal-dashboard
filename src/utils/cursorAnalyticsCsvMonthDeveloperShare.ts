@@ -69,3 +69,74 @@ export function buildCsvMonthDeveloperEstimateRows(
   out.sort((a, b) => b.chargedCents - a.chargedCents);
   return out;
 }
+
+export type CsvDeveloperEstimateBasis = 'tabular_weight' | 'equal_nova_fallback';
+
+export interface CsvDeveloperEstimateRow {
+  developer: string;
+  rows: number;
+  amount: number;
+  estRangeCents: number;
+  estUsdPerAmount: number | null;
+  basis: CsvDeveloperEstimateBasis;
+}
+
+/**
+ * Allocate the team **model-estimate** range total across tabular developer rows by `amount` weight.
+ * When every weight is zero, splits **evenly** across those rows (still tied to tabular keys, e.g. email).
+ */
+export function buildCsvDeveloperEstimateRowsFromTabular(
+  rows: readonly { developer: string; rows: number; amount: number }[],
+  totalCents: number,
+): CsvDeveloperEstimateRow[] {
+  if (rows.length === 0) return [];
+  if (!Number.isFinite(totalCents) || totalCents <= 0) {
+    return rows.map((r) => ({
+      ...r,
+      estRangeCents: 0,
+      estUsdPerAmount: null,
+      basis: 'tabular_weight',
+    }));
+  }
+  const wSum = rows.reduce((s, r) => s + (Number.isFinite(r.amount) && r.amount > 0 ? r.amount : 0), 0);
+  if (wSum <= 0) {
+    const each = Math.round(totalCents / rows.length);
+    return rows.map((r) => ({
+      ...r,
+      estRangeCents: each,
+      estUsdPerAmount: r.amount > 0 ? each / 100 / r.amount : null,
+      basis: 'tabular_weight',
+    }));
+  }
+  return rows.map((r) => {
+    const w = Number.isFinite(r.amount) && r.amount > 0 ? r.amount : 0;
+    const estRangeCents = Math.round(totalCents * (w / wSum));
+    return {
+      ...r,
+      estRangeCents,
+      estUsdPerAmount: r.amount > 0 ? estRangeCents / 100 / r.amount : null,
+      basis: 'tabular_weight',
+    };
+  });
+}
+
+/**
+ * Team **Analytics** daily rollup has no per-user column — optional **equal** split of the same model-estimate
+ * total across known NOVA display names so the Developers tab still shows a number (clearly labeled, not usage-based).
+ */
+export function buildCsvDeveloperEstimateRowsNovaEqualSplit(
+  displayNames: readonly string[],
+  totalCents: number,
+): CsvDeveloperEstimateRow[] {
+  const n = displayNames.length;
+  if (n === 0 || !Number.isFinite(totalCents) || totalCents <= 0) return [];
+  const each = Math.round(totalCents / n);
+  return displayNames.map((developer) => ({
+    developer,
+    rows: 0,
+    amount: 0,
+    estRangeCents: each,
+    estUsdPerAmount: null,
+    basis: 'equal_nova_fallback',
+  }));
+}

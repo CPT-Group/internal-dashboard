@@ -9,12 +9,18 @@ import { TabPanel, TabView } from 'primereact/tabview';
 
 import type { CursorBillingSnapshot, CursorTeamMemberSpend } from '@/lib/cursorAdminApi';
 import type { CursorEnterpriseAgentEditDay, CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
+import { NOVA_TEAM_DISPLAY_NAMES } from '@/constants/NOVA_TEAM';
 import type { CursorAnalyticsMonetarySource, CursorAnalyticsSummary } from '@/types/cursorAnalytics';
 import { isCursorChargedByDayTruncated } from '@/utils/cursorAnalyticsBillingGuards';
 import { formatUsdFromCents, formatUsdNumber } from '@/utils/cursorBillingFormat';
 import type { CsvMoneyEstimateResult } from '@/utils/cursorAnalyticsCsvModelMoneyEstimate';
 import { sumUsageRequestsInRange } from '@/utils/cursorAnalyticsCsvModelMoneyEstimate';
-import { buildCsvMonthDeveloperEstimateRows } from '@/utils/cursorAnalyticsCsvMonthDeveloperShare';
+import {
+  buildCsvDeveloperEstimateRowsFromTabular,
+  buildCsvDeveloperEstimateRowsNovaEqualSplit,
+  buildCsvMonthDeveloperEstimateRows,
+} from '@/utils/cursorAnalyticsCsvMonthDeveloperShare';
+import type { CsvDeveloperEstimateRow } from '@/utils/cursorAnalyticsCsvMonthDeveloperShare';
 import { teamDailyUsdTrendHybrid } from '@/utils/cursorAnalyticsDailyCostTrend';
 import { buildDeveloperMoneyRangeRows } from '@/utils/cursorAnalyticsMonetaryJoin';
 import { eachIsoDayInclusive } from '@/utils/cursorAnalyticsTeamTrend';
@@ -82,9 +88,25 @@ function dataBasisBody(row: { dataBasis: RepoMoneyBasis }) {
   return 'AI lines × charged (est.)';
 }
 
+function csvDevEstBasisBody(row: CsvDeveloperEstimateRow) {
+  if (row.basis === 'equal_nova_fallback') {
+    return 'Equal NOVA split (team rollup has no per-user column)';
+  }
+  return 'Tabular weight × team est.';
+}
+
 function monthDevBasisBody(row: { dataBasis: MonthDevMoneyBasis }) {
   if (row.dataBasis === 'usage_events') return 'Usage events';
   return 'CSV est. (month $ × tabular share)';
+}
+
+function estRangeCentsCell(row: CsvDeveloperEstimateRow) {
+  return formatUsdFromCents(row.estRangeCents);
+}
+
+function estUsdPerAmountCell(row: CsvDeveloperEstimateRow) {
+  if (row.estUsdPerAmount == null || !Number.isFinite(row.estUsdPerAmount)) return '—';
+  return formatUsdNumber(row.estUsdPerAmount);
 }
 
 const DOCS_MODELS_URL = 'https://cursor.com/docs/models';
@@ -109,7 +131,7 @@ export const CursorAnalyticsDataPanels = ({
   const monthDevDtRef = useRef<
     DataTable<{ month: string; developer: string; chargedCents: number; dataBasis: MonthDevMoneyBasis }[]> | null
   >(null);
-  const csvDevActivityDtRef = useRef<DataTable<{ developer: string; rows: number; amount: number }[]> | null>(null);
+  const csvDevActivityDtRef = useRef<DataTable<CsvDeveloperEstimateRow[]> | null>(null);
   const byMonthDtRef = useRef<DataTable<{ month: string; chargedCents: number }[]> | null>(null);
   const enterpriseDtRef = useRef<DataTable<CursorEnterpriseAgentEditDay[]> | null>(null);
 
@@ -324,6 +346,15 @@ export const CursorAnalyticsDataPanels = ({
     }
     return out.sort((a, b) => b.amount - a.amount);
   }, [summary.byDeveloper]);
+
+  const csvDeveloperEstimateRows = useMemo((): CsvDeveloperEstimateRow[] => {
+    if (!useCsvMoney || !csvMoneyEstimate) return [];
+    const total = csvMoneyEstimate.totalRangeCents;
+    if (csvDeveloperActivityRows.length > 0) {
+      return buildCsvDeveloperEstimateRowsFromTabular(csvDeveloperActivityRows, total);
+    }
+    return buildCsvDeveloperEstimateRowsNovaEqualSplit([...NOVA_TEAM_DISPLAY_NAMES], total);
+  }, [useCsvMoney, csvMoneyEstimate, csvDeveloperActivityRows]);
 
   const monthDeveloperUnifiedRows = useMemo(() => {
     if (useCsvMoney && csvMoneyEstimate) {
@@ -550,7 +581,7 @@ export const CursorAnalyticsDataPanels = ({
               <Message
                 severity="info"
                 className={styles.apiMessage}
-                text="Per-member cycle spend, usage/included request counts in range, and event-matched Charged (range) require Monetary → API + Refresh (team CSV has no per-email dollars)."
+                text="The joined cycle vs range table (Cursor-reported spendCents, usage events, daily usage) still requires Monetary → API + Refresh. The list above is the CSV model estimate for the team only."
               />
             </>
           ) : useCsvMoney ? (
@@ -573,20 +604,20 @@ export const CursorAnalyticsDataPanels = ({
           {useCsvMoney ? (
             <>
               <p className={styles.hint}>
-                The team <strong>daily rollup</strong> has no per-user column — dollars and event charges are not
-                splittable without Admin API or a <strong>tabular</strong> export merged into the summary. List rates:{' '}
+                <strong>Est. charged (range)</strong> for each row is your <strong>team model-pricing total</strong> for
+                the selected dates (see Trend) allocated here: if the merged summary has a <strong>user / email</strong>{' '}
+                column on tabular exports, we split by each person&apos;s <strong>tabular amount</strong> weight. The
+                Cursor <strong>team daily rollup</strong> CSV has <strong>no per-user column</strong> — then we show an
+                explicit <strong>equal split across NOVA roster names</strong> (not Cursor-reported usage per person).
+                Public list $/1M:{' '}
                 <a href={DOCS_MODELS_URL} target="_blank" rel="noopener noreferrer">
                   cursor.com/docs/models
                 </a>
-                .
+                . For <strong>Cursor-billed</strong> cycle spend and event-backed <strong>Charged (range)</strong>, use{' '}
+                <strong>Monetary → API</strong> and Refresh.
               </p>
-              {csvDeveloperActivityRows.length > 0 ? (
+              {csvDeveloperEstimateRows.length > 0 ? (
                 <>
-                  <p className={styles.hint}>
-                    <strong>Tabular activity (merged exports):</strong> row counts and amounts from CSV columns mapped
-                    as user + amount — volumes are over the files ingested into <code>data/cursor-analytics/cursor-analytics-summary.json</code>,
-                    not automatically clipped to the date picker above.
-                  </p>
                   <div className={styles.tabExportBar}>
                     <Button
                       type="button"
@@ -600,24 +631,27 @@ export const CursorAnalyticsDataPanels = ({
                   </div>
                   <DataTable
                     ref={csvDevActivityDtRef}
-                    value={csvDeveloperActivityRows}
+                    value={csvDeveloperEstimateRows}
                     paginator
                     rows={20}
                     sortMode="multiple"
                     removableSort
                     size="small"
                   >
-                    <Column field="developer" header="Developer" sortable />
-                    <Column field="rows" header="Rows" sortable />
+                    <Column field="developer" header="Developer / email" sortable />
+                    <Column field="rows" header="Rows (tabular)" sortable />
                     <Column field="amount" header="Amount (tabular)" sortable />
+                    <Column field="estRangeCents" header="Est. charged (range)" sortable body={estRangeCentsCell} />
+                    <Column header="Est $ / tabular amount" body={estUsdPerAmountCell} />
+                    <Column field="basis" header="Basis" sortable body={csvDevEstBasisBody} />
                   </DataTable>
                 </>
-              ) : null}
-              <Message
-                severity="info"
-                className={styles.apiMessage}
-                text="Cycle spend, usage/included request totals, and Charged columns require Monetary → API + Refresh (matches Trend dashed comparison when billing loads)."
-              />
+              ) : (
+                <p className={styles.hint}>
+                  No per-developer estimate in this range (team model total is zero — widen the date range or confirm{' '}
+                  <code>Models Time Series Data</code> in <code>data/cursor-analytics/csv/</code> exports).
+                </p>
+              )}
             </>
           ) : (
             <>

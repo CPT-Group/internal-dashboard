@@ -1,17 +1,5849 @@
 {
-  "schema": "empty",
-  "generatedAt": "2026-05-14T19:35:31.919Z",
+  "schema": "teamDaily",
+  "generatedAt": "2026-05-14T19:45:37.354Z",
   "directory": "data\\cursor-analytics\\csv",
-  "sources": [],
-  "columnDetection": [],
-  "byMonth": {},
-  "byRepo": {},
-  "byDeveloper": {},
-  "byMonthRepo": {},
+  "sources": [
+    "data\\cursor-analytics\\csv\\Analytics_Team_2025-08-27_2026-05-13.csv"
+  ],
+  "columnDetection": [
+    {
+      "file": "Analytics_Team_2025-08-27_2026-05-13.csv",
+      "dateColumn": "Date",
+      "userColumn": "(not in team daily export — use leaderboard CSV or Enterprise API)",
+      "repoColumn": "File Extensions Data → extensions",
+      "amountColumn": "Chats Usage Based Requests (usage-based volume proxy)"
+    }
+  ],
+  "byMonth": {
+    "2025-08": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09": {
+      "rows": 30,
+      "amount": 4995
+    },
+    "2025-10": {
+      "rows": 31,
+      "amount": 1848
+    },
+    "2025-11": {
+      "rows": 30,
+      "amount": 3042
+    },
+    "2025-12": {
+      "rows": 31,
+      "amount": 3492
+    },
+    "2026-01": {
+      "rows": 31,
+      "amount": 2892
+    },
+    "2026-02": {
+      "rows": 28,
+      "amount": 5032
+    },
+    "2026-03": {
+      "rows": 31,
+      "amount": 3429
+    },
+    "2026-04": {
+      "rows": 30,
+      "amount": 4762
+    },
+    "2026-05": {
+      "rows": 13,
+      "amount": 1837
+    }
+  },
+  "byRepo": {
+    ".js": {
+      "rows": 99,
+      "amount": 173796
+    },
+    ".md": {
+      "rows": 244,
+      "amount": 620672
+    },
+    ".json": {
+      "rows": 121,
+      "amount": 139094
+    },
+    ".py": {
+      "rows": 40,
+      "amount": 11083
+    },
+    ".mdc": {
+      "rows": 41,
+      "amount": 17618
+    },
+    ".cs": {
+      "rows": 210,
+      "amount": 489438
+    },
+    ".ps1": {
+      "rows": 62,
+      "amount": 45395
+    },
+    ".html": {
+      "rows": 32,
+      "amount": 1025
+    },
+    ".resx": {
+      "rows": 59,
+      "amount": 5316
+    },
+    ".csproj": {
+      "rows": 55,
+      "amount": 4175
+    },
+    ".config": {
+      "rows": 45,
+      "amount": 439
+    },
+    ".cshtml": {
+      "rows": 69,
+      "amount": 10516
+    },
+    ".css": {
+      "rows": 49,
+      "amount": 34489
+    },
+    ".sql": {
+      "rows": 58,
+      "amount": 45526
+    },
+    ".tsx": {
+      "rows": 137,
+      "amount": 208821
+    },
+    ".ts": {
+      "rows": 148,
+      "amount": 229537
+    },
+    ".scss": {
+      "rows": 70,
+      "amount": 43972
+    },
+    ".razor": {
+      "rows": 31,
+      "amount": 2591
+    },
+    ".bat": {
+      "rows": 38,
+      "amount": 3013
+    },
+    ".svg": {
+      "rows": 32,
+      "amount": 266
+    },
+    ".txt": {
+      "rows": 35,
+      "amount": 3090
+    },
+    ".bas": {
+      "rows": 59,
+      "amount": 90996
+    },
+    ".cls": {
+      "rows": 40,
+      "amount": 18842
+    },
+    ".cpp": {
+      "rows": 32,
+      "amount": 1633
+    },
+    ".h": {
+      "rows": 32,
+      "amount": 345
+    },
+    ".go": {
+      "rows": 32,
+      "amount": 4094
+    },
+    ".tf": {
+      "rows": 38,
+      "amount": 4424
+    },
+    ".mjs": {
+      "rows": 35,
+      "amount": 1275
+    },
+    ".xaml": {
+      "rows": 31,
+      "amount": 64
+    },
+    ".stg": {
+      "rows": 31,
+      "amount": 24
+    },
+    ".prd": {
+      "rows": 31,
+      "amount": 23
+    },
+    ".yml": {
+      "rows": 31,
+      "amount": 60
+    },
+    ".example": {
+      "rows": 31,
+      "amount": 481
+    }
+  },
+  "byDeveloper": {
+    "_team": {
+      "rows": 260,
+      "amount": 31329
+    }
+  },
+  "byMonthRepo": {
+    "2025-08\t.bas": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.bat": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.cls": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.config": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.cpp": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.cs": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.cshtml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.csproj": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.css": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.example": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.go": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.h": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.html": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.js": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.json": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.md": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.mdc": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.mjs": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.prd": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.ps1": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.py": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.razor": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.resx": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.scss": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.sql": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.stg": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.svg": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.tf": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.ts": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.tsx": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.txt": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.xaml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-08\t.yml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.bas": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.bat": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.cls": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.config": {
+      "rows": 11,
+      "amount": 413
+    },
+    "2025-09\t.cpp": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.cs": {
+      "rows": 26,
+      "amount": 126633
+    },
+    "2025-09\t.cshtml": {
+      "rows": 11,
+      "amount": 792
+    },
+    "2025-09\t.csproj": {
+      "rows": 12,
+      "amount": 2539
+    },
+    "2025-09\t.css": {
+      "rows": 8,
+      "amount": 2132
+    },
+    "2025-09\t.example": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.go": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.h": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.html": {
+      "rows": 6,
+      "amount": 126
+    },
+    "2025-09\t.js": {
+      "rows": 18,
+      "amount": 118907
+    },
+    "2025-09\t.json": {
+      "rows": 14,
+      "amount": 31850
+    },
+    "2025-09\t.md": {
+      "rows": 30,
+      "amount": 139444
+    },
+    "2025-09\t.mdc": {
+      "rows": 8,
+      "amount": 12607
+    },
+    "2025-09\t.mjs": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.prd": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.ps1": {
+      "rows": 13,
+      "amount": 27502
+    },
+    "2025-09\t.py": {
+      "rows": 6,
+      "amount": 1654
+    },
+    "2025-09\t.razor": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.resx": {
+      "rows": 14,
+      "amount": 2319
+    },
+    "2025-09\t.scss": {
+      "rows": 6,
+      "amount": 2770
+    },
+    "2025-09\t.sql": {
+      "rows": 9,
+      "amount": 5735
+    },
+    "2025-09\t.stg": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.svg": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.tf": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.ts": {
+      "rows": 8,
+      "amount": 5973
+    },
+    "2025-09\t.tsx": {
+      "rows": 8,
+      "amount": 21133
+    },
+    "2025-09\t.txt": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.xaml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-09\t.yml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-10\t.bas": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.bat": {
+      "rows": 10,
+      "amount": 3013
+    },
+    "2025-10\t.cls": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.config": {
+      "rows": 6,
+      "amount": 3
+    },
+    "2025-10\t.cpp": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.cs": {
+      "rows": 21,
+      "amount": 3974
+    },
+    "2025-10\t.cshtml": {
+      "rows": 5,
+      "amount": 194
+    },
+    "2025-10\t.csproj": {
+      "rows": 4,
+      "amount": 3
+    },
+    "2025-10\t.css": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.example": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.go": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.h": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.html": {
+      "rows": 3,
+      "amount": 899
+    },
+    "2025-10\t.js": {
+      "rows": 17,
+      "amount": 6053
+    },
+    "2025-10\t.json": {
+      "rows": 23,
+      "amount": 10110
+    },
+    "2025-10\t.md": {
+      "rows": 31,
+      "amount": 43221
+    },
+    "2025-10\t.mdc": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-10\t.mjs": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.prd": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.ps1": {
+      "rows": 8,
+      "amount": 2952
+    },
+    "2025-10\t.py": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2025-10\t.razor": {
+      "rows": 3,
+      "amount": 2591
+    },
+    "2025-10\t.resx": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2025-10\t.scss": {
+      "rows": 3,
+      "amount": 932
+    },
+    "2025-10\t.sql": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.stg": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.svg": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-10\t.tf": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.ts": {
+      "rows": 20,
+      "amount": 27389
+    },
+    "2025-10\t.tsx": {
+      "rows": 7,
+      "amount": 15973
+    },
+    "2025-10\t.txt": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-10\t.xaml": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-10\t.yml": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2025-11\t.bas": {
+      "rows": 15,
+      "amount": 55275
+    },
+    "2025-11\t.bat": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.cls": {
+      "rows": 7,
+      "amount": 15399
+    },
+    "2025-11\t.config": {
+      "rows": 2,
+      "amount": 1
+    },
+    "2025-11\t.cpp": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.cs": {
+      "rows": 19,
+      "amount": 53588
+    },
+    "2025-11\t.cshtml": {
+      "rows": 7,
+      "amount": 2342
+    },
+    "2025-11\t.csproj": {
+      "rows": 6,
+      "amount": 753
+    },
+    "2025-11\t.css": {
+      "rows": 3,
+      "amount": 3525
+    },
+    "2025-11\t.example": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.go": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.h": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.html": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.js": {
+      "rows": 10,
+      "amount": 13826
+    },
+    "2025-11\t.json": {
+      "rows": 12,
+      "amount": 17771
+    },
+    "2025-11\t.md": {
+      "rows": 27,
+      "amount": 193338
+    },
+    "2025-11\t.mdc": {
+      "rows": 3,
+      "amount": 4565
+    },
+    "2025-11\t.mjs": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.prd": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.ps1": {
+      "rows": 3,
+      "amount": 1501
+    },
+    "2025-11\t.py": {
+      "rows": 4,
+      "amount": 8915
+    },
+    "2025-11\t.razor": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.resx": {
+      "rows": 6,
+      "amount": 1131
+    },
+    "2025-11\t.scss": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.sql": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.stg": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.svg": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.tf": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.ts": {
+      "rows": 11,
+      "amount": 32719
+    },
+    "2025-11\t.tsx": {
+      "rows": 12,
+      "amount": 17336
+    },
+    "2025-11\t.txt": {
+      "rows": 2,
+      "amount": 1046
+    },
+    "2025-11\t.xaml": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11\t.yml": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12\t.bas": {
+      "rows": 7,
+      "amount": 22180
+    },
+    "2025-12\t.bat": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.cls": {
+      "rows": 5,
+      "amount": 1519
+    },
+    "2025-12\t.config": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.cpp": {
+      "rows": 5,
+      "amount": 1633
+    },
+    "2025-12\t.cs": {
+      "rows": 26,
+      "amount": 80970
+    },
+    "2025-12\t.cshtml": {
+      "rows": 8,
+      "amount": 2380
+    },
+    "2025-12\t.csproj": {
+      "rows": 6,
+      "amount": 298
+    },
+    "2025-12\t.css": {
+      "rows": 10,
+      "amount": 23526
+    },
+    "2025-12\t.example": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.go": {
+      "rows": 5,
+      "amount": 4094
+    },
+    "2025-12\t.h": {
+      "rows": 5,
+      "amount": 345
+    },
+    "2025-12\t.html": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.js": {
+      "rows": 16,
+      "amount": 20467
+    },
+    "2025-12\t.json": {
+      "rows": 10,
+      "amount": 1130
+    },
+    "2025-12\t.md": {
+      "rows": 27,
+      "amount": 75348
+    },
+    "2025-12\t.mdc": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.mjs": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.prd": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.ps1": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.py": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.razor": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.resx": {
+      "rows": 4,
+      "amount": 92
+    },
+    "2025-12\t.scss": {
+      "rows": 4,
+      "amount": 1735
+    },
+    "2025-12\t.sql": {
+      "rows": 13,
+      "amount": 25548
+    },
+    "2025-12\t.stg": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.svg": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.tf": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.ts": {
+      "rows": 13,
+      "amount": 21132
+    },
+    "2025-12\t.tsx": {
+      "rows": 20,
+      "amount": 30449
+    },
+    "2025-12\t.txt": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.xaml": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2025-12\t.yml": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2026-01\t.bas": {
+      "rows": 6,
+      "amount": 3130
+    },
+    "2026-01\t.bat": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.cls": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.config": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.cpp": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.cs": {
+      "rows": 27,
+      "amount": 78344
+    },
+    "2026-01\t.cshtml": {
+      "rows": 11,
+      "amount": 2469
+    },
+    "2026-01\t.csproj": {
+      "rows": 7,
+      "amount": 290
+    },
+    "2026-01\t.css": {
+      "rows": 6,
+      "amount": 766
+    },
+    "2026-01\t.example": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.go": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.h": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.html": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.js": {
+      "rows": 12,
+      "amount": 7588
+    },
+    "2026-01\t.json": {
+      "rows": 14,
+      "amount": 50283
+    },
+    "2026-01\t.md": {
+      "rows": 26,
+      "amount": 56091
+    },
+    "2026-01\t.mdc": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.mjs": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.prd": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.ps1": {
+      "rows": 8,
+      "amount": 51
+    },
+    "2026-01\t.py": {
+      "rows": 5,
+      "amount": 514
+    },
+    "2026-01\t.razor": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.resx": {
+      "rows": 6,
+      "amount": 327
+    },
+    "2026-01\t.scss": {
+      "rows": 13,
+      "amount": 6268
+    },
+    "2026-01\t.sql": {
+      "rows": 8,
+      "amount": 5249
+    },
+    "2026-01\t.stg": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.svg": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.tf": {
+      "rows": 5,
+      "amount": 3446
+    },
+    "2026-01\t.ts": {
+      "rows": 18,
+      "amount": 27635
+    },
+    "2026-01\t.tsx": {
+      "rows": 21,
+      "amount": 38996
+    },
+    "2026-01\t.txt": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.xaml": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-01\t.yml": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-02\t.bas": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.bat": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.cls": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.config": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.cpp": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.cs": {
+      "rows": 22,
+      "amount": 57460
+    },
+    "2026-02\t.cshtml": {
+      "rows": 7,
+      "amount": 1130
+    },
+    "2026-02\t.csproj": {
+      "rows": 3,
+      "amount": 104
+    },
+    "2026-02\t.css": {
+      "rows": 6,
+      "amount": 4535
+    },
+    "2026-02\t.example": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.go": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.h": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.html": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.js": {
+      "rows": 4,
+      "amount": 1515
+    },
+    "2026-02\t.json": {
+      "rows": 9,
+      "amount": 9060
+    },
+    "2026-02\t.md": {
+      "rows": 27,
+      "amount": 37557
+    },
+    "2026-02\t.mdc": {
+      "rows": 3,
+      "amount": 38
+    },
+    "2026-02\t.mjs": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2026-02\t.prd": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.ps1": {
+      "rows": 3,
+      "amount": 1945
+    },
+    "2026-02\t.py": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2026-02\t.razor": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.resx": {
+      "rows": 4,
+      "amount": 197
+    },
+    "2026-02\t.scss": {
+      "rows": 14,
+      "amount": 21947
+    },
+    "2026-02\t.sql": {
+      "rows": 5,
+      "amount": 3693
+    },
+    "2026-02\t.stg": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.svg": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.tf": {
+      "rows": 3,
+      "amount": 522
+    },
+    "2026-02\t.ts": {
+      "rows": 21,
+      "amount": 57363
+    },
+    "2026-02\t.tsx": {
+      "rows": 23,
+      "amount": 52051
+    },
+    "2026-02\t.txt": {
+      "rows": 4,
+      "amount": 2044
+    },
+    "2026-02\t.xaml": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-02\t.yml": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.bas": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.bat": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.cls": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.config": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2026-03\t.cpp": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.cs": {
+      "rows": 26,
+      "amount": 36673
+    },
+    "2026-03\t.cshtml": {
+      "rows": 6,
+      "amount": 857
+    },
+    "2026-03\t.csproj": {
+      "rows": 6,
+      "amount": 188
+    },
+    "2026-03\t.css": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.example": {
+      "rows": 3,
+      "amount": 481
+    },
+    "2026-03\t.go": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.h": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.html": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.js": {
+      "rows": 9,
+      "amount": 5058
+    },
+    "2026-03\t.json": {
+      "rows": 19,
+      "amount": 11190
+    },
+    "2026-03\t.md": {
+      "rows": 30,
+      "amount": 30612
+    },
+    "2026-03\t.mdc": {
+      "rows": 3,
+      "amount": 395
+    },
+    "2026-03\t.mjs": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.prd": {
+      "rows": 3,
+      "amount": 23
+    },
+    "2026-03\t.ps1": {
+      "rows": 4,
+      "amount": 346
+    },
+    "2026-03\t.py": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2026-03\t.razor": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.resx": {
+      "rows": 7,
+      "amount": 1030
+    },
+    "2026-03\t.scss": {
+      "rows": 8,
+      "amount": 5292
+    },
+    "2026-03\t.sql": {
+      "rows": 6,
+      "amount": 3887
+    },
+    "2026-03\t.stg": {
+      "rows": 3,
+      "amount": 24
+    },
+    "2026-03\t.svg": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.tf": {
+      "rows": 3,
+      "amount": 0
+    },
+    "2026-03\t.ts": {
+      "rows": 17,
+      "amount": 20051
+    },
+    "2026-03\t.tsx": {
+      "rows": 15,
+      "amount": 18241
+    },
+    "2026-03\t.txt": {
+      "rows": 2,
+      "amount": 0
+    },
+    "2026-03\t.xaml": {
+      "rows": 3,
+      "amount": 64
+    },
+    "2026-03\t.yml": {
+      "rows": 3,
+      "amount": 60
+    },
+    "2026-04\t.bas": {
+      "rows": 13,
+      "amount": 9592
+    },
+    "2026-04\t.bat": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.cls": {
+      "rows": 7,
+      "amount": 1924
+    },
+    "2026-04\t.config": {
+      "rows": 6,
+      "amount": 0
+    },
+    "2026-04\t.cpp": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.cs": {
+      "rows": 27,
+      "amount": 28783
+    },
+    "2026-04\t.cshtml": {
+      "rows": 6,
+      "amount": 147
+    },
+    "2026-04\t.csproj": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.css": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.example": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.go": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.h": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.html": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.js": {
+      "rows": 7,
+      "amount": 382
+    },
+    "2026-04\t.json": {
+      "rows": 11,
+      "amount": 6592
+    },
+    "2026-04\t.md": {
+      "rows": 28,
+      "amount": 25826
+    },
+    "2026-04\t.mdc": {
+      "rows": 6,
+      "amount": 13
+    },
+    "2026-04\t.mjs": {
+      "rows": 7,
+      "amount": 474
+    },
+    "2026-04\t.prd": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.ps1": {
+      "rows": 12,
+      "amount": 10800
+    },
+    "2026-04\t.py": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.razor": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.resx": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.scss": {
+      "rows": 13,
+      "amount": 4505
+    },
+    "2026-04\t.sql": {
+      "rows": 8,
+      "amount": 1414
+    },
+    "2026-04\t.stg": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.svg": {
+      "rows": 6,
+      "amount": 266
+    },
+    "2026-04\t.tf": {
+      "rows": 7,
+      "amount": 456
+    },
+    "2026-04\t.ts": {
+      "rows": 25,
+      "amount": 16573
+    },
+    "2026-04\t.tsx": {
+      "rows": 19,
+      "amount": 10719
+    },
+    "2026-04\t.txt": {
+      "rows": 6,
+      "amount": 0
+    },
+    "2026-04\t.xaml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-04\t.yml": {
+      "rows": 5,
+      "amount": 0
+    },
+    "2026-05\t.bas": {
+      "rows": 2,
+      "amount": 819
+    },
+    "2026-05\t.bat": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.cls": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.config": {
+      "rows": 3,
+      "amount": 22
+    },
+    "2026-05\t.cpp": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.cs": {
+      "rows": 11,
+      "amount": 23013
+    },
+    "2026-05\t.cshtml": {
+      "rows": 3,
+      "amount": 205
+    },
+    "2026-05\t.csproj": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.css": {
+      "rows": 2,
+      "amount": 5
+    },
+    "2026-05\t.example": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.go": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.h": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.html": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.js": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.json": {
+      "rows": 4,
+      "amount": 1108
+    },
+    "2026-05\t.md": {
+      "rows": 13,
+      "amount": 19235
+    },
+    "2026-05\t.mdc": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.mjs": {
+      "rows": 3,
+      "amount": 801
+    },
+    "2026-05\t.prd": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.ps1": {
+      "rows": 3,
+      "amount": 298
+    },
+    "2026-05\t.py": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.razor": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.resx": {
+      "rows": 4,
+      "amount": 220
+    },
+    "2026-05\t.scss": {
+      "rows": 3,
+      "amount": 523
+    },
+    "2026-05\t.sql": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.stg": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.svg": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.tf": {
+      "rows": 4,
+      "amount": 0
+    },
+    "2026-05\t.ts": {
+      "rows": 10,
+      "amount": 20702
+    },
+    "2026-05\t.tsx": {
+      "rows": 7,
+      "amount": 3923
+    },
+    "2026-05\t.txt": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.xaml": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05\t.yml": {
+      "rows": 1,
+      "amount": 0
+    }
+  },
   "byMonthDeveloper": {},
   "byRepoDeveloper": {},
-  "byDay": {},
-  "byDayModelRequests": {},
+  "byDay": {
+    "2025-08-27": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-08-28": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-08-29": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-08-30": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-08-31": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-09-01": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-09-02": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-09-03": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-09-04": {
+      "rows": 1,
+      "amount": 379
+    },
+    "2025-09-05": {
+      "rows": 1,
+      "amount": 1226
+    },
+    "2025-09-06": {
+      "rows": 1,
+      "amount": 758
+    },
+    "2025-09-07": {
+      "rows": 1,
+      "amount": 299
+    },
+    "2025-09-08": {
+      "rows": 1,
+      "amount": 171
+    },
+    "2025-09-09": {
+      "rows": 1,
+      "amount": 125
+    },
+    "2025-09-10": {
+      "rows": 1,
+      "amount": 98
+    },
+    "2025-09-11": {
+      "rows": 1,
+      "amount": 46
+    },
+    "2025-09-12": {
+      "rows": 1,
+      "amount": 99
+    },
+    "2025-09-13": {
+      "rows": 1,
+      "amount": 23
+    },
+    "2025-09-14": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-09-15": {
+      "rows": 1,
+      "amount": 142
+    },
+    "2025-09-16": {
+      "rows": 1,
+      "amount": 148
+    },
+    "2025-09-17": {
+      "rows": 1,
+      "amount": 238
+    },
+    "2025-09-18": {
+      "rows": 1,
+      "amount": 160
+    },
+    "2025-09-19": {
+      "rows": 1,
+      "amount": 146
+    },
+    "2025-09-20": {
+      "rows": 1,
+      "amount": 7
+    },
+    "2025-09-21": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-09-22": {
+      "rows": 1,
+      "amount": 115
+    },
+    "2025-09-23": {
+      "rows": 1,
+      "amount": 62
+    },
+    "2025-09-24": {
+      "rows": 1,
+      "amount": 113
+    },
+    "2025-09-25": {
+      "rows": 1,
+      "amount": 106
+    },
+    "2025-09-26": {
+      "rows": 1,
+      "amount": 144
+    },
+    "2025-09-27": {
+      "rows": 1,
+      "amount": 81
+    },
+    "2025-09-28": {
+      "rows": 1,
+      "amount": 121
+    },
+    "2025-09-29": {
+      "rows": 1,
+      "amount": 68
+    },
+    "2025-09-30": {
+      "rows": 1,
+      "amount": 120
+    },
+    "2025-10-01": {
+      "rows": 1,
+      "amount": 127
+    },
+    "2025-10-02": {
+      "rows": 1,
+      "amount": 118
+    },
+    "2025-10-03": {
+      "rows": 1,
+      "amount": 114
+    },
+    "2025-10-04": {
+      "rows": 1,
+      "amount": 10
+    },
+    "2025-10-05": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-06": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-07": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-08": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-09": {
+      "rows": 1,
+      "amount": 36
+    },
+    "2025-10-10": {
+      "rows": 1,
+      "amount": 48
+    },
+    "2025-10-11": {
+      "rows": 1,
+      "amount": 3
+    },
+    "2025-10-12": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-13": {
+      "rows": 1,
+      "amount": 38
+    },
+    "2025-10-14": {
+      "rows": 1,
+      "amount": 72
+    },
+    "2025-10-15": {
+      "rows": 1,
+      "amount": 60
+    },
+    "2025-10-16": {
+      "rows": 1,
+      "amount": 123
+    },
+    "2025-10-17": {
+      "rows": 1,
+      "amount": 49
+    },
+    "2025-10-18": {
+      "rows": 1,
+      "amount": 14
+    },
+    "2025-10-19": {
+      "rows": 1,
+      "amount": 69
+    },
+    "2025-10-20": {
+      "rows": 1,
+      "amount": 104
+    },
+    "2025-10-21": {
+      "rows": 1,
+      "amount": 157
+    },
+    "2025-10-22": {
+      "rows": 1,
+      "amount": 38
+    },
+    "2025-10-23": {
+      "rows": 1,
+      "amount": 93
+    },
+    "2025-10-24": {
+      "rows": 1,
+      "amount": 194
+    },
+    "2025-10-25": {
+      "rows": 1,
+      "amount": 21
+    },
+    "2025-10-26": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-27": {
+      "rows": 1,
+      "amount": 242
+    },
+    "2025-10-28": {
+      "rows": 1,
+      "amount": 118
+    },
+    "2025-10-29": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-30": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-10-31": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-01": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-02": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-03": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-04": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-05": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-06": {
+      "rows": 1,
+      "amount": 65
+    },
+    "2025-11-07": {
+      "rows": 1,
+      "amount": 83
+    },
+    "2025-11-08": {
+      "rows": 1,
+      "amount": 72
+    },
+    "2025-11-09": {
+      "rows": 1,
+      "amount": 2
+    },
+    "2025-11-10": {
+      "rows": 1,
+      "amount": 100
+    },
+    "2025-11-11": {
+      "rows": 1,
+      "amount": 170
+    },
+    "2025-11-12": {
+      "rows": 1,
+      "amount": 167
+    },
+    "2025-11-13": {
+      "rows": 1,
+      "amount": 234
+    },
+    "2025-11-14": {
+      "rows": 1,
+      "amount": 329
+    },
+    "2025-11-15": {
+      "rows": 1,
+      "amount": 212
+    },
+    "2025-11-16": {
+      "rows": 1,
+      "amount": 88
+    },
+    "2025-11-17": {
+      "rows": 1,
+      "amount": 191
+    },
+    "2025-11-18": {
+      "rows": 1,
+      "amount": 149
+    },
+    "2025-11-19": {
+      "rows": 1,
+      "amount": 178
+    },
+    "2025-11-20": {
+      "rows": 1,
+      "amount": 130
+    },
+    "2025-11-21": {
+      "rows": 1,
+      "amount": 215
+    },
+    "2025-11-22": {
+      "rows": 1,
+      "amount": 48
+    },
+    "2025-11-23": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-24": {
+      "rows": 1,
+      "amount": 188
+    },
+    "2025-11-25": {
+      "rows": 1,
+      "amount": 138
+    },
+    "2025-11-26": {
+      "rows": 1,
+      "amount": 155
+    },
+    "2025-11-27": {
+      "rows": 1,
+      "amount": 56
+    },
+    "2025-11-28": {
+      "rows": 1,
+      "amount": 72
+    },
+    "2025-11-29": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-11-30": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-01": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-02": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-03": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-04": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-05": {
+      "rows": 1,
+      "amount": 35
+    },
+    "2025-12-06": {
+      "rows": 1,
+      "amount": 51
+    },
+    "2025-12-07": {
+      "rows": 1,
+      "amount": 16
+    },
+    "2025-12-08": {
+      "rows": 1,
+      "amount": 226
+    },
+    "2025-12-09": {
+      "rows": 1,
+      "amount": 146
+    },
+    "2025-12-10": {
+      "rows": 1,
+      "amount": 253
+    },
+    "2025-12-11": {
+      "rows": 1,
+      "amount": 248
+    },
+    "2025-12-12": {
+      "rows": 1,
+      "amount": 197
+    },
+    "2025-12-13": {
+      "rows": 1,
+      "amount": 3
+    },
+    "2025-12-14": {
+      "rows": 1,
+      "amount": 33
+    },
+    "2025-12-15": {
+      "rows": 1,
+      "amount": 172
+    },
+    "2025-12-16": {
+      "rows": 1,
+      "amount": 198
+    },
+    "2025-12-17": {
+      "rows": 1,
+      "amount": 265
+    },
+    "2025-12-18": {
+      "rows": 1,
+      "amount": 326
+    },
+    "2025-12-19": {
+      "rows": 1,
+      "amount": 391
+    },
+    "2025-12-20": {
+      "rows": 1,
+      "amount": 66
+    },
+    "2025-12-21": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-22": {
+      "rows": 1,
+      "amount": 441
+    },
+    "2025-12-23": {
+      "rows": 1,
+      "amount": 233
+    },
+    "2025-12-24": {
+      "rows": 1,
+      "amount": 98
+    },
+    "2025-12-25": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-26": {
+      "rows": 1,
+      "amount": 88
+    },
+    "2025-12-27": {
+      "rows": 1,
+      "amount": 6
+    },
+    "2025-12-28": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-29": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-30": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2025-12-31": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-01": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-02": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-03": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-04": {
+      "rows": 1,
+      "amount": 41
+    },
+    "2026-01-05": {
+      "rows": 1,
+      "amount": 39
+    },
+    "2026-01-06": {
+      "rows": 1,
+      "amount": 87
+    },
+    "2026-01-07": {
+      "rows": 1,
+      "amount": 161
+    },
+    "2026-01-08": {
+      "rows": 1,
+      "amount": 238
+    },
+    "2026-01-09": {
+      "rows": 1,
+      "amount": 294
+    },
+    "2026-01-10": {
+      "rows": 1,
+      "amount": 32
+    },
+    "2026-01-11": {
+      "rows": 1,
+      "amount": 8
+    },
+    "2026-01-12": {
+      "rows": 1,
+      "amount": 167
+    },
+    "2026-01-13": {
+      "rows": 1,
+      "amount": 143
+    },
+    "2026-01-14": {
+      "rows": 1,
+      "amount": 300
+    },
+    "2026-01-15": {
+      "rows": 1,
+      "amount": 220
+    },
+    "2026-01-16": {
+      "rows": 1,
+      "amount": 122
+    },
+    "2026-01-17": {
+      "rows": 1,
+      "amount": 30
+    },
+    "2026-01-18": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-19": {
+      "rows": 1,
+      "amount": 90
+    },
+    "2026-01-20": {
+      "rows": 1,
+      "amount": 152
+    },
+    "2026-01-21": {
+      "rows": 1,
+      "amount": 204
+    },
+    "2026-01-22": {
+      "rows": 1,
+      "amount": 118
+    },
+    "2026-01-23": {
+      "rows": 1,
+      "amount": 24
+    },
+    "2026-01-24": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-25": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-01-26": {
+      "rows": 1,
+      "amount": 67
+    },
+    "2026-01-27": {
+      "rows": 1,
+      "amount": 128
+    },
+    "2026-01-28": {
+      "rows": 1,
+      "amount": 94
+    },
+    "2026-01-29": {
+      "rows": 1,
+      "amount": 37
+    },
+    "2026-01-30": {
+      "rows": 1,
+      "amount": 73
+    },
+    "2026-01-31": {
+      "rows": 1,
+      "amount": 23
+    },
+    "2026-02-01": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-02-02": {
+      "rows": 1,
+      "amount": 19
+    },
+    "2026-02-03": {
+      "rows": 1,
+      "amount": 52
+    },
+    "2026-02-04": {
+      "rows": 1,
+      "amount": 180
+    },
+    "2026-02-05": {
+      "rows": 1,
+      "amount": 475
+    },
+    "2026-02-06": {
+      "rows": 1,
+      "amount": 351
+    },
+    "2026-02-07": {
+      "rows": 1,
+      "amount": 104
+    },
+    "2026-02-08": {
+      "rows": 1,
+      "amount": 243
+    },
+    "2026-02-09": {
+      "rows": 1,
+      "amount": 189
+    },
+    "2026-02-10": {
+      "rows": 1,
+      "amount": 71
+    },
+    "2026-02-11": {
+      "rows": 1,
+      "amount": 138
+    },
+    "2026-02-12": {
+      "rows": 1,
+      "amount": 270
+    },
+    "2026-02-13": {
+      "rows": 1,
+      "amount": 233
+    },
+    "2026-02-14": {
+      "rows": 1,
+      "amount": 82
+    },
+    "2026-02-15": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-02-16": {
+      "rows": 1,
+      "amount": 147
+    },
+    "2026-02-17": {
+      "rows": 1,
+      "amount": 286
+    },
+    "2026-02-18": {
+      "rows": 1,
+      "amount": 223
+    },
+    "2026-02-19": {
+      "rows": 1,
+      "amount": 173
+    },
+    "2026-02-20": {
+      "rows": 1,
+      "amount": 199
+    },
+    "2026-02-21": {
+      "rows": 1,
+      "amount": 40
+    },
+    "2026-02-22": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-02-23": {
+      "rows": 1,
+      "amount": 217
+    },
+    "2026-02-24": {
+      "rows": 1,
+      "amount": 163
+    },
+    "2026-02-25": {
+      "rows": 1,
+      "amount": 243
+    },
+    "2026-02-26": {
+      "rows": 1,
+      "amount": 380
+    },
+    "2026-02-27": {
+      "rows": 1,
+      "amount": 451
+    },
+    "2026-02-28": {
+      "rows": 1,
+      "amount": 103
+    },
+    "2026-03-01": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-02": {
+      "rows": 1,
+      "amount": 268
+    },
+    "2026-03-03": {
+      "rows": 1,
+      "amount": 231
+    },
+    "2026-03-04": {
+      "rows": 1,
+      "amount": 111
+    },
+    "2026-03-05": {
+      "rows": 1,
+      "amount": 381
+    },
+    "2026-03-06": {
+      "rows": 1,
+      "amount": 335
+    },
+    "2026-03-07": {
+      "rows": 1,
+      "amount": 50
+    },
+    "2026-03-08": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-09": {
+      "rows": 1,
+      "amount": 345
+    },
+    "2026-03-10": {
+      "rows": 1,
+      "amount": 429
+    },
+    "2026-03-11": {
+      "rows": 1,
+      "amount": 269
+    },
+    "2026-03-12": {
+      "rows": 1,
+      "amount": 130
+    },
+    "2026-03-13": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-14": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-15": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-16": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-17": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-18": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-19": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-20": {
+      "rows": 1,
+      "amount": 184
+    },
+    "2026-03-21": {
+      "rows": 1,
+      "amount": 1
+    },
+    "2026-03-22": {
+      "rows": 1,
+      "amount": 4
+    },
+    "2026-03-23": {
+      "rows": 1,
+      "amount": 209
+    },
+    "2026-03-24": {
+      "rows": 1,
+      "amount": 153
+    },
+    "2026-03-25": {
+      "rows": 1,
+      "amount": 85
+    },
+    "2026-03-26": {
+      "rows": 1,
+      "amount": 59
+    },
+    "2026-03-27": {
+      "rows": 1,
+      "amount": 38
+    },
+    "2026-03-28": {
+      "rows": 1,
+      "amount": 6
+    },
+    "2026-03-29": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-03-30": {
+      "rows": 1,
+      "amount": 44
+    },
+    "2026-03-31": {
+      "rows": 1,
+      "amount": 97
+    },
+    "2026-04-01": {
+      "rows": 1,
+      "amount": 90
+    },
+    "2026-04-02": {
+      "rows": 1,
+      "amount": 63
+    },
+    "2026-04-03": {
+      "rows": 1,
+      "amount": 220
+    },
+    "2026-04-04": {
+      "rows": 1,
+      "amount": 36
+    },
+    "2026-04-05": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-04-06": {
+      "rows": 1,
+      "amount": 195
+    },
+    "2026-04-07": {
+      "rows": 1,
+      "amount": 241
+    },
+    "2026-04-08": {
+      "rows": 1,
+      "amount": 186
+    },
+    "2026-04-09": {
+      "rows": 1,
+      "amount": 118
+    },
+    "2026-04-10": {
+      "rows": 1,
+      "amount": 165
+    },
+    "2026-04-11": {
+      "rows": 1,
+      "amount": 6
+    },
+    "2026-04-12": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-04-13": {
+      "rows": 1,
+      "amount": 229
+    },
+    "2026-04-14": {
+      "rows": 1,
+      "amount": 344
+    },
+    "2026-04-15": {
+      "rows": 1,
+      "amount": 360
+    },
+    "2026-04-16": {
+      "rows": 1,
+      "amount": 478
+    },
+    "2026-04-17": {
+      "rows": 1,
+      "amount": 305
+    },
+    "2026-04-18": {
+      "rows": 1,
+      "amount": 30
+    },
+    "2026-04-19": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-04-20": {
+      "rows": 1,
+      "amount": 317
+    },
+    "2026-04-21": {
+      "rows": 1,
+      "amount": 261
+    },
+    "2026-04-22": {
+      "rows": 1,
+      "amount": 161
+    },
+    "2026-04-23": {
+      "rows": 1,
+      "amount": 191
+    },
+    "2026-04-24": {
+      "rows": 1,
+      "amount": 218
+    },
+    "2026-04-25": {
+      "rows": 1,
+      "amount": 1
+    },
+    "2026-04-26": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-04-27": {
+      "rows": 1,
+      "amount": 129
+    },
+    "2026-04-28": {
+      "rows": 1,
+      "amount": 93
+    },
+    "2026-04-29": {
+      "rows": 1,
+      "amount": 103
+    },
+    "2026-04-30": {
+      "rows": 1,
+      "amount": 222
+    },
+    "2026-05-01": {
+      "rows": 1,
+      "amount": 308
+    },
+    "2026-05-02": {
+      "rows": 1,
+      "amount": 19
+    },
+    "2026-05-03": {
+      "rows": 1,
+      "amount": 19
+    },
+    "2026-05-04": {
+      "rows": 1,
+      "amount": 349
+    },
+    "2026-05-05": {
+      "rows": 1,
+      "amount": 248
+    },
+    "2026-05-06": {
+      "rows": 1,
+      "amount": 208
+    },
+    "2026-05-07": {
+      "rows": 1,
+      "amount": 196
+    },
+    "2026-05-08": {
+      "rows": 1,
+      "amount": 174
+    },
+    "2026-05-09": {
+      "rows": 1,
+      "amount": 9
+    },
+    "2026-05-10": {
+      "rows": 1,
+      "amount": 0
+    },
+    "2026-05-11": {
+      "rows": 1,
+      "amount": 140
+    },
+    "2026-05-12": {
+      "rows": 1,
+      "amount": 77
+    },
+    "2026-05-13": {
+      "rows": 1,
+      "amount": 90
+    }
+  },
+  "byDayModelRequests": {
+    "2025-09-04": {
+      "claude-4-sonnet": {
+        "requests": 89,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 30,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-05": {
+      "claude-4-sonnet": {
+        "requests": 151,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 72,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-06": {
+      "claude-4-sonnet": {
+        "requests": 94,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 11,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-07": {
+      "claude-4-sonnet": {
+        "requests": 19,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 123,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-08": {
+      "claude-4-sonnet": {
+        "requests": 28,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 174,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-09": {
+      "claude-4-sonnet": {
+        "requests": 50,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 122,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-10": {
+      "claude-4-sonnet": {
+        "requests": 22,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 63,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-11": {
+      "claude-3.5-sonnet": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4-sonnet": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 65,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "grok-3-beta": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-12": {
+      "claude-4-sonnet": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 199,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-13": {
+      "default": {
+        "requests": 29,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-15": {
+      "claude-4-sonnet": {
+        "requests": 30,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 155,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-16": {
+      "claude-4-sonnet": {
+        "requests": 50,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 100,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-17": {
+      "claude-4-sonnet": {
+        "requests": 104,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 135,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-18": {
+      "claude-3.7-sonnet": {
+        "requests": 32,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4-sonnet": {
+        "requests": 59,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 75,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-19": {
+      "claude-3.7-sonnet": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4-sonnet": {
+        "requests": 55,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 72,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-20": {
+      "claude-4-sonnet": {
+        "requests": 7,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-22": {
+      "claude-3.7-sonnet": {
+        "requests": 29,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4-sonnet": {
+        "requests": 60,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 27,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-23": {
+      "claude-3.7-sonnet": {
+        "requests": 13,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4-sonnet": {
+        "requests": 23,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 32,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-24": {
+      "claude-3.7-sonnet": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4-sonnet": {
+        "requests": 71,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 82,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-25": {
+      "claude-4-sonnet": {
+        "requests": 61,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 64,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-26": {
+      "claude-4-sonnet": {
+        "requests": 84,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 68,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-27": {
+      "claude-4-sonnet": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 69,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-28": {
+      "default": {
+        "requests": 100,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "gpt-5": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-29": {
+      "claude-4-sonnet": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 59,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-09-30": {
+      "default": {
+        "requests": 123,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-01": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 123,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-02": {
+      "default": {
+        "requests": 133,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-03": {
+      "default": {
+        "requests": 143,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-04": {
+      "default": {
+        "requests": 31,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-05": {
+      "default": {
+        "requests": 107,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-06": {
+      "default": {
+        "requests": 169,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-07": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 202,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-08": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 7,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 187,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-09": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 8,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 194,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-10": {
+      "default": {
+        "requests": 134,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-11": {
+      "default": {
+        "requests": 13,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-13": {
+      "default": {
+        "requests": 89,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-14": {
+      "default": {
+        "requests": 103,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-15": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 12,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 125,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-16": {
+      "claude-4-sonnet": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 214,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-17": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 27,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 97,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-18": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 4,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 14,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-19": {
+      "default": {
+        "requests": 65,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-20": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 78,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 123,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-21": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 54,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 117,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-22": {
+      "default": {
+        "requests": 63,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-23": {
+      "default": {
+        "requests": 115,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-24": {
+      "default": {
+        "requests": 222,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-25": {
+      "default": {
+        "requests": 21,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-27": {
+      "claude-3.5-sonnet": {
+        "requests": 15,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-3.7-sonnet": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 229,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-28": {
+      "claude-3.7-sonnet": {
+        "requests": 33,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 155,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-29": {
+      "claude-3.7-sonnet": {
+        "requests": 11,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 214,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-30": {
+      "default": {
+        "requests": 187,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-10-31": {
+      "claude-3.7-sonnet": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 218,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-01": {
+      "default": {
+        "requests": 20,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-02": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 132,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-03": {
+      "claude-3.7-sonnet": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 334,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-04": {
+      "default": {
+        "requests": 33,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-05": {
+      "default": {
+        "requests": 187,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-06": {
+      "default": {
+        "requests": 259,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-07": {
+      "default": {
+        "requests": 181,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-08": {
+      "default": {
+        "requests": 81,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-09": {
+      "default": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-10": {
+      "default": {
+        "requests": 96,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-11": {
+      "composer-1": {
+        "requests": 14,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 157,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-12": {
+      "composer-1": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 190,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-13": {
+      "default": {
+        "requests": 246,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-14": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 282,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.1-codex": {
+        "requests": 80,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-15": {
+      "default": {
+        "requests": 206,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "gpt-5.1-codex": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-16": {
+      "gpt-5.1-codex": {
+        "requests": 88,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-17": {
+      "default": {
+        "requests": 162,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.1-codex": {
+        "requests": 28,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-18": {
+      "composer-1": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 153,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-19": {
+      "default": {
+        "requests": 210,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-20": {
+      "default": {
+        "requests": 170,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-21": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 255,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-22": {
+      "default": {
+        "requests": 43,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-24": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 183,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-25": {
+      "default": {
+        "requests": 144,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-26": {
+      "default": {
+        "requests": 246,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-27": {
+      "default": {
+        "requests": 84,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-28": {
+      "default": {
+        "requests": 84,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-29": {
+      "default": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-11-30": {
+      "default": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-01": {
+      "default": {
+        "requests": 120,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-02": {
+      "default": {
+        "requests": 212,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-03": {
+      "default": {
+        "requests": 277,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-04": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 305,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-05": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 213,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-06": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 44,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 17,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-07": {
+      "default": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-08": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 305,
+        "users": 5,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-09": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 152,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-10": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 266,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-11": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 37,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 232,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-12": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 55,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 178,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-13": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-14": {
+      "default": {
+        "requests": 28,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-15": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 56,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 176,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-16": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 20,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 152,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 26,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-17": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 244,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-18": {
+      "default": {
+        "requests": 338,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-19": {
+      "default": {
+        "requests": 392,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-20": {
+      "default": {
+        "requests": 66,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-22": {
+      "composer-1": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 445,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-23": {
+      "default": {
+        "requests": 253,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-24": {
+      "composer-1": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 100,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-26": {
+      "composer-1": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 79,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 8,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-27": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 7,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-29": {
+      "default": {
+        "requests": 78,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-30": {
+      "default": {
+        "requests": 178,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2025-12-31": {
+      "composer-1": {
+        "requests": 26,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 226,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-01": {
+      "default": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-02": {
+      "default": {
+        "requests": 181,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-03": {
+      "default": {
+        "requests": 24,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-04": {
+      "default": {
+        "requests": 99,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-05": {
+      "default": {
+        "requests": 181,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-06": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 122,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-07": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 36,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 137,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-08": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 240,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-09": {
+      "composer-1": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 329,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-10": {
+      "default": {
+        "requests": 40,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-11": {
+      "default": {
+        "requests": 8,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-12": {
+      "default": {
+        "requests": 178,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-13": {
+      "default": {
+        "requests": 176,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-14": {
+      "default": {
+        "requests": 337,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-15": {
+      "default": {
+        "requests": 249,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-16": {
+      "composer-1": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 150,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-17": {
+      "default": {
+        "requests": 32,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-19": {
+      "default": {
+        "requests": 111,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.2-codex": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-20": {
+      "composer-1": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 186,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-21": {
+      "default": {
+        "requests": 221,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-22": {
+      "default": {
+        "requests": 128,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-23": {
+      "composer-1": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 41,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-24": {
+      "default": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-26": {
+      "default": {
+        "requests": 96,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-27": {
+      "default": {
+        "requests": 137,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-28": {
+      "default": {
+        "requests": 198,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-29": {
+      "default": {
+        "requests": 286,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-30": {
+      "composer-1": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 177,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-01-31": {
+      "default": {
+        "requests": 84,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-02": {
+      "default": {
+        "requests": 108,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-03": {
+      "default": {
+        "requests": 122,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-04": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 95,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 153,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-05": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 278,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 275,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-06": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 185,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 14,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 215,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-07": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 51,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 59,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-08": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 242,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-09": {
+      "agent_review": {
+        "requests": 0,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet-thinking": {
+        "requests": 15,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 19,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 18,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 211,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.2-codex": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-10": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 116,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-11": {
+      "composer-1.5": {
+        "requests": 39,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 197,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-12": {
+      "composer-1.5": {
+        "requests": 22,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 269,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-13": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 26,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 50,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 209,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-14": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 25,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 55,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-16": {
+      "claude-4.5-sonnet-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 46,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 98,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-17": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 22,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 264,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-18": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 80,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 40,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 154,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-19": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 77,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 101,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 30,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-20": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 62,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 155,
+        "users": 5,
+        "outputTokens": 0
+      },
+      "gpt-5.2": {
+        "requests": 14,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-21": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 15,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 34,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.3-codex": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-22": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-23": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 103,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 127,
+        "users": 5,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-24": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 106,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 22,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 81,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.3-codex": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-25": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 166,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 26,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 143,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-26": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 216,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 7,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 168,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-27": {
+      "claude-4.5-sonnet": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 326,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 29,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 102,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-02-28": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 61,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1": {
+        "requests": 13,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 7,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 24,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-01": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 45,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-02": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 320,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 52,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 138,
+        "users": 4,
+        "outputTokens": 0
+      },
+      "gpt-5.3-codex": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-03": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 207,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 26,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 58,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-04": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 121,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 49,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 70,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-05": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 287,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 78,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 49,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-06": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 266,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 69,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 47,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-07": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 45,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-09": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 201,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 45,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 124,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-10": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 131,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 50,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 303,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-11": {
+      "Premium": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 90,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 306,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-12": {
+      "Premium": {
+        "requests": 25,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 402,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-13": {
+      "default": {
+        "requests": 160,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-14": {
+      "default": {
+        "requests": 51,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-15": {
+      "default": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-16": {
+      "default": {
+        "requests": 177,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-17": {
+      "default": {
+        "requests": 333,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-18": {
+      "default": {
+        "requests": 258,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-19": {
+      "default": {
+        "requests": 329,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-20": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-1.5": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 223,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-21": {
+      "default": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-22": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-23": {
+      "Premium": {
+        "requests": 11,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 16,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 226,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-24": {
+      "Premium": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 21,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 168,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-25": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 22,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 4,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 123,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-26": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 13,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 137,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-27": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 93,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-28": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-29": {
+      "claude-4.6-opus-high-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-30": {
+      "Premium": {
+        "requests": 14,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 33,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 152,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-03-31": {
+      "Premium": {
+        "requests": 20,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 35,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 16,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 108,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-01": {
+      "Premium": {
+        "requests": 46,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 31,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 38,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-02": {
+      "Premium": {
+        "requests": 12,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 31,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-max-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 8,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 37,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-03": {
+      "Premium": {
+        "requests": 30,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 35,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-max-thinking": {
+        "requests": 105,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 49,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 103,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-04": {
+      "Premium": {
+        "requests": 11,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-max-thinking": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 24,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 8,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-05": {
+      "composer-2": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-06": {
+      "Premium": {
+        "requests": 101,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 10,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-max-thinking": {
+        "requests": 47,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 51,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-07": {
+      "Premium": {
+        "requests": 134,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 35,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 67,
+        "users": 4,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-08": {
+      "Premium": {
+        "requests": 88,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 40,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 63,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-09": {
+      "Premium": {
+        "requests": 24,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 17,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 108,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-10": {
+      "Premium": {
+        "requests": 75,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 29,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 73,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-11": {
+      "default": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-13": {
+      "Premium": {
+        "requests": 186,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 36,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-14": {
+      "Premium": {
+        "requests": 195,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 66,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 85,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-15": {
+      "Premium": {
+        "requests": 214,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 37,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 9,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 100,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-16": {
+      "Premium": {
+        "requests": 342,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 34,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 100,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-17": {
+      "Premium": {
+        "requests": 185,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 68,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 57,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-18": {
+      "Premium": {
+        "requests": 16,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 11,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 3,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-20": {
+      "Premium": {
+        "requests": 137,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 70,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 50,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 55,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.4-high": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-21": {
+      "Premium": {
+        "requests": 67,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 149,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 47,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.4-high": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-22": {
+      "Premium": {
+        "requests": 63,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 48,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 49,
+        "users": 2,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-23": {
+      "Premium": {
+        "requests": 106,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 49,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 43,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-24": {
+      "Premium": {
+        "requests": 96,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 11,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-high": {
+        "requests": 17,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 27,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 45,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.5-high": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 22,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "grok-4-20-thinking": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-25": {
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-27": {
+      "Premium": {
+        "requests": 27,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 13,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 47,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 16,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 27,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-28": {
+      "Premium": {
+        "requests": 29,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 9,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 69,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 29,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-29": {
+      "Premium": {
+        "requests": 74,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 12,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 38,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 3,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 18,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 33,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-04-30": {
+      "Premium": {
+        "requests": 179,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 6,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 80,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 28,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-01": {
+      "Premium": {
+        "requests": 85,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 83,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 149,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.5-high": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 7,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-02": {
+      "Premium": {
+        "requests": 6,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 12,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-03": {
+      "default": {
+        "requests": 19,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-04": {
+      "Premium": {
+        "requests": 129,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-sonnet-medium-thinking": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-opus-4-7-thinking-xhigh": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 229,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.3-codex": {
+        "requests": 27,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-05": {
+      "Premium": {
+        "requests": 44,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 241,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "gpt-5.5-high": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-06": {
+      "Premium": {
+        "requests": 64,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 164,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-07": {
+      "Premium": {
+        "requests": 15,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 36,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-sonnet-medium-thinking": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 27,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 121,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-08": {
+      "Premium": {
+        "requests": 52,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 82,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 8,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 73,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-09": {
+      "Premium": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.5-sonnet": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 2,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-11": {
+      "Premium": {
+        "requests": 70,
+        "users": 2,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 3,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 100,
+        "users": 3,
+        "outputTokens": 0
+      },
+      "gpt-5.5-medium": {
+        "requests": 16,
+        "users": 1,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-12": {
+      "Premium": {
+        "requests": 28,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-opus-high-thinking": {
+        "requests": 1,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 98,
+        "users": 3,
+        "outputTokens": 0
+      }
+    },
+    "2026-05-13": {
+      "Premium": {
+        "requests": 15,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "claude-4.6-sonnet-medium-thinking": {
+        "requests": 5,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2": {
+        "requests": 15,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "composer-2-fast": {
+        "requests": 4,
+        "users": 1,
+        "outputTokens": 0
+      },
+      "default": {
+        "requests": 66,
+        "users": 3,
+        "outputTokens": 0
+      }
+    }
+  },
   "repoAiEdits": {},
   "repoDeveloperAiEdits": {}
 }
