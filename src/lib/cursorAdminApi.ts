@@ -5,7 +5,15 @@
  * Not the same as **Enterprise Analytics** (`/analytics/team/*`), which returns 401 unless the org is on Enterprise.
  */
 
+import { eachIsoDayInclusive } from '@/utils/cursorAnalyticsTeamTrend';
+import { extractUsageEventRepoFromRow } from '@/utils/cursorUsageEventRepo';
+
 const CURSOR_API = 'https://api.cursor.com';
+
+function sleep(ms: number): Promise<void> {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export type CursorAdminResult<T> =
   | { ok: true; data: T }
@@ -47,7 +55,7 @@ export interface CursorBillingSnapshot {
       }
     >;
   }>;
-  /** Sum `chargedCents` from `/teams/filtered-usage-events` (paginated; may be truncated). */
+  /** Sum `chargedCents` from `/teams/filtered-usage-events` (UTC-day chunks, paginated per chunk; may be truncated). */
   chargedByDay: CursorAdminResult<{
     byDay: Record<string, number>;
     byMonth: Record<string, number>;
@@ -57,14 +65,25 @@ export interface CursorBillingSnapshot {
     byMonthDeveloper: Record<string, number>;
     eventsRead: number;
     truncated: boolean;
+    /** Raw `usageEvents` array length summed across all HTTP pages (reconciliation vs reported totals). */
+    usageEventRowsReturned?: number;
+    usageEventsTotalReported?: number;
+    warnings?: string[];
   }>;
+}
+
+/** Disk cache policy for usage events (v2 = chunked full pagination + throttle). */
+export interface CursorUsageEventsCachePolicy {
+  v: 2;
+  requestDelayMs: number;
+  maxPagesPerDay: number;
 }
 
 interface CacheEnvelope {
   fetchedAt: string;
   startMs: number;
   endMs: number;
-  usageEventsMaxPages: number;
+  usageEventsPolicy: CursorUsageEventsCachePolicy | null;
   snapshot: CursorBillingSnapshot;
 }
 
@@ -297,11 +316,62 @@ async function fetchDailyRangeAggregated(
   };
 }
 
+export interface UsageEventsFetchPolicy {
+  /** Delay between each `/teams/filtered-usage-events` HTTP call (20 req/min team limit). */
+  requestDelayMs: number;
+  /** Safety cap: max pagination pages per UTC calendar day chunk. */
+  maxPagesPerDay: number;
+}
+
+function mergeChargedEventRow(
+  row: Record<string, unknown>,
+  into: {
+    byDay: Record<string, number>;
+    byMonth: Record<string, number>;
+    byDeveloper: Record<string, number>;
+    byRepo: Record<string, number>;
+    byRepoDeveloper: Record<string, number>;
+    byMonthDeveloper: Record<string, number>;
+  },
+): boolean {
+  const ts = row.timestamp;
+  const chRaw = row.chargedCents;
+  if (typeof ts !== 'string' && typeof ts !== 'number') return false;
+  const ch =
+    typeof chRaw === 'number'
+      ? chRaw
+      : typeof chRaw === 'string'
+        ? Number.parseFloat(chRaw)
+        : Number.NaN;
+  if (!Number.isFinite(ch)) return false;
+  const tmsRaw = typeof ts === 'string' ? Number.parseInt(ts, 10) : ts;
+  if (!Number.isFinite(tmsRaw)) return false;
+  const tms = tmsRaw < 1_000_000_000_000 ? tmsRaw * 1000 : tmsRaw;
+  const day = new Date(tms).toISOString().slice(0, 10);
+  const month = day.slice(0, 7);
+  into.byDay[day] = (into.byDay[day] ?? 0) + ch;
+  into.byMonth[month] = (into.byMonth[month] ?? 0) + ch;
+  const emailRaw = [row.email, row.userEmail, row.memberEmail, row.username, row.user].find((v) => typeof v === 'string');
+  const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
+  const repo = extractUsageEventRepoFromRow(row);
+  if (email !== '') {
+    into.byDeveloper[email] = (into.byDeveloper[email] ?? 0) + ch;
+    into.byMonthDeveloper[`${month}\t${email}`] = (into.byMonthDeveloper[`${month}\t${email}`] ?? 0) + ch;
+  }
+  if (repo !== '') {
+    into.byRepo[repo] = (into.byRepo[repo] ?? 0) + ch;
+  }
+  if (repo !== '' && email !== '') {
+    into.byRepoDeveloper[`${repo}\t${email}`] = (into.byRepoDeveloper[`${repo}\t${email}`] ?? 0) + ch;
+  }
+  return true;
+}
+
 async function fetchChargedByDay(
   apiKey: string,
   startMs: number,
   endMs: number,
-  maxPages: number,
+  policy: UsageEventsFetchPolicy,
 ): Promise<
   CursorAdminResult<{
     byDay: Record<string, number>;
@@ -312,6 +382,9 @@ async function fetchChargedByDay(
     byMonthDeveloper: Record<string, number>;
     eventsRead: number;
     truncated: boolean;
+    usageEventRowsReturned?: number;
+    usageEventsTotalReported?: number;
+    warnings?: string[];
   }>
 > {
   const byDay: Record<string, number> = {};
@@ -322,109 +395,134 @@ async function fetchChargedByDay(
   const byMonthDeveloper: Record<string, number> = {};
   let eventsRead = 0;
   let truncated = false;
+  const warnings: string[] = [];
+  let usageEventsTotalReported = 0;
+  let reportedChunks = 0;
+  let usageEventHttpCalls = 0;
+  let usageEventRowsReturned = 0;
 
-  for (let page = 1; page <= maxPages; page++) {
-    const { status, text } = await adminPostRaw(apiKey, '/teams/filtered-usage-events', {
-      startDate: startMs,
-      endDate: endMs,
-      page,
-      pageSize: 100,
-    });
-    let raw: unknown;
-    try {
-      raw = JSON.parse(text) as unknown;
-    } catch {
-      return { ok: false, status, message: text.slice(0, 240) };
-    }
-    if (!status.toString().startsWith('2')) {
-      if (page === 1) {
-        const msg =
-          typeof raw === 'object' && raw !== null && 'message' in raw
-            ? String((raw as { message: string }).message)
-            : text.slice(0, 240);
-        return { ok: false, status, message: msg || `HTTP ${status}` };
+  const startIso = new Date(startMs).toISOString().slice(0, 10);
+  const endIso = new Date(endMs).toISOString().slice(0, 10);
+  const dayKeys = eachIsoDayInclusive(startIso, endIso);
+
+  for (const day of dayKeys) {
+    const chunkStart = Math.max(startMs, Date.parse(`${day}T00:00:00.000Z`));
+    const chunkEnd = Math.min(endMs, Date.parse(`${day}T23:59:59.999Z`));
+    if (chunkStart > chunkEnd) continue;
+
+    let dayEventObjects = 0;
+    let reportedForDay: number | undefined;
+    let page = 1;
+
+    while (page <= policy.maxPagesPerDay) {
+      if (usageEventHttpCalls > 0) {
+        await sleep(policy.requestDelayMs);
       }
-      break;
-    }
-    if (!raw || typeof raw !== 'object') break;
-    const o = raw as {
-      usageEvents?: unknown;
-      pagination?: { hasNextPage?: boolean; numPages?: number };
-    };
-    const ev = Array.isArray(o.usageEvents) ? o.usageEvents : [];
-    for (const row of ev) {
-      if (!row || typeof row !== 'object') continue;
-      const r = row as Record<string, unknown>;
-      const ts = r.timestamp;
-      const chRaw = r.chargedCents;
-      if (typeof ts !== 'string' && typeof ts !== 'number') continue;
-      const ch =
-        typeof chRaw === 'number'
-          ? chRaw
-          : typeof chRaw === 'string'
-            ? Number.parseFloat(chRaw)
-            : Number.NaN;
-      if (!Number.isFinite(ch)) continue;
-      const tmsRaw = typeof ts === 'string' ? Number.parseInt(ts, 10) : ts;
-      if (!Number.isFinite(tmsRaw)) continue;
-      /** Admin API uses ms strings; guard epoch-seconds if a client ever sends 10-digit values. */
-      const tms = tmsRaw < 1_000_000_000_000 ? tmsRaw * 1000 : tmsRaw;
-      const day = new Date(tms).toISOString().slice(0, 10);
-      const month = day.slice(0, 7);
-      byDay[day] = (byDay[day] ?? 0) + ch;
-      byMonth[month] = (byMonth[month] ?? 0) + ch;
-      const emailRaw = [r.email, r.userEmail, r.memberEmail, r.username, r.user]
-        .find((v) => typeof v === 'string');
-      const email = typeof emailRaw === 'string' ? emailRaw.trim().toLowerCase() : '';
-      const repoRaw = [
-        r.repo,
-        r.repository,
-        r.repoName,
-        r.repositoryName,
-        r.gitRepo,
-        r.remoteUrl,
-        r.projectPath,
-        r.workspaceRepo,
-      ].find((v) => typeof v === 'string');
-      const repo = typeof repoRaw === 'string' ? repoRaw.trim() : '';
-      if (email !== '') {
-        byDeveloper[email] = (byDeveloper[email] ?? 0) + ch;
-        byMonthDeveloper[`${month}\t${email}`] = (byMonthDeveloper[`${month}\t${email}`] ?? 0) + ch;
+      usageEventHttpCalls += 1;
+      const { status, text } = await adminPostRaw(apiKey, '/teams/filtered-usage-events', {
+        startDate: chunkStart,
+        endDate: chunkEnd,
+        page,
+        pageSize: 100,
+      });
+      let raw: unknown;
+      try {
+        raw = JSON.parse(text) as unknown;
+      } catch {
+        return { ok: false, status, message: text.slice(0, 240) };
       }
-      if (repo !== '') {
-        byRepo[repo] = (byRepo[repo] ?? 0) + ch;
+      if (!status.toString().startsWith('2')) {
+        if (page === 1) {
+          const msg =
+            typeof raw === 'object' && raw !== null && 'message' in raw
+              ? String((raw as { message: string }).message)
+              : text.slice(0, 240);
+          return { ok: false, status, message: msg || `HTTP ${status}` };
+        }
+        warnings.push(`Usage events: HTTP ${status} on ${day} page ${String(page)} — partial data for that day.`);
+        truncated = true;
+        break;
       }
-      if (repo !== '' && email !== '') {
-        byRepoDeveloper[`${repo}\t${email}`] = (byRepoDeveloper[`${repo}\t${email}`] ?? 0) + ch;
+      if (!raw || typeof raw !== 'object') break;
+      const o = raw as {
+        usageEvents?: unknown;
+        pagination?: { hasNextPage?: boolean; numPages?: number };
+        totalUsageEventsCount?: number;
+      };
+      if (page === 1 && typeof o.totalUsageEventsCount === 'number' && Number.isFinite(o.totalUsageEventsCount)) {
+        reportedForDay = o.totalUsageEventsCount;
+        usageEventsTotalReported += reportedForDay;
+        reportedChunks += 1;
       }
-      eventsRead += 1;
+      const ev = Array.isArray(o.usageEvents) ? o.usageEvents : [];
+      dayEventObjects += ev.length;
+      usageEventRowsReturned += ev.length;
+      for (const row of ev) {
+        if (!row || typeof row !== 'object') continue;
+        if (mergeChargedEventRow(row as Record<string, unknown>, { byDay, byMonth, byDeveloper, byRepo, byRepoDeveloper, byMonthDeveloper })) {
+          eventsRead += 1;
+        }
+      }
+
+      const pag = o.pagination;
+      const hasNext = pag?.hasNextPage === true;
+      if (!hasNext) {
+        if (reportedForDay != null && dayEventObjects < reportedForDay) {
+          truncated = true;
+          warnings.push(
+            `Usage events: ${day} reported ${String(reportedForDay)} events but only ${String(dayEventObjects)} rows returned across pages — pagination may have stopped early.`,
+          );
+        }
+        break;
+      }
+      page += 1;
     }
 
-    const pag = o.pagination;
-    const hasNext = pag?.hasNextPage === true;
-    if (!hasNext) {
-      truncated = false;
-      break;
-    }
-    if (page >= maxPages) {
+    if (page > policy.maxPagesPerDay) {
       truncated = true;
-      break;
+      warnings.push(`Usage events: ${day} hit max pages (${String(policy.maxPagesPerDay)}) — raise CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY.`);
     }
   }
 
-  return {
-    ok: true,
-    data: {
-      byDay,
-      byMonth,
-      byDeveloper,
-      byRepo,
-      byRepoDeveloper,
-      byMonthDeveloper,
-      eventsRead,
-      truncated,
-    },
+  if (reportedChunks > 0 && usageEventsTotalReported > 0 && usageEventRowsReturned < usageEventsTotalReported) {
+    truncated = true;
+    warnings.push(
+      `Usage events: HTTP returned ${String(usageEventRowsReturned)} event rows vs API-reported total ${String(usageEventsTotalReported)} — not all pages loaded.`,
+    );
+  }
+
+  const out: {
+    byDay: Record<string, number>;
+    byMonth: Record<string, number>;
+    byDeveloper: Record<string, number>;
+    byRepo: Record<string, number>;
+    byRepoDeveloper: Record<string, number>;
+    byMonthDeveloper: Record<string, number>;
+    eventsRead: number;
+    truncated: boolean;
+    usageEventRowsReturned?: number;
+    usageEventsTotalReported?: number;
+    warnings?: string[];
+  } = {
+    byDay,
+    byMonth,
+    byDeveloper,
+    byRepo,
+    byRepoDeveloper,
+    byMonthDeveloper,
+    eventsRead,
+    truncated,
   };
+  if (usageEventRowsReturned > 0 || reportedChunks > 0) {
+    out.usageEventRowsReturned = usageEventRowsReturned;
+  }
+  if (reportedChunks > 0) {
+    out.usageEventsTotalReported = usageEventsTotalReported;
+  }
+  if (warnings.length > 0) {
+    out.warnings = warnings;
+  }
+  return { ok: true, data: out };
 }
 
 async function readBillingCache(
@@ -432,7 +530,7 @@ async function readBillingCache(
   ttlMs: number,
   startMs: number,
   endMs: number,
-  usageEventsMaxPages: number,
+  usageEventsPolicy: CursorUsageEventsCachePolicy | null,
 ): Promise<CursorBillingSnapshot | null> {
   try {
     const fs = await import('node:fs/promises');
@@ -441,10 +539,20 @@ async function readBillingCache(
     const text = await fs.readFile(path, 'utf8');
     const parsed: unknown = JSON.parse(text) as unknown;
     if (!parsed || typeof parsed !== 'object') return null;
-    const env = parsed as CacheEnvelope;
+    const env = parsed as CacheEnvelope & { usageEventsMaxPages?: number };
     if (typeof env.fetchedAt !== 'string' || !env.snapshot) return null;
-    if (env.startMs !== startMs || env.endMs !== endMs || env.usageEventsMaxPages !== usageEventsMaxPages) {
-      return null;
+    if (env.startMs !== startMs || env.endMs !== endMs) return null;
+    if (usageEventsPolicy === null) {
+      if (env.usageEventsPolicy !== null) return null;
+    } else {
+      if (
+        !env.usageEventsPolicy ||
+        env.usageEventsPolicy.v !== usageEventsPolicy.v ||
+        env.usageEventsPolicy.requestDelayMs !== usageEventsPolicy.requestDelayMs ||
+        env.usageEventsPolicy.maxPagesPerDay !== usageEventsPolicy.maxPagesPerDay
+      ) {
+        return null;
+      }
     }
     return env.snapshot;
   } catch {
@@ -457,7 +565,7 @@ async function writeBillingCache(
   snapshot: CursorBillingSnapshot,
   startMs: number,
   endMs: number,
-  usageEventsMaxPages: number,
+  usageEventsPolicy: CursorUsageEventsCachePolicy | null,
 ): Promise<void> {
   const fs = await import('node:fs/promises');
   const pathMod = await import('node:path');
@@ -467,7 +575,7 @@ async function writeBillingCache(
     fetchedAt: new Date().toISOString(),
     startMs,
     endMs,
-    usageEventsMaxPages,
+    usageEventsPolicy,
     snapshot,
   };
   await fs.writeFile(path, JSON.stringify(envelope, null, 2), 'utf8');
@@ -479,10 +587,10 @@ export async function fetchCursorBillingSnapshot(options: {
   cacheTtlMs: number;
   startMs: number;
   endMs: number;
-  /** Pages of `/teams/filtered-usage-events` (100 rows each) for $ trend; 0 = skip */
-  usageEventsMaxPages: number;
+  /** When null, skip `/teams/filtered-usage-events` (empty charged aggregates). */
+  usageEventsPolicy: CursorUsageEventsCachePolicy | null;
 }): Promise<CursorBillingSnapshot> {
-  const { apiKey, cachePath, cacheTtlMs, startMs, endMs, usageEventsMaxPages } = options;
+  const { apiKey, cachePath, cacheTtlMs, startMs, endMs, usageEventsPolicy } = options;
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs > endMs) {
     return {
       spend: { ok: false, status: 0, message: 'Invalid date range for billing' },
@@ -490,14 +598,17 @@ export async function fetchCursorBillingSnapshot(options: {
       chargedByDay: { ok: false, status: 0, message: 'Invalid date range for billing' },
     };
   }
-  const cached = await readBillingCache(cachePath, cacheTtlMs, startMs, endMs, usageEventsMaxPages);
+  const cached = await readBillingCache(cachePath, cacheTtlMs, startMs, endMs, usageEventsPolicy);
   if (cached) return cached;
 
   const spend = await fetchSpend(apiKey);
   const dailyByDay = await fetchDailyRangeAggregated(apiKey, startMs, endMs);
   const chargedByDay =
-    usageEventsMaxPages > 0
-      ? await fetchChargedByDay(apiKey, startMs, endMs, usageEventsMaxPages)
+    usageEventsPolicy !== null
+      ? await fetchChargedByDay(apiKey, startMs, endMs, {
+          requestDelayMs: usageEventsPolicy.requestDelayMs,
+          maxPagesPerDay: usageEventsPolicy.maxPagesPerDay,
+        })
       : {
           ok: true as const,
           data: {
@@ -517,7 +628,7 @@ export async function fetchCursorBillingSnapshot(options: {
   const dailyOk = dailyByDay.ok;
   const chargedOk = chargedByDay.ok;
   if (spendOk || dailyOk || chargedOk) {
-    await writeBillingCache(cachePath, snapshot, startMs, endMs, usageEventsMaxPages);
+    await writeBillingCache(cachePath, snapshot, startMs, endMs, usageEventsPolicy);
   }
   return snapshot;
 }

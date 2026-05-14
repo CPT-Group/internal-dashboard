@@ -1,7 +1,9 @@
 import type {
   CursorAnalyticsAiEditsMetric,
   CursorAnalyticsBucket,
+  CursorAnalyticsByDayModelRequests,
   CursorAnalyticsColumnDetection,
+  CursorAnalyticsModelDayBreakdown,
   CursorAnalyticsSummary,
 } from '@/types/cursorAnalytics';
 
@@ -30,6 +32,25 @@ function isAiEditsMetricMap(value: unknown): value is Record<string, CursorAnaly
   if (!value || typeof value !== 'object') return false;
   const o = value as Record<string, object>;
   return Object.values(o).every((v) => typeof v === 'object' && v !== null && isAiEditsMetric(v));
+}
+
+function isModelDayBreakdown(value: object): value is CursorAnalyticsModelDayBreakdown {
+  const m = value as CursorAnalyticsModelDayBreakdown;
+  if (typeof m.requests !== 'number' || typeof m.users !== 'number') return false;
+  const optNum = (x: unknown): boolean => x === undefined || (typeof x === 'number' && Number.isFinite(x) && x >= 0);
+  return optNum(m.inputTokens) && optNum(m.outputTokens) && optNum(m.totalTokens);
+}
+
+function isByDayModelRequestsMap(value: unknown): value is CursorAnalyticsByDayModelRequests {
+  if (!value || typeof value !== 'object') return false;
+  const o = value as Record<string, Record<string, object>>;
+  for (const inner of Object.values(o)) {
+    if (!inner || typeof inner !== 'object') return false;
+    for (const v of Object.values(inner)) {
+      if (!v || typeof v !== 'object' || !isModelDayBreakdown(v)) return false;
+    }
+  }
+  return true;
 }
 
 function isColumnDetection(value: object): value is CursorAnalyticsColumnDetection {
@@ -69,6 +90,14 @@ export function parseCursorAnalyticsSummary(raw: unknown): CursorAnalyticsSummar
       : undefined;
   if (repoDeveloperAiEdits === null) return null;
 
+  const byDayModelRequests =
+    o.byDayModelRequests !== undefined
+      ? isByDayModelRequestsMap(o.byDayModelRequests)
+        ? o.byDayModelRequests
+        : null
+      : undefined;
+  if (byDayModelRequests === null) return null;
+
   return {
     schema: typeof o.schema === 'string' ? o.schema : undefined,
     generatedAt: o.generatedAt,
@@ -82,6 +111,7 @@ export function parseCursorAnalyticsSummary(raw: unknown): CursorAnalyticsSummar
     byMonthDeveloper: o.byMonthDeveloper,
     byRepoDeveloper: o.byRepoDeveloper,
     byDay,
+    byDayModelRequests,
     repoAiEdits,
     repoDeveloperAiEdits,
   };

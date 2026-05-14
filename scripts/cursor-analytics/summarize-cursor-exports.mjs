@@ -3,7 +3,8 @@
  *
  * Supports:
  * - **Team daily rollup** (Analytics_Team_*.csv): `Date` + `Chats Usage Based Requests` + nested JSON
- *   in `File Extensions Data` → byMonth (usage-based requests), byRepo (file extensions → line volume proxy).
+ *   in `File Extensions Data` → byMonth (usage-based requests), byRepo (file extensions → line volume proxy);
+ *   optional `Models Time Series Data` → **byDayModelRequests** (per-day model slug → requests, optional token fields) for CSV estimate mode.
  * - **AI edits by repository / repo×developer** exports: carries AI lines and percentages for allocation views.
  * - **Generic tabular** CSVs: heuristic column matching (no ambiguous short "total" synonym).
  *
@@ -221,6 +222,76 @@ function parseFileExtensionsCell(cell) {
   }
 }
 
+/**
+ * Team CSV "Models Time Series Data" cell: JSON array of objects, some with `model_breakdown`.
+ * @param {string} cell
+ * @returns {Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }> | null}
+ */
+function parseModelsTimeSeriesModelBreakdown(cell) {
+  const t = String(cell).trim();
+  if (!t) return null;
+  try {
+    const parsed = JSON.parse(t);
+    if (!Array.isArray(parsed)) return null;
+    /** @type {Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }>} */
+    const out = {};
+    for (const entry of parsed) {
+      if (!entry || typeof entry !== "object") continue;
+      const mb = entry.model_breakdown;
+      if (!mb || typeof mb !== "object") continue;
+      for (const [slug, v] of Object.entries(mb)) {
+        if (!slug || !v || typeof v !== "object") continue;
+        const requests = Number(v.requests ?? 0);
+        const users = Number(v.users ?? 0);
+        if (!Number.isFinite(requests) || requests < 0) continue;
+        const ru = Number.isFinite(users) && users >= 0 ? Math.round(users) : 0;
+        const rq = Math.round(requests);
+        const it = Number(v.input_tokens ?? v.inputTokens ?? 0);
+        const ot = Number(v.output_tokens ?? v.outputTokens ?? 0);
+        const tt = Number(v.total_tokens ?? v.totalTokens ?? v.tokens ?? 0);
+        const inputTokens = Number.isFinite(it) && it > 0 ? Math.round(it) : undefined;
+        const outputTokens = Number.isFinite(ot) && ot >= 0 ? Math.round(ot) : undefined;
+        const totalTokens = Number.isFinite(tt) && tt > 0 ? Math.round(tt) : undefined;
+        /** @type {typeof out[string]} */
+        const row = { requests: rq, users: ru };
+        if (inputTokens !== undefined) row.inputTokens = inputTokens;
+        if (outputTokens !== undefined) row.outputTokens = outputTokens;
+        if (totalTokens !== undefined) row.totalTokens = totalTokens;
+        mergeModelBreakdownIntoDay(out, { [slug]: row });
+      }
+    }
+    return Object.keys(out).length > 0 ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @param {Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }>} target
+ * @param {Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }>} addition
+ */
+function mergeModelBreakdownIntoDay(target, addition) {
+  for (const [slug, m] of Object.entries(addition)) {
+    const cur = target[slug];
+    if (!cur) {
+      target[slug] = { ...m };
+    } else {
+      const nextIt = (cur.inputTokens ?? 0) + (m.inputTokens ?? 0);
+      const nextOt = (cur.outputTokens ?? 0) + (m.outputTokens ?? 0);
+      const nextTt = (cur.totalTokens ?? 0) + (m.totalTokens ?? 0);
+      /** @type {typeof target[string]} */
+      const merged = {
+        requests: cur.requests + m.requests,
+        users: Math.max(cur.users, m.users),
+      };
+      if (nextIt > 0) merged.inputTokens = nextIt;
+      if (nextOt > 0) merged.outputTokens = nextOt;
+      if (nextTt > 0) merged.totalTokens = nextTt;
+      target[slug] = merged;
+    }
+  }
+}
+
 /** @param {Record<string, { rows: number; amount: number }>} map @param {string} key @param {number} amount */
 function bump(map, key, amount) {
   if (!map[key]) map[key] = { rows: 0, amount: 0 };
@@ -264,6 +335,7 @@ function ingestTeamDaily(headers, dataRows, fileLabel, seenDates) {
   const dateIdx = norm.indexOf("date");
   const usageIdx = norm.findIndex((x) => x === "chats usage based requests" || x.includes("usage based requests"));
   const extIdx = norm.findIndex((x) => x.includes("file extensions data"));
+  const modelsIdx = norm.findIndex((x) => x.includes("models time series data"));
 
   /** @type {Record<string, { rows: number; amount: number }>} */
   const byMonth = {};
@@ -273,6 +345,8 @@ function ingestTeamDaily(headers, dataRows, fileLabel, seenDates) {
   const byMonthRepo = {};
   /** @type {Record<string, { rows: number; amount: number }>} */
   const byDay = {};
+  /** @type {Record<string, Record<string, { requests: number; users: number }>>} */
+  const byDayModelRequests = {};
 
   for (const row of dataRows) {
     if (row.length < headers.length) continue;
@@ -285,6 +359,15 @@ function ingestTeamDaily(headers, dataRows, fileLabel, seenDates) {
     bumpAmount(byMonth, month, usage, 1);
     const iso = isoDayFromCell(dateRaw);
     if (iso) bumpAmount(byDay, iso, usage, 1);
+
+    if (iso && modelsIdx >= 0) {
+      const modelsCell = String(row[modelsIdx] ?? "");
+      const breakdown = parseModelsTimeSeriesModelBreakdown(modelsCell);
+      if (breakdown) {
+        if (!byDayModelRequests[iso]) byDayModelRequests[iso] = {};
+        mergeModelBreakdownIntoDay(byDayModelRequests[iso], breakdown);
+      }
+    }
 
     const extCell = extIdx >= 0 ? String(row[extIdx] ?? "") : "";
     const items = parseFileExtensionsCell(extCell);
@@ -321,6 +404,7 @@ function ingestTeamDaily(headers, dataRows, fileLabel, seenDates) {
     byRepoDeveloper: {},
     repoAiEdits: {},
     repoDeveloperAiEdits: {},
+    byDayModelRequests,
   };
 }
 
@@ -489,6 +573,31 @@ function mergeAiEdits(into, from) {
   }
 }
 
+/**
+ * @param {Record<string, Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }>>} into
+ * @param {Record<string, Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }>>} from
+ */
+function mergeDayModelRequests(into, from) {
+  for (const [day, models] of Object.entries(from)) {
+    if (!into[day]) into[day] = {};
+    mergeModelBreakdownIntoDay(into[day], models);
+  }
+}
+
+/** @param {Record<string, Record<string, { requests: number; users: number; inputTokens?: number; outputTokens?: number; totalTokens?: number }>>} m */
+function sortDayModelRequestsMap(m) {
+  const sorted = Object.create(null);
+  for (const day of Object.keys(m).sort()) {
+    const inner = m[day];
+    const innerSorted = Object.create(null);
+    for (const slug of Object.keys(inner).sort()) {
+      innerSorted[slug] = inner[slug];
+    }
+    sorted[day] = innerSorted;
+  }
+  return sorted;
+}
+
 function parseArgs(argv) {
   let dir = "cursor-analytics-new-screen";
   /** @type {string | null} */
@@ -544,6 +653,7 @@ function main() {
         byMonthDeveloper: {},
         byRepoDeveloper: {},
         byDay: {},
+        byDayModelRequests: {},
         repoAiEdits: {},
         repoDeveloperAiEdits: {},
       };
@@ -572,6 +682,9 @@ function main() {
   const repoAiEdits = {};
   /** @type {Record<string, { rows: number; aiLines: number; totalLines: number; aiPercent: number | null }>} */
   const repoDeveloperAiEdits = {};
+
+  /** @type {Record<string, Record<string, { requests: number; users: number }>>} */
+  const byDayModelRequests = {};
 
   /** @type {string[]} */
   const sources = [];
@@ -608,6 +721,7 @@ function main() {
     mergeBuckets(byMonthDeveloper, chunk.byMonthDeveloper);
     mergeBuckets(byRepoDeveloper, chunk.byRepoDeveloper);
     mergeBuckets(byDay, chunk.byDay ?? {});
+    mergeDayModelRequests(byDayModelRequests, chunk.byDayModelRequests ?? {});
     mergeAiEdits(repoAiEdits, chunk.repoAiEdits ?? {});
     mergeAiEdits(repoDeveloperAiEdits, chunk.repoDeveloperAiEdits ?? {});
   }
@@ -628,6 +742,7 @@ function main() {
     byMonthDeveloper: sortKeys(byMonthDeveloper),
     byRepoDeveloper: sortKeys(byRepoDeveloper),
     byDay: sortKeys(byDay),
+    byDayModelRequests: sortDayModelRequestsMap(byDayModelRequests),
     repoAiEdits: sortMetricKeys(repoAiEdits),
     repoDeveloperAiEdits: sortMetricKeys(repoDeveloperAiEdits),
   };

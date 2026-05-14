@@ -80,6 +80,17 @@
   --highlight-bg: rgba(36, 205, 197, 0.15) !important;
   --highlight-text-color: #dbd4fa !important;
 
+  // InputSwitch (PrimeReact) — structural colors follow theme via surface + primary
+  --inputswitch-width: 2.75rem !important;
+  --inputswitch-height: 1.5rem !important;
+  --inputswitch-border-radius: 999px !important;
+  --inputswitch-track-bg: var(--surface-400) !important;
+  --inputswitch-track-bg-on: var(--primary-color) !important;
+  --inputswitch-handle-bg: var(--surface-card) !important;
+  --inputswitch-handle-bg-on: var(--surface-card) !important;
+  --inputswitch-handle-shadow: 0 1px 3px rgba(0, 0, 0, 0.28) !important;
+  --inputswitch-focus-ring: var(--focus-ring) !important;
+
   // Semantic (used by base/layout)
   --page-background: var(--surface-ground) !important;
   --text-primary: var(--text-color) !important;

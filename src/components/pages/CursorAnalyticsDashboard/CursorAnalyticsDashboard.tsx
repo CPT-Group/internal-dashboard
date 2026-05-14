@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from 'primereact/button';
+import { InputSwitch } from 'primereact/inputswitch';
 import { Message } from 'primereact/message';
 import { Skeleton } from 'primereact/skeleton';
 
@@ -10,11 +11,31 @@ import type { KpiItem } from '@/components/ui';
 import type { CursorBillingSnapshot } from '@/lib/cursorAdminApi';
 import type { CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
 import { useTheme } from '@/providers/ThemeProvider';
-import type { CursorAnalyticsApiResponseBody, CursorAnalyticsSummary } from '@/types/cursorAnalytics';
+import type {
+  CursorAnalyticsApiResponseBody,
+  CursorAnalyticsMonetarySource,
+  CursorAnalyticsSummary,
+} from '@/types/cursorAnalytics';
+import { isCursorChargedByDayTruncated } from '@/utils/cursorAnalyticsBillingGuards';
+import { computeCsvMoneyEstimate, sumUsageRequestsInRange } from '@/utils/cursorAnalyticsCsvModelMoneyEstimate';
+import { eachIsoDayInclusive } from '@/utils/cursorAnalyticsTeamTrend';
 import { formatUsdFromCents, formatUsdNumber } from '@/utils/cursorBillingFormat';
 
 import { CursorAnalyticsDataPanels } from './CursorAnalyticsDataPanels';
 import styles from './CursorAnalyticsDashboard.module.scss';
+
+const MONETARY_SOURCE_STORAGE_KEY = 'cursor-analytics-monetary-source';
+
+function readMonetarySource(): CursorAnalyticsMonetarySource {
+  if (typeof window === 'undefined') return 'csv_estimate';
+  try {
+    const v = window.localStorage.getItem(MONETARY_SOURCE_STORAGE_KEY);
+    if (v === 'api') return 'api';
+    return 'csv_estimate';
+  } catch {
+    return 'csv_estimate';
+  }
+}
 
 function formatPeriod(months: string[]): string {
   const valid = months.filter((m) => /^\d{4}-\d{2}$/.test(m)).sort();
@@ -55,6 +76,23 @@ export const CursorAnalyticsDashboard = () => {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [apiWarnings, setApiWarnings] = useState<string[]>([]);
+  const [monetarySource, setMonetarySource] = useState<CursorAnalyticsMonetarySource>('csv_estimate');
+
+  // One-shot: read persisted toggle after mount (localStorage not in prerender snapshot).
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional hydration from localStorage
+  useEffect(() => {
+    setMonetarySource(readMonetarySource());
+  }, []);
+
+  const setMonetarySourceAndPersist = useCallback((next: CursorAnalyticsMonetarySource) => {
+    setMonetarySource(next);
+    try {
+      window.localStorage.setItem(MONETARY_SOURCE_STORAGE_KEY, next);
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }, []);
 
   const setPreset = useCallback(
     (preset: 'sprint' | 'month' | 'quarter' | 'all') => {
@@ -96,12 +134,16 @@ export const CursorAnalyticsDashboard = () => {
         startDate: range.startDate,
         endDate: range.endDate,
       });
+      if (monetarySource === 'api') {
+        params.set('includeAdmin', '1');
+      }
       const res = await fetch(`/api/cursor-analytics?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) {
         setError(`HTTP ${res.status}`);
         setSummary(null);
         setEnterprise(undefined);
         setBilling(undefined);
+        setApiWarnings([]);
         setLoaded(false);
         return;
       }
@@ -110,6 +152,7 @@ export const CursorAnalyticsDashboard = () => {
       setSummary(body.loaded ? body.summary : null);
       setEnterprise(body.enterprise);
       setBilling(body.billing);
+      setApiWarnings(body.warnings ?? []);
       if (body.range.startDate !== range.startDate || body.range.endDate !== range.endDate) {
         setRange(body.range);
       }
@@ -119,20 +162,40 @@ export const CursorAnalyticsDashboard = () => {
       setSummary(null);
       setEnterprise(undefined);
       setBilling(undefined);
+      setApiWarnings([]);
       setLoaded(false);
     } finally {
       setLoading(false);
     }
-  }, [range.endDate, range.startDate]);
+  }, [range.endDate, range.startDate, monetarySource]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const cycleOverallCents = useMemo(() => {
+    if (billing?.spend.ok !== true) return null;
+    return billing.spend.data.members.reduce((sum, member) => sum + member.overallSpendCents, 0);
+  }, [billing]);
+
+  const chargedByDayTruncated = useMemo(() => isCursorChargedByDayTruncated(billing), [billing]);
+
+  const csvMoneyEstimate = useMemo(() => {
+    if (!loaded || !summary) return null;
+    const chargedByDayCents =
+      billing?.chargedByDay.ok === true ? billing.chargedByDay.data.byDay : undefined;
+    return computeCsvMoneyEstimate({
+      summary,
+      range,
+      chargedByDayCents,
+      disableCalibration: chargedByDayTruncated,
+    });
+  }, [loaded, summary, range, billing, chargedByDayTruncated]);
+
   const kpiItems: KpiItem[] = useMemo(() => {
     if (!loaded) {
       return [
-        { label: 'Team cycle spend', value: '—', onActivate: cycleTheme },
+        { label: 'Cycle billed (team)', value: '—', onActivate: cycleTheme },
         { label: 'Period', value: '—' },
         { label: 'Charged (range)', value: '—' },
         { label: 'Team members', value: '—' },
@@ -145,21 +208,34 @@ export const CursorAnalyticsDashboard = () => {
       billing?.spend.ok === true
         ? billing.spend.data.members.reduce((sum, member) => sum + member.spendCents, 0)
         : null;
-    const chargedCents = billing?.chargedByDay.ok === true ? sumValues(billing.chargedByDay.data.byDay) : null;
-    const usageReqs = billing?.dailyByDay.ok === true ? sumValues(billing.dailyByDay.data.usageBasedByDay) : null;
-    const usdPerReq = chargedCents != null && usageReqs != null && usageReqs > 0 ? chargedCents / 100 / usageReqs : null;
+
+    const usageReqsFromCsv = summary ? sumUsageRequestsInRange(summary, range) : 0;
+
+    const chargedCentsApi = billing?.chargedByDay.ok === true ? sumValues(billing.chargedByDay.data.byDay) : null;
+    const usageReqsApi = billing?.dailyByDay.ok === true ? sumValues(billing.dailyByDay.data.usageBasedByDay) : null;
+
+    const chargedCents =
+      monetarySource === 'csv_estimate' && csvMoneyEstimate != null
+        ? csvMoneyEstimate.totalRangeCents
+        : chargedCentsApi;
+    const usageReqs = monetarySource === 'csv_estimate' ? usageReqsFromCsv : usageReqsApi;
+    const usdPerReq =
+      chargedCents != null && usageReqs != null && usageReqs > 0 ? chargedCents / 100 / usageReqs : null;
     const memberCount =
       billing?.spend.ok === true ? billing.spend.data.members.length : summary ? developerCount(summary) : 0;
 
+    const chargedLabel = monetarySource === 'csv_estimate' ? 'Est. charged (range)' : 'Charged (range)';
+    const usageLabel = monetarySource === 'csv_estimate' ? 'Usage reqs (CSV)' : 'Usage reqs';
+
     return [
       {
-        label: 'Team cycle spend',
+        label: 'Cycle billed (team)',
         value: cycleSpendCents != null ? formatUsdFromCents(cycleSpendCents) : '—',
         onActivate: cycleTheme,
       },
       { label: 'Period', value: `${range.startDate} → ${range.endDate}` },
       {
-        label: 'Charged (range)',
+        label: chargedLabel,
         value: chargedCents != null ? formatUsdFromCents(chargedCents) : '—',
       },
       {
@@ -171,13 +247,25 @@ export const CursorAnalyticsDashboard = () => {
         value: usdPerReq != null ? formatUsdNumber(usdPerReq) : '—',
       },
       {
-        label: 'Usage reqs',
-        value: usageReqs != null ? usageReqs.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—',
+        label: usageLabel,
+        value: usageReqs != null && usageReqs > 0 ? usageReqs.toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—',
       },
     ];
-  }, [loaded, summary, billing, cycleTheme, range.endDate, range.startDate]);
+  }, [
+    loaded,
+    summary,
+    billing,
+    cycleTheme,
+    range.endDate,
+    range.startDate,
+    monetarySource,
+    csvMoneyEstimate,
+  ]);
 
   const toolbarBillingHint = useMemo(() => {
+    if (monetarySource === 'csv_estimate' && billing === undefined) {
+      return ' · Cursor Admin API not loaded (CSV mode — toggle Monetary to API + Refresh for billing)';
+    }
     if (!billing) return '';
     const okSpend = billing.spend.ok;
     const okDaily = billing.dailyByDay.ok;
@@ -190,7 +278,31 @@ export const CursorAnalyticsDashboard = () => {
       return ` · Billing ${parts.join('+')}`;
     }
     return ' · Billing unavailable';
-  }, [billing]);
+  }, [billing, monetarySource]);
+
+  const suspectLowDailyCostVsActivity = useMemo(() => {
+    if (monetarySource === 'csv_estimate') return false;
+    if (!billing?.chargedByDay.ok || !billing.dailyByDay.ok) return false;
+    if (
+      billing.chargedByDay.data.truncated ||
+      (typeof billing.chargedByDay.data.usageEventsTotalReported === 'number' &&
+        billing.chargedByDay.data.usageEventsTotalReported > 0 &&
+        typeof billing.chargedByDay.data.usageEventRowsReturned === 'number' &&
+        billing.chargedByDay.data.usageEventRowsReturned < billing.chargedByDay.data.usageEventsTotalReported)
+    ) {
+      return false;
+    }
+    const days = eachIsoDayInclusive(range.startDate, range.endDate);
+    const usage = billing.dailyByDay.data.usageBasedByDay;
+    const inc = billing.dailyByDay.data.includedByDay;
+    const byDay = billing.chargedByDay.data.byDay;
+    for (const d of days) {
+      const usd = (byDay[d] ?? 0) / 100;
+      const reqs = (usage[d] ?? 0) + (inc[d] ?? 0);
+      if (reqs >= 500 && usd > 0 && usd < 50) return true;
+    }
+    return false;
+  }, [billing, range]);
 
   return (
     <main className={styles.root} aria-label="Cursor analytics">
@@ -198,6 +310,31 @@ export const CursorAnalyticsDashboard = () => {
         <div className={styles.kpiRow}>
           <KpiStrip items={kpiItems} />
         </div>
+        {apiWarnings.map((w) => (
+          <Message key={w} className={styles.apiMessage} severity="warn" text={w} />
+        ))}
+        {loaded && summary && monetarySource === 'csv_estimate' ? (
+          <Message
+            className={styles.apiMessage}
+            severity="info"
+            text="CSV mode: dollars are estimates from your team export and public list $/M — not Cursor billing. Daily costs are scaled to match Chats Usage Based Requests when model request counts are only a partial slice of that line."
+          />
+        ) : null}
+        {suspectLowDailyCostVsActivity ? (
+          <Message
+            className={styles.apiMessage}
+            severity="warn"
+            text="Heuristic: at least one day has high team request volume but low event-charged USD — double-check Trend vs Cursor Usage for that day (timezone UTC vs local)."
+          />
+        ) : null}
+        {loaded && billing?.spend.ok === true && cycleOverallCents !== null ? (
+          <p className={styles.billingSemanticsHint}>
+            <strong>Cycle overall (team, API):</strong> {formatUsdFromCents(cycleOverallCents)} — sum of per-member{' '}
+            <code>overallSpendCents</code> for the <em>current subscription cycle</em> from <code>/teams/spend</code> (not
+            lifetime all-time). Compare to <strong>Cycle billed</strong> (sum <code>spendCents</code>) when included
+            allowance is reported separately.
+          </p>
+        ) : null}
         <div className={styles.toolbar}>
           <Button
             type="button"
@@ -207,6 +344,17 @@ export const CursorAnalyticsDashboard = () => {
             loading={loading}
             onClick={() => void load()}
           />
+          {loaded && summary ? (
+            <label className={styles.monetaryToggle}>
+              <span className={styles.monetaryToggleLabel}>Monetary: API</span>
+              <InputSwitch
+                checked={monetarySource === 'csv_estimate'}
+                onChange={(e) => setMonetarySourceAndPersist(e.value ? 'csv_estimate' : 'api')}
+                aria-label="Toggle monetary source between Admin API and CSV model estimate"
+              />
+              <span className={styles.monetaryToggleLabel}>CSV est.</span>
+            </label>
+          ) : null}
           <div className={styles.rangeControls}>
             <Button type="button" label="Sprint" size="small" outlined onClick={() => setPreset('sprint')} />
             <Button type="button" label="Month" size="small" outlined onClick={() => setPreset('month')} />
@@ -268,7 +416,14 @@ export const CursorAnalyticsDashboard = () => {
         ) : null}
 
         {loaded && summary ? (
-          <CursorAnalyticsDataPanels summary={summary} enterprise={enterprise} billing={billing} range={range} />
+          <CursorAnalyticsDataPanels
+            summary={summary}
+            enterprise={enterprise}
+            billing={billing}
+            range={range}
+            monetarySource={monetarySource}
+            csvMoneyEstimate={csvMoneyEstimate}
+          />
         ) : null}
       </div>
     </main>

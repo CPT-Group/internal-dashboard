@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test:sql": "node scripts/test-sql-connections.cjs",
     "test:github-deploy-tokens": "node scripts/test-github-deploy-tokens.mjs",
+    "test:cursor-usage-event-repo": "tsx scripts/cursor-analytics/verify-usage-event-repo.ts",
+    "cursor-analytics:reconcile-day": "tsx scripts/cursor-analytics/reconcile-usage-events-day.ts",
     "cursor-analytics:summarize": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen",
     "cursor-analytics:regen": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen --out kyleOutput/cursor-analytics-summary.json"
   },
@@ -38,6 +40,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.2.3",
     "sass": "^1.97.3",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "typescript-eslint": "^8.56.0"
   },

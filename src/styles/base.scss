@@ -1045,6 +1045,47 @@ body {
   }
 }
 
+// --- InputSwitch (PrimeReact) --------------------------------------------
+.p-inputswitch {
+  width: var(--inputswitch-width);
+  height: var(--inputswitch-height);
+
+  .p-inputswitch-slider {
+    background: var(--inputswitch-track-bg) !important;
+    border-radius: var(--inputswitch-border-radius);
+
+    &::before {
+      background: var(--inputswitch-handle-bg) !important;
+      box-shadow: var(--inputswitch-handle-shadow);
+    }
+  }
+
+  &.p-highlight .p-inputswitch-slider {
+    background: var(--inputswitch-track-bg-on) !important;
+
+    &::before {
+      background: var(--inputswitch-handle-bg-on) !important;
+    }
+  }
+
+  &:not(.p-disabled):hover .p-inputswitch-slider {
+    filter: brightness(1.06);
+  }
+
+  &:not(.p-disabled).p-invalid .p-inputswitch-slider {
+    outline: 1px solid var(--color-danger, #ef4444);
+    outline-offset: 1px;
+  }
+
+  .p-inputswitch-input:focus-visible + .p-inputswitch-slider {
+    box-shadow: var(--inputswitch-focus-ring) !important;
+  }
+
+  &.p-disabled {
+    opacity: 0.5;
+  }
+}
+
 // --- SelectButton ----------------------------------------------------------
 .p-selectbutton {
   .p-button {

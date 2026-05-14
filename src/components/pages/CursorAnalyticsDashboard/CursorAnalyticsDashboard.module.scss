@@ -29,12 +29,39 @@
   flex-shrink: 0;
 }
 
+.billingSemanticsHint {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  opacity: 0.9;
+  margin: 0 0 0.15rem;
+  color: var(--text-color-secondary);
+}
+
+.billingSemanticsHint code {
+  font-size: 0.72em;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
+}
+
+.monetaryToggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+}
+
+.monetaryToggleLabel {
+  white-space: nowrap;
+  user-select: none;
 }
 
 .rangeControls {
