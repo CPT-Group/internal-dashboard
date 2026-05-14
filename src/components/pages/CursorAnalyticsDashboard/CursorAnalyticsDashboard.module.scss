@@ -135,6 +135,18 @@
   opacity: 0.9;
 }
 
+.hintList {
+  margin: 0 0 0.65rem 1.1rem;
+  padding: 0;
+  font-size: 0.85rem;
+  opacity: 0.92;
+  line-height: 1.45;
+}
+
+.hintList li {
+  margin-bottom: 0.2rem;
+}
+
 .trendWrap {
   display: flex;
   flex-direction: column;

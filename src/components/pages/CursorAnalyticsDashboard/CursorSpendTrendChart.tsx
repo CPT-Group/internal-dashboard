@@ -185,7 +185,8 @@ export const CursorSpendTrendChart = ({
           grid: { color: theme.surfaceBorder },
           ticks: { color: theme.textColor, maxRotation: 45, font: { size: 10 } },
         },
-        y: {
+        // Keys must match dataset `yAxisID` — `y` with `y1` data leaves an empty ~0–1 axis and mis-scales the line.
+        y1: {
           type: 'linear' as const,
           position: 'right' as const,
           beginAtZero: true,
@@ -230,8 +231,9 @@ export const CursorSpendTrendChart = ({
       </>
     ) : dataSource === 'csv_model_estimate' || dataSource === 'csv_model_estimate_calibrated' ? (
       <>
-        <strong>Cost source (estimate):</strong> team CSV Models Time Series per-model rows × list $/1M (tokens when
-        present, else requests × assumed tokens/request). When team <strong>Chats Usage Based Requests</strong> for a day
+        <strong>Cost source (estimate):</strong> Analytics CSV has no USD columns — Models Time Series per-model rows ×
+        public list $/1M (tokens when present, else requests × assumed tokens/request). When team{' '}
+        <strong>Chats Usage Based Requests</strong> for a day
         exceeds the sum of model <code>requests</code> in the JSON, that day is <strong>scaled up</strong> to match the CSV
         usage line. Days with usage but no model row are <strong>imputed</strong> from other days or list defaults.{' '}
         {dataSource === 'csv_model_estimate_calibrated' ? (

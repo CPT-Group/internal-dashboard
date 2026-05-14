@@ -1,3 +1,7 @@
+/**
+ * Team **Analytics** CSV has **no dollar columns** — this module turns `Models Time Series Data` model rows into cents
+ * using **Cursor public list $/1M** from `cursorModelPricingUsdPer1M.ts` (aligned to https://cursor.com/docs/models).
+ */
 import { getCursorModelUsdPer1M, resolveCursorModelPricingSlug } from '@/constants/cursorModelPricingUsdPer1M';
 import type {
   CursorAnalyticsByDayModelRequests,
@@ -12,13 +16,17 @@ const ESTIMATE_INPUT_WEIGHT = 0.65;
 const ESTIMATE_OUTPUT_WEIGHT = 0.35;
 
 /** Assumed tokens per usage request when CSV only reports request counts (no token fields). */
-const DEFAULT_TOKENS_PER_REQUEST = 22_000;
+const DEFAULT_TOKENS_PER_REQUEST = 28_000;
 
-/** Default list slug for synthetic $/req when the range has usage but no model rows to calibrate from. */
-const DEFAULT_PRICING_SLUG_FOR_SYNTHETIC = 'composer-2';
+/**
+ * When a day has team usage but **no** `model_breakdown`, impute using list **Auto + Composer pool** rates (not a
+ * single cheap API model) — matches Cursor docs “Auto pricing” for typical editor usage.
+ */
+const DEFAULT_PRICING_SLUG_FOR_SYNTHETIC = '__auto_composer_pool__';
 
 /** Optional overrides by canonical pricing slug (after alias resolution). */
 const TOKENS_PER_REQUEST_BY_CANONICAL: Readonly<Record<string, number>> = {
+  __auto_composer_pool__: 32_000,
   'gpt-5.5': 32_000,
   'gpt-5.4': 28_000,
   'gpt-5.2': 26_000,
@@ -150,9 +158,12 @@ function scaleModelCentsToTeamUsageLine(
 }
 
 function defaultSyntheticCentsPerUsageRequest(): number {
-  const rate = getCursorModelUsdPer1M(DEFAULT_PRICING_SLUG_FOR_SYNTHETIC);
+  const raw = DEFAULT_PRICING_SLUG_FOR_SYNTHETIC;
+  const canonical = resolveCursorModelPricingSlug(raw);
+  const rate = getCursorModelUsdPer1M(raw);
   const blended = blendedUsdPer1MForEstimate(rate);
-  const usd = (DEFAULT_TOKENS_PER_REQUEST / 1_000_000) * blended;
+  const tpr = tokensPerRequestForCanonical(canonical);
+  const usd = (tpr / 1_000_000) * blended;
   return Math.max(1, Math.round(usd * 100));
 }
 

@@ -1,8 +1,12 @@
 /**
- * Snapshot of public list rates from Cursor docs "Models & Pricing" (API pool, $ per 1M tokens).
- * https://cursor.com/docs/models-and-pricing — captured 2026-05-13 for CSV cost estimates only (not invoices).
+ * Public list rates from Cursor **Models & Pricing** (API pool + Auto + Composer pool), $ per 1M tokens.
+ * Source of truth: https://cursor.com/docs/models — captured for **CSV-derived estimates only** (exports have no $).
  *
- * Where the doc omits cache write, `cacheWritePer1M` is null (estimator treats like input for cache-write slot).
+ * - **API pool**: table “Model pricing” (per-model input / cache read / cache write / output).
+ * - **Auto + Composer pool**: “Auto pricing” — Input + Cache Write $1.25, Output $6, Cache Read $0.25 (mapped here as
+ *   `__auto_composer_pool__` using `inputPer1M` for the combined input+write column; `cacheWritePer1M` null).
+ *
+ * Teams add a **Cursor Token Rate** ($0.25/M) on non-Auto API usage — not applied in this estimator yet.
  */
 
 export const CURSOR_MODEL_PRICING_DOC_SNAPSHOT_ISO = '2026-05-13';
@@ -52,7 +56,7 @@ export const CURSOR_MODEL_PRICING_USD_PER_1M: Readonly<Record<string, CursorMode
   'grok-4.20': { inputPer1M: 2, outputPer1M: 6, cacheReadPer1M: 0.2, cacheWritePer1M: null },
   'grok-4.3': { inputPer1M: 1.25, outputPer1M: 2.5, cacheReadPer1M: 0.2, cacheWritePer1M: null },
   'kimi-k2.5': { inputPer1M: 0.6, outputPer1M: 3, cacheReadPer1M: 0.1, cacheWritePer1M: null },
-  /** Auto + Composer pool list row (used only when no API slug match — rough ceiling vs API pool). */
+  /** Auto + Composer pool (“Auto pricing” in docs — everyday agentic default when CSV has no model mix). */
   __auto_composer_pool__: { inputPer1M: 1.25, outputPer1M: 6, cacheReadPer1M: 0.25, cacheWritePer1M: null },
   /** When slug unknown after alias pass. */
   __fallback__: { inputPer1M: 1.25, outputPer1M: 10, cacheReadPer1M: 0.125, cacheWritePer1M: null },
@@ -60,6 +64,11 @@ export const CURSOR_MODEL_PRICING_USD_PER_1M: Readonly<Record<string, CursorMode
 
 /** CSV / API variant slug → canonical key in `CURSOR_MODEL_PRICING_USD_PER_1M`. */
 export const CURSOR_MODEL_PRICING_ALIASES: Readonly<Record<string, string>> = Object.freeze({
+  auto: '__auto_composer_pool__',
+  'auto-composer': '__auto_composer_pool__',
+  'auto_composer': '__auto_composer_pool__',
+  'cursor-auto': '__auto_composer_pool__',
+  'composer-pool': '__auto_composer_pool__',
   'claude-4-sonnet-1m': 'claude-4-sonnet',
   'claude-3-5-sonnet': 'claude-4.5-sonnet',
   'claude-3-5-haiku': 'claude-4.5-haiku',
