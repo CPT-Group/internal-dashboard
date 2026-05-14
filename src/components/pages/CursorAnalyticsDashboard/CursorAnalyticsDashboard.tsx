@@ -313,6 +313,13 @@ export const CursorAnalyticsDashboard = () => {
         {apiWarnings.map((w) => (
           <Message key={w} className={styles.apiMessage} severity="warn" text={w} />
         ))}
+        {loaded && summary?.schema === 'empty' ? (
+          <Message
+            className={styles.apiMessage}
+            severity="warn"
+            text="No Cursor analytics CSVs found: add .csv files under data/cursor-analytics/csv/ in the repo, then run npm run cursor-analytics:regen or npm run build so data/cursor-analytics/cursor-analytics-summary.json is regenerated (Netlify runs this on deploy)."
+          />
+        ) : null}
         {loaded && summary && monetarySource === 'csv_estimate' ? (
           <Message
             className={styles.apiMessage}

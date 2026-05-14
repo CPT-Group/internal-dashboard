@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { NextResponse } from 'next/server';
 
+import { CURSOR_ANALYTICS_SUMMARY_JSON_REL } from '@/constants/cursorAnalyticsPaths';
 import {
   fetchCursorAgentEditsCached,
   monthKeysToIsoRange,
@@ -79,7 +80,10 @@ function clipRangeToMaxDays(
 function resolveSummaryPath(): string {
   const raw = process.env.CURSOR_ANALYTICS_SUMMARY_JSON;
   if (!raw || raw.trim() === '') {
-    return path.join(/* turbopackIgnore: true */ process.cwd(), 'kyleOutput', 'cursor-analytics-summary.json');
+    return path.join(
+      /* turbopackIgnore: true */ process.cwd(),
+      CURSOR_ANALYTICS_SUMMARY_JSON_REL,
+    );
   }
   return path.isAbsolute(raw) ? raw : path.join(/* turbopackIgnore: true */ process.cwd(), raw);
 }

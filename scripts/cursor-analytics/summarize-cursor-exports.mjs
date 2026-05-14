@@ -1,5 +1,5 @@
 /**
- * Summarize Cursor dashboard CSV exports into kyleOutput/cursor-analytics-summary.json
+ * Summarize Cursor dashboard CSV exports (default: data/cursor-analytics/cursor-analytics-summary.json).
  *
  * Supports:
  * - **Team daily rollup** (Analytics_Team_*.csv): `Date` + `Chats Usage Based Requests` + nested JSON
@@ -9,7 +9,7 @@
  * - **Generic tabular** CSVs: heuristic column matching (no ambiguous short "total" synonym).
  *
  * Usage:
- *   node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir cursor-analytics-new-screen --out kyleOutput/cursor-analytics-summary.json
+ *   node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir data/cursor-analytics/csv --out data/cursor-analytics/cursor-analytics-summary.json
  */
 
 import fs from "node:fs";
@@ -599,7 +599,7 @@ function sortDayModelRequestsMap(m) {
 }
 
 function parseArgs(argv) {
-  let dir = "cursor-analytics-new-screen";
+  let dir = "data/cursor-analytics/csv";
   /** @type {string | null} */
   let out = null;
   let verbose = false;

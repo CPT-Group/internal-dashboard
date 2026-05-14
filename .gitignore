@@ -62,7 +62,7 @@ kyleJira/
 # local Cursor agent one-off scripts (Jira JSON payloads, per-task helpers)
 cursorScripts/
 
-# Cursor analytics workspace (CSVs/JSON dumps); only README + .gitkeep are tracked
+# Cursor analytics — legacy local-only CSV scratch (use data/cursor-analytics/csv for commits / Netlify)
 /cursor-analytics-new-screen/**
 !/cursor-analytics-new-screen/README.md
 !/cursor-analytics-new-screen/.gitkeep

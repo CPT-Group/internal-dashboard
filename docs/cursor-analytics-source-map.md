@@ -28,7 +28,7 @@ This document ties together **Cursor.com team dashboards**, **Team Admin API** (
 
 **Reconciliation script:** `npm run cursor-analytics:reconcile-day -- 2026-05-13` — full pagination for one UTC day, prints team cents and per-email sums for comparison with Cursor.com Usage.
 
-## CSV summary (`kyleOutput/cursor-analytics-summary.json`)
+## CSV summary (`data/cursor-analytics/cursor-analytics-summary.json`)
 
 | Source file (typical) | `summarize-cursor-exports.mjs` | Use in app |
 |----------------------|--------------------------------|-------------|

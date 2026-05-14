@@ -482,7 +482,7 @@ export const CursorAnalyticsDataPanels = ({
               <strong>imputed</strong> dollars from the average cents/request on days that do have model data (or Auto +
               Composer pool list rates). Optional dashed line:
               Admin API <code>chargedCents</code> when you load billing (toggle Monetary to API + Refresh). Regenerate{' '}
-              <code>cursor-analytics-summary.json</code> after changing exports.
+              <code>data/cursor-analytics/cursor-analytics-summary.json</code> after changing exports.
             </p>
           ) : (
             <p className={styles.hint}>
@@ -557,7 +557,7 @@ export const CursorAnalyticsDataPanels = ({
             <Message
               severity="warn"
               className={styles.apiMessage}
-              text="CSV monetary estimate unavailable — regenerate cursor-analytics-summary.json or widen the date range."
+              text="CSV monetary estimate unavailable — regenerate data/cursor-analytics/cursor-analytics-summary.json or widen the date range."
             />
           ) : developerMoneyRangeRows.length > 0 ? (
             <CursorAnalyticsMonetaryRangePanel rows={developerMoneyRangeRows} />
@@ -584,7 +584,7 @@ export const CursorAnalyticsDataPanels = ({
                 <>
                   <p className={styles.hint}>
                     <strong>Tabular activity (merged exports):</strong> row counts and amounts from CSV columns mapped
-                    as user + amount — volumes are over the files ingested into <code>cursor-analytics-summary.json</code>,
+                    as user + amount — volumes are over the files ingested into <code>data/cursor-analytics/cursor-analytics-summary.json</code>,
                     not automatically clipped to the date picker above.
                   </p>
                   <div className={styles.tabExportBar}>
@@ -772,7 +772,7 @@ export const CursorAnalyticsDataPanels = ({
           ) : (
             <p className={styles.hint}>
               {useCsvMoney
-                ? 'No repo AI-edits metrics in the summary to split the estimated total — add a repo AI-edits CSV export and regenerate cursor-analytics-summary.json, or switch to API mode if usage events include repositories.'
+                ? 'No repo AI-edits metrics in the summary to split the estimated total — add a repo AI-edits CSV export and regenerate data/cursor-analytics/cursor-analytics-summary.json, or switch to API mode if usage events include repositories.'
                 : usageEventsRepoLoadHint}
             </p>
           )}
@@ -820,7 +820,7 @@ export const CursorAnalyticsDataPanels = ({
           ) : (
             <p className={styles.hint}>
               {useCsvMoney
-                ? 'No repo×developer AI-edits metrics in the summary to split the estimated total — merge the appropriate CSV export and regenerate cursor-analytics-summary.json.'
+                ? 'No repo×developer AI-edits metrics in the summary to split the estimated total — merge the appropriate CSV export and regenerate data/cursor-analytics/cursor-analytics-summary.json.'
                 : `${usageEventsRepoLoadHint} Repo × developer pairs need both a parsed repo and an email on each event.`}
             </p>
           )}
@@ -870,7 +870,7 @@ export const CursorAnalyticsDataPanels = ({
           ) : useCsvMoney ? (
             <p className={styles.hint}>
               No month×developer rows — merge a tabular export that populates <code>byMonthDeveloper</code> in{' '}
-              <code>cursor-analytics-summary.json</code>, or switch Monetary to <strong>API</strong> for event-based
+              <code>data/cursor-analytics/cursor-analytics-summary.json</code>, or switch Monetary to <strong>API</strong> for event-based
               splits.
             </p>
           ) : (
