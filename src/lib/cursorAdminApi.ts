@@ -5,14 +5,17 @@
  * Not the same as **Enterprise Analytics** (`/analytics/team/*`), which returns 401 unless the org is on Enterprise.
  */
 
+import { cursorAdminPost } from '@/lib/cursorAdminHttp';
 import { eachIsoDayInclusive } from '@/utils/cursorAnalyticsTeamTrend';
 import { extractUsageEventRepoFromRow } from '@/utils/cursorUsageEventRepo';
 
-const CURSOR_API = 'https://api.cursor.com';
-
-function sleep(ms: number): Promise<void> {
-  if (ms <= 0) return Promise.resolve();
-  return new Promise((resolve) => setTimeout(resolve, ms));
+async function adminPostRaw(
+  apiKey: string,
+  path: string,
+  body: object,
+): Promise<{ status: number; text: string }> {
+  const result = await cursorAdminPost({ apiKey, path, body });
+  return { status: result.status, text: result.text };
 }
 
 export type CursorAdminResult<T> =
@@ -87,24 +90,25 @@ interface CacheEnvelope {
   snapshot: CursorBillingSnapshot;
 }
 
-async function adminPostRaw(
-  apiKey: string,
-  path: string,
-  body: object,
-): Promise<{ status: number; text: string }> {
-  const auth = Buffer.from(`${apiKey}:`).toString('base64');
-  const res = await fetch(`${CURSOR_API}${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `Basic ${auth}`,
-    },
-    body: JSON.stringify(body),
-    cache: 'no-store',
-  });
-  const text = await res.text();
-  return { status: res.status, text };
+/** Charged-event aggregate buckets (shared by live fetch + billing store). */
+export interface ChargedEventAggregates {
+  byDay: Record<string, number>;
+  byMonth: Record<string, number>;
+  byDeveloper: Record<string, number>;
+  byRepo: Record<string, number>;
+  byRepoDeveloper: Record<string, number>;
+  byMonthDeveloper: Record<string, number>;
+}
+
+export function createEmptyChargedAggregates(): ChargedEventAggregates {
+  return {
+    byDay: {},
+    byMonth: {},
+    byDeveloper: {},
+    byRepo: {},
+    byRepoDeveloper: {},
+    byMonthDeveloper: {},
+  };
 }
 
 /** Some Admin responses nest payload under `data`. */
@@ -235,7 +239,7 @@ function parseDailyRow(row: unknown): CursorDailyUsageRow | null {
 }
 
 /** Merge-only variant returning aggregates */
-async function fetchDailyRangeAggregated(
+export async function fetchDailyRangeAggregated(
   apiKey: string,
   startMs: number,
   endMs: number,
@@ -323,16 +327,9 @@ export interface UsageEventsFetchPolicy {
   maxPagesPerDay: number;
 }
 
-function mergeChargedEventRow(
+export function mergeChargedEventRow(
   row: Record<string, unknown>,
-  into: {
-    byDay: Record<string, number>;
-    byMonth: Record<string, number>;
-    byDeveloper: Record<string, number>;
-    byRepo: Record<string, number>;
-    byRepoDeveloper: Record<string, number>;
-    byMonthDeveloper: Record<string, number>;
-  },
+  into: ChargedEventAggregates,
 ): boolean {
   const ts = row.timestamp;
   const chRaw = row.chargedCents;

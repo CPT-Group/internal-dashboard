@@ -6,6 +6,8 @@
 // rendering sidesteps that without changing runtime behaviour (the 404 page is
 // served on demand, never long-cached).
 // See: https://github.com/vercel/next.js/issues/84994
+import Link from 'next/link';
+
 export const dynamic = 'force-dynamic';
 
 export default function NotFound() {
@@ -25,7 +27,7 @@ export default function NotFound() {
         <p style={{ margin: '0 0 1rem', opacity: 0.75 }}>
           We couldn&apos;t find that page.
         </p>
-        <a
+        <Link
           href="/"
           style={{
             display: 'inline-block',
@@ -36,7 +38,7 @@ export default function NotFound() {
           }}
         >
           Back to dashboard
-        </a>
+        </Link>
       </div>
     </div>
   );

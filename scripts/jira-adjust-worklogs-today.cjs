@@ -4,20 +4,31 @@
  *
  * Usage:
  *   node scripts/jira-adjust-worklogs-today.cjs --dry-run
- *   node scripts/jira-adjust-worklogs-today.cjs --apply
+ *   node scripts/jira-adjust-worklogs-today.cjs --dry-run --target-hours=7.4
+ *   node scripts/jira-adjust-worklogs-today.cjs --apply --target-hours=7.4
  *
+ * Default target 7.3 h (override: --target-hours=7.4 or JIRA_WORKLOG_TARGET_HOURS).
  * Strategy (default): if non-bug time alone is <= target hours, scale only
  * bug / bug sub-task worklogs proportionally to reach the target; otherwise
  * scale all worklogs proportionally. Each worklog is floored at 60 seconds;
  * if the plan is impossible, the script exits with an error without applying.
+ *
+ * Jira Cloud stores worklog duration in whole minutes; the script rounds planned
+ * seconds to minute boundaries and fixes the remainder so totals match the target.
  */
 
-const fs = require('fs');
 const path = require('path');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
-const TARGET_HOURS = 7.3;
+const targetArg = process.argv.find((a) => a.startsWith('--target-hours='));
+const TARGET_HOURS = targetArg
+  ? Number.parseFloat(targetArg.split('=')[1])
+  : Number.parseFloat(process.env.JIRA_WORKLOG_TARGET_HOURS ?? '7.3', 10);
+if (!Number.isFinite(TARGET_HOURS) || TARGET_HOURS <= 0) {
+  console.error('Invalid --target-hours= or JIRA_WORKLOG_TARGET_HOURS');
+  process.exit(1);
+}
 const TARGET_SECONDS = Math.round(TARGET_HOURS * 3600);
 const MIN_SECONDS = 60;
 const JIRA_PREFIX = '/rest/api/3';
@@ -110,6 +121,53 @@ async function fetchAllWorklogsForIssue(issueKey) {
   return all;
 }
 
+/**
+ * Jira stores worklog duration in whole minutes; non-minute `timeSpentSeconds` is truncated on save.
+ * Round each planned value to a minute, then apply remaining delta to the largest entry (or trim from smallest).
+ */
+function finalizeJiraWorklogMinutes(scaled, targetSeconds) {
+  const out = scaled.map((e) => {
+    if (e.newSeconds === e.seconds) {
+      return { ...e, newSeconds: e.seconds };
+    }
+    return {
+      ...e,
+      newSeconds: Math.max(MIN_SECONDS, Math.round(e.newSeconds / 60) * 60),
+    };
+  });
+
+  let sum = out.reduce((s, e) => s + e.newSeconds, 0);
+  let delta = targetSeconds - sum;
+  if (delta === 0) return out;
+
+  const idxDesc = out.map((_, i) => i).sort((a, b) => out[b].newSeconds - out[a].newSeconds);
+
+  if (delta > 0) {
+    out[idxDesc[0]].newSeconds += delta;
+    return out;
+  }
+
+  let need = -delta;
+  const asc = [...idxDesc].reverse();
+  while (need >= 60) {
+    const i = asc.find((j) => out[j].newSeconds >= MIN_SECONDS + 60);
+    if (i === undefined) break;
+    out[i].newSeconds -= 60;
+    need -= 60;
+  }
+  if (need > 0) {
+    for (const i of asc) {
+      if (need <= 0) break;
+      const room = out[i].newSeconds - MIN_SECONDS;
+      if (room <= 0) continue;
+      const cut = Math.min(room, need);
+      out[i].newSeconds -= cut;
+      need -= cut;
+    }
+  }
+  return out;
+}
+
 function planAdjustments(entries, targetSeconds) {
   const total = entries.reduce((s, e) => s + e.seconds, 0);
   if (total <= targetSeconds) {
@@ -191,12 +249,14 @@ function planAdjustments(entries, targetSeconds) {
     }
   }
 
+  scaled = finalizeJiraWorklogMinutes(scaled, targetSeconds);
+
   const changed = scaled.filter((e) => e.newSeconds !== e.seconds);
   const newTotal = scaled.reduce((s, e) => s + e.newSeconds, 0);
 
-  if (newTotal > targetSeconds) {
+  if (Math.abs(newTotal - targetSeconds) > 60) {
     throw new Error(
-      `Could not reach target ${targetSeconds}s (got ${newTotal}s); try raising target or removing MIN_SECONDS floor.`
+      `After minute alignment, total is ${newTotal}s, target ${targetSeconds}s — adjust script or target.`
     );
   }
 
@@ -227,6 +287,7 @@ async function main() {
   const myself = await jiraFetch('/myself');
   const accountId = myself.accountId;
   const ymd = todayPacificYmd();
+  console.log(`Target total: ${TARGET_HOURS} h (${TARGET_SECONDS}s)\n`);
 
   const jql = `worklogDate >= startOfDay() AND worklogAuthor = "${accountId}"`;
   const issues = await searchAllIssueKeys(jql, 500);

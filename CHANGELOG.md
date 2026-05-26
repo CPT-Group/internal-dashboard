@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **CPT2K16 CleanClaims SSN remediation (NOVA-2454)**: Sub-task under NOVA-2451 — tracked scripts in `scripts/jira/ssn-encryption/` (discovery, DDL, remediate; see README), `docs/cleanclaims-ssn-encryption.md`, `scripts/sql/add-ssn-encrypted-fix-column.sql`. Remediation `--execute` updates **only** the target SSN column + `SSNEncryptedFix`. CPTSQL20 encrypt via `SSN_ENCRYPT_SQL` after manual spike. Pilot dry-run: HomeDepot_Bell_O_SQL (12), RegisFongClaimsSQL (13).
-- **CPT2K16 CleanClaims SSN audit (NOVA-2451)**: One-off scan of all `dbo.CleanClaims` databases on CPT2K16 for plaintext-pattern SSN values (`cursorScripts/jira/audit-cleanclaims-ssn.mjs`). Jira description uses an aggregate summary table (plaintext / encrypted / errors); full per-database CSV attached sorted by plaintext count. Scripts: `enrich-ssn-audit-results.mjs`, `post-ssn-audit-to-jira.mjs`.
+- **Cursor analytics password gate**: **`CURSOR_ANALYTICS_PASSWORD`** (e.g. `cpt-nova-team`) protects **`/cursor-analytics`** and **`/api/cursor-analytics`** via middleware; **`/cursor-analytics/login`** + **`POST /api/cursor-analytics/auth`** set an httpOnly session cookie. Unset env = no gate (open route).
+- **AGENTS.md — CPT2K16 CleanClaims SSN program (NOVA-2451 / NOVA-2454)**: Documented completed audit/remediation on CPT2K16 (encrypt pipeline, strict update rules, results, 58 placeholders). Operational scripts/CSVs remain gitignored under `cursorScripts/jira/` — not shipped in this app repo.
 
 ### Changed
 
