@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cursor analytics password gate**: **`CURSOR_ANALYTICS_PASSWORD`** (e.g. `cpt-nova-team`) protects **`/cursor-analytics`** and **`/api/cursor-analytics`** via middleware; **`/cursor-analytics/login`** + **`POST /api/cursor-analytics/auth`** set an httpOnly session cookie. Unset env = no gate (open route).
+- **AGENTS.md — CPT2K16 CleanClaims SSN program (NOVA-2451 / NOVA-2454)**: Documented completed audit/remediation on CPT2K16 (encrypt pipeline, strict update rules, results, 58 placeholders). Operational scripts/CSVs remain gitignored under `cursorScripts/jira/` — not shipped in this app repo.
+
 ### Changed
 
+- **Dependencies**: `npm update` (54 packages within semver ranges). **`eslint-plugin-react-hooks`** added as a direct devDependency and registered in **`eslint.config.mjs`** (flat config no longer picked up the plugin transitively). ESLint **`globalIgnores`** extended for local/archive paths (`ArchivedReports_TestingArchive`, `kyleOutput`, `kyleJira`, `cursorScripts`, `cursor-analytics-new-screen`). **`not-found.tsx`**: home link uses **`next/link`** (`@next/next/no-html-link-for-pages`).
+- **`scripts/jira-adjust-worklogs-today.cjs`**: optional **`--target-hours=7.4`** (or **`JIRA_WORKLOG_TARGET_HOURS`**) overrides the default **7.3 h** target. After scaling, worklogs are aligned to **whole minutes** (Jira truncates non-minute `timeSpentSeconds` on save) and the remainder is applied so the planned total matches the target within **60 seconds**.
 - **`/cursor-analytics` Developers (CSV est.)**: Per-row **estimated charged (range)** — splits the team model-pricing total by **tabular user/email amount** when merged exports provide `byDeveloper`; when only the **team daily rollup** exists (no per-user column), shows an explicit **equal split across `NOVA_TEAM_DISPLAY_NAMES`** instead of implying it is impossible. **`buildCsvDeveloperEstimateRowsFromTabular`** / **`buildCsvDeveloperEstimateRowsNovaEqualSplit`** in **`cursorAnalyticsCsvMonthDeveloperShare.ts`**. Money tab copy no longer claims the rollup “has no per-email dollars” for the estimate path.
 - **Cursor analytics data path (Netlify-ready)**: tracked **`data/cursor-analytics/csv/`** holds all `*.csv` exports; **`data/cursor-analytics/cursor-analytics-summary.json`** is the default summary for **`GET /api/cursor-analytics`** (`src/constants/cursorAnalyticsPaths.ts`). **`predev`** / **`prebuild`** regenerate the summary from those CSVs; **`npm run cursor-analytics:regen`** and the summarizer default `--dir` point at the new paths. Legacy **`cursor-analytics-new-screen/`** stays gitignored for local-only dumps.
 - **CSV monetary imputation (no `vcost` in export)**: days with team usage but no `model_breakdown` now use **Auto + Composer pool** public list $/1M (see [Cursor models pricing](https://cursor.com/docs/models)) instead of a single cheap model slug; `cursorModelPricingUsdPer1M.ts` documents the CSV gap and adds aliases (`auto`, `composer-pool`, …) for `__auto_composer_pool__`.

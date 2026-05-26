@@ -153,7 +153,7 @@ Automation rules (the "When / If / Then" rules you see under Jira Project Settin
 - **Build**: `npm run build` — same scripts then production build.
 - **Lint**: `npm run lint` (ESLint; type-aware rules on `src/**`).
 - **SQL connectivity check**: `npm run test:sql` — loads `.env.local` and probes `DB_*` (CPT2K16) and `PROD_DB_*` (interactive-site prod) with a read-only query; run from a machine/VPN that can reach both hosts.
-- **`GET /api/cursor-analytics`** (default): reads **`data/cursor-analytics/cursor-analytics-summary.json`**, rebuilt from **`data/cursor-analytics/csv/*.csv`** on **`npm run dev`** / **`npm run build`** (`predev` / `prebuild`) and **`npm run cursor-analytics:regen`**. Override with **`CURSOR_ANALYTICS_SUMMARY_JSON`**. **Team Admin API** billing (`/teams/spend`, `/teams/daily-usage-data`, `/teams/filtered-usage-events`) and **Enterprise** agent-edits run **only** when the request includes **`includeAdmin=1`** (the dashboard sends this when **Monetary** is **API**). Default monetary mode is **CSV estimate** (`localStorage` value **`api`** opts into Admin billing). Billing responses are cached under **`kyleOutput/cursor-admin-billing-cache.json`** (TTL **`CURSOR_ANALYTICS_BILLING_CACHE_MS`**, default 15m; usage-events policy **v2**: per-UTC-day windows, full pagination per day, throttle **`CURSOR_ANALYTICS_USAGE_EVENTS_REQUEST_DELAY_MS`**). **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_RANGE_DAYS`** clips to the most recent N UTC days (response **`warnings`**). **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES=0`** skips usage events. **CSV estimate**: per-model list $/M using **tokens** from the export when present, else requests × assumed tokens/request; **imputes** missing model days from team daily usage volume. Daily **Trend** in API mode: **chargedCents** ÷ 100 per day; **CSV `byDay` scaling disabled** when the event load is incomplete. **Money (range)** tab: **`buildDeveloperMoneyRangeRows`** in **`src/utils/cursorAnalyticsMonetaryJoin.ts`**. **Developers**: **Charged (range)** column (events by email). **Repos** / **Repo × developer** show **Basis**. **`npm run cursor-analytics:reconcile-day`** — one-day CLI reconciliation vs Cursor Usage. **`npm run test:cursor-usage-event-repo`** — repo/workspace parsing fixtures. **Enterprise** agent-edits is **opt-in**: **`CURSOR_ANALYTICS_AGENT_EDITS=1`**. Env: **`CURSOR_ANALYTICS_SUMMARY_JSON`**, **`CURSOR_ANALYTICS_BILLING_CACHE_JSON`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES`** (0 = skip events), **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_REQUEST_DELAY_MS`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_RANGE_DAYS`**, **`CURSOR_ANALYTICS_SKIP_ADMIN_API`**, **`CURSOR_ANALYTICS_SKIP_CLOUD`**, **`CURSOR_ANALYTICS_SKIP_ENTERPRISE`**, **`CURSOR_ANALYTICS_ENTERPRISE_CACHE_JSON`**. Styles only in **`CursorAnalyticsDashboard.module.scss`** (`.root`).
+- **`GET /api/cursor-analytics`** (default): reads **`data/cursor-analytics/cursor-analytics-summary.json`**, rebuilt from **`data/cursor-analytics/csv/*.csv`** on **`npm run dev`** / **`npm run build`** (`predev` / `prebuild`) and **`npm run cursor-analytics:regen`**. Override with **`CURSOR_ANALYTICS_SUMMARY_JSON`**. **Password gate**: set **`CURSOR_ANALYTICS_PASSWORD`** in `.env.local` / Netlify (e.g. `cpt-nova-team`) — middleware protects **`/cursor-analytics`** and **`/api/cursor-analytics/*`**; login at **`/cursor-analytics/login`**; session cookie **`cursor-analytics-auth`** (30 days, httpOnly). Omit the env var to leave the route open (local-only convenience). **Team Admin API** billing (`/teams/spend`, `/teams/daily-usage-data`, `/teams/filtered-usage-events`) and **Enterprise** agent-edits run **only** when the request includes **`includeAdmin=1`** (the dashboard sends this when **Monetary** is **API**). Default monetary mode is **CSV estimate** (`localStorage` value **`api`** opts into Admin billing). Admin API limit is **20 req/min per team** — usage events paginate **per UTC day** with **`CURSOR_ANALYTICS_USAGE_EVENTS_REQUEST_DELAY_MS`** (default 3100ms); wide ranges + **Refresh** can still **429**; prefer **Sprint/Month** presets, disk cache (**`CURSOR_ANALYTICS_BILLING_CACHE_MS`**, default 15m), and **CSV est.** for routine views. Billing responses are cached under **`kyleOutput/cursor-admin-billing-cache.json`** (TTL **`CURSOR_ANALYTICS_BILLING_CACHE_MS`**, default 15m; usage-events policy **v2**: per-UTC-day windows, full pagination per day, throttle **`CURSOR_ANALYTICS_USAGE_EVENTS_REQUEST_DELAY_MS`**). **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_RANGE_DAYS`** clips to the most recent N UTC days (response **`warnings`**). **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES=0`** skips usage events. **CSV estimate**: per-model list $/M using **tokens** from the export when present, else requests × assumed tokens/request; **imputes** missing model days from team daily usage volume. Daily **Trend** in API mode: **chargedCents** ÷ 100 per day; **CSV `byDay` scaling disabled** when the event load is incomplete. **Money (range)** tab: **`buildDeveloperMoneyRangeRows`** in **`src/utils/cursorAnalyticsMonetaryJoin.ts`**. **Developers**: **Charged (range)** column (events by email). **Repos** / **Repo × developer** show **Basis**. **`npm run cursor-analytics:reconcile-day`** — one-day CLI reconciliation vs Cursor Usage. **`npm run test:cursor-usage-event-repo`** — repo/workspace parsing fixtures. **Enterprise** agent-edits is **opt-in**: **`CURSOR_ANALYTICS_AGENT_EDITS=1`**. Env: **`CURSOR_ANALYTICS_SUMMARY_JSON`**, **`CURSOR_ANALYTICS_BILLING_CACHE_JSON`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES`** (0 = skip events), **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_REQUEST_DELAY_MS`**, **`CURSOR_ANALYTICS_USAGE_EVENTS_MAX_RANGE_DAYS`**, **`CURSOR_ANALYTICS_SKIP_ADMIN_API`**, **`CURSOR_ANALYTICS_SKIP_CLOUD`**, **`CURSOR_ANALYTICS_SKIP_ENTERPRISE`**, **`CURSOR_ANALYTICS_ENTERPRISE_CACHE_JSON`**. Styles only in **`CursorAnalyticsDashboard.module.scss`** (`.root`).
 
 Do **not** run `next dev` (or `next build`) directly without the scripts; slide lists and other generated data can be stale.
 
@@ -189,6 +189,55 @@ Add/remove images in those folders and re-run `npm run dev` or `npm run build` t
 Scripts for editing Jira automation rules via the Atlassian Automation REST API live in `scripts/jira/`. See **`scripts/jira/README.md`** for the full how-to: auth requirements (James's token — global **Administer Jira** needed, Kyle's token returns 403), endpoint cheat sheet, the IF/ELSE block pattern we use for conditional assigns (`jira.condition.container.block` + `jira.condition.if.block`), and shape gotchas that silently no-op on the API (e.g. `SPECIFY_USER` with `assignee.type: "COPY"` does nothing — use `assignType: "SMART_VALUE"` + `{{issue.customfield_X.accountId}}`; `jira.issue.edit` must use `operations[]` not `fields{}`).
 
 Keep generic tooling in `scripts/jira/` (helpers, verifiers, the if/else pattern scanner) and one-off migration/diagnostic scripts in `kyleJira/` (gitignored). Always `node scripts/jira/backup-rules.mjs <uuid>:label` before editing — snapshots land in `kyleOutput/jira-rule-backups/`.
+
+## CPT2K16 CleanClaims SSN audit & encryption (completed 2026-05-26)
+
+Operational work on **CPT2K16** `dbo.CleanClaims` — **not** part of the Next.js app. Jira: **[NOVA-2451](https://cptgroup.atlassian.net/browse/NOVA-2451)** (audit) · **[NOVA-2454](https://cptgroup.atlassian.net/browse/NOVA-2454)** (remediation). Both **Done**. Artifacts and one-off scripts live in **`cursorScripts/jira/`** and **`kyleOutput/`** (gitignored), not in this repo.
+
+### Scope
+
+- Scan every online case DB with `dbo.CleanClaims` and every column whose name contains **`ssn`** (e.g. `SSN`, `W9SSN`, `Rep1SSNOrTaxID`, `W4SSN`).
+- **Audit heuristic (plaintext)**: non-empty, no letters, exactly **9 digits** after removing dashes/spaces.
+- **Encrypted (production)**: **35-character hex** from `TestOptOut.dbo.uspGetCryptedSSN` on linked server **`cptsql20\sqlexpress`**.
+- **Do not use** `CPTMaster.dbo.EncryptSSN` (legacy; wrong format).
+
+### Encryption pipeline (legacy downloader pattern)
+
+| Step | Where | API |
+|------|--------|-----|
+| Encrypt | CPT2K16 → linked server | `[cptsql20\sqlexpress].TestOptOut.dbo.uspGetCryptedSSN` — `@SSN` in, `@xSSN` out (35-char hex) |
+| Decrypt (verify) | Case database on CPT2K16 | `TestOptOut.dbo.uspGetSSN` — `@Crypt` in, `@SSN` out (must run in **case DB** context, not only via linked server) |
+
+Auth: `DB_*` in `.env.local` (`DB_SERVER=CPT2K16`). Jira updates: `KYLE_EMAIL` + `KYLE_JIRA_TOKEN`.
+
+### Remediation rules (strict)
+
+- **Only update**: target SSN column + set **`SSNEncryptedFix = 1`** on `dbo.CleanClaims`. No other columns.
+- Add **`SSNEncryptedFix` BIT** on remediated databases only (idempotent DDL).
+- Gate updates on **column still plaintext** (row-level marker must not block other `*ssn*` columns on the same row).
+- Widen columns narrower than **50** chars before encrypting (e.g. `Rep1SSNOrTaxID` was `varchar(30)`; ciphertext is 35 chars).
+
+### Results (2026-05-26)
+
+| Measure | Count |
+|---------|------:|
+| Initial audit plaintext cells (all `*ssn*` columns) | 4,389 |
+| Encrypted (real SSNs) | ~4,331 |
+| Remaining plaintext after re-audit | 58 |
+| Likely real SSN in remainder | 0 |
+
+**58 placeholders** — `000000000` (56), `900000000` (1), `842000000` (1). **`uspGetCryptedSSN` returns the same 9-digit input** (proc refuses invalid SSNs). This is **stored-procedure behavior**, not an app/script bug. Do not write 9-char values as if encrypted. Optional future work: NULL/sentinel cleanup (separate ticket).
+
+### Audit KPIs (recommended)
+
+Report separately:
+
+- **Actionable plaintext** — 9-digit values the encrypt proc accepts (should → 0 after remediation).
+- **Placeholder plaintext** — all-zeros, invalid area (000/666/9xx), encrypt-proc refused patterns (expected residual).
+
+### Re-audit
+
+Re-run a full CPT2K16 scan with the same plaintext heuristic after bulk encrypt. Expect **~0 actionable** and **~58 placeholder** unless new data is loaded.
 
 ## Code layout
 

@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
 const eslintConfig = defineConfig([
@@ -21,6 +22,9 @@ const eslintConfig = defineConfig([
     },
   },
   {
+    plugins: {
+      "react-hooks": reactHooks,
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/explicit-function-return-type": "warn",
@@ -44,6 +48,11 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     ".cursor/**",
     "scripts/**",
+    "ArchivedReports_TestingArchive/**",
+    "kyleOutput/**",
+    "kyleJira/**",
+    "cursorScripts/**",
+    "cursor-analytics-new-screen/**",
   ]),
 ]);
 

@@ -160,3 +160,45 @@
   height: min(42vh, 320px);
   min-height: 220px;
 }
+
+.loginShell {
+  box-sizing: border-box;
+  max-width: 22rem;
+  margin: 12vh auto 0;
+  padding: 1.25rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.5rem;
+  background: var(--surface-card);
+}
+
+.loginTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.loginHint {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+.loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.loginLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-color-secondary);
+}
+
+.loginPassword {
+  width: 100%;
+}
+
+.loginPassword :global(.p-password-input) {
+  width: 100%;
+}
