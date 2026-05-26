@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "updatedAt": "2026-05-26T20:01:11.486Z",
+  "encryptedSsnLength": 35,
+  "primaryKeyColumn": "MailingListID",
+  "markerColumn": "SSNEncryptedFix",
+  "legacyDoNotUse": {
+    "function": "CPTMaster.dbo.EncryptSSN",
+    "reason": "Letter-substitution UDF; returns empty for valid input; not the 35-char hex format in production."
+  },
+  "encryptedShape": {
+    "description": "Production encrypted SSN on CleanClaims is typically 35-char hex (see vwShowSSNsInClaimsNotEncrypted: len(ssn) between 1-34 = not encrypted).",
+    "validationSql": "LEN(LTRIM(RTRIM(CAST({col} AS NVARCHAR(4000))))) = 35"
+  },
+  "linkedServers": {
+    "cptsql20": "CPTSQL20",
+    "cptsql20Express": "cptsql20\\sqlexpress"
+  },
+  "cptsql20DirectAuth": {
+    "status": "requires_windows_integrated",
+    "note": "Agent/sa cannot log in directly; use OPENQUERY from CPT2K16 or run encrypt on domain-joined workstation."
+  },
+  "encryptInvoke": {
+    "type": "env_sql",
+    "envVar": "SSN_ENCRYPT_SQL",
+    "description": "Parameterized SQL run on CPT2K16 (CPTMaster context). Must accept @plain (nvarchar) and return one row column encrypted (alias encrypted). Example: SELECT encrypted FROM OPENQUERY(CPTSQL20, '...') — set after CPTSQL20 spike."
+  },
+  "updateRule": {
+    "description": "Remediation UPDATE must touch only the target SSN column and SSNEncryptedFix. No other CleanClaims columns.",
+    "setColumns": [
+      "<ssnColumn>",
+      "SSNEncryptedFix"
+    ]
+  },
+  "defaultColumnScope": [
+    "SSN",
+    "ssnString",
+    "SSNString"
+  ],
+  "views": {
+    "unencryptedClaims": "dbo.vwShowSSNsInClaimsNotEncrypted"
+  },
+  "discoveryNotes": {
+    "cptsql20DirectOk": false,
+    "productionEncryptedLen": 35,
+    "legacyEncryptLen": 0
+  }
+}
