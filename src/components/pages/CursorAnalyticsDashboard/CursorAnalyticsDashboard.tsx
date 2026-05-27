@@ -9,6 +9,7 @@ import { Skeleton } from 'primereact/skeleton';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
 import type { CursorBillingSnapshot } from '@/lib/cursorAdminApi';
+import type { CursorBillingStoreStatus } from '@/lib/cursorBillingStore';
 import type { CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
 import { useTheme } from '@/providers/ThemeProvider';
 import type {
@@ -16,7 +17,7 @@ import type {
   CursorAnalyticsMonetarySource,
   CursorAnalyticsSummary,
 } from '@/types/cursorAnalytics';
-import { isCursorChargedByDayTruncated } from '@/utils/cursorAnalyticsBillingGuards';
+import { isCursorBillingStoreIncomplete, isCursorChargedByDayTruncated } from '@/utils/cursorAnalyticsBillingGuards';
 import { computeCsvMoneyEstimate, sumUsageRequestsInRange } from '@/utils/cursorAnalyticsCsvModelMoneyEstimate';
 import { eachIsoDayInclusive } from '@/utils/cursorAnalyticsTeamTrend';
 import { formatUsdFromCents, formatUsdNumber } from '@/utils/cursorBillingFormat';
@@ -65,6 +66,7 @@ export const CursorAnalyticsDashboard = () => {
   const [summary, setSummary] = useState<CursorAnalyticsSummary | null>(null);
   const [enterprise, setEnterprise] = useState<CursorEnterpriseFetchResult | undefined>();
   const [billing, setBilling] = useState<CursorBillingSnapshot | undefined>();
+  const [billingStore, setBillingStore] = useState<CursorBillingStoreStatus | undefined>();
   const [range, setRange] = useState<{ startDate: string; endDate: string }>({
     startDate: isoDayFromOffset(-90),
     endDate: isoDayFromOffset(0),
@@ -87,6 +89,11 @@ export const CursorAnalyticsDashboard = () => {
 
   const setMonetarySourceAndPersist = useCallback((next: CursorAnalyticsMonetarySource) => {
     setMonetarySource(next);
+    if (next === 'api') {
+      const sprint = { startDate: isoDayFromOffset(-13), endDate: isoDayFromOffset(0) };
+      setDraftRange(sprint);
+      setRange(sprint);
+    }
     try {
       window.localStorage.setItem(MONETARY_SOURCE_STORAGE_KEY, next);
     } catch {
@@ -126,48 +133,65 @@ export const CursorAnalyticsDashboard = () => {
     [summary],
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams({
-        startDate: range.startDate,
-        endDate: range.endDate,
-      });
-      if (monetarySource === 'api') {
-        params.set('includeAdmin', '1');
-      }
-      const res = await fetch(`/api/cursor-analytics?${params.toString()}`, { cache: 'no-store' });
-      if (!res.ok) {
-        setError(`HTTP ${res.status}`);
+  const fetchAnalytics = useCallback(
+    async (adminMode: 'none' | 'quick' | 'full') => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({
+          startDate: range.startDate,
+          endDate: range.endDate,
+        });
+        if (adminMode === 'quick') {
+          params.set('includeAdmin', 'quick');
+        } else if (adminMode === 'full') {
+          params.set('includeAdmin', '1');
+        }
+        const res = await fetch(`/api/cursor-analytics?${params.toString()}`, { cache: 'no-store' });
+        if (!res.ok) {
+          setError(`HTTP ${res.status}`);
+          setSummary(null);
+          setEnterprise(undefined);
+          setBilling(undefined);
+          setBillingStore(undefined);
+          setApiWarnings([]);
+          setLoaded(false);
+          return;
+        }
+        const body = (await res.json()) as CursorAnalyticsApiResponseBody;
+        setLoaded(body.loaded);
+        setSummary(body.loaded ? body.summary : null);
+        setEnterprise(body.enterprise);
+        setBilling(body.billing);
+        setBillingStore(body.billingStore);
+        setApiWarnings(body.warnings ?? []);
+        if (body.range.startDate !== range.startDate || body.range.endDate !== range.endDate) {
+          setRange(body.range);
+        }
+        setDraftRange(body.range);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Request failed');
         setSummary(null);
         setEnterprise(undefined);
         setBilling(undefined);
+        setBillingStore(undefined);
         setApiWarnings([]);
         setLoaded(false);
-        return;
+      } finally {
+        setLoading(false);
       }
-      const body = (await res.json()) as CursorAnalyticsApiResponseBody;
-      setLoaded(body.loaded);
-      setSummary(body.loaded ? body.summary : null);
-      setEnterprise(body.enterprise);
-      setBilling(body.billing);
-      setApiWarnings(body.warnings ?? []);
-      if (body.range.startDate !== range.startDate || body.range.endDate !== range.endDate) {
-        setRange(body.range);
-      }
-      setDraftRange(body.range);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Request failed');
-      setSummary(null);
-      setEnterprise(undefined);
-      setBilling(undefined);
-      setApiWarnings([]);
-      setLoaded(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [range.endDate, range.startDate, monetarySource]);
+    },
+    [range.endDate, range.startDate],
+  );
+
+  const load = useCallback(async () => {
+    const adminMode = monetarySource === 'api' ? 'full' : 'none';
+    await fetchAnalytics(adminMode);
+  }, [fetchAnalytics, monetarySource]);
+
+  const loadQuick = useCallback(async () => {
+    await fetchAnalytics('quick');
+  }, [fetchAnalytics]);
 
   useEffect(() => {
     void load();
@@ -179,6 +203,7 @@ export const CursorAnalyticsDashboard = () => {
   }, [billing]);
 
   const chargedByDayTruncated = useMemo(() => isCursorChargedByDayTruncated(billing), [billing]);
+  const billingStoreIncomplete = useMemo(() => isCursorBillingStoreIncomplete(billingStore), [billingStore]);
 
   const csvMoneyEstimate = useMemo(() => {
     if (!loaded || !summary) return null;
@@ -188,9 +213,9 @@ export const CursorAnalyticsDashboard = () => {
       summary,
       range,
       chargedByDayCents,
-      disableCalibration: chargedByDayTruncated,
+      disableCalibration: chargedByDayTruncated || billingStoreIncomplete,
     });
-  }, [loaded, summary, range, billing, chargedByDayTruncated]);
+  }, [loaded, summary, range, billing, chargedByDayTruncated, billingStoreIncomplete]);
 
   const kpiItems: KpiItem[] = useMemo(() => {
     if (!loaded) {
@@ -211,7 +236,10 @@ export const CursorAnalyticsDashboard = () => {
 
     const usageReqsFromCsv = summary ? sumUsageRequestsInRange(summary, range) : 0;
 
-    const chargedCentsApi = billing?.chargedByDay.ok === true ? sumValues(billing.chargedByDay.data.byDay) : null;
+    const chargedCentsApi =
+      billing?.chargedByDay.ok === true && !billingStoreIncomplete
+        ? sumValues(billing.chargedByDay.data.byDay)
+        : null;
     const usageReqsApi = billing?.dailyByDay.ok === true ? sumValues(billing.dailyByDay.data.usageBasedByDay) : null;
 
     const chargedCents =
@@ -236,7 +264,12 @@ export const CursorAnalyticsDashboard = () => {
       { label: 'Period', value: `${range.startDate} → ${range.endDate}` },
       {
         label: chargedLabel,
-        value: chargedCents != null ? formatUsdFromCents(chargedCents) : '—',
+        value:
+          chargedCents != null
+            ? formatUsdFromCents(chargedCents)
+            : monetarySource === 'api' && billingStoreIncomplete
+              ? '—'
+              : '—',
       },
       {
         label: 'Team members',
@@ -259,9 +292,16 @@ export const CursorAnalyticsDashboard = () => {
     range.endDate,
     range.startDate,
     monetarySource,
+    billingStoreIncomplete,
     csvMoneyEstimate,
   ]);
 
+  const billingStoreHint = useMemo(() => {
+    if (!billingStore) return null;
+    const { coverage, lastSyncAt } = billingStore;
+    const syncLabel = lastSyncAt ? new Date(lastSyncAt).toLocaleString() : 'never';
+    return `${coverage.daysComplete}/${coverage.daysTotal} days complete · last sync ${syncLabel}`;
+  }, [billingStore]);
   const toolbarBillingHint = useMemo(() => {
     if (monetarySource === 'csv_estimate' && billing === undefined) {
       return ' · Cursor Admin API not loaded (CSV mode — toggle Monetary to API + Refresh for billing)';
@@ -269,16 +309,16 @@ export const CursorAnalyticsDashboard = () => {
     if (!billing) return '';
     const okSpend = billing.spend.ok;
     const okDaily = billing.dailyByDay.ok;
-    const okEvents = billing.chargedByDay.ok;
+    const okEvents = billing.chargedByDay.ok && !billingStoreIncomplete;
     if (okSpend || okDaily || okEvents) {
       const parts: string[] = [];
       if (okSpend) parts.push('spend');
       if (okDaily) parts.push('daily');
-      if (okEvents) parts.push('events');
+      if (okEvents) parts.push('store events');
       return ` · Billing ${parts.join('+')}`;
     }
     return ' · Billing unavailable';
-  }, [billing, monetarySource]);
+  }, [billing, billingStoreIncomplete, monetarySource]);
 
   const suspectLowDailyCostVsActivity = useMemo(() => {
     if (monetarySource === 'csv_estimate') return false;
@@ -334,6 +374,19 @@ export const CursorAnalyticsDashboard = () => {
             text="Heuristic: at least one day has high team request volume but low event-charged USD — double-check Trend vs Cursor Usage for that day (timezone UTC vs local)."
           />
         ) : null}
+        {monetarySource === 'api' && billingStoreIncomplete ? (
+          <Message
+            className={styles.apiMessage}
+            severity="warn"
+            text="Billing store incomplete for this range — charged (range) and dollar trend are hidden. Run: npm run cursor-analytics:sync-billing -- --days 14"
+          />
+        ) : null}
+        {billingStoreHint ? (
+          <p className={styles.billingSemanticsHint}>
+            <strong>Billing data status:</strong> {billingStoreHint}. Quick refresh updates cycle spend + daily usage
+            only; full API refresh reads the on-disk store for charged events.
+          </p>
+        ) : null}
         {loaded && billing?.spend.ok === true && cycleOverallCents !== null ? (
           <p className={styles.billingSemanticsHint}>
             <strong>Cycle overall (team, API):</strong> {formatUsdFromCents(cycleOverallCents)} — sum of per-member{' '}
@@ -343,6 +396,14 @@ export const CursorAnalyticsDashboard = () => {
           </p>
         ) : null}
         <div className={styles.toolbar}>
+          <Button
+            type="button"
+            label="Quick refresh"
+            icon="pi pi-bolt"
+            size="small"
+            loading={loading}
+            onClick={() => void loadQuick()}
+          />
           <Button
             type="button"
             label="Refresh"
@@ -427,6 +488,7 @@ export const CursorAnalyticsDashboard = () => {
             summary={summary}
             enterprise={enterprise}
             billing={billing}
+            billingStore={billingStore}
             range={range}
             monetarySource={monetarySource}
             csvMoneyEstimate={csvMoneyEstimate}

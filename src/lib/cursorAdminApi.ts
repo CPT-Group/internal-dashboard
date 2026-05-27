@@ -170,7 +170,7 @@ function parseSpend(raw: unknown): CursorAdminResult<{
   return { ok: true, data: { members, subscriptionCycleStart } };
 }
 
-async function fetchSpend(apiKey: string): Promise<CursorAdminResult<{ members: CursorTeamMemberSpend[]; subscriptionCycleStart?: number }>> {
+export async function fetchSpend(apiKey: string): Promise<CursorAdminResult<{ members: CursorTeamMemberSpend[]; subscriptionCycleStart?: number }>> {
   const { status, text } = await adminPostRaw(apiKey, '/teams/spend', {
     page: 1,
     pageSize: 500,
@@ -364,7 +364,114 @@ export function mergeChargedEventRow(
   return true;
 }
 
-async function fetchChargedByDay(
+export interface SingleDayUsageEventsResult {
+  rowsReturned: number;
+  totalReported?: number;
+  complete: boolean;
+  truncated: boolean;
+  warnings: string[];
+  aggregates: ChargedEventAggregates;
+  eventsRead: number;
+}
+
+/** Paginate `/teams/filtered-usage-events` for one UTC calendar day (CLI + billing store sync). */
+export async function fetchUsageEventsForSingleDay(
+  apiKey: string,
+  day: string,
+  policy: UsageEventsFetchPolicy,
+): Promise<CursorAdminResult<SingleDayUsageEventsResult>> {
+  const chunkStart = Date.parse(`${day}T00:00:00.000Z`);
+  const chunkEnd = Date.parse(`${day}T23:59:59.999Z`);
+  if (!Number.isFinite(chunkStart) || !Number.isFinite(chunkEnd)) {
+    return { ok: false, status: 0, message: `Invalid day ${day}` };
+  }
+
+  const aggregates = createEmptyChargedAggregates();
+  let eventsRead = 0;
+  let rowsReturned = 0;
+  let reportedForDay: number | undefined;
+  const warnings: string[] = [];
+  let truncated = false;
+  let page = 1;
+
+  while (page <= policy.maxPagesPerDay) {
+    const { status, text } = await adminPostRaw(apiKey, '/teams/filtered-usage-events', {
+      startDate: chunkStart,
+      endDate: chunkEnd,
+      page,
+      pageSize: 100,
+    });
+    let raw: unknown;
+    try {
+      raw = JSON.parse(text) as unknown;
+    } catch {
+      return { ok: false, status, message: text.slice(0, 240) };
+    }
+    if (!status.toString().startsWith('2')) {
+      if (page === 1) {
+        const msg =
+          typeof raw === 'object' && raw !== null && 'message' in raw
+            ? String((raw as { message: string }).message)
+            : text.slice(0, 240);
+        return { ok: false, status, message: msg || `HTTP ${status}` };
+      }
+      warnings.push(`Usage events: HTTP ${status} on ${day} page ${String(page)} — partial data for that day.`);
+      truncated = true;
+      break;
+    }
+    if (!raw || typeof raw !== 'object') break;
+    const o = raw as {
+      usageEvents?: unknown;
+      pagination?: { hasNextPage?: boolean };
+      totalUsageEventsCount?: number;
+    };
+    if (page === 1 && typeof o.totalUsageEventsCount === 'number' && Number.isFinite(o.totalUsageEventsCount)) {
+      reportedForDay = o.totalUsageEventsCount;
+    }
+    const ev = Array.isArray(o.usageEvents) ? o.usageEvents : [];
+    rowsReturned += ev.length;
+    for (const row of ev) {
+      if (!row || typeof row !== 'object') continue;
+      if (mergeChargedEventRow(row as Record<string, unknown>, aggregates)) {
+        eventsRead += 1;
+      }
+    }
+
+    if (o.pagination?.hasNextPage !== true) {
+      if (reportedForDay != null && rowsReturned < reportedForDay) {
+        truncated = true;
+        warnings.push(
+          `Usage events: ${day} reported ${String(reportedForDay)} events but only ${String(rowsReturned)} rows returned — pagination may have stopped early.`,
+        );
+      }
+      break;
+    }
+    page += 1;
+  }
+
+  if (page > policy.maxPagesPerDay) {
+    truncated = true;
+    warnings.push(`Usage events: ${day} hit max pages (${String(policy.maxPagesPerDay)}) — raise CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY.`);
+  }
+
+  const complete =
+    !truncated && (reportedForDay == null || rowsReturned >= reportedForDay) && page <= policy.maxPagesPerDay;
+
+  return {
+    ok: true,
+    data: {
+      rowsReturned,
+      totalReported: reportedForDay,
+      complete,
+      truncated,
+      warnings,
+      aggregates,
+      eventsRead,
+    },
+  };
+}
+
+export async function fetchChargedByDay(
   apiKey: string,
   startMs: number,
   endMs: number,
@@ -395,7 +502,6 @@ async function fetchChargedByDay(
   const warnings: string[] = [];
   let usageEventsTotalReported = 0;
   let reportedChunks = 0;
-  let usageEventHttpCalls = 0;
   let usageEventRowsReturned = 0;
 
   const startIso = new Date(startMs).toISOString().slice(0, 10);
@@ -403,81 +509,37 @@ async function fetchChargedByDay(
   const dayKeys = eachIsoDayInclusive(startIso, endIso);
 
   for (const day of dayKeys) {
-    const chunkStart = Math.max(startMs, Date.parse(`${day}T00:00:00.000Z`));
-    const chunkEnd = Math.min(endMs, Date.parse(`${day}T23:59:59.999Z`));
-    if (chunkStart > chunkEnd) continue;
-
-    let dayEventObjects = 0;
-    let reportedForDay: number | undefined;
-    let page = 1;
-
-    while (page <= policy.maxPagesPerDay) {
-      if (usageEventHttpCalls > 0) {
-        await sleep(policy.requestDelayMs);
-      }
-      usageEventHttpCalls += 1;
-      const { status, text } = await adminPostRaw(apiKey, '/teams/filtered-usage-events', {
-        startDate: chunkStart,
-        endDate: chunkEnd,
-        page,
-        pageSize: 100,
-      });
-      let raw: unknown;
-      try {
-        raw = JSON.parse(text) as unknown;
-      } catch {
-        return { ok: false, status, message: text.slice(0, 240) };
-      }
-      if (!status.toString().startsWith('2')) {
-        if (page === 1) {
-          const msg =
-            typeof raw === 'object' && raw !== null && 'message' in raw
-              ? String((raw as { message: string }).message)
-              : text.slice(0, 240);
-          return { ok: false, status, message: msg || `HTTP ${status}` };
-        }
-        warnings.push(`Usage events: HTTP ${status} on ${day} page ${String(page)} — partial data for that day.`);
-        truncated = true;
-        break;
-      }
-      if (!raw || typeof raw !== 'object') break;
-      const o = raw as {
-        usageEvents?: unknown;
-        pagination?: { hasNextPage?: boolean; numPages?: number };
-        totalUsageEventsCount?: number;
-      };
-      if (page === 1 && typeof o.totalUsageEventsCount === 'number' && Number.isFinite(o.totalUsageEventsCount)) {
-        reportedForDay = o.totalUsageEventsCount;
-        usageEventsTotalReported += reportedForDay;
-        reportedChunks += 1;
-      }
-      const ev = Array.isArray(o.usageEvents) ? o.usageEvents : [];
-      dayEventObjects += ev.length;
-      usageEventRowsReturned += ev.length;
-      for (const row of ev) {
-        if (!row || typeof row !== 'object') continue;
-        if (mergeChargedEventRow(row as Record<string, unknown>, { byDay, byMonth, byDeveloper, byRepo, byRepoDeveloper, byMonthDeveloper })) {
-          eventsRead += 1;
-        }
-      }
-
-      const pag = o.pagination;
-      const hasNext = pag?.hasNextPage === true;
-      if (!hasNext) {
-        if (reportedForDay != null && dayEventObjects < reportedForDay) {
-          truncated = true;
-          warnings.push(
-            `Usage events: ${day} reported ${String(reportedForDay)} events but only ${String(dayEventObjects)} rows returned across pages — pagination may have stopped early.`,
-          );
-        }
-        break;
-      }
-      page += 1;
+    const dayResult = await fetchUsageEventsForSingleDay(apiKey, day, policy);
+    if (!dayResult.ok) {
+      return dayResult;
     }
+    const d = dayResult.data;
+    usageEventRowsReturned += d.rowsReturned;
+    if (typeof d.totalReported === 'number') {
+      usageEventsTotalReported += d.totalReported;
+      reportedChunks += 1;
+    }
+    eventsRead += d.eventsRead;
+    if (d.truncated) truncated = true;
+    if (d.warnings.length > 0) warnings.push(...d.warnings);
 
-    if (page > policy.maxPagesPerDay) {
-      truncated = true;
-      warnings.push(`Usage events: ${day} hit max pages (${String(policy.maxPagesPerDay)}) — raise CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY.`);
+    for (const [k, v] of Object.entries(d.aggregates.byDay)) {
+      byDay[k] = (byDay[k] ?? 0) + v;
+    }
+    for (const [k, v] of Object.entries(d.aggregates.byMonth)) {
+      byMonth[k] = (byMonth[k] ?? 0) + v;
+    }
+    for (const [k, v] of Object.entries(d.aggregates.byDeveloper)) {
+      byDeveloper[k] = (byDeveloper[k] ?? 0) + v;
+    }
+    for (const [k, v] of Object.entries(d.aggregates.byRepo)) {
+      byRepo[k] = (byRepo[k] ?? 0) + v;
+    }
+    for (const [k, v] of Object.entries(d.aggregates.byRepoDeveloper)) {
+      byRepoDeveloper[k] = (byRepoDeveloper[k] ?? 0) + v;
+    }
+    for (const [k, v] of Object.entries(d.aggregates.byMonthDeveloper)) {
+      byMonthDeveloper[k] = (byMonthDeveloper[k] ?? 0) + v;
     }
   }
 
@@ -628,6 +690,34 @@ export async function fetchCursorBillingSnapshot(options: {
     await writeBillingCache(cachePath, snapshot, startMs, endMs, usageEventsPolicy);
   }
   return snapshot;
+}
+
+/** Live spend + daily usage only — no usage-event pagination (for HTTP quick refresh). */
+export async function fetchCursorBillingQuick(options: {
+  apiKey: string;
+  startMs: number;
+  endMs: number;
+}): Promise<CursorBillingSnapshot> {
+  const { apiKey, startMs, endMs } = options;
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs > endMs) {
+    return {
+      spend: { ok: false, status: 0, message: 'Invalid date range for billing' },
+      dailyByDay: { ok: false, status: 0, message: 'Invalid date range for billing' },
+      chargedByDay: { ok: false, status: 0, message: 'Invalid date range for billing' },
+    };
+  }
+  const spend = await fetchSpend(apiKey);
+  const dailyByDay = await fetchDailyRangeAggregated(apiKey, startMs, endMs);
+  const empty = createEmptyChargedAggregates();
+  const chargedByDay = {
+    ok: true as const,
+    data: {
+      ...empty,
+      eventsRead: 0,
+      truncated: false,
+    },
+  };
+  return { spend, dailyByDay, chargedByDay };
 }
 
 export function isoRangeToMs(startIso: string, endIso: string): { startMs: number; endMs: number } {

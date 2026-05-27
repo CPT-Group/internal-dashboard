@@ -1,4 +1,5 @@
 import type { CursorBillingSnapshot } from '@/lib/cursorAdminApi';
+import type { CursorBillingStoreStatus } from '@/lib/cursorBillingStore';
 import type { CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
 
 export interface CursorAnalyticsBucket {
@@ -66,8 +67,10 @@ export type CursorAnalyticsApiResponseBody =
       loaded: true;
       summary: CursorAnalyticsSummary;
       range: { startDate: string; endDate: string };
-      /** Team Admin API: spend, daily usage, usage events (disk-cached). */
+      /** Team Admin API: spend, daily usage (live quick), charged events (billing store when includeAdmin=1). */
       billing?: CursorBillingSnapshot;
+      /** Per-day shard coverage for usage-event charged totals. */
+      billingStore?: CursorBillingStoreStatus;
       enterprise?: CursorEnterpriseFetchResult;
       /** Non-fatal notices (e.g. billing range clipped for usage events). */
       warnings?: string[];
@@ -77,6 +80,7 @@ export type CursorAnalyticsApiResponseBody =
       summary: null;
       range: { startDate: string; endDate: string };
       billing?: CursorBillingSnapshot;
+      billingStore?: CursorBillingStoreStatus;
       enterprise?: CursorEnterpriseFetchResult;
       warnings?: string[];
     };

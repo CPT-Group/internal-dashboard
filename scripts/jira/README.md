@@ -268,6 +268,7 @@ Snapshot of what's in scope as of this doc (see `CHANGELOG.md` for history):
 | `019daca7-a0c6-7e42-979c-385b551d8261` | NOVA | ENABLED | **Auto-log on Create** — on `jira.issue.event.trigger:created`, **Actor = EVENT_INITIATOR**, three mutually-exclusive JQL branches: `type = Epic` → `jira.worklog.add 15m`, `type IN (Bug, "Bug Sub-Task")` → `10m`, `type NOT IN (Epic, Bug, "Bug Sub-Task")` → `5m`. Worklog description: `"Auto-logged on create"`. No whitelist guard — if creator lacks Work-Log permission (service account) the action silently fails. |
 | `019daca8-3dca-7bc2-b89e-abad27ed6c6c` | OPRD | ENABLED | **Auto-log on Create** — same structure as NOVA rule, scoped to OPRD (projectId 10002). |
 | `019daca8-43ff-7710-8c32-70b7788e3fc7` | CM   | ENABLED | **Auto-log on Create** — same structure as NOVA rule, scoped to CM (projectId 10017). Legacy project; rule mostly benign since CM issue types rarely match the Epic/Bug branches and fall through to the 5m catchall. |
+| `019d3181-bf73-73f9-92fa-1ee1a1d8ad52` | NOVA (+ CM on trigger) | ENABLED | **Ensure Due Date is at Least 24 Hours After Creation** — on create, IF due date &lt; 24h then bump to `now.plusBusinessDays(1)` + comment; IF due date empty then clear. **Jennifer Forst** (`62475ee8f4079800705791e0`) exempt: both IF branches require `{{initiator.accountId}}` NOT_EQUALS her id. Patch script: `exempt-jennifer-forst-due-date-rule.mjs`. |
 
 ---
 

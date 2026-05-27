@@ -11,7 +11,8 @@ import type { CursorBillingSnapshot, CursorTeamMemberSpend } from '@/lib/cursorA
 import type { CursorEnterpriseAgentEditDay, CursorEnterpriseFetchResult } from '@/lib/cursorAnalyticsEnterpriseApi';
 import { NOVA_TEAM_DISPLAY_NAMES } from '@/constants/NOVA_TEAM';
 import type { CursorAnalyticsMonetarySource, CursorAnalyticsSummary } from '@/types/cursorAnalytics';
-import { isCursorChargedByDayTruncated } from '@/utils/cursorAnalyticsBillingGuards';
+import type { CursorBillingStoreStatus } from '@/lib/cursorBillingStore';
+import { isCursorChargedByDayTruncated, shouldBlockApiMonetaryCharts } from '@/utils/cursorAnalyticsBillingGuards';
 import { formatUsdFromCents, formatUsdNumber } from '@/utils/cursorBillingFormat';
 import type { CsvMoneyEstimateResult } from '@/utils/cursorAnalyticsCsvModelMoneyEstimate';
 import { sumUsageRequestsInRange } from '@/utils/cursorAnalyticsCsvModelMoneyEstimate';
@@ -39,6 +40,7 @@ export interface CursorAnalyticsDataPanelsProps {
   summary: CursorAnalyticsSummary;
   enterprise: CursorEnterpriseFetchResult | undefined;
   billing: CursorBillingSnapshot | undefined;
+  billingStore: CursorBillingStoreStatus | undefined;
   range: { startDate: string; endDate: string };
   monetarySource: CursorAnalyticsMonetarySource;
   csvMoneyEstimate: CsvMoneyEstimateResult | null;
@@ -115,6 +117,7 @@ export const CursorAnalyticsDataPanels = ({
   summary,
   enterprise,
   billing,
+  billingStore,
   range,
   monetarySource,
   csvMoneyEstimate,
@@ -147,6 +150,7 @@ export const CursorAnalyticsDataPanels = ({
   const billingChargedByDay =
     billing?.chargedByDay.ok === true ? billing.chargedByDay.data.byDay : {};
   const chargedTruncated = isCursorChargedByDayTruncated(billing);
+  const blockApiMonetaryCharts = shouldBlockApiMonetaryCharts(billing, billingStore);
 
   const billingMessages = useMemo(() => {
     if (!billing) return [];
@@ -165,18 +169,22 @@ export const CursorAnalyticsDataPanels = ({
         out.push(`Billing · ${w}`);
       }
     }
-    if (billing.chargedByDay.ok && chargedTruncated) {
+    if (billing.chargedByDay.ok && blockApiMonetaryCharts) {
       const reported = billing.chargedByDay.data.usageEventsTotalReported;
       const reportedPart =
         typeof reported === 'number' && reported > 0
           ? ` API reported ${reported.toLocaleString()} events in range vs ${billing.chargedByDay.data.eventsRead.toLocaleString()} rows parsed.`
           : '';
+      const storePart =
+        billingStore != null
+          ? ` Store coverage: ${String(billingStore.coverage.daysComplete)}/${String(billingStore.coverage.daysTotal)} days complete.`
+          : '';
       out.push(
-        `Billing · usage events incomplete — daily $ and repo splits may be wrong.${reportedPart} Raise CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY, narrow the date range, or rely on disk cache after a full pull completes.`,
+        `Billing · usage events incomplete — daily $ and repo splits may be wrong.${reportedPart}${storePart} Run npm run cursor-analytics:sync-billing -- --days 14.`,
       );
     }
     return out;
-  }, [billing, chargedTruncated]);
+  }, [billing, blockApiMonetaryCharts, billingStore]);
 
   const spendMembers = useMemo((): CursorTeamMemberSpend[] => {
     if (!billing?.spend.ok) return [];
@@ -194,14 +202,14 @@ export const CursorAnalyticsDataPanels = ({
     if (!billing?.chargedByDay.ok) {
       return 'Usage events are unavailable — fix billing errors above to load repo-level charges.';
     }
-    if (chargedTruncated) {
-      return `Usage events are incomplete for this range (per-day API pagination or parse mismatch). Repo totals may be wrong — raise CURSOR_ANALYTICS_USAGE_EVENTS_MAX_PAGES_PER_DAY, narrow dates, or wait for cache after a successful full pull.`;
+    if (blockApiMonetaryCharts) {
+      return `Usage events are incomplete for this range (billing store missing days or partial shards). Repo totals may be wrong — run npm run cursor-analytics:sync-billing -- --days 14.`;
     }
     if (usageEventsRead === 0) {
       return 'No usage events returned for this date range. Widen the range or confirm the Admin API key can read /teams/filtered-usage-events.';
     }
     return 'Events loaded, but no repository/workspace field matched our parsers — the payload may omit repo, or use a new shape. A dedicated repo AI-edits CSV in the summary folder still works as a fallback when present.';
-  }, [billing, usageEventsRead, chargedTruncated]);
+  }, [billing, usageEventsRead, blockApiMonetaryCharts]);
 
   const chargedByDeveloper = useMemo(() => {
     if (!billing?.chargedByDay.ok) return [];
@@ -419,14 +427,15 @@ export const CursorAnalyticsDataPanels = ({
       range,
       chargedByDayCents: billingChargedByDay,
       summary,
-      disableCsvDollarBackfill: chargedTruncated,
+      disableCsvDollarBackfill: blockApiMonetaryCharts,
     });
-  }, [billing, range, summary, billingChargedByDay, chargedTruncated, useCsvMoney]);
+  }, [billing, range, summary, billingChargedByDay, blockApiMonetaryCharts, useCsvMoney]);
 
   const trendUsdByDay = useMemo(() => {
     if (useCsvMoney && csvMoneyEstimate) return csvMoneyEstimate.usdByDay;
+    if (blockApiMonetaryCharts) return {};
     return hybridDailyTrend?.usdByDay ?? {};
-  }, [hybridDailyTrend, useCsvMoney, csvMoneyEstimate]);
+  }, [hybridDailyTrend, useCsvMoney, csvMoneyEstimate, blockApiMonetaryCharts]);
 
   const trendDataSource = useMemo((): CursorSpendTrendDataSource => {
     if (useCsvMoney && csvMoneyEstimate) {
@@ -465,8 +474,8 @@ export const CursorAnalyticsDataPanels = ({
     const calPart =
       m.calibrationApplied && m.calibrationK != null
         ? ` Overlap calibration k≈${m.calibrationK.toFixed(4)} applied vs Admin API charged cents where both series have data.`
-        : chargedTruncated
-          ? ' Calibration skipped: usage events incomplete for this range (see billing warnings).'
+        : blockApiMonetaryCharts
+          ? ' Calibration skipped: billing store incomplete for this range (see billing warnings).'
           : ' No calibration applied (toggle Monetary to API + Refresh to load billing, or overlap was unusable).';
     const scalePart =
       m.daysScaledToTeamUsageLine > 0
@@ -481,7 +490,7 @@ export const CursorAnalyticsDataPanels = ({
           }.`
         : '';
     return `CSV mode — estimates from the team export + public list $/M (not Cursor billing). ${String(m.daysWithModelBreakdown)} days with per-model rows in range.${scalePart}${imputePart}${calPart}${unknownPart}`;
-  }, [useCsvMoney, csvMoneyEstimate, chargedTruncated]);
+  }, [useCsvMoney, csvMoneyEstimate, blockApiMonetaryCharts]);
 
   return (
     <section className={styles.dataSection} aria-label="Cursor analytics detail">
@@ -541,15 +550,15 @@ export const CursorAnalyticsDataPanels = ({
           <CursorSpendTrendChart
             usdByDay={trendUsdByDay}
             dataSource={trendDataSource}
-            chargedTruncated={chargedTruncated}
+            chargedTruncated={blockApiMonetaryCharts}
             comparisonUsdByDay={comparisonUsdByDay}
             comparisonLabel="API (usage events)"
           />
-          {!useCsvMoney && chargedTruncated ? (
+          {!useCsvMoney && blockApiMonetaryCharts ? (
             <Message
               className={styles.apiMessage}
               severity="error"
-              text="Daily team cost may be wrong: usage events were not fully loaded for this range. Fix warnings above, narrow the date range, or increase limits — then Refresh (cached billing may load faster)."
+              text="Daily team cost chart hidden: billing store does not have complete usage-event shards for this range. Run npm run cursor-analytics:sync-billing -- --days 14, then Refresh."
             />
           ) : null}
         </TabPanel>
@@ -771,9 +780,13 @@ export const CursorAnalyticsDataPanels = ({
             </p>
           ) : (
             <p className={styles.hint}>
-              Repo-level cost comes from <code>/teams/filtered-usage-events</code> when repository or workspace fields are
-              present (GitHub URLs are normalized to <code>owner/repo</code>). If events omit repo, allocation can fall
-              back to a dedicated repo AI-edits CSV merged into the summary.
+              Repo-level cost is <strong>inferred from usage events</strong> when repository or workspace fields are
+              present (GitHub URLs normalized to <code>owner/repo</code>). Cursor has no official $/repo — use Analytics
+              CSV exports for lines / AI % per repo. Store coverage:{' '}
+              {billingStore
+                ? `${String(billingStore.coverage.daysComplete)}/${String(billingStore.coverage.daysTotal)} days`
+                : 'unknown'}
+              .
             </p>
           )}
           {repoMoneyRows.length > 0 ? (
@@ -799,7 +812,7 @@ export const CursorAnalyticsDataPanels = ({
                 size="small"
               >
                 <Column field="repo" header="Repo" sortable />
-                <Column field="chargedCents" header="Charged" sortable body={centsCell} />
+                <Column field="chargedCents" header="Inferred $ (events)" sortable body={centsCell} />
                 <Column field="dataBasis" header="Basis" sortable body={dataBasisBody} />
               </DataTable>
             </>

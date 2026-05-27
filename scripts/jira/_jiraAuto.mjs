@@ -37,5 +37,7 @@ export const KYLE_ID = '712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837';
 /** Jeremy Romero — NCOA/ACS intake on NOVA “move to sprint” automation (verified user search 2026-04-17). */
 export const JEREMY_ROMERO_ID = '62475f051da0e100713b08f2';
 export const BRANDON_ID = '712020:384111d1-8f9d-4155-8420-37ff1888d6c3';
+/** Jennifer Forst — case manager; exempt from 24h due-date automation (verified user search 2026-05-26). */
+export const JENNIFER_FORST_ID = '62475ee8f4079800705791e0';
 export const CF_TECH_OWNER = 'customfield_10193';
 export const CF_CASE_MANAGER = 'customfield_10194';
