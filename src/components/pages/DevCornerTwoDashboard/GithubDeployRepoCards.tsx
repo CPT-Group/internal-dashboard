@@ -1,16 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { MarqueeTicker } from '@/components/ui';
+import { useAutoScroll } from '@/hooks';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
+import type { GitHubDeployRunSummary } from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthForRow,
   formatDeployRunDuration,
   formatDeployStatusLabel,
+  formatDeployVersionLabel,
   repoToneForRepo,
+  type GitHubRepoTone,
   tagSeverityForRow,
 } from '@/utils/githubDeployDisplay';
 import {
@@ -20,7 +24,7 @@ import {
 import styles from './GithubDeployRepoCards.module.scss';
 
 export interface GithubDeployRepoCardsProps {
-  /** Workflow rows from GET /api/github/deploy-status (typically four CD pipelines). */
+  /** Workflow rows from GET /api/github/deploy-status. */
   repos: GitHubDeployWorkflowStatus[];
   /** Toggle the branch context chip row below card header. */
   showBranchContext?: boolean;
@@ -29,7 +33,13 @@ export interface GithubDeployRepoCardsProps {
 type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
 const IDLE_AFTER_DAYS = 7;
 
-const PLACEHOLDER_ENV_LABELS = ['Dev', 'Tst', 'Stg', 'Prod'] as const;
+const ENV_ORDER: readonly DeployEnvironmentKey[] = ['dev', 'tst', 'stg', 'prod'];
+const ENV_LABELS: Record<DeployEnvironmentKey, EnvironmentSnapshot['label']> = {
+  dev: 'Dev',
+  tst: 'Tst',
+  stg: 'Stg',
+  prod: 'Prod',
+};
 
 interface EnvironmentSnapshot {
   key: DeployEnvironmentKey;
@@ -39,6 +49,26 @@ interface EnvironmentSnapshot {
   triggerText: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Semver, #runNumber, or short SHA from the env's latest workflow run. */
+  deployVersionLabel: string | null;
+}
+
+function environmentSnapshotFromRun(
+  env: DeployEnvironmentKey,
+  label: EnvironmentSnapshot['label'],
+  state: EnvironmentRunState,
+  run: GitHubDeployRunSummary
+): EnvironmentSnapshot {
+  return {
+    key: env,
+    label,
+    state,
+    branch: run.headBranch,
+    triggerText: run.title,
+    createdAt: run.createdAt,
+    updatedAt: run.updatedAt,
+    deployVersionLabel: formatDeployVersionLabel(run),
+  };
 }
 
 function statusTagWrapClass(
@@ -65,12 +95,25 @@ function isWithinIdleWindow(isoTimestamp: string): boolean {
   return Date.now() - updatedAtMs <= idleAfterMs;
 }
 
+function idleEnvironmentSnapshots(): EnvironmentSnapshot[] {
+  return ENV_ORDER.map((key) => ({
+    key,
+    label: ENV_LABELS[key],
+    state: 'idle',
+    branch: null,
+    triggerText: null,
+    createdAt: null,
+    updatedAt: null,
+    deployVersionLabel: null,
+  }));
+}
+
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
   const envs: Record<DeployEnvironmentKey, EnvironmentSnapshot> = {
-    dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
-    tst: { key: 'tst', label: 'Tst', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
-    stg: { key: 'stg', label: 'Stg', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
-    prod: { key: 'prod', label: 'Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null },
+    dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    tst: { key: 'tst', label: 'Tst', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    stg: { key: 'stg', label: 'Stg', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    prod: { key: 'prod', label: 'Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
   };
 
   const runs = (row.recentRuns ?? []).slice().sort(
@@ -82,40 +125,21 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
     if (envs[env].state !== 'idle') continue;
     if (!isWithinIdleWindow(run.updatedAt)) continue;
     if (run.status !== 'completed') {
-      envs[env] = {
-        key: env,
-        label: envs[env].label,
-        state: run.status === 'queued' ? 'queued' : 'running',
-        branch: run.headBranch,
-        triggerText: run.title,
-        createdAt: run.createdAt,
-        updatedAt: run.updatedAt,
-      };
+      envs[env] = environmentSnapshotFromRun(
+        env,
+        envs[env].label,
+        run.status === 'queued' ? 'queued' : 'running',
+        run
+      );
       continue;
     }
     if (run.conclusion === 'success') {
-      envs[env] = {
-        key: env,
-        label: envs[env].label,
-        state: 'ok',
-        branch: run.headBranch,
-        triggerText: run.title,
-        createdAt: run.createdAt,
-        updatedAt: run.updatedAt,
-      };
+      envs[env] = environmentSnapshotFromRun(env, envs[env].label, 'ok', run);
       continue;
     }
-    envs[env] = {
-      key: env,
-      label: envs[env].label,
-      state: 'failed',
-      branch: run.headBranch,
-      triggerText: run.title,
-      createdAt: run.createdAt,
-      updatedAt: run.updatedAt,
-    };
+    envs[env] = environmentSnapshotFromRun(env, envs[env].label, 'failed', run);
   }
-  return [envs.dev, envs.tst, envs.stg, envs.prod];
+  return ENV_ORDER.map((key) => envs[key]);
 }
 
 function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger' | 'warning' | 'secondary' | 'info' {
@@ -134,6 +158,14 @@ function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   return 'Idle';
 }
 
+function environmentRowClass(snapshot: EnvironmentSnapshot): string {
+  if (snapshot.state === 'ok') return styles.environmentOk;
+  if (snapshot.state === 'failed') return styles.environmentFailed;
+  if (snapshot.state === 'running') return styles.environmentRunning;
+  if (snapshot.state === 'queued') return styles.environmentQueued;
+  return styles.environmentIdle;
+}
+
 function environmentElapsedText(snapshot: EnvironmentSnapshot): string {
   if (!snapshot.createdAt) return '—';
   const isActive = snapshot.state === 'running' || snapshot.state === 'queued';
@@ -144,12 +176,208 @@ function environmentElapsedText(snapshot: EnvironmentSnapshot): string {
   );
 }
 
+function buildEnvTickerText(envSnapshots: EnvironmentSnapshot[]): string {
+  return envSnapshots
+    .map((env) => `${env.label.toUpperCase()}: ${env.triggerText ?? env.branch ?? 'No recent run'}`)
+    .join(' | ');
+}
+
+function repoToneClassName(tone: GitHubRepoTone): string {
+  if (tone === 'api') return styles.repoToneApi;
+  if (tone === 'tools') return styles.repoToneTools;
+  if (tone === 'nuget') return styles.repoToneNuget;
+  if (tone === 'migrations') return styles.repoToneMigrations;
+  if (tone === 'infra') return styles.repoToneInfra;
+  return '';
+}
+
+/** Scrollable card body — auto-scrolls only when content overflows (TV / small viewports). */
+function DeployRepoCardScrollBody({ children }: { children: ReactNode }) {
+  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 9, pauseMs: 3500 });
+
+  return (
+    <div ref={scrollRef} className={styles.cardBodyScroll}>
+      {children}
+    </div>
+  );
+}
+
+interface DeployPipelineCardProps {
+  row: GitHubDeployWorkflowStatus;
+  showBranchContext: boolean;
+}
+
+/** One pipeline card — shared layout for live repos and placeholders. */
+function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps) {
+  const isPlaceholder = Boolean(row.isPlaceholder);
+  const run = isPlaceholder ? undefined : row.activeRun ?? row.lastCompletedRun;
+  const err = isPlaceholder ? undefined : row.error;
+  const queuedCount = isPlaceholder ? 0 : row.queuedCount ?? 0;
+
+  const envSnapshots = isPlaceholder ? idleEnvironmentSnapshots() : deriveEnvironmentSnapshots(row);
+  const activeEnvBadges = envSnapshots.filter(
+    (env) => env.state === 'running' || env.state === 'queued'
+  );
+  const envTickerText = buildEnvTickerText(envSnapshots);
+  const showEnvironmentBadgeRow = activeEnvBadges.length > 0 || queuedCount > 0;
+
+  const tagValue = isPlaceholder
+    ? 'Not configured'
+    : err
+      ? 'API error'
+      : (row.inProgressCount ?? 0) > 0
+        ? 'In Progress'
+        : queuedCount > 0
+          ? `Queued (${queuedCount})`
+          : run
+            ? formatDeployStatusLabel(run.status, run.conclusion)
+            : 'No runs';
+  const severity = isPlaceholder ? 'secondary' : tagSeverityForRow(row, run);
+  const health = isPlaceholder ? 'warning' : cardHealthForRow(row, run);
+  const deployerLabel = isPlaceholder ? '—' : run?.actorLogin ?? 'unknown';
+
+  const cardClassName = [
+    styles.card,
+    isPlaceholder
+      ? styles.cardPlaceholder
+      : health === 'ok'
+        ? styles.cardOk
+        : health === 'error'
+          ? styles.cardError
+          : styles.cardWarning,
+    repoToneClassName(repoToneForRepo(row.repo)),
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <Card
+      className={cardClassName}
+      header={
+        <div className={styles.cardHeader}>
+          <div className={styles.headerTitleWithMeta}>
+            <span className={styles.repoTitle}>{row.shortLabel}</span>
+            <span className={styles.cardHeaderMeta}>
+              <span className={styles.metaChip}>By {deployerLabel}</span>
+            </span>
+          </div>
+          <div className={styles.headerStatusTags}>
+            <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
+              <Tag value={tagValue} severity={severity} rounded />
+            </span>
+            {queuedCount > 0 ? (
+              <span className={styles.headerQueueTagWrap}>
+                <Tag value={`Q ${queuedCount}`} severity="info" rounded />
+              </span>
+            ) : null}
+          </div>
+        </div>
+      }
+    >
+      <DeployRepoCardScrollBody>
+        {err ? <p className={styles.errorText}>{err}</p> : null}
+        {!err && !run && !isPlaceholder ? (
+          <p className={styles.meta}>No workflow runs returned.</p>
+        ) : null}
+        {showBranchContext && run?.headBranch ? (
+          <div className={styles.branchRow}>
+            <span className={styles.branchPill}>{run.headBranch}</span>
+          </div>
+        ) : null}
+        <div className={styles.environmentBoard}>
+          {envSnapshots.map((env) => (
+            <div
+              key={`${row.repo}-${env.key}`}
+              className={`${styles.environmentRow} ${environmentRowClass(env)}`}
+            >
+              <span className={styles.environmentLabel}>
+                <span className={styles.environmentLabelName}>{env.label}</span>
+                {env.deployVersionLabel ? (
+                  <span className={styles.environmentVersion}>{env.deployVersionLabel}</span>
+                ) : null}
+              </span>
+              <span className={styles.environmentStatusWrap}>
+                <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
+              </span>
+              <span className={styles.environmentElapsed}>{environmentElapsedText(env)}</span>
+              <div className={styles.environmentInfo}>
+                <MarqueeTicker
+                  text={env.triggerText ?? env.branch ?? 'No recent run'}
+                  className={styles.environmentTriggerTicker}
+                  durationSeconds={22}
+                  gapRem={1.5}
+                  forceMarquee
+                />
+                <div className={styles.environmentProgressTrack}>
+                  {(env.state === 'running' || env.state === 'queued') && (
+                    <ProgressBar
+                      mode="indeterminate"
+                      className={`${styles.environmentInlineProgress} ${
+                        env.state === 'queued'
+                          ? styles.environmentInlineProgressQueued
+                          : styles.environmentInlineProgressRunning
+                      }`}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className={styles.badgeRowSlot}>
+          {showEnvironmentBadgeRow ? (
+            <div className={styles.environmentBadgeRow}>
+              {activeEnvBadges.map((env) => (
+                <span
+                  key={`${row.repo}-${env.key}-active`}
+                  className={`${styles.activeEnvBadge} ${
+                    env.state === 'queued' ? styles.activeEnvBadgeQueued : ''
+                  }`}
+                >
+                  <Tag
+                    value={`${env.label.toUpperCase()} ${env.state === 'queued' ? 'Queued' : 'In Progress'}`}
+                    severity={env.state === 'queued' ? 'info' : 'warning'}
+                    rounded
+                  />
+                </span>
+              ))}
+              {queuedCount > 0 ? (
+                <span className={styles.queueTagWrap}>
+                  <Tag value={`Queued ${queuedCount}`} severity="info" rounded />
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        <div className={styles.detailListSlot}>
+          {queuedCount > 0 ? (
+            <dl className={styles.detailList}>
+              <div className={styles.detailRow}>
+                <dt>Waiting</dt>
+                <dd>{queuedCount} run(s) in queue</dd>
+              </div>
+            </dl>
+          ) : null}
+        </div>
+        <div className={styles.footerTicker}>
+          <MarqueeTicker
+            text={envTickerText}
+            className={styles.footerTickerMarquee}
+            durationSeconds={34}
+            gapRem={2.25}
+          />
+        </div>
+      </DeployRepoCardScrollBody>
+    </Card>
+  );
+}
+
 /**
- * Reusable 2×2 grid of CD deploy cards (repo label, status, branch pill, marquee run title, details, footer ticker).
+ * 3×2 grid of CD deploy cards (repo label, status, swim lanes, footer ticker).
  * Uses PrimeReact Card, Tag, ProgressBar — TV-safe (no button links).
  */
 export const GithubDeployRepoCards = ({ repos, showBranchContext = true }: GithubDeployRepoCardsProps) => {
-  const [, setElapsedClock] = useState<number>(Date.now());
+  const [, setElapsedClock] = useState<number>(0);
   const hasActiveRuns = useMemo(
     () =>
       repos.some(
@@ -171,218 +399,13 @@ export const GithubDeployRepoCards = ({ repos, showBranchContext = true }: Githu
   return (
     <div className={styles.root}>
       <div className={styles.grid}>
-        {repos.map((row) => {
-          if (row.isPlaceholder) {
-            return (
-              <Card
-                key={`${row.owner}/${row.repo}`}
-                className={`${styles.card} ${styles.cardPlaceholder}`}
-                header={
-                  <div className={styles.cardHeader}>
-                    <div className={styles.headerTitleWithMeta}>
-                      <span className={styles.repoTitle}>{row.shortLabel}</span>
-                    </div>
-                    <div className={styles.headerStatusTags}>
-                      <span className={`${styles.statusTagWrap} ${styles.tagWrapNeutral}`}>
-                        <Tag value="Not configured" severity="secondary" rounded />
-                      </span>
-                    </div>
-                  </div>
-                }
-              >
-                <div className={styles.environmentBoard}>
-                  {PLACEHOLDER_ENV_LABELS.map((label) => (
-                    <div
-                      key={`${row.repo}-${label}`}
-                      className={`${styles.environmentRow} ${styles.environmentIdle}`}
-                    >
-                      <span className={styles.environmentLabel}>{label}</span>
-                      <span className={styles.environmentStatusWrap}>
-                        <Tag value="Idle" severity="secondary" rounded />
-                      </span>
-                      <span className={styles.environmentElapsed}>—</span>
-                      <div className={styles.environmentInfo}>
-                        <MarqueeTicker
-                          text="Not configured"
-                          className={styles.environmentTriggerTicker}
-                          durationSeconds={22}
-                          gapRem={1.5}
-                          forceMarquee
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            );
-          }
-
-          const run = row.activeRun ?? row.lastCompletedRun;
-          const err = row.error;
-          const tagValue = err
-            ? 'API error'
-            : (row.inProgressCount ?? 0) > 0
-              ? 'In Progress'
-              : (row.queuedCount ?? 0) > 0
-                ? `Queued (${row.queuedCount})`
-                : run
-                  ? formatDeployStatusLabel(run.status, run.conclusion)
-                  : 'No runs';
-          const severity = tagSeverityForRow(row, run);
-          const health = cardHealthForRow(row, run);
-          const tone = repoToneForRepo(row.repo);
-          const isRunning = Boolean(row.activeRun && run && run.status !== 'completed');
-          const deployerLabel = run?.actorLogin ?? 'unknown';
-          const queuedCount = row.queuedCount ?? 0;
-          const envSnapshots = deriveEnvironmentSnapshots(row);
-          const activeEnvBadges = envSnapshots.filter(
-            (env) => env.state === 'running' || env.state === 'queued'
-          );
-          const envTickerText = envSnapshots
-            .map((env) => `${env.label.toUpperCase()}: ${env.triggerText ?? env.branch ?? 'No recent run'}`)
-            .join(' | ');
-          const showEnvironmentBadgeRow = activeEnvBadges.length > 0 || queuedCount > 0;
-
-          return (
-            <Card
-              key={`${row.owner}/${row.repo}`}
-              className={`${styles.card} ${
-                health === 'ok' ? styles.cardOk : health === 'error' ? styles.cardError : styles.cardWarning
-              } ${
-                tone === 'api'
-                  ? styles.repoToneApi
-                  : tone === 'tools'
-                    ? styles.repoToneTools
-                    : tone === 'nuget'
-                      ? styles.repoToneNuget
-                      : tone === 'migrations'
-                      ? styles.repoToneMigrations
-                      : tone === 'infra'
-                        ? styles.repoToneInfra
-                        : ''
-              }`}
-              header={
-                <div className={styles.cardHeader}>
-                  <div className={styles.headerTitleWithMeta}>
-                    <span className={styles.repoTitle}>{row.shortLabel}</span>
-                    <span className={styles.cardHeaderMeta}>
-                      <span className={styles.metaChip}>By {deployerLabel}</span>
-                    </span>
-                  </div>
-                  <div className={styles.headerStatusTags}>
-                    <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
-                      <Tag value={tagValue} severity={severity} rounded />
-                    </span>
-                    {queuedCount > 0 ? (
-                      <span className={styles.headerQueueTagWrap}>
-                        <Tag value={`Q ${queuedCount}`} severity="info" rounded />
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              }
-            >
-              {err ? (
-                <p className={styles.errorText}>{err}</p>
-              ) : run ? (
-                <>
-                  {showBranchContext ? (
-                    <div className={styles.branchRow}>
-                      <span className={styles.branchPill}>{run.headBranch ?? '—'}</span>
-                    </div>
-                  ) : null}
-                  <div className={styles.environmentBoard}>
-                    {envSnapshots.map((env) => (
-                      <div
-                        key={`${row.repo}-${env.key}`}
-                        className={`${styles.environmentRow} ${
-                          env.state === 'ok'
-                            ? styles.environmentOk
-                            : env.state === 'failed'
-                              ? styles.environmentFailed
-                              : env.state === 'running'
-                                ? styles.environmentRunning
-                                : env.state === 'queued'
-                                  ? styles.environmentQueued
-                                  : styles.environmentIdle
-                        }`}
-                      >
-                        <span className={styles.environmentLabel}>{env.label}</span>
-                        <span className={styles.environmentStatusWrap}>
-                          <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
-                        </span>
-                        <span className={styles.environmentElapsed}>
-                          {environmentElapsedText(env)}
-                        </span>
-                        <div className={styles.environmentInfo}>
-                          <MarqueeTicker
-                            text={env.triggerText ?? env.branch ?? 'No recent run'}
-                            className={styles.environmentTriggerTicker}
-                            durationSeconds={22}
-                            gapRem={1.5}
-                            forceMarquee
-                          />
-                          {(env.state === 'running' || env.state === 'queued') && (
-                            <ProgressBar
-                              mode="indeterminate"
-                              className={`${styles.environmentInlineProgress} ${
-                                env.state === 'queued'
-                                  ? styles.environmentInlineProgressQueued
-                                  : styles.environmentInlineProgressRunning
-                              }`}
-                              style={{ height: '3px' }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {showEnvironmentBadgeRow ? (
-                    <div className={styles.environmentBadgeRow}>
-                      {activeEnvBadges.map((env) => (
-                        <span
-                          key={`${row.repo}-${env.key}-active`}
-                          className={`${styles.activeEnvBadge} ${
-                            env.state === 'queued' ? styles.activeEnvBadgeQueued : ''
-                          }`}
-                        >
-                          <Tag
-                            value={`${env.label.toUpperCase()} ${env.state === 'queued' ? 'Queued' : 'In Progress'}`}
-                            severity={env.state === 'queued' ? 'info' : 'warning'}
-                            rounded
-                          />
-                        </span>
-                      ))}
-                      {queuedCount > 0 ? (
-                        <span className={styles.queueTagWrap}>
-                          <Tag value={`Queued ${queuedCount}`} severity="info" rounded />
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <dl className={styles.detailList}>
-                    {queuedCount > 0 && (
-                      <div className={styles.detailRow}>
-                        <dt>Waiting</dt>
-                        <dd>{queuedCount} run(s) in queue</dd>
-                      </div>
-                    )}
-                  </dl>
-                  <div className={styles.footerTicker}>
-                    <MarqueeTicker
-                      text={envTickerText}
-                      className={styles.footerTickerMarquee}
-                      durationSeconds={34}
-                      gapRem={2.25}
-                    />
-                  </div>
-                </>
-              ) : (
-                <p className={styles.meta}>No workflow runs returned.</p>
-              )}
-            </Card>
-          );
-        })}
+        {repos.map((row) => (
+          <DeployPipelineCard
+            key={`${row.owner}/${row.repo}`}
+            row={row}
+            showBranchContext={showBranchContext}
+          />
+        ))}
       </div>
     </div>
   );

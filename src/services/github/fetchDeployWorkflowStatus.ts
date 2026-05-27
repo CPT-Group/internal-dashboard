@@ -11,10 +11,12 @@ interface GitHubWorkflowRunApi {
     login?: string | null;
   } | null;
   id: number;
+  run_number: number;
   name: string | null;
   status: string;
   conclusion: string | null;
   head_branch: string | null;
+  head_sha?: string | null;
   html_url: string;
   display_title?: string | null;
   created_at: string;
@@ -35,14 +37,22 @@ function githubHeaders(token: string): HeadersInit {
   };
 }
 
+function toHeadShaShort(headSha: string | null | undefined): string | null {
+  const trimmed = headSha?.trim() ?? '';
+  if (trimmed.length < 7) return trimmed.length > 0 ? trimmed : null;
+  return trimmed.slice(0, 7);
+}
+
 function toSummary(run: GitHubWorkflowRunApi): GitHubDeployRunSummary {
   const title =
     (run.display_title && run.display_title.trim() !== '') ? run.display_title : (run.name ?? `#${run.id}`);
   return {
     id: run.id,
+    runNumber: typeof run.run_number === 'number' ? run.run_number : 0,
     status: run.status,
     conclusion: run.conclusion,
     headBranch: run.head_branch,
+    headShaShort: toHeadShaShort(run.head_sha),
     actorLogin: run.actor?.login ?? null,
     title,
     htmlUrl: run.html_url,

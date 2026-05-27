@@ -25,9 +25,13 @@ export interface GitHubDeployWorkflowStatus {
 
 export interface GitHubDeployRunSummary {
   id: number;
+  /** GitHub Actions run number for this workflow (shown in the Actions UI as Run #N). */
+  runNumber: number;
   status: string;
   conclusion: string | null;
   headBranch: string | null;
+  /** Short commit SHA for the workflow run head (7 chars). */
+  headShaShort: string | null;
   actorLogin: string | null;
   title: string;
   htmlUrl: string;

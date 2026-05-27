@@ -45,6 +45,51 @@ export function formatDeployStatusLabel(status: string, conclusion: string | nul
   return conclusion?.replace(/_/g, ' ') ?? 'completed';
 }
 
+/** Semver-like token (optional leading v), e.g. 1.0.6, v2.1.0-beta.1, 0.0.2b */
+const DEPLOY_SEMVER_PATTERN = /\b(v?)(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)\b/i;
+
+function normalizeSemverMatch(match: RegExpMatchArray): string {
+  const core = match[2];
+  if (!core) return match[0];
+  return match[1] ? `v${core}` : core;
+}
+
+function semverFromRef(ref: string | null): string | null {
+  if (!ref) return null;
+  const normalized = ref.trim();
+  if (!normalized) return null;
+  const exact = normalized.match(/^v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/i);
+  if (exact) {
+    return normalized.toLowerCase().startsWith('v') ? `v${exact[1]}` : exact[1]!;
+  }
+  const embedded = normalized.match(DEPLOY_SEMVER_PATTERN);
+  return embedded ? normalizeSemverMatch(embedded) : null;
+}
+
+function semverFromText(text: string | null): string | null {
+  if (!text) return null;
+  const match = text.match(DEPLOY_SEMVER_PATTERN);
+  return match ? normalizeSemverMatch(match) : null;
+}
+
+/**
+ * Compact deploy version for swim-lane labels — from GitHub workflow run fields only.
+ * Prefers semver on branch/title, else Actions run number (#N), else short SHA.
+ */
+export function formatDeployVersionLabel(run: GitHubDeployRunSummary): string | null {
+  const fromBranch = semverFromRef(run.headBranch);
+  if (fromBranch) return fromBranch;
+
+  const fromTitle = semverFromText(run.title);
+  if (fromTitle) return fromTitle;
+
+  if (run.runNumber > 0) return `#${run.runNumber}`;
+
+  if (run.headShaShort) return run.headShaShort;
+
+  return null;
+}
+
 export type DeploySummaryCounts = { ok: number; active: number; attention: number };
 
 /** Buckets all four monitored repos for MeterGroup (max total = number of repos). */
