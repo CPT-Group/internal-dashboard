@@ -61,6 +61,9 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
   };
 
   for (const repo of repos) {
+    if (repo.isPlaceholder) {
+      continue;
+    }
     const byEnv: Record<DeployEnvironmentKey, DeployEnvironmentState> = {
       dev: 'noData',
       tst: 'noData',
@@ -296,7 +299,7 @@ export const GithubDeployStatusSlide = () => {
     return (
       <div className={slideStyles.slideContent}>
         <div className={styles.skeletonGrid} aria-busy="true" aria-label="Loading deploy status">
-          {Array.from({ length: 4 }, (_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className={styles.skeletonCard}>
               <Skeleton width="100%" height="1.25rem" className="mb-2" />
               <Skeleton width="70%" height="0.75rem" className="mb-2" />

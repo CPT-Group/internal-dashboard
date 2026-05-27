@@ -10,7 +10,7 @@
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: 0.4rem;
   align-content: stretch;
@@ -61,6 +61,19 @@
 
 .repoToneMigrations {
   background: linear-gradient(90deg, var(--github-repo-migrations-bg) 0%, var(--surface-card) 45%);
+}
+
+.repoToneInfra {
+  background: linear-gradient(90deg, var(--github-repo-infra-bg) 0%, var(--surface-card) 45%);
+}
+
+.cardPlaceholder {
+  border-left-color: var(--surface-500);
+  opacity: 0.92;
+
+  .repoTitle {
+    color: var(--text-color-secondary);
+  }
 }
 
 .cardOk {

@@ -1,5 +1,8 @@
-import { GITHUB_DEPLOY_WORKFLOW_MONITORS } from '@/constants/GITHUB_DEPLOY_MONITORS';
-import { fetchAllDeployWorkflowStatuses } from '@/services/github/fetchDeployWorkflowStatus';
+import { LIVE_DEPLOY_WORKFLOW_MONITORS } from '@/constants/GITHUB_DEPLOY_MONITORS';
+import {
+  fetchAllDeployWorkflowStatuses,
+  mergeDeployStatusesInMonitorOrder,
+} from '@/services/github/fetchDeployWorkflowStatus';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 
 export const runtime = 'nodejs';
@@ -13,6 +16,10 @@ export const dynamic = 'force-dynamic';
  * - **Every** repo fails with a retryable error (`401`, `403`, `404`, rate limit, bad credentials) —
  *   e.g. fine-grained PAT with `/user` OK but **no Actions** access → **404** on all workflow-run URLs.
  */
+function liveDeployRows(repos: GitHubDeployWorkflowStatus[]): GitHubDeployWorkflowStatus[] {
+  return repos.filter((row) => !row.isPlaceholder);
+}
+
 function errorText(row: GitHubDeployWorkflowStatus): string {
   return (row.error ?? '').toLowerCase();
 }
@@ -24,9 +31,10 @@ function hasHardTokenFailure(row: GitHubDeployWorkflowStatus): boolean {
 }
 
 function shouldAdvanceTokenInChain(repos: GitHubDeployWorkflowStatus[]): boolean {
-  if (repos.length === 0) return false;
-  if (repos.some((row) => hasHardTokenFailure(row))) return true;
-  return repos.every((row) => {
+  const live = liveDeployRows(repos);
+  if (live.length === 0) return false;
+  if (live.some((row) => hasHardTokenFailure(row))) return true;
+  return live.every((row) => {
     if (!row.error) return false;
     const m = errorText(row);
     return (
@@ -69,11 +77,11 @@ let deployStatusInFlight: Promise<DeployStatusCacheEntry> | null = null;
 let rateLimitCooldownUntilMs = 0;
 
 function hasAnyRepoError(repos: GitHubDeployWorkflowStatus[]): boolean {
-  return repos.some((row) => Boolean(row.error));
+  return liveDeployRows(repos).some((row) => Boolean(row.error));
 }
 
 function hasRateLimitOrAuthError(repos: GitHubDeployWorkflowStatus[]): boolean {
-  return repos.some((row) => {
+  return liveDeployRows(repos).some((row) => {
     if (!row.error) return false;
     const message = row.error.toLowerCase();
     return message.includes('rate limit') || message.includes('github 403') || message.includes('github 401');
@@ -112,7 +120,11 @@ async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry
 
   for (let i = 0; i < tokenChain.length; i += 1) {
     const chainEntry = tokenChain[i];
-    const repos = await fetchAllDeployWorkflowStatuses(chainEntry.token, GITHUB_DEPLOY_WORKFLOW_MONITORS);
+    const liveRepos = await fetchAllDeployWorkflowStatuses(
+      chainEntry.token,
+      LIVE_DEPLOY_WORKFLOW_MONITORS
+    );
+    const repos = mergeDeployStatusesInMonitorOrder(liveRepos);
     const advance = shouldAdvanceTokenInChain(repos);
     const hasNextToken = i < tokenChain.length - 1;
     if (!advance || !hasNextToken) {

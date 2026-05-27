@@ -1,4 +1,9 @@
-import type { GitHubDeployWorkflowMonitor } from '@/constants/GITHUB_DEPLOY_MONITORS';
+import {
+  GITHUB_DEPLOY_WORKFLOW_MONITORS,
+  isPlaceholderDeployMonitor,
+  type GitHubDeployLiveWorkflowMonitor,
+  type GitHubDeployPlaceholderMonitor,
+} from '@/constants/GITHUB_DEPLOY_MONITORS';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 
 interface GitHubWorkflowRunApi {
@@ -71,9 +76,23 @@ async function fetchWorkflowRunCountByStatus(
   return typeof data.total_count === 'number' ? data.total_count : 0;
 }
 
+export function buildPlaceholderDeployStatus(
+  monitor: GitHubDeployPlaceholderMonitor
+): GitHubDeployWorkflowStatus {
+  const shortLabel =
+    monitor.shortLabel?.trim() !== '' ? monitor.shortLabel! : monitor.repo.replace(/^cpt-/, '');
+  return {
+    owner: monitor.owner,
+    repo: monitor.repo,
+    shortLabel,
+    isPlaceholder: true,
+    recentRuns: [],
+  };
+}
+
 export async function fetchDeployWorkflowStatus(
   token: string,
-  monitor: GitHubDeployWorkflowMonitor
+  monitor: GitHubDeployLiveWorkflowMonitor
 ): Promise<GitHubDeployWorkflowStatus> {
   const { owner, repo, workflowId } = monitor;
   const base: GitHubDeployWorkflowStatus = {
@@ -130,7 +149,30 @@ export async function fetchDeployWorkflowStatus(
 
 export async function fetchAllDeployWorkflowStatuses(
   token: string,
-  monitors: readonly GitHubDeployWorkflowMonitor[]
+  monitors: readonly GitHubDeployLiveWorkflowMonitor[]
 ): Promise<GitHubDeployWorkflowStatus[]> {
   return Promise.all(monitors.map((m) => fetchDeployWorkflowStatus(token, m)));
+}
+
+/** Merge live fetch results with placeholders in `GITHUB_DEPLOY_WORKFLOW_MONITORS` order. */
+export function mergeDeployStatusesInMonitorOrder(
+  liveResults: readonly GitHubDeployWorkflowStatus[]
+): GitHubDeployWorkflowStatus[] {
+  const liveByRepo = new Map(liveResults.map((row) => [row.repo, row] as const));
+  return GITHUB_DEPLOY_WORKFLOW_MONITORS.map((monitor) => {
+    if (isPlaceholderDeployMonitor(monitor)) {
+      return buildPlaceholderDeployStatus(monitor);
+    }
+    const live = liveByRepo.get(monitor.repo);
+    if (live) {
+      return live;
+    }
+    return {
+      owner: monitor.owner,
+      repo: monitor.repo,
+      workflowId: monitor.workflowId,
+      shortLabel: monitor.repo.replace(/^cpt-/, ''),
+      error: 'Missing deploy status for monitored workflow',
+    };
+  });
 }

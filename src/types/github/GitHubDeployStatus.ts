@@ -2,9 +2,12 @@
 export interface GitHubDeployWorkflowStatus {
   owner: string;
   repo: string;
-  workflowId: number;
+  /** Omitted for TV placeholder slots that do not call GitHub. */
+  workflowId?: number;
   /** Short label for the TV (e.g. azure-functions-api). */
   shortLabel: string;
+  /** Static “Coming soon” card — no Actions API fetch. */
+  isPlaceholder?: boolean;
   error?: string;
   /** Count of queued runs for this monitored workflow (waiting for runners). */
   queuedCount?: number;

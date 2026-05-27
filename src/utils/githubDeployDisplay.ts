@@ -143,7 +143,7 @@ export function deployRunOutcomeGlow(run: GitHubDeployRunSummary): DeployRunOutc
   return 'neutral';
 }
 
-export type GitHubRepoTone = 'api' | 'tools' | 'nuget' | 'migrations' | 'default';
+export type GitHubRepoTone = 'api' | 'tools' | 'nuget' | 'migrations' | 'infra' | 'default';
 
 /** Maps monitored repo names (full or short labels) to a theme color tone. */
 export function repoToneForRepo(repo: string): GitHubRepoTone {
@@ -152,5 +152,6 @@ export function repoToneForRepo(repo: string): GitHubRepoTone {
   if (key.includes('internal-tools') || key.includes('tools')) return 'tools';
   if (key.includes('nuget-libraries') || key.includes('nuget')) return 'nuget';
   if (key.includes('ef-postgres-migrations') || key.includes('migration')) return 'migrations';
+  if (key.includes('cpt-infra') || key === 'infra') return 'infra';
   return 'default';
 }

@@ -29,6 +29,8 @@ export interface GithubDeployRepoCardsProps {
 type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
 const IDLE_AFTER_DAYS = 7;
 
+const PLACEHOLDER_ENV_LABELS = ['Dev', 'Tst', 'Stg', 'Prod'] as const;
+
 interface EnvironmentSnapshot {
   key: DeployEnvironmentKey;
   label: 'Dev' | 'Tst' | 'Stg' | 'Prod';
@@ -149,7 +151,12 @@ function environmentElapsedText(snapshot: EnvironmentSnapshot): string {
 export const GithubDeployRepoCards = ({ repos, showBranchContext = true }: GithubDeployRepoCardsProps) => {
   const [, setElapsedClock] = useState<number>(Date.now());
   const hasActiveRuns = useMemo(
-    () => repos.some((row) => Boolean(row.activeRun && row.activeRun.status !== 'completed')),
+    () =>
+      repos.some(
+        (row) =>
+          !row.isPlaceholder &&
+          Boolean(row.activeRun && row.activeRun.status !== 'completed')
+      ),
     [repos]
   );
 
@@ -165,6 +172,51 @@ export const GithubDeployRepoCards = ({ repos, showBranchContext = true }: Githu
     <div className={styles.root}>
       <div className={styles.grid}>
         {repos.map((row) => {
+          if (row.isPlaceholder) {
+            return (
+              <Card
+                key={`${row.owner}/${row.repo}`}
+                className={`${styles.card} ${styles.cardPlaceholder}`}
+                header={
+                  <div className={styles.cardHeader}>
+                    <div className={styles.headerTitleWithMeta}>
+                      <span className={styles.repoTitle}>{row.shortLabel}</span>
+                    </div>
+                    <div className={styles.headerStatusTags}>
+                      <span className={`${styles.statusTagWrap} ${styles.tagWrapNeutral}`}>
+                        <Tag value="Not configured" severity="secondary" rounded />
+                      </span>
+                    </div>
+                  </div>
+                }
+              >
+                <div className={styles.environmentBoard}>
+                  {PLACEHOLDER_ENV_LABELS.map((label) => (
+                    <div
+                      key={`${row.repo}-${label}`}
+                      className={`${styles.environmentRow} ${styles.environmentIdle}`}
+                    >
+                      <span className={styles.environmentLabel}>{label}</span>
+                      <span className={styles.environmentStatusWrap}>
+                        <Tag value="Idle" severity="secondary" rounded />
+                      </span>
+                      <span className={styles.environmentElapsed}>—</span>
+                      <div className={styles.environmentInfo}>
+                        <MarqueeTicker
+                          text="Not configured"
+                          className={styles.environmentTriggerTicker}
+                          durationSeconds={22}
+                          gapRem={1.5}
+                          forceMarquee
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            );
+          }
+
           const run = row.activeRun ?? row.lastCompletedRun;
           const err = row.error;
           const tagValue = err
@@ -204,7 +256,9 @@ export const GithubDeployRepoCards = ({ repos, showBranchContext = true }: Githu
                     : tone === 'nuget'
                       ? styles.repoToneNuget
                       : tone === 'migrations'
-                        ? styles.repoToneMigrations
+                      ? styles.repoToneMigrations
+                      : tone === 'infra'
+                        ? styles.repoToneInfra
                         : ''
               }`}
               header={
