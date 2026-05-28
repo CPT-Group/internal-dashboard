@@ -5,7 +5,6 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { MarqueeTicker } from '@/components/ui';
-import { useAutoScroll } from '@/hooks';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import type { GitHubDeployRunSummary } from '@/types/github/GitHubDeployStatus';
 import {
@@ -191,15 +190,9 @@ function repoToneClassName(tone: GitHubRepoTone): string {
   return '';
 }
 
-/** Scrollable card body — auto-scrolls only when content overflows (TV / small viewports). */
-function DeployRepoCardScrollBody({ children }: { children: ReactNode }) {
-  const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 9, pauseMs: 3500 });
-
-  return (
-    <div ref={scrollRef} className={styles.cardBodyScroll}>
-      {children}
-    </div>
-  );
+/** Card body — content-sized; no TV auto-scroll (avoids false overflow gaps). */
+function DeployRepoCardBody({ children }: { children: ReactNode }) {
+  return <div className={styles.cardBody}>{children}</div>;
 }
 
 interface DeployPipelineCardProps {
@@ -215,11 +208,7 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
   const queuedCount = isPlaceholder ? 0 : row.queuedCount ?? 0;
 
   const envSnapshots = isPlaceholder ? idleEnvironmentSnapshots() : deriveEnvironmentSnapshots(row);
-  const activeEnvBadges = envSnapshots.filter(
-    (env) => env.state === 'running' || env.state === 'queued'
-  );
   const envTickerText = buildEnvTickerText(envSnapshots);
-  const showEnvironmentBadgeRow = activeEnvBadges.length > 0 || queuedCount > 0;
 
   const tagValue = isPlaceholder
     ? 'Not configured'
@@ -274,90 +263,57 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
         </div>
       }
     >
-      <DeployRepoCardScrollBody>
-        {err ? <p className={styles.errorText}>{err}</p> : null}
-        {!err && !run && !isPlaceholder ? (
-          <p className={styles.meta}>No workflow runs returned.</p>
-        ) : null}
-        {showBranchContext && run?.headBranch ? (
-          <div className={styles.branchRow}>
-            <span className={styles.branchPill}>{run.headBranch}</span>
-          </div>
-        ) : null}
-        <div className={styles.environmentBoard}>
-          {envSnapshots.map((env) => (
-            <div
-              key={`${row.repo}-${env.key}`}
-              className={`${styles.environmentRow} ${environmentRowClass(env)}`}
-            >
-              <span className={styles.environmentLabel}>
-                <span className={styles.environmentLabelName}>{env.label}</span>
-                {env.deployVersionLabel ? (
-                  <span className={styles.environmentVersion}>{env.deployVersionLabel}</span>
-                ) : null}
-              </span>
-              <span className={styles.environmentStatusWrap}>
-                <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
-              </span>
-              <span className={styles.environmentElapsed}>{environmentElapsedText(env)}</span>
-              <div className={styles.environmentInfo}>
-                <MarqueeTicker
-                  text={env.triggerText ?? env.branch ?? 'No recent run'}
-                  className={styles.environmentTriggerTicker}
-                  durationSeconds={22}
-                  gapRem={1.5}
-                  forceMarquee
-                />
-                <div className={styles.environmentProgressTrack}>
-                  {(env.state === 'running' || env.state === 'queued') && (
-                    <ProgressBar
-                      mode="indeterminate"
-                      className={`${styles.environmentInlineProgress} ${
-                        env.state === 'queued'
-                          ? styles.environmentInlineProgressQueued
-                          : styles.environmentInlineProgressRunning
-                      }`}
-                    />
-                  )}
+      <DeployRepoCardBody>
+        <div className={styles.cardBodyMain}>
+          {err ? <p className={styles.errorText}>{err}</p> : null}
+          {!err && !run && !isPlaceholder ? (
+            <p className={styles.meta}>No workflow runs returned.</p>
+          ) : null}
+          {showBranchContext && run?.headBranch ? (
+            <div className={styles.branchRow}>
+              <span className={styles.branchPill}>{run.headBranch}</span>
+            </div>
+          ) : null}
+          <div className={styles.environmentBoard}>
+            {envSnapshots.map((env) => (
+              <div
+                key={`${row.repo}-${env.key}`}
+                className={`${styles.environmentRow} ${environmentRowClass(env)}`}
+              >
+                <span className={styles.environmentLabel}>
+                  <span className={styles.environmentLabelName}>{env.label}</span>
+                  {env.deployVersionLabel ? (
+                    <span className={styles.environmentVersion}>{env.deployVersionLabel}</span>
+                  ) : null}
+                </span>
+                <span className={styles.environmentStatusWrap}>
+                  <Tag value={environmentStatusText(env)} severity={environmentSeverity(env)} rounded />
+                </span>
+                <span className={styles.environmentElapsed}>{environmentElapsedText(env)}</span>
+                <div className={styles.environmentInfo}>
+                  <MarqueeTicker
+                    text={env.triggerText ?? env.branch ?? 'No recent run'}
+                    className={styles.environmentTriggerTicker}
+                    durationSeconds={22}
+                    gapRem={1.5}
+                    forceMarquee
+                  />
+                  <div className={styles.environmentProgressTrack}>
+                    {(env.state === 'running' || env.state === 'queued') && (
+                      <ProgressBar
+                        mode="indeterminate"
+                        className={`${styles.environmentInlineProgress} ${
+                          env.state === 'queued'
+                            ? styles.environmentInlineProgressQueued
+                            : styles.environmentInlineProgressRunning
+                        }`}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className={styles.badgeRowSlot}>
-          {showEnvironmentBadgeRow ? (
-            <div className={styles.environmentBadgeRow}>
-              {activeEnvBadges.map((env) => (
-                <span
-                  key={`${row.repo}-${env.key}-active`}
-                  className={`${styles.activeEnvBadge} ${
-                    env.state === 'queued' ? styles.activeEnvBadgeQueued : ''
-                  }`}
-                >
-                  <Tag
-                    value={`${env.label.toUpperCase()} ${env.state === 'queued' ? 'Queued' : 'In Progress'}`}
-                    severity={env.state === 'queued' ? 'info' : 'warning'}
-                    rounded
-                  />
-                </span>
-              ))}
-              {queuedCount > 0 ? (
-                <span className={styles.queueTagWrap}>
-                  <Tag value={`Queued ${queuedCount}`} severity="info" rounded />
-                </span>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        <div className={styles.detailListSlot}>
-          {queuedCount > 0 ? (
-            <dl className={styles.detailList}>
-              <div className={styles.detailRow}>
-                <dt>Waiting</dt>
-                <dd>{queuedCount} run(s) in queue</dd>
-              </div>
-            </dl>
-          ) : null}
+            ))}
+          </div>
         </div>
         <div className={styles.footerTicker}>
           <MarqueeTicker
@@ -367,7 +323,7 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
             gapRem={2.25}
           />
         </div>
-      </DeployRepoCardScrollBody>
+      </DeployRepoCardBody>
     </Card>
   );
 }
