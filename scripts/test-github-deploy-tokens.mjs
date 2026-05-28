@@ -13,11 +13,11 @@ config({ path: resolve(process.cwd(), '.env.local') });
 
 /** Mirrors `src/constants/GITHUB_DEPLOY_MONITORS.ts` — keep in sync when workflow IDs change. */
 const MONITORS = [
-  { owner: 'CPT-Group', repo: 'cpt-azure-functions-api', workflowId: 235954278, short: 'azure-functions-api' },
-  { owner: 'CPT-Group', repo: 'cpt-internal-tools', workflowId: 236281791, short: 'internal-tools' },
-  { owner: 'CPT-Group', repo: 'cpt-nuget-libraries', workflowId: 235954510, short: 'nuget-libraries' },
-  { owner: 'CPT-Group', repo: 'cpt-ef-postgres-migrations', workflowId: 236316341, short: 'ef-postgres-migrations' },
-  { owner: 'CPT-Group', repo: 'cpt-infra', workflowId: 283599098, short: 'infra' },
+  { owner: 'CPT-Group', repo: 'cpt-azure-functions-api', workflowIds: [235954278], short: 'azure-functions-api' },
+  { owner: 'CPT-Group', repo: 'cpt-internal-tools', workflowIds: [236281791], short: 'internal-tools' },
+  { owner: 'CPT-Group', repo: 'cpt-nuget-libraries', workflowIds: [235954510], short: 'nuget-libraries' },
+  { owner: 'CPT-Group', repo: 'cpt-ef-postgres-migrations', workflowIds: [236316341, 283834441], short: 'ef-postgres-migrations' },
+  { owner: 'CPT-Group', repo: 'cpt-infra', workflowIds: [283599098], short: 'infra' },
 ];
 
 const TOKEN_ENVS = ['GITHUB_TOKEN_3', 'GITHUB_TOKEN_2', 'GITHUB_DEPLOY_READ_TOKEN'];
@@ -44,8 +44,8 @@ async function getJson(url, token) {
   return { status: res.status, snippet };
 }
 
-async function testWorkflowRuns(token, monitor) {
-  const url = `https://api.github.com/repos/${monitor.owner}/${monitor.repo}/actions/workflows/${monitor.workflowId}/runs?per_page=1`;
+async function testWorkflowRuns(token, monitor, workflowId) {
+  const url = `https://api.github.com/repos/${monitor.owner}/${monitor.repo}/actions/workflows/${workflowId}/runs?per_page=1`;
   return getJson(url, token);
 }
 
@@ -69,12 +69,15 @@ async function main() {
 
     let ok = 0;
     for (const m of MONITORS) {
-      const r = await testWorkflowRuns(token, m);
-      const pass = r.status === 200;
-      if (pass) ok += 1;
-      console.log(`  ${m.short} (${m.repo} wf ${m.workflowId}) → ${r.status}${r.snippet ? ` — ${r.snippet}` : ''}`);
+      for (const workflowId of m.workflowIds) {
+        const r = await testWorkflowRuns(token, m, workflowId);
+        const pass = r.status === 200;
+        if (pass) ok += 1;
+        console.log(`  ${m.short} (${m.repo} wf ${workflowId}) → ${r.status}${r.snippet ? ` — ${r.snippet}` : ''}`);
+      }
     }
-    console.log(`  Summary: ${ok}/${MONITORS.length} workflow list calls returned 200\n`);
+    const expectedChecks = MONITORS.reduce((sum, m) => sum + m.workflowIds.length, 0);
+    console.log(`  Summary: ${ok}/${expectedChecks} workflow list calls returned 200\n`);
   }
 
   console.log('Notes:');

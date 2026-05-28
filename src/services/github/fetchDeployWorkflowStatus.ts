@@ -69,6 +69,11 @@ function isQueuedLikeStatus(status: string): boolean {
   return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
 }
 
+function monitorWorkflowIds(monitor: GitHubDeployLiveWorkflowMonitor): number[] {
+  const ids = [monitor.workflowId, ...(monitor.workflowIds ?? [])];
+  return [...new Set(ids)];
+}
+
 async function fetchWorkflowRunCountByStatus(
   token: string,
   owner: string,
@@ -84,6 +89,62 @@ async function fetchWorkflowRunCountByStatus(
   if (!res.ok) return 0;
   const data = (await res.json()) as GitHubWorkflowRunsResponse;
   return typeof data.total_count === 'number' ? data.total_count : 0;
+}
+
+interface WorkflowRunsFetchResult {
+  workflowId: number;
+  runs: GitHubWorkflowRunApi[];
+  queuedCount: number;
+  inProgressCount: number;
+  error?: string;
+}
+
+async function fetchWorkflowRunsById(
+  token: string,
+  owner: string,
+  repo: string,
+  workflowId: number
+): Promise<WorkflowRunsFetchResult> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=50`;
+
+  try {
+    const res = await fetch(url, {
+      headers: githubHeaders(token),
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      return {
+        workflowId,
+        runs: [],
+        queuedCount: 0,
+        inProgressCount: 0,
+        error: `GitHub ${res.status}${text ? `: ${text.slice(0, 120)}` : ''}`,
+      };
+    }
+
+    const [data, queuedCount, inProgressCount] = await Promise.all([
+      res.json() as Promise<GitHubWorkflowRunsResponse>,
+      fetchWorkflowRunCountByStatus(token, owner, repo, workflowId, 'queued'),
+      fetchWorkflowRunCountByStatus(token, owner, repo, workflowId, 'in_progress'),
+    ]);
+
+    return {
+      workflowId,
+      runs: Array.isArray(data.workflow_runs) ? data.workflow_runs : [],
+      queuedCount,
+      inProgressCount,
+    };
+  } catch (e) {
+    return {
+      workflowId,
+      runs: [],
+      queuedCount: 0,
+      inProgressCount: 0,
+      error: e instanceof Error ? e.message : 'Request failed',
+    };
+  }
 }
 
 export function buildPlaceholderDeployStatus(
@@ -112,49 +173,39 @@ export async function fetchDeployWorkflowStatus(
     shortLabel: shortLabel(repo),
   };
 
-  const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/runs?per_page=50`;
+  const workflowIds = monitorWorkflowIds(monitor);
+  const workflowFetches = await Promise.all(
+    workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))
+  );
+  const successful = workflowFetches.filter((f) => !f.error);
 
-  try {
-    const res = await fetch(url, {
-      headers: githubHeaders(token),
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      return {
-        ...base,
-        error: `GitHub ${res.status}${text ? `: ${text.slice(0, 120)}` : ''}`,
-      };
-    }
-
-    const [data, queuedCount, inProgressCount] = await Promise.all([
-      res.json() as Promise<GitHubWorkflowRunsResponse>,
-      fetchWorkflowRunCountByStatus(token, owner, repo, workflowId, 'queued'),
-      fetchWorkflowRunCountByStatus(token, owner, repo, workflowId, 'in_progress'),
-    ]);
-    const runs = Array.isArray(data.workflow_runs) ? data.workflow_runs : [];
-
-    const active = runs.find((r) => r.status === 'in_progress')
-      ?? runs.find((r) => isQueuedLikeStatus(r.status))
-      ?? runs.find((r) => r.status !== 'completed');
-    const lastDone = runs.find((r) => r.status === 'completed');
-
+  if (successful.length === 0) {
     return {
       ...base,
-      queuedCount,
-      inProgressCount,
-      activeCount: queuedCount + inProgressCount,
-      activeRun: active ? toSummary(active) : undefined,
-      lastCompletedRun: lastDone ? toSummary(lastDone) : undefined,
-      recentRuns: runs.slice(0, 30).map(toSummary),
-    };
-  } catch (e) {
-    return {
-      ...base,
-      error: e instanceof Error ? e.message : 'Request failed',
+      error: workflowFetches.find((f) => f.error)?.error ?? 'Request failed',
     };
   }
+
+  const queuedCount = successful.reduce((sum, f) => sum + f.queuedCount, 0);
+  const inProgressCount = successful.reduce((sum, f) => sum + f.inProgressCount, 0);
+  const runs = successful
+    .flatMap((f) => f.runs)
+    .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+
+  const active = runs.find((r) => r.status === 'in_progress')
+    ?? runs.find((r) => isQueuedLikeStatus(r.status))
+    ?? runs.find((r) => r.status !== 'completed');
+  const lastDone = runs.find((r) => r.status === 'completed');
+
+  return {
+    ...base,
+    queuedCount,
+    inProgressCount,
+    activeCount: queuedCount + inProgressCount,
+    activeRun: active ? toSummary(active) : undefined,
+    lastCompletedRun: lastDone ? toSummary(lastDone) : undefined,
+    recentRuns: runs.slice(0, 30).map(toSummary),
+  };
 }
 
 export async function fetchAllDeployWorkflowStatuses(

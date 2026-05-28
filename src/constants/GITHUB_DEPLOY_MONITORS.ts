@@ -6,7 +6,10 @@
 export interface GitHubDeployLiveWorkflowMonitor {
   owner: string;
   repo: string;
+  /** Primary workflow used for display labels and token probes. */
   workflowId: number;
+  /** Optional additional workflows merged into the same repo card (for env-specific CD lanes). */
+  workflowIds?: readonly number[];
 }
 
 export interface GitHubDeployPlaceholderMonitor {
@@ -56,8 +59,13 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-ef-postgres-migrations',
-    /** `CD - Run EF Core Migrations` */
+    /**
+     * Merge both active CD pipelines for accurate lane state:
+     * - `CD - Run EF Core Migrations` (test/stg/prod)
+     * - `CD - Apply DEV Migrations` (dev)
+     */
     workflowId: 236316341,
+    workflowIds: [236316341, 283834441],
   },
   {
     owner: 'CPT-Group',
