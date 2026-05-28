@@ -4,7 +4,6 @@ import { Badge } from 'primereact/badge';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
 import type { ImpedimentAnalytics, ImpedimentView } from '@/types';
 import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
@@ -43,27 +42,16 @@ export const ImpedimentPanel = ({ analytics }: ImpedimentPanelProps) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
   const rows = analytics.activeImpediments;
 
-  const header = (
-    <div className={styles.panelHeader}>
-      <span>Active Impediments</span>
-      {analytics.impedimentCount > 0 && (
-        <span className={styles.panelBadges}>
-          <Tag severity="warning" value={`${analytics.impactedStoryCount} stories blocked`} />
-        </span>
-      )}
-    </div>
-  );
-
   if (rows.length === 0) {
     return (
-      <Card header={header} className={styles.panelCard}>
+      <Card className={styles.panelCard}>
         <p className={styles.impedimentEmpty}>No active impediments</p>
       </Card>
     );
   }
 
   return (
-    <Card header={header} className={styles.panelCard}>
+    <Card className={styles.panelCard}>
       <div ref={scrollRef} className={styles.impedimentTableWrap}>
         <DataTable
           value={rows}

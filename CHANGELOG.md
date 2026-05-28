@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dev Corner One — Impediment panel**: Removed **Owner** and **Story owner** columns; table uses scrollable DataTable with a frozen header while rows auto-scroll. **Blocks** column uses PrimeReact **`p-overlay-badge`** (story key pill + warning count badge).
+- **Dev Corner One — Impediment panel**: Removed **Owner** and **Story owner** columns; table uses scrollable DataTable with a frozen header while rows auto-scroll. **Blocks** column uses PrimeReact **`p-overlay-badge`** (story key pill + warning count badge). Card panel title and header story-count tag removed — table only (KPI strip still shows **Impediments** count).
 - **PrimeReact Badge theming**: per-theme palette + `p-badge` / `p-badge-warning` / … rules via `src/styles/mixins/_badge-theme.scss` (included in all four themes); structural sizing in `base.scss` `@layer primereact`.
 - **Dev Corner Two — GitHub deploy cards**: Per-environment deploy version (semver / run # / SHA) sits **inline** with the env label (Dev/Tst/Stg/Prod), not on a second line under it.
 - **`GET /api/cursor-analytics`**: Removed synchronous live pagination of **`/teams/filtered-usage-events`** from the HTTP handler (avoids 429/timeouts). Charged totals come from the CLI billing store when **`includeAdmin=1`**.
