@@ -834,6 +834,45 @@ body {
   color: var(--red-50) !important;
 }
 
+// --- Badge (PrimeReact: p-badge, p-overlay-badge) — colors per theme via mixins/_badge-theme.scss ---
+.p-overlay-badge {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+}
+
+@layer primereact {
+  .p-badge {
+    font-size: var(--badge-font-size) !important;
+    font-weight: 700 !important;
+    min-width: var(--badge-min-width) !important;
+    height: var(--badge-height) !important;
+    line-height: var(--badge-height) !important;
+  }
+
+  .p-badge.p-badge-dot {
+    min-width: 0.5rem !important;
+    width: 0.5rem !important;
+    height: 0.5rem !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+  }
+
+  .p-badge.p-badge-lg {
+    font-size: var(--badge-lg-font-size) !important;
+    min-width: var(--badge-lg-min-width) !important;
+    height: var(--badge-lg-height) !important;
+    line-height: var(--badge-lg-height) !important;
+  }
+
+  .p-badge.p-badge-xl {
+    font-size: var(--badge-xl-font-size) !important;
+    min-width: var(--badge-xl-min-width) !important;
+    height: var(--badge-xl-height) !important;
+    line-height: var(--badge-xl-height) !important;
+  }
+}
+
 // --- ProgressBar ---
 .p-progressbar {
   background: var(--github-deploy-progressbar-track-bg) !important;

@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge } from 'primereact/badge';
 import { Card } from 'primereact/card';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
@@ -24,23 +25,19 @@ const impedimentBody = (row: ImpedimentView) => (
 
 const blocksBody = (row: ImpedimentView) => (
   <div className={styles.blocksCell}>
-    <span className={`${styles.countBadge} ${styles.muted}`}>{row.blockedStories.length}</span>
-    <div className={styles.storyKeyChips}>
-      {row.blockedStories.map((story) => (
-        <Tag
-          key={story.key}
-          value={story.key}
-          className={story.key.startsWith('NOVA-') ? styles.storyKeyTagNova : styles.storyKeyTag}
-        />
-      ))}
-    </div>
+    {row.blockedStories.map((story) => {
+      const pillClass = story.key.startsWith('NOVA-')
+        ? `${styles.storyKeyPill} ${styles.storyKeyPillNova}`
+        : styles.storyKeyPill;
+      return (
+        <span key={story.key} className="p-overlay-badge">
+          <span className={pillClass}>{story.key}</span>
+          <Badge value="1" severity="warning" />
+        </span>
+      );
+    })}
   </div>
 );
-
-const storyOwnersBody = (row: ImpedimentView) => {
-  const owners = [...new Set(row.blockedStories.map((s) => s.techOwnerName))];
-  return owners.join(', ');
-};
 
 export const ImpedimentPanel = ({ analytics }: ImpedimentPanelProps) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 12, pauseMs: 3000 });
@@ -67,13 +64,18 @@ export const ImpedimentPanel = ({ analytics }: ImpedimentPanelProps) => {
 
   return (
     <Card header={header} className={styles.panelCard}>
-      <div ref={scrollRef} className={styles.compTableWrap}>
-        <DataTable value={rows} size="small" stripedRows className={styles.compTable}>
+      <div ref={scrollRef} className={styles.impedimentTableWrap}>
+        <DataTable
+          value={rows}
+          size="small"
+          stripedRows
+          scrollable
+          scrollHeight="flex"
+          className={styles.compTable}
+        >
           <Column header="Impediment" body={impedimentBody} style={{ minWidth: '140px' }} />
           <Column field="statusName" header="Status" style={{ width: '90px' }} />
-          <Column field="assigneeName" header="Owner" style={{ width: '100px' }} />
           <Column header="Blocks" body={blocksBody} style={{ minWidth: '120px' }} />
-          <Column header="Story owner" body={storyOwnersBody} style={{ minWidth: '100px' }} />
           <Column
             header="Age"
             body={(row: ImpedimentView) => `${row.ageDays}d`}

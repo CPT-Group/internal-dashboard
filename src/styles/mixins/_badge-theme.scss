@@ -1,0 +1,59 @@
+/// PrimeReact Badge palette + class rules — include inside each `html[data-theme='…']` block.
+@mixin badge-theme-tokens(
+  $bg,
+  $text,
+  $success-bg,
+  $success-text,
+  $info-bg,
+  $info-text,
+  $warning-bg,
+  $warning-text,
+  $danger-bg,
+  $danger-text,
+  $dot-bg
+) {
+  --badge-bg: #{$bg} !important;
+  --badge-text: #{$text} !important;
+  --badge-success-bg: #{$success-bg} !important;
+  --badge-success-text: #{$success-text} !important;
+  --badge-info-bg: #{$info-bg} !important;
+  --badge-info-text: #{$info-text} !important;
+  --badge-warning-bg: #{$warning-bg} !important;
+  --badge-warning-text: #{$warning-text} !important;
+  --badge-danger-bg: #{$danger-bg} !important;
+  --badge-danger-text: #{$danger-text} !important;
+  --badge-dot-bg: #{$dot-bg} !important;
+}
+
+/// Maps PrimeReact classes (p-badge, p-badge-warning, …) to theme tokens.
+@mixin badge-theme-rules() {
+  .p-badge {
+    background: var(--badge-bg) !important;
+    color: var(--badge-text) !important;
+  }
+
+  .p-badge.p-badge-success {
+    background: var(--badge-success-bg) !important;
+    color: var(--badge-success-text) !important;
+  }
+
+  .p-badge.p-badge-info {
+    background: var(--badge-info-bg) !important;
+    color: var(--badge-info-text) !important;
+  }
+
+  .p-badge.p-badge-warning {
+    background: var(--badge-warning-bg) !important;
+    color: var(--badge-warning-text) !important;
+  }
+
+  .p-badge.p-badge-danger {
+    background: var(--badge-danger-bg) !important;
+    color: var(--badge-danger-text) !important;
+  }
+
+  .p-badge.p-badge-dot {
+    background: var(--badge-dot-bg) !important;
+    color: transparent !important;
+  }
+}

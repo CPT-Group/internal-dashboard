@@ -1,3 +1,5 @@
+@use '../mixins/badge-theme' as badge;
+
 // Dark Synth Theme – matches cpt-internal-tools (synthwave purple/cyan)
 // Explicit html/body rules ensure background and text apply even if variable order is wrong.
 
@@ -164,6 +166,21 @@ html[data-theme='dark-synth'],
   --toast-error-text: #fbcfe8 !important;
   --cpt-skeleton-bg: #2a1f4e !important;
   --cpt-skeleton-sheen: rgba(184, 114, 249, 0.28) !important;
+
+  @include badge.badge-theme-tokens(
+    #24cdc5,
+    #07071b,
+    rgb(59, 226, 141),
+    #07071b,
+    rgb(36, 205, 197),
+    #07071b,
+    rgb(255, 177, 102),
+    #1f1300,
+    rgb(244, 114, 182),
+    #ffffff,
+    rgb(244, 114, 182)
+  );
+  @include badge.badge-theme-rules();
 }
 
 // Dialog – theme colors (from cpt-internal-tools)

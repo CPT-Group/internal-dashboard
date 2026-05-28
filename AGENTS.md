@@ -104,7 +104,7 @@ Delivery blockers are modeled in Jira with **issue links**, not a separate TV al
 
 Discovery script: `node scripts/jira/discover-impediment-links.mjs` (sample keys e.g. `NOVA-2146` blocks `NOVA-2101`).
 
-**Dev Corner One:** middle-right panel is **`ImpedimentPanel`** (replaces Component Activity; old panel import commented out). KPI strip adds **Impediments** count (warning when &gt; 0). Data: `operationalJiraStore.impedimentAnalytics` from `buildImpedimentAnalytics()` — same **60s** client poll and [`getJiraCacheTtl()`](src/constants/JIRA_SHARED.ts) as other operational Jira data. Blocked-story accountability uses **Tech Owner** (fallback assignee); blocker row shows blocker **assignee**.
+**Dev Corner One:** middle-right panel is **`ImpedimentPanel`** (replaces Component Activity; old panel import commented out). Columns: impediment key/summary, status, blocked story keys, age. KPI strip adds **Impediments** count (warning when &gt; 0). Data: `operationalJiraStore.impedimentAnalytics` from `buildImpedimentAnalytics()` — same **60s** client poll and [`getJiraCacheTtl()`](src/constants/JIRA_SHARED.ts) as other operational Jira data. Scrollable DataTable keeps the column header frozen while rows auto-scroll.
 
 ### Tech Owner vs Assignee
 

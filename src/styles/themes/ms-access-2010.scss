@@ -1,3 +1,5 @@
+@use '../mixins/badge-theme' as badge;
+
 // MS Access 2010 Theme – matches cpt-internal-tools
 
 html[data-theme='ms-access-2010'],
@@ -178,4 +180,19 @@ html[data-theme='ms-access-2010'],
   --dm-filter-input-border-radius: 3px !important;
   --cpt-skeleton-bg: #e4e7ed !important;
   --cpt-skeleton-sheen: rgba(255, 255, 255, 0.75) !important;
+
+  @include badge.badge-theme-tokens(
+    #f79646,
+    #ffffff,
+    rgb(94, 168, 111),
+    #ffffff,
+    rgb(43, 87, 154),
+    #ffffff,
+    rgb(247, 150, 70),
+    #5c3d00,
+    rgb(192, 57, 43),
+    #ffffff,
+    rgb(192, 57, 43)
+  );
+  @include badge.badge-theme-rules();
 }

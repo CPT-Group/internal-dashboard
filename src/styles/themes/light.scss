@@ -1,3 +1,5 @@
+@use '../mixins/badge-theme' as badge;
+
 // CPT Light Theme – matches cpt-internal-tools
 
 html[data-theme='light'],
@@ -180,4 +182,19 @@ html[data-theme='light'],
   --toast-error-text: #991b1b !important;
   --cpt-skeleton-bg: #dbe4ef !important;
   --cpt-skeleton-sheen: rgba(255, 255, 255, 0.8) !important;
+
+  @include badge.badge-theme-tokens(
+    #3b82f6,
+    #ffffff,
+    rgb(22, 163, 74),
+    #ffffff,
+    rgb(37, 99, 235),
+    #ffffff,
+    rgb(202, 138, 4),
+    #ffffff,
+    rgb(220, 38, 38),
+    #ffffff,
+    rgb(220, 38, 38)
+  );
+  @include badge.badge-theme-rules();
 }
