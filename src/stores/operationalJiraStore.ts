@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import type { JiraIssue } from '@/types';
-import type { OperationalAnalytics } from '@/types';
+import type { ImpedimentAnalytics, OperationalAnalytics } from '@/types';
 import { buildOperationalAnalytics } from '@/utils/operationalAnalytics';
+import { buildImpedimentAnalytics } from '@/utils/impedimentAnalytics';
 import { jiraSearch, jiraTransitionDates } from '@/services/api/jiraSearchClient';
 import {
   getJiraCacheTtl,
   JIRA_SEARCH_MAX_RESULTS,
+  JIRA_IMPEDIMENT_LINK_CARRIERS_JQL,
+  JIRA_IMPEDIMENT_SEARCH_FIELDS,
   JIRA_OPERATIONAL_JQL_OPEN,
   JIRA_OPERATIONAL_JQL_LIMBO,
   JIRA_OPERATIONAL_JQL_LANDED_TODAY,
@@ -28,6 +31,7 @@ interface OperationalJiraState {
   /** Map of issueKey → ISO date when the issue transitioned FROM "New". */
   transitionDates: Map<string, string>;
   analytics: OperationalAnalytics;
+  impedimentAnalytics: ImpedimentAnalytics;
   loading: boolean;
   error: string | null;
   lastFetched: number | null;
@@ -45,6 +49,11 @@ const emptyAnalytics = buildOperationalAnalytics({
   transitionDates: new Map(),
 });
 
+const emptyImpedimentAnalytics = buildImpedimentAnalytics({
+  openOperationalIssues: [],
+  linkCarrierIssues: [],
+});
+
 export const useOperationalJiraStore = create<OperationalJiraState>((set, get) => ({
   openIssues: [],
   landedToday: [],
@@ -55,6 +64,7 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
   resolvedPrev14: [],
   transitionDates: new Map(),
   analytics: emptyAnalytics,
+  impedimentAnalytics: emptyImpedimentAnalytics,
   loading: false,
   error: null,
   lastFetched: null,
@@ -70,9 +80,11 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
     if (!force && !get().isStale()) return;
     set({ loading: true, error: null });
     try {
-      const [open, limbo, landedToday, closedToday, landedLast14, resolvedLast14, landedPrev14, resolvedPrev14] = await Promise.all([
-        jiraSearch(JIRA_OPERATIONAL_JQL_OPEN, JIRA_SEARCH_MAX_RESULTS),
+      const impedimentFields = [...JIRA_IMPEDIMENT_SEARCH_FIELDS];
+      const [open, limbo, linkCarriers, landedToday, closedToday, landedLast14, resolvedLast14, landedPrev14, resolvedPrev14] = await Promise.all([
+        jiraSearch(JIRA_OPERATIONAL_JQL_OPEN, JIRA_SEARCH_MAX_RESULTS, impedimentFields),
         jiraSearch(JIRA_OPERATIONAL_JQL_LIMBO, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch(JIRA_IMPEDIMENT_LINK_CARRIERS_JQL, JIRA_SEARCH_MAX_RESULTS, impedimentFields),
         jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_TODAY, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_CLOSED_TODAY, JIRA_SEARCH_MAX_RESULTS),
         jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
@@ -119,6 +131,27 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
         resolvedPrev14: resolvedPrev14Filtered,
         transitionDates,
       });
+
+      const linkCarriersFiltered = filterNova(linkCarriers.issues);
+      const impedimentDraft = buildImpedimentAnalytics({
+        openOperationalIssues: openFiltered,
+        linkCarrierIssues: linkCarriersFiltered,
+      });
+      const missingBlockerKeys = impedimentDraft.activeImpediments
+        .map((row) => row.key)
+        .filter((key) => !linkCarriersFiltered.some((i) => i.key === key) && !openFiltered.some((i) => i.key === key));
+      let enrichmentIssues: JiraIssue[] = [];
+      if (missingBlockerKeys.length > 0) {
+        const enrichJql = `key in (${missingBlockerKeys.join(',')}) ORDER BY updated DESC`;
+        const enriched = await jiraSearch(enrichJql, missingBlockerKeys.length, impedimentFields);
+        enrichmentIssues = filterNova(enriched.issues);
+      }
+      const impedimentAnalytics = buildImpedimentAnalytics({
+        openOperationalIssues: openFiltered,
+        linkCarrierIssues: linkCarriersFiltered,
+        enrichmentIssues,
+      });
+
       set({
         openIssues: openFiltered,
         landedToday: landedTodayFiltered,
@@ -129,6 +162,7 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
         resolvedPrev14: resolvedPrev14Filtered,
         transitionDates,
         analytics,
+        impedimentAnalytics,
         lastFetched: Date.now(),
         loading: false,
         error: null,

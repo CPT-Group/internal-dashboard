@@ -401,3 +401,53 @@
   font-size: var(--dev1-panel-text-sm);
   font-style: italic;
 }
+
+/* ── Impediment panel ── */
+.impedimentEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 1rem;
+  font-size: var(--dev1-panel-text);
+  font-weight: 600;
+  color: var(--green-500);
+}
+
+.impedimentCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.25;
+}
+
+.impedimentSummary {
+  font-size: calc(var(--dev1-panel-text-sm) * 0.95);
+  color: var(--text-color-secondary);
+}
+
+.blocksCell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.storyKeyChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.storyKeyTag,
+.storyKeyTagNova {
+  font-size: calc(var(--dev1-panel-text-sm) * 0.88) !important;
+  padding: 0.1rem 0.35rem !important;
+}
+
+.storyKeyTagNova {
+  background: var(--nova-accent-bg) !important;
+  color: var(--nova-accent-text) !important;
+  border: 1px solid var(--nova-accent-border) !important;
+}

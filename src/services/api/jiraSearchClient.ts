@@ -46,11 +46,15 @@ export async function fetchWorkHoursToday(
 
 export async function jiraSearch(
   jql: string,
-  maxResults: number = JIRA_SEARCH_MAX_RESULTS
+  maxResults: number = JIRA_SEARCH_MAX_RESULTS,
+  fields?: readonly string[]
 ): Promise<JiraSearchClientResult> {
   const q = new URLSearchParams();
   q.set('jql', jql);
   q.set('maxResults', String(maxResults));
+  if (fields?.length) {
+    q.set('fields', fields.join(','));
+  }
   const res = await fetch(`/api/jira/search?${q.toString()}`);
   const json = await res.json();
   if (!res.ok) throw new Error(json?.message ?? `HTTP ${res.status}`);

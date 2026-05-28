@@ -91,6 +91,21 @@ NOVA "landed on team" now mirrors CM/OPRD's transition-based approach (`NOVA_LAN
 
 Updated 2026-03-30 — previously used bare `created >= date` which inflated counts by ~23 Backlog template tickets per day. The `sprint in openSprints()` filter on the board query also prevents Backlog items from appearing in the "open" count.
 
+### Impediments (issue links)
+
+Delivery blockers are modeled in Jira with **issue links**, not a separate TV alert layer. Only link type **`Blocks`** counts (`JIRA_BLOCKS_LINK_TYPE_NAMES` in `src/constants/JIRA_IMPEDIMENT.ts`). Other types (Relates, Associates, etc.) are ignored.
+
+| Perspective | API field | Meaning |
+|-------------|-----------|---------|
+| Blocker issue | `issuelinks[].outwardIssue` | This issue **blocks** the linked story |
+| Blocked story | `issuelinks[].inwardIssue` | This story **is blocked by** the linked issue |
+
+**Blocked stories** must be in operational open scope ([`JIRA_OPERATIONAL_JQL_OPEN`](src/constants/JIRA_OPERATIONAL.ts) — CM/OPRD/NOVA board filter, NOVA in `openSprints()`, team-scoped). **Blocker** issues can live in NOVA, CM, OPRD, or IT if still open (`JIRA_IMPEDIMENT_LINK_CARRIERS_JQL`).
+
+Discovery script: `node scripts/jira/discover-impediment-links.mjs` (sample keys e.g. `NOVA-2146` blocks `NOVA-2101`).
+
+**Dev Corner One:** middle-right panel is **`ImpedimentPanel`** (replaces Component Activity; old panel import commented out). KPI strip adds **Impediments** count (warning when &gt; 0). Data: `operationalJiraStore.impedimentAnalytics` from `buildImpedimentAnalytics()` — same **60s** client poll and [`getJiraCacheTtl()`](src/constants/JIRA_SHARED.ts) as other operational Jira data. Blocked-story accountability uses **Tech Owner** (fallback assignee); blocker row shows blocker **assignee**.
+
 ### Tech Owner vs Assignee
 
 Jira custom field `customfield_10193` (**Tech Owner**) identifies the developer who actually does the work. The standard **assignee** changes throughout the ticket lifecycle — devs are assigned while in progress, but when they finish they reassign to the CM for UAT/approval. At resolution time the assignee is typically the CM, **not** the dev who built it.

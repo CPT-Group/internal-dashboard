@@ -9,7 +9,8 @@ import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
 import { useTheme } from '@/providers/ThemeProvider';
 import { WorkHoursTodayPanel } from './WorkHoursTodayPanel';
-import { ComponentActivityPanel } from './ComponentActivityPanel';
+// import { ComponentActivityPanel } from './ComponentActivityPanel';
+import { ImpedimentPanel } from './ImpedimentPanel';
 import { TeamActivityPanel } from './TeamActivityPanel';
 import styles from './DevCornerOneDashboard.module.scss';
 
@@ -23,7 +24,7 @@ const formatCloseTime = (hours: number | null): string => {
 
 export const DevCornerOneDashboard = () => {
   const { cycleTheme } = useTheme();
-  const { fetchOperationalData, isStale, loading, error, getAnalytics } =
+  const { fetchOperationalData, isStale, loading, error, getAnalytics, impedimentAnalytics } =
     useOperationalJiraStore();
 
   useEffect(() => {
@@ -35,7 +36,7 @@ export const DevCornerOneDashboard = () => {
   }, [fetchOperationalData, isStale]);
 
   const analytics = getAnalytics();
-  const { kpis, throughputRatio, componentActivity, teamActivity } = analytics;
+  const { kpis, throughputRatio, teamActivity } = analytics;
 
   const kpiItems: KpiItem[] = useMemo(() => [
     {
@@ -43,6 +44,11 @@ export const DevCornerOneDashboard = () => {
       value: kpis.limboCount,
       severity: kpis.limboCount > 0 ? 'warning' : 'success',
       onActivate: cycleTheme,
+    },
+    {
+      label: 'Impediments',
+      value: impedimentAnalytics.impedimentCount,
+      severity: impedimentAnalytics.impedimentCount > 0 ? 'warning' : 'success',
     },
     { label: 'Landed Today', value: kpis.landedToday },
     { label: 'Closed Today', value: kpis.closedToday },
@@ -57,7 +63,7 @@ export const DevCornerOneDashboard = () => {
       value: `${throughputRatio}x`,
       severity: throughputRatio >= 1 ? 'success' : throughputRatio >= 0.7 ? 'warning' : 'danger',
     },
-  ], [kpis, throughputRatio, cycleTheme]);
+  ], [kpis, throughputRatio, impedimentAnalytics.impedimentCount, cycleTheme]);
 
   if (loading && kpis.openCount === 0) {
     return (
@@ -88,7 +94,8 @@ export const DevCornerOneDashboard = () => {
           <WorkHoursTodayPanel />
         </div>
         <div className={styles.rightCol}>
-          <ComponentActivityPanel components={componentActivity} />
+          <ImpedimentPanel analytics={impedimentAnalytics} />
+          {/* <ComponentActivityPanel components={componentActivity} /> */}
         </div>
       </div>
       <div className={styles.bottomRow}>

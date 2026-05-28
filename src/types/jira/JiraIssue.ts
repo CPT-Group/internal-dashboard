@@ -24,13 +24,42 @@ export interface JiraUser {
   emailAddress?: string;
 }
 
+export interface JiraIssueLinkType {
+  id: string;
+  name: string;
+  inward: string;
+  outward: string;
+}
+
+/** Minimal linked issue embedded on issuelinks from Jira search. */
+export interface JiraLinkedIssueRef {
+  id: string;
+  key: string;
+  fields?: {
+    summary?: string;
+    status?: JiraIssueStatus;
+    project?: JiraIssueProject;
+    assignee?: JiraUser | null;
+    customfield_10193?: JiraUser | null;
+  };
+}
+
+export interface JiraIssueLink {
+  id: string;
+  type: JiraIssueLinkType;
+  outwardIssue?: JiraLinkedIssueRef | null;
+  inwardIssue?: JiraLinkedIssueRef | null;
+}
+
 export interface JiraIssueFields {
   summary: string;
   status: JiraIssueStatus;
   project: JiraIssueProject;
   assignee: JiraUser | null;
+  reporter?: JiraUser | null;
   created: string;
   updated: string;
+  issuelinks?: JiraIssueLink[];
   issuetype: {
     id: string;
     name: string;

@@ -34,6 +34,13 @@ import {
   NOVA_CORE_DEVS,
   DASHBOARD_EXCLUDED_ACCOUNT_IDS,
 } from '@/constants';
+import {
+  getAssigneeName,
+  getTechOwnerAccountId,
+  getTechOwnerName,
+} from '@/utils/jiraIssueAttribution';
+
+export { getAssigneeName, getTechOwnerAccountId, getTechOwnerName };
 
 const AGING_DAYS_THRESHOLD = 7;
 
@@ -52,24 +59,6 @@ function filterDashboardIssues(issues: JiraIssue[]): JiraIssue[] {
 
 function getAssigneeKey(issue: JiraIssue): string {
   return issue.fields?.assignee?.accountId ?? 'unassigned';
-}
-
-function getAssigneeName(issue: JiraIssue): string {
-  return issue.fields?.assignee?.displayName ?? 'Unassigned';
-}
-
-/**
- * Get the Tech Owner (the dev who actually does the work).
- * Falls back to assignee if Tech Owner isn't set.
- */
-function getTechOwnerName(issue: JiraIssue): string {
-  return issue.fields?.customfield_10193?.displayName ?? getAssigneeName(issue);
-}
-
-function getTechOwnerAccountId(issue: JiraIssue): string | null {
-  return issue.fields?.customfield_10193?.accountId
-    ?? issue.fields?.assignee?.accountId
-    ?? null;
 }
 
 /**
