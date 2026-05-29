@@ -41,13 +41,14 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-azure-functions-api',
-    /** `CD - Deploy Azure Functions` */
-    workflowId: 235954278,
+    /** Dev Fast + TST Build Artifact + Deploy Version + legacy CD — see `GITHUB_DEPLOY_LANE_WORKFLOWS`. */
+    workflowId: 285805316,
+    workflowIds: [285805316, 285805319, 285805315, 235954278],
   },
   {
     owner: 'CPT-Group',
     repo: 'cpt-internal-tools',
-    /** `CD - Deploy to Azure Static Web Apps` */
+    /** `CD - Deploy to Azure Static Web Apps` — single CD for all env branches. */
     workflowId: 236281791,
   },
   {
@@ -59,13 +60,9 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-ef-postgres-migrations',
-    /**
-     * Merge both active CD pipelines for accurate lane state:
-     * - `CD - Run EF Core Migrations` (test/stg/prod)
-     * - `CD - Apply DEV Migrations` (dev)
-     */
-    workflowId: 236316341,
-    workflowIds: [236316341, 283834441],
+    /** Dev Fast + TST Build Artifact + Deploy Version + legacy CD — see `GITHUB_DEPLOY_LANE_WORKFLOWS`. */
+    workflowId: 285810378,
+    workflowIds: [285810378, 285810381, 285810377, 236316341],
   },
   {
     owner: 'CPT-Group',

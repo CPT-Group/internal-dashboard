@@ -38,65 +38,100 @@ function isNugetRepo(repo: string): boolean {
   return repo.toLowerCase().includes('nuget-libraries');
 }
 
-function detectFromPromotionTitle(title: string | null): string | null {
-  if (!title) return null;
-  const normalized = title.trim();
-  if (!normalized) return null;
-
-  const arrowMatch = normalized.match(/→|->/);
-  if (arrowMatch) {
-    const parts = normalized.split(/→|->/).map((part) => part.trim());
-    const target = parts.at(-1);
-    return target && target !== '' ? target : null;
-  }
-
-  const promoteMatch = normalized.match(/\bto\b/i);
-  if (promoteMatch) {
-    const parts = normalized.split(/\bto\b/i).map((part) => part.trim());
-    const target = parts.at(-1);
-    return target && target !== '' ? target : null;
-  }
-
-  return null;
+function isNonProdProdLaneRepo(repo: string): boolean {
+  const key = repo.toLowerCase();
+  return isNugetRepo(repo) || key === 'npm-libs';
 }
 
+/** Exact Git branch names per TV swim lane (CPT CD repos). */
+export const DEPLOY_ENV_BRANCHES: Readonly<Record<DeployEnvironmentKey, readonly string[]>> = {
+  dev: ['development'],
+  tst: ['test'],
+  stg: ['staging'],
+  prod: ['production', 'main'],
+};
+
 /**
- * Resolve deployment environment from GitHub's reported branch only.
- * We intentionally do not inspect run titles to avoid false positives from
- * branch names embedded in PR titles (for example "remove-stg-slots").
+ * Resolve deployment environment from GitHub `head_branch` only — exact branch match.
+ * Feature/PR branches are ignored (not in DEPLOY_ENV_BRANCHES).
  */
 export function detectDeployEnvironmentFromBranch(branch: string | null): DeployEnvironmentKey | null {
   const normalized = normalizeBranchName(branch);
   if (!normalized) return null;
 
-  if (normalized === 'main' || normalized === 'master' || normalized === 'prod' || normalized === 'production') {
-    return 'prod';
-  }
-  if (normalized === 'staging' || normalized === 'stg' || normalized === 'uat') {
-    return 'stg';
-  }
-  if (normalized === 'test' || normalized === 'tst' || normalized === 'qa') {
-    return 'tst';
-  }
-  if (normalized === 'development' || normalized === 'develop' || normalized === 'dev') {
-    return 'dev';
+  for (const env of ['dev', 'tst', 'stg', 'prod'] as const) {
+    if (DEPLOY_ENV_BRANCHES[env].includes(normalized)) {
+      return env;
+    }
   }
 
   return null;
 }
 
+/** Branch-only — run titles are not used for lane assignment. */
 export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput): DeployEnvironmentKey | null {
-  const fromTitle = detectFromPromotionTitle(input.title);
-  const resolved = fromTitle ?? input.headBranch;
-  return detectDeployEnvironmentFromBranch(resolved);
+  return detectDeployEnvironmentFromBranch(input.headBranch);
 }
 
 export function getDeployLaneConfig(repo: string): DeployLaneConfig {
-  if (isNugetRepo(repo)) return NUGET_LANE_CONFIG;
+  if (isNonProdProdLaneRepo(repo)) return NUGET_LANE_CONFIG;
   return DEFAULT_LANE_CONFIG;
 }
 
 export function mapEnvironmentToLane(repo: string, env: DeployEnvironmentKey): DeployLaneKey {
-  if (isNugetRepo(repo) && env !== 'prod') return 'nonprod';
+  if (isNonProdProdLaneRepo(repo) && env !== 'prod') return 'nonprod';
   return env;
+}
+
+/** Branches that belong to a swim lane for the given repo. */
+export function getBranchesForDeployLane(repo: string, lane: DeployLaneKey): readonly string[] {
+  if (isNonProdProdLaneRepo(repo)) {
+    if (lane === 'prod') return DEPLOY_ENV_BRANCHES.prod;
+    if (lane === 'nonprod') {
+      return [...DEPLOY_ENV_BRANCHES.dev, ...DEPLOY_ENV_BRANCHES.tst, ...DEPLOY_ENV_BRANCHES.stg];
+    }
+    return [];
+  }
+  if (lane === 'dev') return DEPLOY_ENV_BRANCHES.dev;
+  if (lane === 'tst') return DEPLOY_ENV_BRANCHES.tst;
+  if (lane === 'stg') return DEPLOY_ENV_BRANCHES.stg;
+  if (lane === 'prod') return DEPLOY_ENV_BRANCHES.prod;
+  return [];
+}
+
+export interface DeployRunLike {
+  headBranch: string | null;
+  updatedAt: string;
+  workflowId?: number;
+}
+
+/** Newest run matching lane branch(es) and optional per-lane workflow allow-list. */
+export function findLatestRunForDeployLane<T extends DeployRunLike>(
+  repo: string,
+  lane: DeployLaneKey,
+  runs: readonly T[],
+  workflowIdsForLane: readonly number[] | null
+): T | undefined {
+  const allowedBranches = new Set(getBranchesForDeployLane(repo, lane));
+  if (allowedBranches.size === 0) return undefined;
+
+  const allowedWorkflows =
+    workflowIdsForLane && workflowIdsForLane.length > 0 ? new Set(workflowIdsForLane) : null;
+
+  let latest: T | undefined;
+  let latestMs = Number.NEGATIVE_INFINITY;
+
+  for (const run of runs) {
+    const branch = normalizeBranchName(run.headBranch);
+    if (!allowedBranches.has(branch)) continue;
+    if (allowedWorkflows) {
+      if (run.workflowId === undefined || !allowedWorkflows.has(run.workflowId)) continue;
+    }
+    const ms = Date.parse(run.updatedAt);
+    if (!Number.isFinite(ms) || ms < latestMs) continue;
+    latestMs = ms;
+    latest = run;
+  }
+
+  return latest;
 }

@@ -45,13 +45,21 @@ export function formatDeployStatusLabel(status: string, conclusion: string | nul
   return conclusion?.replace(/_/g, ' ') ?? 'completed';
 }
 
-/**
- * Compact deploy version for swim-lane labels — from GitHub workflow run fields only.
- * Uses GitHub Actions run number (or run id if missing).
- */
+const PULL_REQUEST_NUMBER_PATTERN = /pull request\s+#(\d+)/i;
+
+/** PR number from merge title (e.g. "Merge pull request #155 from …"). */
+export function extractPullRequestNumberFromTitle(title: string | null): number | null {
+  if (!title) return null;
+  const match = title.match(PULL_REQUEST_NUMBER_PATTERN);
+  if (!match?.[1]) return null;
+  const parsed = Number.parseInt(match[1], 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/** Swim-lane label: PR # when present (not GitHub Actions run #). */
 export function formatDeployVersionLabel(run: GitHubDeployRunSummary): string | null {
-  if (run.runNumber > 0) return `#${run.runNumber}`;
-  if (run.id > 0) return `#${run.id}`;
+  const pr = extractPullRequestNumberFromTitle(run.title);
+  if (pr !== null) return `#${pr}`;
   return null;
 }
 

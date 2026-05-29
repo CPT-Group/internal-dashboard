@@ -17,11 +17,11 @@ import {
   tagSeverityForRow,
 } from '@/utils/githubDeployDisplay';
 import {
-  detectDeployEnvironmentFromRun,
+  findLatestRunForDeployLane,
   getDeployLaneConfig,
-  mapEnvironmentToLane,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
+import { getWorkflowIdsForDeployLane } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 import styles from './GithubDeployRepoCards.module.scss';
 
 export interface GithubDeployRepoCardsProps {
@@ -42,7 +42,7 @@ interface EnvironmentSnapshot {
   triggerText: string | null;
   createdAt: string | null;
   updatedAt: string | null;
-  /** Semver, #runNumber, or short SHA from the env's latest workflow run. */
+  /** PR # from merge title when present. */
   deployVersionLabel: string | null;
 }
 
@@ -104,41 +104,44 @@ function idleEnvironmentSnapshots(
   }));
 }
 
+function isQueuedLikeRunStatus(status: string): boolean {
+  return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
+}
+
+function runStateFromSummary(run: GitHubDeployRunSummary): EnvironmentRunState {
+  if (run.status !== 'completed') {
+    return isQueuedLikeRunStatus(run.status) ? 'queued' : 'running';
+  }
+  if (run.conclusion === 'success') return 'ok';
+  return 'failed';
+}
+
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
   const laneConfig = getDeployLaneConfig(row.repo);
-  const envs: Record<DeployLaneKey, EnvironmentSnapshot> = {
-    dev: { key: 'dev', label: laneConfig.labels.dev ?? 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    tst: { key: 'tst', label: laneConfig.labels.tst ?? 'Tst', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    stg: { key: 'stg', label: laneConfig.labels.stg ?? 'Stg', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    prod: { key: 'prod', label: laneConfig.labels.prod ?? 'Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    nonprod: { key: 'nonprod', label: laneConfig.labels.nonprod ?? 'Non-Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-  };
+  const runs = row.recentRuns ?? [];
 
-  const runs = (row.recentRuns ?? []).slice().sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
-  for (const run of runs) {
-    const env = detectDeployEnvironmentFromRun({ headBranch: run.headBranch, title: run.title });
-    if (!env) continue;
-    const lane = mapEnvironmentToLane(row.repo, env);
-    if (envs[lane].state !== 'idle') continue;
-    if (!isWithinIdleWindow(run.updatedAt)) continue;
-    if (run.status !== 'completed') {
-      envs[lane] = environmentSnapshotFromRun(
-        lane,
-        envs[lane].label,
-        run.status === 'queued' ? 'queued' : 'running',
-        run
-      );
-      continue;
+  return laneConfig.order.map((lane) => {
+    const label = laneConfig.labels[lane] ?? lane.toUpperCase();
+    const run = findLatestRunForDeployLane(
+      row.repo,
+      lane,
+      runs,
+      getWorkflowIdsForDeployLane(row.repo, lane)
+    );
+    if (!run || !isWithinIdleWindow(run.updatedAt)) {
+      return {
+        key: lane,
+        label,
+        state: 'idle',
+        branch: null,
+        triggerText: null,
+        createdAt: null,
+        updatedAt: null,
+        deployVersionLabel: null,
+      };
     }
-    if (run.conclusion === 'success') {
-      envs[lane] = environmentSnapshotFromRun(lane, envs[lane].label, 'ok', run);
-      continue;
-    }
-    envs[lane] = environmentSnapshotFromRun(lane, envs[lane].label, 'failed', run);
-  }
-  return laneConfig.order.map((key) => envs[key]);
+    return environmentSnapshotFromRun(lane, label, runStateFromSummary(run), run);
+  });
 }
 
 function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger' | 'warning' | 'secondary' | 'info' {

@@ -9,11 +9,11 @@ import { Skeleton } from 'primereact/skeleton';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
-  detectDeployEnvironmentFromRun,
+  findLatestRunForDeployLane,
   getDeployLaneConfig,
-  mapEnvironmentToLane,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
+import { getWorkflowIdsForDeployLane } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './GithubDeployStatusSlide.module.scss';
@@ -78,19 +78,27 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
       nonprod: 'noData',
     });
 
-    const sortedRuns = (repo.recentRuns ?? [])
-      .slice()
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const runs = repo.recentRuns ?? [];
 
-    for (const run of sortedRuns) {
-      const env = detectDeployEnvironmentFromRun({ headBranch: run.headBranch, title: run.title });
-      if (!env) continue;
-      const lane = mapEnvironmentToLane(repo.repo, env);
-      if (byEnv[lane] !== 'noData') continue;
-      if (!isWithinIdleWindow(run.updatedAt)) continue;
+    for (const lane of laneConfig.order) {
+      const run = findLatestRunForDeployLane(
+        repo.repo,
+        lane,
+        runs,
+        getWorkflowIdsForDeployLane(repo.repo, lane)
+      );
+      if (!run || !isWithinIdleWindow(run.updatedAt)) {
+        continue;
+      }
 
       if (run.status !== 'completed') {
-        byEnv[lane] = run.status === 'queued' ? 'queued' : 'inProgress';
+        byEnv[lane] =
+          run.status === 'queued' ||
+          run.status === 'waiting' ||
+          run.status === 'pending' ||
+          run.status === 'requested'
+            ? 'queued'
+            : 'inProgress';
         continue;
       }
 
@@ -101,10 +109,7 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
 
       if (run.conclusion === 'failure' || run.conclusion === 'timed_out') {
         byEnv[lane] = 'failed';
-        continue;
       }
-
-      byEnv[lane] = 'noData';
     }
 
     for (const lane of laneConfig.order) {

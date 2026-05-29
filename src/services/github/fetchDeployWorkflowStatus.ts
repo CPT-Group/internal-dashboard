@@ -43,7 +43,7 @@ function toHeadShaShort(headSha: string | null | undefined): string | null {
   return trimmed.slice(0, 7);
 }
 
-function toSummary(run: GitHubWorkflowRunApi): GitHubDeployRunSummary {
+function toSummary(run: GitHubWorkflowRunApi, workflowId: number): GitHubDeployRunSummary {
   const title =
     (run.display_title && run.display_title.trim() !== '') ? run.display_title : (run.name ?? `#${run.id}`);
   return {
@@ -58,6 +58,7 @@ function toSummary(run: GitHubWorkflowRunApi): GitHubDeployRunSummary {
     htmlUrl: run.html_url,
     createdAt: run.created_at,
     updatedAt: run.updated_at,
+    workflowId,
   };
 }
 
@@ -189,22 +190,22 @@ export async function fetchDeployWorkflowStatus(
   const queuedCount = successful.reduce((sum, f) => sum + f.queuedCount, 0);
   const inProgressCount = successful.reduce((sum, f) => sum + f.inProgressCount, 0);
   const runs = successful
-    .flatMap((f) => f.runs)
-    .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+    .flatMap((f) => f.runs.map((run) => ({ run, workflowId: f.workflowId })))
+    .sort((a, b) => Date.parse(b.run.updated_at) - Date.parse(a.run.updated_at));
 
-  const active = runs.find((r) => r.status === 'in_progress')
-    ?? runs.find((r) => isQueuedLikeStatus(r.status))
-    ?? runs.find((r) => r.status !== 'completed');
-  const lastDone = runs.find((r) => r.status === 'completed');
+  const activeEntry = runs.find(({ run }) => run.status === 'in_progress')
+    ?? runs.find(({ run }) => isQueuedLikeStatus(run.status))
+    ?? runs.find(({ run }) => run.status !== 'completed');
+  const lastDoneEntry = runs.find(({ run }) => run.status === 'completed');
 
   return {
     ...base,
     queuedCount,
     inProgressCount,
     activeCount: queuedCount + inProgressCount,
-    activeRun: active ? toSummary(active) : undefined,
-    lastCompletedRun: lastDone ? toSummary(lastDone) : undefined,
-    recentRuns: runs.slice(0, 30).map(toSummary),
+    activeRun: activeEntry ? toSummary(activeEntry.run, activeEntry.workflowId) : undefined,
+    lastCompletedRun: lastDoneEntry ? toSummary(lastDoneEntry.run, lastDoneEntry.workflowId) : undefined,
+    recentRuns: runs.slice(0, 30).map(({ run, workflowId }) => toSummary(run, workflowId)),
   };
 }
 

@@ -37,4 +37,6 @@ export interface GitHubDeployRunSummary {
   htmlUrl: string;
   createdAt: string;
   updatedAt: string;
+  /** Source workflow (for per-lane Dev Fast vs main CD filtering). */
+  workflowId?: number;
 }
