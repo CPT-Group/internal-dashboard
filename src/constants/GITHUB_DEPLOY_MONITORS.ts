@@ -70,8 +70,8 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-infra',
-    /** `PR promotion` */
-    workflowId: 285078804,
+    /** `CD - Deploy Infrastructure` */
+    workflowId: 285242645,
   },
   {
     owner: 'CPT-Group',

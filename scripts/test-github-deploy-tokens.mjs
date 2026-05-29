@@ -17,7 +17,7 @@ const MONITORS = [
   { owner: 'CPT-Group', repo: 'cpt-internal-tools', workflowIds: [236281791], short: 'internal-tools' },
   { owner: 'CPT-Group', repo: 'cpt-nuget-libraries', workflowIds: [235954510], short: 'nuget-libraries' },
   { owner: 'CPT-Group', repo: 'cpt-ef-postgres-migrations', workflowIds: [236316341, 283834441], short: 'ef-postgres-migrations' },
-  { owner: 'CPT-Group', repo: 'cpt-infra', workflowIds: [285078804], short: 'infra' },
+  { owner: 'CPT-Group', repo: 'cpt-infra', workflowIds: [285242645], short: 'infra' },
 ];
 
 const TOKEN_ENVS = ['GITHUB_TOKEN_3', 'GITHUB_TOKEN_2', 'GITHUB_DEPLOY_READ_TOKEN'];
