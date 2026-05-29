@@ -70,8 +70,8 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-infra',
-    /** `Terraform apply` */
-    workflowId: 283599098,
+    /** `PR promotion` */
+    workflowId: 285078804,
   },
   {
     owner: 'CPT-Group',

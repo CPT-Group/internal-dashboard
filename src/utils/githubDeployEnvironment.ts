@@ -1,8 +1,35 @@
 export type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
 
+export interface DeployRunEnvironmentInput {
+  headBranch: string | null;
+  title: string | null;
+}
+
 function normalizeBranchName(branch: string | null): string {
   if (!branch) return '';
   return branch.trim().toLowerCase().replace(/^refs\/heads\//, '');
+}
+
+function detectFromPromotionTitle(title: string | null): string | null {
+  if (!title) return null;
+  const normalized = title.trim();
+  if (!normalized) return null;
+
+  const arrowMatch = normalized.match(/→|->/);
+  if (arrowMatch) {
+    const parts = normalized.split(/→|->/).map((part) => part.trim());
+    const target = parts.at(-1);
+    return target && target !== '' ? target : null;
+  }
+
+  const promoteMatch = normalized.match(/\bto\b/i);
+  if (promoteMatch) {
+    const parts = normalized.split(/\bto\b/i).map((part) => part.trim());
+    const target = parts.at(-1);
+    return target && target !== '' ? target : null;
+  }
+
+  return null;
 }
 
 /**
@@ -28,4 +55,10 @@ export function detectDeployEnvironmentFromBranch(branch: string | null): Deploy
   }
 
   return null;
+}
+
+export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput): DeployEnvironmentKey | null {
+  const fromTitle = detectFromPromotionTitle(input.title);
+  const resolved = fromTitle ?? input.headBranch;
+  return detectDeployEnvironmentFromBranch(resolved);
 }

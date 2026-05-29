@@ -9,7 +9,7 @@ import { Skeleton } from 'primereact/skeleton';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
-  detectDeployEnvironmentFromBranch,
+  detectDeployEnvironmentFromRun,
   type DeployEnvironmentKey,
 } from '@/utils/githubDeployEnvironment';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
@@ -76,7 +76,7 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     for (const run of sortedRuns) {
-      const env = detectDeployEnvironmentFromBranch(run.headBranch);
+      const env = detectDeployEnvironmentFromRun({ headBranch: run.headBranch, title: run.title });
       if (!env || byEnv[env] !== 'noData') continue;
       if (!isWithinIdleWindow(run.updatedAt)) continue;
 

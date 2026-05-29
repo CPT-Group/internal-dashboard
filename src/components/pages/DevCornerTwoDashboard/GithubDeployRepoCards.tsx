@@ -17,7 +17,7 @@ import {
   tagSeverityForRow,
 } from '@/utils/githubDeployDisplay';
 import {
-  detectDeployEnvironmentFromBranch,
+  detectDeployEnvironmentFromRun,
   type DeployEnvironmentKey,
 } from '@/utils/githubDeployEnvironment';
 import styles from './GithubDeployRepoCards.module.scss';
@@ -119,7 +119,7 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   );
   for (const run of runs) {
-    const env = detectDeployEnvironmentFromBranch(run.headBranch);
+    const env = detectDeployEnvironmentFromRun({ headBranch: run.headBranch, title: run.title });
     if (!env) continue;
     if (envs[env].state !== 'idle') continue;
     if (!isWithinIdleWindow(run.updatedAt)) continue;
