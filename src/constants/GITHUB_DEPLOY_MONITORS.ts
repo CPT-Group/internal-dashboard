@@ -75,9 +75,9 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   },
   {
     owner: 'CPT-Group',
-    repo: 'coming-soon',
+    repo: 'npm-libs',
     placeholder: true,
-    shortLabel: 'Coming soon',
+    shortLabel: 'NPM libs',
   },
 ] as const;
 

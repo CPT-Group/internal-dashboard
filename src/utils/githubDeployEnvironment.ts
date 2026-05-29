@@ -1,4 +1,28 @@
 export type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
+export type DeployLaneKey = DeployEnvironmentKey | 'nonprod';
+
+interface DeployLaneConfig {
+  order: readonly DeployLaneKey[];
+  labels: Partial<Record<DeployLaneKey, string>>;
+}
+
+const DEFAULT_LANE_CONFIG: DeployLaneConfig = {
+  order: ['dev', 'tst', 'stg', 'prod'],
+  labels: {
+    dev: 'Dev',
+    tst: 'Tst',
+    stg: 'Stg',
+    prod: 'Prod',
+  },
+};
+
+const NUGET_LANE_CONFIG: DeployLaneConfig = {
+  order: ['nonprod', 'prod'],
+  labels: {
+    nonprod: 'Non-Prod',
+    prod: 'Prod',
+  },
+};
 
 export interface DeployRunEnvironmentInput {
   headBranch: string | null;
@@ -8,6 +32,10 @@ export interface DeployRunEnvironmentInput {
 function normalizeBranchName(branch: string | null): string {
   if (!branch) return '';
   return branch.trim().toLowerCase().replace(/^refs\/heads\//, '');
+}
+
+function isNugetRepo(repo: string): boolean {
+  return repo.toLowerCase().includes('nuget-libraries');
 }
 
 function detectFromPromotionTitle(title: string | null): string | null {
@@ -61,4 +89,14 @@ export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput)
   const fromTitle = detectFromPromotionTitle(input.title);
   const resolved = fromTitle ?? input.headBranch;
   return detectDeployEnvironmentFromBranch(resolved);
+}
+
+export function getDeployLaneConfig(repo: string): DeployLaneConfig {
+  if (isNugetRepo(repo)) return NUGET_LANE_CONFIG;
+  return DEFAULT_LANE_CONFIG;
+}
+
+export function mapEnvironmentToLane(repo: string, env: DeployEnvironmentKey): DeployLaneKey {
+  if (isNugetRepo(repo) && env !== 'prod') return 'nonprod';
+  return env;
 }

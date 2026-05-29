@@ -10,7 +10,9 @@ import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
   detectDeployEnvironmentFromRun,
-  type DeployEnvironmentKey,
+  getDeployLaneConfig,
+  mapEnvironmentToLane,
+  type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -64,12 +66,17 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
     if (repo.isPlaceholder) {
       continue;
     }
-    const byEnv: Record<DeployEnvironmentKey, DeployEnvironmentState> = {
+    const laneConfig = getDeployLaneConfig(repo.repo);
+    const byEnv = laneConfig.order.reduce<Record<DeployLaneKey, DeployEnvironmentState>>((acc, key) => {
+      acc[key] = 'noData';
+      return acc;
+    }, {
       dev: 'noData',
       tst: 'noData',
       stg: 'noData',
       prod: 'noData',
-    };
+      nonprod: 'noData',
+    });
 
     const sortedRuns = (repo.recentRuns ?? [])
       .slice()
@@ -77,51 +84,37 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
 
     for (const run of sortedRuns) {
       const env = detectDeployEnvironmentFromRun({ headBranch: run.headBranch, title: run.title });
-      if (!env || byEnv[env] !== 'noData') continue;
+      if (!env) continue;
+      const lane = mapEnvironmentToLane(repo.repo, env);
+      if (byEnv[lane] !== 'noData') continue;
       if (!isWithinIdleWindow(run.updatedAt)) continue;
 
       if (run.status !== 'completed') {
-        byEnv[env] = run.status === 'queued' ? 'queued' : 'inProgress';
+        byEnv[lane] = run.status === 'queued' ? 'queued' : 'inProgress';
         continue;
       }
 
       if (run.conclusion === 'success') {
-        byEnv[env] = 'success';
+        byEnv[lane] = 'success';
         continue;
       }
 
       if (run.conclusion === 'failure' || run.conclusion === 'timed_out') {
-        byEnv[env] = 'failed';
+        byEnv[lane] = 'failed';
         continue;
       }
 
-      byEnv[env] = 'noData';
+      byEnv[lane] = 'noData';
     }
 
-    totals.success += byEnv.dev === 'success' ? 1 : 0;
-    totals.success += byEnv.tst === 'success' ? 1 : 0;
-    totals.success += byEnv.stg === 'success' ? 1 : 0;
-    totals.success += byEnv.prod === 'success' ? 1 : 0;
-
-    totals.inProgress += byEnv.dev === 'inProgress' ? 1 : 0;
-    totals.inProgress += byEnv.tst === 'inProgress' ? 1 : 0;
-    totals.inProgress += byEnv.stg === 'inProgress' ? 1 : 0;
-    totals.inProgress += byEnv.prod === 'inProgress' ? 1 : 0;
-
-    totals.queued += byEnv.dev === 'queued' ? 1 : 0;
-    totals.queued += byEnv.tst === 'queued' ? 1 : 0;
-    totals.queued += byEnv.stg === 'queued' ? 1 : 0;
-    totals.queued += byEnv.prod === 'queued' ? 1 : 0;
-
-    totals.failed += byEnv.dev === 'failed' ? 1 : 0;
-    totals.failed += byEnv.tst === 'failed' ? 1 : 0;
-    totals.failed += byEnv.stg === 'failed' ? 1 : 0;
-    totals.failed += byEnv.prod === 'failed' ? 1 : 0;
-
-    totals.noData += byEnv.dev === 'noData' ? 1 : 0;
-    totals.noData += byEnv.tst === 'noData' ? 1 : 0;
-    totals.noData += byEnv.stg === 'noData' ? 1 : 0;
-    totals.noData += byEnv.prod === 'noData' ? 1 : 0;
+    for (const lane of laneConfig.order) {
+      const state = byEnv[lane];
+      if (state === 'success') totals.success += 1;
+      if (state === 'inProgress') totals.inProgress += 1;
+      if (state === 'queued') totals.queued += 1;
+      if (state === 'failed') totals.failed += 1;
+      if (state === 'noData') totals.noData += 1;
+    }
   }
 
   return totals;

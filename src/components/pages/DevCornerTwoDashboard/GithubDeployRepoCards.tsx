@@ -18,7 +18,9 @@ import {
 } from '@/utils/githubDeployDisplay';
 import {
   detectDeployEnvironmentFromRun,
-  type DeployEnvironmentKey,
+  getDeployLaneConfig,
+  mapEnvironmentToLane,
+  type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
 import styles from './GithubDeployRepoCards.module.scss';
 
@@ -32,17 +34,9 @@ export interface GithubDeployRepoCardsProps {
 type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
 const IDLE_AFTER_DAYS = 7;
 
-const ENV_ORDER: readonly DeployEnvironmentKey[] = ['dev', 'tst', 'stg', 'prod'];
-const ENV_LABELS: Record<DeployEnvironmentKey, EnvironmentSnapshot['label']> = {
-  dev: 'Dev',
-  tst: 'Tst',
-  stg: 'Stg',
-  prod: 'Prod',
-};
-
 interface EnvironmentSnapshot {
-  key: DeployEnvironmentKey;
-  label: 'Dev' | 'Tst' | 'Stg' | 'Prod';
+  key: DeployLaneKey;
+  label: string;
   state: EnvironmentRunState;
   branch: string | null;
   triggerText: string | null;
@@ -53,8 +47,8 @@ interface EnvironmentSnapshot {
 }
 
 function environmentSnapshotFromRun(
-  env: DeployEnvironmentKey,
-  label: EnvironmentSnapshot['label'],
+  env: DeployLaneKey,
+  label: string,
   state: EnvironmentRunState,
   run: GitHubDeployRunSummary
 ): EnvironmentSnapshot {
@@ -94,10 +88,13 @@ function isWithinIdleWindow(isoTimestamp: string): boolean {
   return Date.now() - updatedAtMs <= idleAfterMs;
 }
 
-function idleEnvironmentSnapshots(): EnvironmentSnapshot[] {
-  return ENV_ORDER.map((key) => ({
+function idleEnvironmentSnapshots(
+  order: readonly DeployLaneKey[],
+  labels: Partial<Record<DeployLaneKey, string>>
+): EnvironmentSnapshot[] {
+  return order.map((key) => ({
     key,
-    label: ENV_LABELS[key],
+    label: labels[key] ?? key.toUpperCase(),
     state: 'idle',
     branch: null,
     triggerText: null,
@@ -108,11 +105,13 @@ function idleEnvironmentSnapshots(): EnvironmentSnapshot[] {
 }
 
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
-  const envs: Record<DeployEnvironmentKey, EnvironmentSnapshot> = {
-    dev: { key: 'dev', label: 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    tst: { key: 'tst', label: 'Tst', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    stg: { key: 'stg', label: 'Stg', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
-    prod: { key: 'prod', label: 'Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+  const laneConfig = getDeployLaneConfig(row.repo);
+  const envs: Record<DeployLaneKey, EnvironmentSnapshot> = {
+    dev: { key: 'dev', label: laneConfig.labels.dev ?? 'Dev', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    tst: { key: 'tst', label: laneConfig.labels.tst ?? 'Tst', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    stg: { key: 'stg', label: laneConfig.labels.stg ?? 'Stg', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    prod: { key: 'prod', label: laneConfig.labels.prod ?? 'Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
+    nonprod: { key: 'nonprod', label: laneConfig.labels.nonprod ?? 'Non-Prod', state: 'idle', branch: null, triggerText: null, createdAt: null, updatedAt: null, deployVersionLabel: null },
   };
 
   const runs = (row.recentRuns ?? []).slice().sort(
@@ -121,24 +120,25 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
   for (const run of runs) {
     const env = detectDeployEnvironmentFromRun({ headBranch: run.headBranch, title: run.title });
     if (!env) continue;
-    if (envs[env].state !== 'idle') continue;
+    const lane = mapEnvironmentToLane(row.repo, env);
+    if (envs[lane].state !== 'idle') continue;
     if (!isWithinIdleWindow(run.updatedAt)) continue;
     if (run.status !== 'completed') {
-      envs[env] = environmentSnapshotFromRun(
-        env,
-        envs[env].label,
+      envs[lane] = environmentSnapshotFromRun(
+        lane,
+        envs[lane].label,
         run.status === 'queued' ? 'queued' : 'running',
         run
       );
       continue;
     }
     if (run.conclusion === 'success') {
-      envs[env] = environmentSnapshotFromRun(env, envs[env].label, 'ok', run);
+      envs[lane] = environmentSnapshotFromRun(lane, envs[lane].label, 'ok', run);
       continue;
     }
-    envs[env] = environmentSnapshotFromRun(env, envs[env].label, 'failed', run);
+    envs[lane] = environmentSnapshotFromRun(lane, envs[lane].label, 'failed', run);
   }
-  return ENV_ORDER.map((key) => envs[key]);
+  return laneConfig.order.map((key) => envs[key]);
 }
 
 function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger' | 'warning' | 'secondary' | 'info' {
@@ -207,7 +207,10 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
   const err = isPlaceholder ? undefined : row.error;
   const queuedCount = isPlaceholder ? 0 : row.queuedCount ?? 0;
 
-  const envSnapshots = isPlaceholder ? idleEnvironmentSnapshots() : deriveEnvironmentSnapshots(row);
+  const laneConfig = getDeployLaneConfig(row.repo);
+  const envSnapshots = isPlaceholder
+    ? idleEnvironmentSnapshots(laneConfig.order, laneConfig.labels)
+    : deriveEnvironmentSnapshots(row);
   const envTickerText = buildEnvTickerText(envSnapshots);
 
   const tagValue = isPlaceholder
