@@ -19,9 +19,13 @@ import {
 import {
   findLatestRunForDeployLane,
   getDeployLaneConfig,
+  isWithinDeployIdleWindow,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
-import { getWorkflowIdsForDeployLane } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import {
+  getActiveWorkflowIdsForDeployLane,
+  getPrimaryWorkflowIdsForDeployLane,
+} from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 import styles from './GithubDeployRepoCards.module.scss';
 
 export interface GithubDeployRepoCardsProps {
@@ -81,13 +85,6 @@ function statusTagWrapClass(
   }
 }
 
-function isWithinIdleWindow(isoTimestamp: string): boolean {
-  const updatedAtMs = Date.parse(isoTimestamp);
-  if (!Number.isFinite(updatedAtMs)) return false;
-  const idleAfterMs = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
-  return Date.now() - updatedAtMs <= idleAfterMs;
-}
-
 function idleEnvironmentSnapshots(
   order: readonly DeployLaneKey[],
   labels: Partial<Record<DeployLaneKey, string>>
@@ -126,9 +123,12 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
       row.repo,
       lane,
       runs,
-      getWorkflowIdsForDeployLane(row.repo, lane)
+      {
+        primaryWorkflowIds: getPrimaryWorkflowIdsForDeployLane(row.repo, lane),
+        activeWorkflowIds: getActiveWorkflowIdsForDeployLane(row.repo, lane),
+      }
     );
-    if (!run || !isWithinIdleWindow(run.updatedAt)) {
+    if (!run || !isWithinDeployIdleWindow(run.updatedAt, Date.now(), IDLE_AFTER_DAYS)) {
       return {
         key: lane,
         label,

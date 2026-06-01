@@ -1,48 +1,78 @@
 import type { DeployLaneKey } from '@/utils/githubDeployEnvironment';
 
+export interface LaneWorkflowRule {
+  /** Completed-state priority list for this lane. */
+  primary: readonly number[];
+  /** Optional active-state list (`status !== completed`) for this lane. */
+  active?: readonly number[];
+}
+
+type RepoLaneWorkflowRules = Partial<Record<DeployLaneKey, LaneWorkflowRule>>;
+
 /**
- * Per-lane GitHub workflow allow-list (repo slug → lane → workflow database IDs).
- *
- * Standardized repos (AZF, EF migrations):
- * - **Dev** → `Dev Fast Deploy` only (fast path)
- * - **Tst** → `TST Build Artifact` (full test deploy) + legacy CD / Deploy Version fallback
- * - **Stg / Prod** → `Deploy Version` when present + legacy main CD (full deploy)
- *
- * Single-CD repos (internal-tools, nuget, infra) are not listed — all fetched runs apply.
- *
- * IDs from `gh workflow list -R CPT-Group/<repo>` (2026-05-29).
+ * Standardized deploy repos with Dev Fast + TST Build + Deploy Version model.
+ * IDs verified with `gh workflow list -R CPT-Group/<repo>` on 2026-06-01.
  */
-export const DEPLOY_LANE_WORKFLOW_IDS: Readonly<
-  Record<string, Partial<Record<DeployLaneKey, readonly number[]>>>
-> = {
+export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflowRules>> = {
   'cpt-azure-functions-api': {
-    dev: [285805316],
-    tst: [285805319, 235954278, 285805315],
-    stg: [235954278, 285805315],
-    prod: [235954278, 285805315],
+    dev: { primary: [285805316], active: [285805316, 285805315] },
+    tst: { primary: [285805319, 235954278, 285805315] },
+    stg: { primary: [235954278, 285805315] },
+    prod: { primary: [235954278, 285805315] },
   },
   'cpt-ef-postgres-migrations': {
-    dev: [285810378],
-    tst: [285810381, 236316341, 285810377],
-    stg: [236316341, 285810377],
-    prod: [236316341, 285810377],
+    dev: { primary: [285810378], active: [285810378, 285810377] },
+    tst: { primary: [285810381, 236316341, 285810377] },
+    stg: { primary: [236316341, 285810377] },
+    prod: { primary: [236316341, 285810377] },
+  },
+  'cpt-internal-tools': {
+    dev: { primary: [285829490], active: [285829490, 285829489] },
+    tst: { primary: [285829491, 236281791, 285829489] },
+    stg: { primary: [236281791, 285829489] },
+    prod: { primary: [236281791, 285829489] },
   },
 };
 
-/** All workflow IDs fetched for a repo (union of lane workflows). */
-export const DEPLOY_MONITOR_WORKFLOW_IDS: Readonly<Record<string, readonly number[]>> = {
-  'cpt-azure-functions-api': [285805316, 285805319, 285805315, 235954278],
-  'cpt-ef-postgres-migrations': [285810378, 285810381, 285810377, 236316341],
-  'cpt-internal-tools': [236281791],
+const FALLBACK_MONITOR_WORKFLOW_IDS: Readonly<Record<string, readonly number[]>> = {
   'cpt-nuget-libraries': [235954510],
   'cpt-infra': [285242645],
 };
 
-export function getWorkflowIdsForDeployLane(
+function unique(values: readonly number[]): readonly number[] {
+  return [...new Set(values)];
+}
+
+export function getPrimaryWorkflowIdsForDeployLane(
   repo: string,
   lane: DeployLaneKey
 ): readonly number[] | null {
-  const byLane = DEPLOY_LANE_WORKFLOW_IDS[repo];
-  if (!byLane) return null;
-  return byLane[lane] ?? null;
+  const rule = DEPLOY_LANE_WORKFLOW_RULES[repo]?.[lane];
+  if (!rule) return null;
+  return rule.primary;
+}
+
+export function getActiveWorkflowIdsForDeployLane(
+  repo: string,
+  lane: DeployLaneKey
+): readonly number[] | null {
+  const rule = DEPLOY_LANE_WORKFLOW_RULES[repo]?.[lane];
+  if (!rule) return null;
+  return rule.active ?? rule.primary;
+}
+
+/** Union of all workflow IDs this repo should fetch for lane assignment. */
+export function getMonitorWorkflowIds(repo: string): readonly number[] | null {
+  const rules = DEPLOY_LANE_WORKFLOW_RULES[repo];
+  if (rules) {
+    const ids: number[] = [];
+    for (const lane of Object.keys(rules) as DeployLaneKey[]) {
+      const laneRule = rules[lane];
+      if (!laneRule) continue;
+      ids.push(...laneRule.primary);
+      if (laneRule.active) ids.push(...laneRule.active);
+    }
+    return unique(ids);
+  }
+  return FALLBACK_MONITOR_WORKFLOW_IDS[repo] ?? null;
 }

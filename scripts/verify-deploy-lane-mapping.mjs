@@ -32,12 +32,18 @@ const LANE_WORKFLOWS = {
     stg: [236316341, 285810377],
     prod: [236316341, 285810377],
   },
+  'cpt-internal-tools': {
+    dev: [285829490],
+    tst: [285829491, 236281791, 285829489],
+    stg: [236281791, 285829489],
+    prod: [236281791, 285829489],
+  },
 };
 
 const MONITOR_WORKFLOWS = {
   'cpt-azure-functions-api': [285805316, 285805319, 285805315, 235954278],
   'cpt-ef-postgres-migrations': [285810378, 285810381, 285810377, 236316341],
-  'cpt-internal-tools': [236281791],
+  'cpt-internal-tools': [285829490, 285829491, 285829489, 236281791],
   'cpt-infra': [285242645],
   'cpt-nuget-libraries': [235954510],
 };

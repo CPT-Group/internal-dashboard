@@ -2,6 +2,7 @@
  * CD workflows to show on the deploy-status panel (IDs from `gh workflow list -R owner/repo`).
  * Each live entry is the primary deploy pipeline for that repository.
  */
+import { getMonitorWorkflowIds } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 
 export interface GitHubDeployLiveWorkflowMonitor {
   owner: string;
@@ -41,15 +42,16 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-azure-functions-api',
-    /** Dev Fast + TST Build Artifact + Deploy Version + legacy CD — see `GITHUB_DEPLOY_LANE_WORKFLOWS`. */
+    /** Standardized lanes: Dev Fast, TST Build, Deploy Version, legacy CD. */
     workflowId: 285805316,
-    workflowIds: [285805316, 285805319, 285805315, 235954278],
+    workflowIds: getMonitorWorkflowIds('cpt-azure-functions-api') ?? undefined,
   },
   {
     owner: 'CPT-Group',
     repo: 'cpt-internal-tools',
-    /** `CD - Deploy to Azure Static Web Apps` — single CD for all env branches. */
-    workflowId: 236281791,
+    /** Standardized lanes: Dev Fast, TST Build, Deploy Version, legacy CD. */
+    workflowId: 285829490,
+    workflowIds: getMonitorWorkflowIds('cpt-internal-tools') ?? undefined,
   },
   {
     owner: 'CPT-Group',
@@ -60,15 +62,16 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-ef-postgres-migrations',
-    /** Dev Fast + TST Build Artifact + Deploy Version + legacy CD — see `GITHUB_DEPLOY_LANE_WORKFLOWS`. */
+    /** Standardized lanes: Dev Fast, TST Build, Deploy Version, legacy CD. */
     workflowId: 285810378,
-    workflowIds: [285810378, 285810381, 285810377, 236316341],
+    workflowIds: getMonitorWorkflowIds('cpt-ef-postgres-migrations') ?? undefined,
   },
   {
     owner: 'CPT-Group',
     repo: 'cpt-infra',
     /** `CD - Deploy Infrastructure` */
     workflowId: 285242645,
+    workflowIds: getMonitorWorkflowIds('cpt-infra') ?? undefined,
   },
   {
     owner: 'CPT-Group',

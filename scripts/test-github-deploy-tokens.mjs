@@ -14,7 +14,7 @@ config({ path: resolve(process.cwd(), '.env.local') });
 /** Mirrors `src/constants/GITHUB_DEPLOY_MONITORS.ts` — keep in sync when workflow IDs change. */
 const MONITORS = [
   { owner: 'CPT-Group', repo: 'cpt-azure-functions-api', workflowIds: [285805316, 285805319, 285805315, 235954278], short: 'azure-functions-api' },
-  { owner: 'CPT-Group', repo: 'cpt-internal-tools', workflowIds: [236281791], short: 'internal-tools' },
+  { owner: 'CPT-Group', repo: 'cpt-internal-tools', workflowIds: [285829490, 285829491, 285829489, 236281791], short: 'internal-tools' },
   { owner: 'CPT-Group', repo: 'cpt-nuget-libraries', workflowIds: [235954510], short: 'nuget-libraries' },
   { owner: 'CPT-Group', repo: 'cpt-ef-postgres-migrations', workflowIds: [285810378, 285810381, 285810377, 236316341], short: 'ef-postgres-migrations' },
   { owner: 'CPT-Group', repo: 'cpt-infra', workflowIds: [285242645], short: 'infra' },

@@ -11,9 +11,13 @@ import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStat
 import {
   findLatestRunForDeployLane,
   getDeployLaneConfig,
+  isWithinDeployIdleWindow,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
-import { getWorkflowIdsForDeployLane } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import {
+  getActiveWorkflowIdsForDeployLane,
+  getPrimaryWorkflowIdsForDeployLane,
+} from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './GithubDeployStatusSlide.module.scss';
@@ -44,13 +48,6 @@ interface MeterLabelListProps {
     value?: number;
     color?: string;
   }>;
-}
-
-function isWithinIdleWindow(isoTimestamp: string): boolean {
-  const updatedAtMs = Date.parse(isoTimestamp);
-  if (!Number.isFinite(updatedAtMs)) return false;
-  const idleAfterMs = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
-  return Date.now() - updatedAtMs <= idleAfterMs;
 }
 
 function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record<DeployEnvironmentState, number> {
@@ -85,9 +82,12 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
         repo.repo,
         lane,
         runs,
-        getWorkflowIdsForDeployLane(repo.repo, lane)
+        {
+          primaryWorkflowIds: getPrimaryWorkflowIdsForDeployLane(repo.repo, lane),
+          activeWorkflowIds: getActiveWorkflowIdsForDeployLane(repo.repo, lane),
+        }
       );
-      if (!run || !isWithinIdleWindow(run.updatedAt)) {
+      if (!run || !isWithinDeployIdleWindow(run.updatedAt, Date.now(), IDLE_AFTER_DAYS)) {
         continue;
       }
 

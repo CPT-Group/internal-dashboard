@@ -103,30 +103,40 @@ export interface DeployRunLike {
   headBranch: string | null;
   updatedAt: string;
   workflowId?: number;
+  status?: string;
 }
 
-/** Newest run matching lane branch(es) and optional per-lane workflow allow-list. */
-export function findLatestRunForDeployLane<T extends DeployRunLike>(
-  repo: string,
-  lane: DeployLaneKey,
+export interface DeployLaneRunSelection {
+  primaryWorkflowIds: readonly number[] | null;
+  activeWorkflowIds: readonly number[] | null;
+}
+
+export function isWithinDeployIdleWindow(
+  isoTimestamp: string,
+  nowMs: number = Date.now(),
+  idleAfterDays: number = 7
+): boolean {
+  const updatedAtMs = Date.parse(isoTimestamp);
+  if (!Number.isFinite(updatedAtMs)) return false;
+  const idleAfterMs = idleAfterDays * 24 * 60 * 60 * 1000;
+  return nowMs - updatedAtMs <= idleAfterMs;
+}
+
+function latestRunByFilters<T extends DeployRunLike>(
   runs: readonly T[],
-  workflowIdsForLane: readonly number[] | null
+  allowedBranches: ReadonlySet<string>,
+  allowedWorkflows: ReadonlySet<number> | null,
+  requireActiveStatus: boolean
 ): T | undefined {
-  const allowedBranches = new Set(getBranchesForDeployLane(repo, lane));
-  if (allowedBranches.size === 0) return undefined;
-
-  const allowedWorkflows =
-    workflowIdsForLane && workflowIdsForLane.length > 0 ? new Set(workflowIdsForLane) : null;
-
   let latest: T | undefined;
   let latestMs = Number.NEGATIVE_INFINITY;
 
   for (const run of runs) {
     const branch = normalizeBranchName(run.headBranch);
     if (!allowedBranches.has(branch)) continue;
-    if (allowedWorkflows) {
-      if (run.workflowId === undefined || !allowedWorkflows.has(run.workflowId)) continue;
-    }
+    if (allowedWorkflows && (run.workflowId === undefined || !allowedWorkflows.has(run.workflowId))) continue;
+    if (requireActiveStatus && run.status === 'completed') continue;
+
     const ms = Date.parse(run.updatedAt);
     if (!Number.isFinite(ms) || ms < latestMs) continue;
     latestMs = ms;
@@ -134,4 +144,37 @@ export function findLatestRunForDeployLane<T extends DeployRunLike>(
   }
 
   return latest;
+}
+
+/** Newest lane run with active-first priority, then completed primary workflow fallback. */
+export function findLatestRunForDeployLane<T extends DeployRunLike>(
+  repo: string,
+  lane: DeployLaneKey,
+  runs: readonly T[],
+  selection: DeployLaneRunSelection
+): T | undefined {
+  const allowedBranches = new Set(getBranchesForDeployLane(repo, lane));
+  if (allowedBranches.size === 0) return undefined;
+
+  const activeWorkflowIds = selection.activeWorkflowIds;
+  const primaryWorkflowIds = selection.primaryWorkflowIds;
+  const allowedActiveWorkflows =
+    activeWorkflowIds && activeWorkflowIds.length > 0 ? new Set(activeWorkflowIds) : null;
+  const allowedPrimaryWorkflows =
+    primaryWorkflowIds && primaryWorkflowIds.length > 0 ? new Set(primaryWorkflowIds) : null;
+
+  const activeRun = latestRunByFilters(
+    runs,
+    allowedBranches,
+    allowedActiveWorkflows,
+    true
+  );
+  if (activeRun) return activeRun;
+
+  return latestRunByFilters(
+    runs,
+    allowedBranches,
+    allowedPrimaryWorkflows,
+    false
+  );
 }
