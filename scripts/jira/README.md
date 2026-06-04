@@ -30,6 +30,22 @@ node scripts/jira/verify-comment-bodies.mjs        # raw comment text for each r
 
 # Find a working if/else structure to copy from when writing a new edit script
 node scripts/jira/find-ifelse-patterns.mjs
+
+# Tech Owner hygiene (platform REST API — uses KYLE_* or JAMES_* from .env.local)
+node scripts/jira/discover-missing-tech-owner.mjs
+node scripts/jira/discover-dev-board-attribution.mjs Roy
+node scripts/jira/backfill-missing-tech-owner.mjs          # dry-run
+node scripts/jira/backfill-missing-tech-owner.mjs --apply  # write Tech Owner to Jira
+node scripts/jira/backfill-tech-owner-by-assignee.mjs          # Kyle/Roy/James/Brandon assignee rules (dry-run)
+node scripts/jira/backfill-tech-owner-by-assignee.mjs --apply  # same, write to Jira
+node scripts/jira/create-tech-owner-on-assignee-rule.mjs --apply  # automation: assignee → Tech Owner (NOVA/OPRD/CM)
+node scripts/jira/enable-case-update-bugs-rule.mjs --apply        # re-enable NOVA Case Update/Bug intake rule
+node scripts/jira/discover-missing-components.mjs                # fuzzy component suggestions
+node scripts/jira/backfill-missing-components.mjs --min-confidence high  # dry-run apply high-confidence
+node scripts/jira/stale-uat-ticket-warning.mjs --apply   # post warning panel + @assignee
+node scripts/jira/stale-uat-ticket-warning.mjs           # dry-run stale UAT warning comments
+npm run test:operational-board-analytics                 # fixture tests (in progress, team activity, impediments)
+npm run verify:operational-board                         # live Jira reconcile vs dashboard analytics
 ```
 
 All backups / snapshots / scan output land under `kyleOutput/` which is gitignored.
@@ -260,6 +276,9 @@ Snapshot of what's in scope as of this doc (see `CHANGELOG.md` for history):
 | `019d3183-076e-7e15-9fc7-d8bae4831e18` | NOVA | ENABLED | Move template-cloned tickets to the sprint on Backlog → To Do; **IF** `component in ("NCOA/ACS")` **THEN** assign Jeremy Romero + Tech Owner + internal comment; **ELSE** assign Roy + Tech Owner=Roy. |
 | `019d356a-ebd3-7b6e-b1f6-6a76d4449a53` | NOVA | ENABLED | Case Update Requests & Bugs auto-add to sprint, assign Roy + Tech Owner=Roy. |
 | `019bb332-09dc-7358-a710-4fedff499888` | OPRD | ENABLED | OPRD intake auto-assign Roy + Tech Owner=Roy on issue created. |
+| `019e94b3-c149-779e-a2c0-455e1ebed316` | NOVA | ENABLED | **Assignee changed → Tech Owner** (empty only): Kyle→Kyle; Roy/James/Brandon→Roy. |
+| `019e94b3-c56d-77c6-937d-0736806c1dd8` | OPRD | ENABLED | Same assignee→Tech Owner rule as NOVA. |
+| `019e94b3-c923-7b33-a57f-4b6495918586` | CM | ENABLED | Same assignee→Tech Owner rule as NOVA. |
 | `019d98b7-e981-7c94-8a29-d161d13e0a37` | NOVA | ENABLED | Transition → QA (10003): assign **Kyle**, post QA handoff comment with `[~accountid:…]` mention. |
 | `019d556a-689f-72b8-9ebb-c1ccc83deea2` | NOVA | ENABLED | Transition → UAT (10012): **Actor = user who triggered**; IF/ELSE assign — Case Manager (`cf[10194]`) or Brandon fallback; then IF initiator is **Kyle** → handoff comment begins with **L3 PASSED** (full prefix in Jira is `L3 PASSED | `) plus **5m** `jira.worklog.add`, ELSE handoff comment only (unchanged wording). |
 | `019d556a-72df-7233-b88e-f2be5d296e5e` | OPRD | ENABLED | Transition → UAT (10012): same IF/ELSE as NOVA, OPRD comment text preserved. |
