@@ -13,6 +13,7 @@
     "test:github-deploy-tokens": "node scripts/test-github-deploy-tokens.mjs",
     "test:impediment-analytics": "node scripts/test-impediment-analytics.mjs",
     "test:deploy-lane-mapping": "node scripts/test-deploy-lane-mapping.mjs",
+    "verify:deploy-lane-mapping": "node scripts/verify-deploy-lane-mapping.mjs",
     "test:cursor-usage-event-repo": "tsx scripts/cursor-analytics/verify-usage-event-repo.ts",
     "cursor-analytics:reconcile-day": "tsx scripts/cursor-analytics/reconcile-usage-events-day.ts",
     "cursor-analytics:sync-billing": "tsx scripts/cursor-analytics/sync-billing.ts",

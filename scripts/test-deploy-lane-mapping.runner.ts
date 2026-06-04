@@ -106,7 +106,7 @@ function testEfTstFailureFromTstBuildArtifact() {
   const repo = 'cpt-ef-postgres-migrations';
   const runs: FixtureRun[] = [
     {
-      workflowId: 236316341,
+      workflowId: 285810377,
       headBranch: 'test',
       status: 'completed',
       conclusion: 'success',

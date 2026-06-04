@@ -16,21 +16,21 @@ type RepoLaneWorkflowRules = Partial<Record<DeployLaneKey, LaneWorkflowRule>>;
 export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflowRules>> = {
   'cpt-azure-functions-api': {
     dev: { primary: [285805316], active: [285805316, 285805315] },
-    tst: { primary: [285805319, 235954278, 285805315] },
-    stg: { primary: [235954278, 285805315] },
-    prod: { primary: [235954278, 285805315] },
+    tst: { primary: [285805319, 285805315] },
+    stg: { primary: [285805315] },
+    prod: { primary: [285805315] },
   },
   'cpt-ef-postgres-migrations': {
     dev: { primary: [285810378], active: [285810378, 285810377] },
-    tst: { primary: [285810381, 236316341, 285810377] },
-    stg: { primary: [236316341, 285810377] },
-    prod: { primary: [236316341, 285810377] },
+    tst: { primary: [285810381, 285810377] },
+    stg: { primary: [285810377] },
+    prod: { primary: [285810377] },
   },
   'cpt-internal-tools': {
     dev: { primary: [285829490], active: [285829490, 285829489] },
-    tst: { primary: [285829491, 236281791, 285829489] },
-    stg: { primary: [236281791, 285829489] },
-    prod: { primary: [236281791, 285829489] },
+    tst: { primary: [285829491, 285829489] },
+    stg: { primary: [285829489] },
+    prod: { primary: [285829489] },
   },
 };
 

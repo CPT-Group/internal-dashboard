@@ -42,14 +42,14 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-azure-functions-api',
-    /** Standardized lanes: Dev Fast, TST Build, Deploy Version, legacy CD. */
+    /** Standardized lanes: Dev Fast, TST Build, Deploy Version. */
     workflowId: 285805316,
     workflowIds: getMonitorWorkflowIds('cpt-azure-functions-api') ?? undefined,
   },
   {
     owner: 'CPT-Group',
     repo: 'cpt-internal-tools',
-    /** Standardized lanes: Dev Fast, TST Build, Deploy Version, legacy CD. */
+    /** Standardized lanes: Dev Fast, TST Build, Deploy Version. */
     workflowId: 285829490,
     workflowIds: getMonitorWorkflowIds('cpt-internal-tools') ?? undefined,
   },
@@ -62,7 +62,7 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-ef-postgres-migrations',
-    /** Standardized lanes: Dev Fast, TST Build, Deploy Version, legacy CD. */
+    /** Standardized lanes: Dev Fast, TST Build, Deploy Version. */
     workflowId: 285810378,
     workflowIds: getMonitorWorkflowIds('cpt-ef-postgres-migrations') ?? undefined,
   },

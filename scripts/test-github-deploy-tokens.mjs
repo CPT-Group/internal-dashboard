@@ -7,18 +7,29 @@
  */
 
 import { config } from 'dotenv';
-import { resolve } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 config({ path: resolve(process.cwd(), '.env.local') });
 
-/** Mirrors `src/constants/GITHUB_DEPLOY_MONITORS.ts` — keep in sync when workflow IDs change. */
-const MONITORS = [
-  { owner: 'CPT-Group', repo: 'cpt-azure-functions-api', workflowIds: [285805316, 285805319, 285805315, 235954278], short: 'azure-functions-api' },
-  { owner: 'CPT-Group', repo: 'cpt-internal-tools', workflowIds: [285829490, 285829491, 285829489, 236281791], short: 'internal-tools' },
-  { owner: 'CPT-Group', repo: 'cpt-nuget-libraries', workflowIds: [235954510], short: 'nuget-libraries' },
-  { owner: 'CPT-Group', repo: 'cpt-ef-postgres-migrations', workflowIds: [285810378, 285810381, 285810377, 236316341], short: 'ef-postgres-migrations' },
-  { owner: 'CPT-Group', repo: 'cpt-infra', workflowIds: [285242645], short: 'infra' },
-];
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const probeRunner = join(root, 'scripts', 'lib', 'printDeployMonitorProbeList.runner.ts');
+
+const probeResult = spawnSync('npx', ['tsx', probeRunner], {
+  cwd: root,
+  encoding: 'utf8',
+  shell: true,
+});
+
+if (probeResult.status !== 0 || !probeResult.stdout.trim()) {
+  console.error('Failed to load deploy monitor probe list from app constants.');
+  if (probeResult.stderr) console.error(probeResult.stderr);
+  process.exit(1);
+}
+
+/** Derived from `GITHUB_DEPLOY_MONITORS` + `GITHUB_DEPLOY_LANE_WORKFLOWS`. */
+const MONITORS = JSON.parse(probeResult.stdout);
 
 const TOKEN_ENVS = ['GITHUB_TOKEN_3', 'GITHUB_TOKEN_2', 'GITHUB_DEPLOY_READ_TOKEN'];
 
