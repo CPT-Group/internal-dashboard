@@ -1,5 +1,5 @@
 /**
- * Fixture tests for buildImpedimentAnalytics (Blocks links → active impediments).
+ * Fixture tests for buildImpedimentAnalytics (Flagged field → active impediments).
  *
  * Usage: npm run test:impediment-analytics
  */

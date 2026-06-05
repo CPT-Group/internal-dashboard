@@ -529,11 +529,16 @@
   color: var(--text-color-secondary);
 }
 
-.blocksCell {
+.flagCell {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.25rem;
+}
+
+.flagReason {
+  font-size: calc(var(--dev1-panel-text-sm) * 0.86);
+  color: var(--text-color-secondary);
 }
 
 /* Target for p-overlay-badge (story key + count notification) */
@@ -548,10 +553,4 @@
   background: var(--surface-hover);
   color: var(--text-color);
   border: 1px solid var(--surface-border);
-}
-
-.storyKeyPillNova {
-  background: var(--nova-accent-bg);
-  color: var(--nova-accent-text);
-  border-color: var(--nova-accent-border);
 }

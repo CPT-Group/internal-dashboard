@@ -8,6 +8,7 @@ import { NOVA_CORE_DEVS } from '@/constants/NOVA_TEAM';
 import { buildOperationalAnalytics } from '@/utils/operationalAnalytics';
 import { buildImpedimentAnalytics } from '@/utils/impedimentAnalytics';
 import { getTechOwnerAccountId } from '@/utils/jiraIssueAttribution';
+import { JIRA_FLAGGED_IMPEDIMENT_VALUE } from '@/constants';
 
 const ROY_ID = '712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f';
 const KYLE_ID = '712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837';
@@ -24,7 +25,7 @@ function issue(
     assigneeName?: string;
     techOwnerId?: string | null;
     techOwnerName?: string;
-    issuelinks?: JiraIssue['fields']['issuelinks'];
+    flagged?: boolean;
   } = {}
 ): JiraIssue {
   const statusKey = opts.statusKey ?? 'indeterminate';
@@ -58,19 +59,9 @@ function issue(
           : opts.techOwnerId
             ? { accountId: opts.techOwnerId, displayName: opts.techOwnerName ?? 'Tech Owner' }
             : null,
-      issuelinks: opts.issuelinks,
-    },
-  };
-}
-
-function blocksOutward(blockedKey: string): NonNullable<JiraIssue['fields']['issuelinks']>[number] {
-  return {
-    id: '20001',
-    type: { id: '20002', name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
-    outwardIssue: {
-      id: '20003',
-      key: blockedKey,
-      fields: { summary: blockedKey, status: { id: '10000', name: 'In Dev' } },
+      customfield_10021: opts.flagged
+        ? [{ id: '10019', value: JIRA_FLAGGED_IMPEDIMENT_VALUE }]
+        : [],
     },
   };
 }
@@ -96,12 +87,8 @@ function assertInProgressInvariants(analytics: ReturnType<typeof buildOperationa
 
 function assertImpedimentInvariants(analytics: ReturnType<typeof buildImpedimentAnalytics>): void {
   assert.equal(analytics.impedimentCount, analytics.activeImpediments.length);
-  const blockedKeys = new Set(
-    analytics.activeImpediments.flatMap((row) => row.blockedStories.map((s) => s.key))
-  );
-  assert.equal(analytics.impactedStoryCount, blockedKeys.size);
   for (const row of analytics.activeImpediments) {
-    assert.ok(row.blockedStories.length > 0, `${row.key} must block at least one story`);
+    assert.ok(row.flagReason.length > 0, `${row.key} must include flag reason text`);
   }
 }
 
@@ -150,14 +137,17 @@ function assertImpedimentInvariants(analytics: ReturnType<typeof buildImpediment
 
 // Impediment + operational open cross-check
 {
-  const open = [issue('NOVA-300', { techOwnerId: ROY_ID, techOwnerName: 'Roy' })];
-  const carriers = [issue('NOVA-900', { issuelinks: [blocksOutward('NOVA-300')] })];
+  const open = [
+    issue('NOVA-300', { techOwnerId: ROY_ID, techOwnerName: 'Roy' }),
+    issue('NOVA-900', { flagged: true }),
+  ];
+  const carriers = [open[1]].filter((i): i is JiraIssue => i != null);
   const impediments = buildImpedimentAnalytics({
     openOperationalIssues: open,
     linkCarrierIssues: carriers,
   });
   assertImpedimentInvariants(impediments);
-  assert.equal(impediments.activeImpediments[0]?.blockedStories[0]?.techOwnerName, 'Roy');
+  assert.equal(impediments.activeImpediments[0]?.key, 'NOVA-900');
 }
 
 // Internal consistency helper used by verify script

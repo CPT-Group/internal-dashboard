@@ -133,23 +133,9 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
       });
 
       const linkCarriersFiltered = filterNova(linkCarriers.issues);
-      const impedimentDraft = buildImpedimentAnalytics({
-        openOperationalIssues: openFiltered,
-        linkCarrierIssues: linkCarriersFiltered,
-      });
-      const missingBlockerKeys = impedimentDraft.activeImpediments
-        .map((row) => row.key)
-        .filter((key) => !linkCarriersFiltered.some((i) => i.key === key) && !openFiltered.some((i) => i.key === key));
-      let enrichmentIssues: JiraIssue[] = [];
-      if (missingBlockerKeys.length > 0) {
-        const enrichJql = `key in (${missingBlockerKeys.join(',')}) ORDER BY updated DESC`;
-        const enriched = await jiraSearch(enrichJql, missingBlockerKeys.length, impedimentFields);
-        enrichmentIssues = filterNova(enriched.issues);
-      }
       const impedimentAnalytics = buildImpedimentAnalytics({
         openOperationalIssues: openFiltered,
         linkCarrierIssues: linkCarriersFiltered,
-        enrichmentIssues,
       });
 
       set({

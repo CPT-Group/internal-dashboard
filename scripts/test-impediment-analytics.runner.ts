@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import type { JiraIssue } from '@/types';
 import { buildImpedimentAnalytics } from '@/utils/impedimentAnalytics';
+import { JIRA_FLAGGED_IMPEDIMENT_VALUE } from '@/constants';
 
 function issue(
   key: string,
@@ -8,7 +9,7 @@ function issue(
     summary?: string;
     statusKey?: string;
     projectKey?: string;
-    issuelinks?: JiraIssue['fields']['issuelinks'];
+    flagged?: boolean;
     techOwner?: string;
     assignee?: string;
   } = {}
@@ -35,42 +36,20 @@ function issue(
       customfield_10193: opts.techOwner
         ? { accountId: 't1', displayName: opts.techOwner }
         : null,
-      issuelinks: opts.issuelinks,
+      customfield_10021: opts.flagged
+        ? [{ id: '10019', value: JIRA_FLAGGED_IMPEDIMENT_VALUE }]
+        : [],
     },
   };
 }
 
-function blocksOutward(blockedKey: string): NonNullable<JiraIssue['fields']['issuelinks']>[number] {
-  return {
-    id: '20001',
-    type: { id: '20002', name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
-    outwardIssue: {
-      id: '20003',
-      key: blockedKey,
-      fields: { summary: blockedKey, status: { id: '10000', name: 'In Dev' } },
-    },
-  };
-}
-
-function blocksInward(blockerKey: string): NonNullable<JiraIssue['fields']['issuelinks']>[number] {
-  return {
-    id: '20004',
-    type: { id: '20002', name: 'Blocks', inward: 'is blocked by', outward: 'blocks' },
-    inwardIssue: {
-      id: '20005',
-      key: blockerKey,
-      fields: { summary: blockerKey, status: { id: '10000', name: 'To Do' } },
-    },
-  };
-}
-
-// Blocker outward link blocks one open operational story
+// Open and flagged in board scope appears as impediment
 {
   const open = [issue('NOVA-100', { techOwner: 'Roy' })];
   const carriers = [
     issue('NOVA-900', {
       assignee: 'Infra',
-      issuelinks: [blocksOutward('NOVA-100')],
+      flagged: true,
     }),
   ];
   const result = buildImpedimentAnalytics({
@@ -79,15 +58,14 @@ function blocksInward(blockerKey: string): NonNullable<JiraIssue['fields']['issu
   });
   assert.equal(result.impedimentCount, 1);
   assert.equal(result.activeImpediments[0]?.key, 'NOVA-900');
-  assert.equal(result.activeImpediments[0]?.blockedStories[0]?.key, 'NOVA-100');
-  assert.equal(result.activeImpediments[0]?.blockedStories[0]?.techOwnerName, 'Roy');
+  assert.equal(result.activeImpediments[0]?.flagReason, JIRA_FLAGGED_IMPEDIMENT_VALUE);
 }
 
-// Ignores Done blocked story
+// Ignores done flagged ticket
 {
   const open = [issue('NOVA-101', { statusKey: 'done' })];
   const carriers = [
-    issue('NOVA-901', { issuelinks: [blocksOutward('NOVA-101')] }),
+    issue('NOVA-901', { statusKey: 'done', flagged: true }),
   ];
   const result = buildImpedimentAnalytics({
     openOperationalIssues: open,
@@ -96,66 +74,28 @@ function blocksInward(blockerKey: string): NonNullable<JiraIssue['fields']['issu
   assert.equal(result.impedimentCount, 0);
 }
 
-// Inward link on open story points at external blocker (enrichment path)
+// Flagged carrier in another project displays
 {
-  const open = [
-    issue('NOVA-200', {
-      techOwner: 'Kyle',
-      issuelinks: [blocksInward('IT-50')],
-    }),
-  ];
-  const result = buildImpedimentAnalytics({
-    openOperationalIssues: open,
-    linkCarrierIssues: [],
-    enrichmentIssues: [
-      issue('IT-50', { projectKey: 'IT', assignee: 'Ops', issuelinks: [blocksOutward('NOVA-200')] }),
-    ],
-  });
-  assert.equal(result.impedimentCount, 1);
-  assert.equal(result.activeImpediments[0]?.key, 'IT-50');
-  assert.equal(result.impactedStoryCount, 1);
-}
-
-// Dedupes same blocker blocking two stories
-{
-  const open = [
-    issue('NOVA-300'),
-    issue('NOVA-301'),
-  ];
-  const carriers = [
-    issue('NOVA-902', {
-      issuelinks: [blocksOutward('NOVA-300'), blocksOutward('NOVA-301')],
-    }),
-  ];
+  const open = [issue('NOVA-200', { techOwner: 'Kyle' })];
+  const carriers = [issue('IT-50', { projectKey: 'IT', flagged: true })];
   const result = buildImpedimentAnalytics({
     openOperationalIssues: open,
     linkCarrierIssues: carriers,
   });
   assert.equal(result.impedimentCount, 1);
-  assert.equal(result.activeImpediments[0]?.blockedStories.length, 2);
-  assert.equal(result.impactedStoryCount, 2);
+  assert.equal(result.activeImpediments[0]?.key, 'IT-50');
 }
 
-// Non-Blocks link type is ignored
+// Non-flagged carrier is ignored
 {
-  const open = [issue('NOVA-400')];
+  const open = [issue('NOVA-300')];
   const carriers = [
-    issue('NOVA-903', {
-      issuelinks: [
-        {
-          id: '20006',
-          type: { id: '20007', name: 'Relates', inward: 'relates to', outward: 'relates to' },
-          outwardIssue: {
-            id: '20008',
-            key: 'NOVA-400',
-            fields: { summary: 'x', status: { id: '10000', name: 'In Dev' } },
-          },
-        },
-      ],
+    issue('NOVA-902', {
+      flagged: false,
     }),
   ];
   const result = buildImpedimentAnalytics({
-    openOperationalIssues: open,
+    openOperationalIssues: [open[0], carriers[0]].filter((i): i is JiraIssue => i != null),
     linkCarrierIssues: carriers,
   });
   assert.equal(result.impedimentCount, 0);

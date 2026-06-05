@@ -1,10 +1,13 @@
 /**
- * Jira impediment visibility — issue-link "Blocks" / "is blocked by".
- * Discovery: scripts/jira/discover-impediment-links.mjs (2026-05).
+ * Jira impediment visibility — tickets flagged in Jira.
  */
 
-/** Link type names that count as a delivery blocker (outward = blocks, inward = is blocked by). */
-export const JIRA_BLOCKS_LINK_TYPE_NAMES = ['Blocks'] as const;
+/** Jira custom field id for "Flagged" (multi-checkbox). */
+export const JIRA_FLAGGED_FIELD_ID = 'customfield_10021' as const;
+/** Option value used by Jira's built-in flag field for impediments. */
+export const JIRA_FLAGGED_IMPEDIMENT_VALUE = 'Impediment' as const;
+/** JQL fragment for flagged impediments. */
+export const JIRA_IMPEDIMENT_FLAGGED_JQL = `"Flagged" = ${JIRA_FLAGGED_IMPEDIMENT_VALUE}`;
 
 /** Fields for impediment searches (issuelinks + attribution). */
 export const JIRA_IMPEDIMENT_SEARCH_FIELDS = [
@@ -16,15 +19,14 @@ export const JIRA_IMPEDIMENT_SEARCH_FIELDS = [
   'created',
   'updated',
   'issuetype',
-  'issuelinks',
+  JIRA_FLAGGED_FIELD_ID,
   'customfield_10193',
   'components',
   'customfield_10754',
 ] as const;
 
 /**
- * Open issues that may carry "Blocks" links (blockers or blocked stories).
- * Wider than board filter so blockers outside the sprint assignee scope still appear.
+ * Open flagged impediments from delivery projects.
  */
 export const JIRA_IMPEDIMENT_LINK_CARRIERS_JQL =
-  `(project = NOVA AND statusCategory != Done) OR (project = CM AND statusCategory != Done) OR (project = OPRD AND statusCategory != Done) OR (project = IT AND statusCategory != Done) ORDER BY updated DESC`;
+  `(project = NOVA AND ${JIRA_IMPEDIMENT_FLAGGED_JQL} AND statusCategory != Done) ORDER BY updated DESC`;
