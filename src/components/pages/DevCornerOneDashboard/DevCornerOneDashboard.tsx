@@ -5,6 +5,7 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { LOADING_NOVA_DATA_PLEASE_WAIT } from '@/constants';
 import { useOperationalJiraStore } from '@/stores';
+import { useWorkHoursToday } from '@/hooks';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
 import { useTheme } from '@/providers/ThemeProvider';
@@ -24,6 +25,7 @@ const formatCloseTime = (hours: number | null): string => {
 
 export const DevCornerOneDashboard = () => {
   const { cycleTheme } = useTheme();
+  const { hours, hoursByIssue, loading: workHoursLoading } = useWorkHoursToday();
   const { fetchOperationalData, isStale, loading, error, getAnalytics, impedimentAnalytics } =
     useOperationalJiraStore();
 
@@ -91,7 +93,7 @@ export const DevCornerOneDashboard = () => {
       </div>
       <div className={styles.middleRow}>
         <div className={styles.leftCol}>
-          <WorkHoursTodayPanel />
+          <WorkHoursTodayPanel hours={hours} loading={workHoursLoading} />
         </div>
         <div className={styles.rightCol}>
           <ImpedimentPanel analytics={impedimentAnalytics} />
@@ -99,7 +101,7 @@ export const DevCornerOneDashboard = () => {
         </div>
       </div>
       <div className={styles.bottomRow}>
-        <TeamActivityPanel members={teamActivity} />
+        <TeamActivityPanel members={teamActivity} hoursByIssue={hoursByIssue} />
       </div>
     </div>
   );

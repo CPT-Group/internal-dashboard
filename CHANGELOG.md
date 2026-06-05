@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner One — Work Hours + Team Activity follow-up**: Strengthened the Canvas plaid visibility for `>=110%` target bars (denser stripes, thicker red/yellow strokes, brighter pulse, subtle yellow underlay) while keeping legacy Tizen-safe drawing paths. Reused the existing `/api/jira/worklogs-today` flow to return issue-level worklog seconds and now append per-ticket logged hours to Team Activity in-progress chips (`Summary | 1.25h`, `0.00h` fallback).
 - Plaid work-hours overlay now triggers at 110% of rolling target (was 200%); stripe colors changed from red/green to red/yellow; stripes now pulse in opacity in addition to scrolling
 - **Agent compatibility doc fixes**: README dev port **3333** (prod `npm start` on 3000), correct TV routes (`/tv/dev-corner-one`, etc.), `.env.example`, refreshed `docs/app-overview.md` (operational Jira store, current dashboards). Added `npm run typecheck`; website-health skill API examples use port 3333.
 - **Jira automation — Tech Owner on assignee change**: Created three ENABLED rules (`[Data team] Assignee changed → set Tech Owner`) for **NOVA**, **OPRD**, and **CM** — when `cf[10193]` is empty and assignee is Kyle/Roy/James/Brandon, set Tech Owner (Kyle→Kyle; Roy/James/Brandon→Roy). Re-enabled **Case Update Requests & Bugs Auto Add to Sprint** (`019d356a`). Scripts: `create-tech-owner-on-assignee-rule.mjs`, `enable-case-update-bugs-rule.mjs`.

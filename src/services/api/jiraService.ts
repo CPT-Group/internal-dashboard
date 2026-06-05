@@ -219,18 +219,23 @@ interface JiraWorklogResponse {
   total: number;
 }
 
+export interface WorklogsTodayResult {
+  secondsByAuthor: Map<string, number>;
+  secondsByIssueByAuthor: Map<string, Map<string, number>>;
+}
+
 /**
  * Fetch total seconds logged *today* (Pacific time) for each account ID.
  *
  * 1. JQL `worklogDate >= startOfDay() AND worklogAuthor in (...)` to find issues.
  * 2. For each issue, GET /issue/{key}/worklog → filter by today + author.
- * 3. Sum timeSpentSeconds per author.
+ * 3. Sum timeSpentSeconds per author and by issue+author pair.
  *
- * Returns Map<accountId, totalSeconds>.
+ * Returns totals by author and issue-level author breakdown.
  */
 export async function getWorklogsToday(
   accountIds: string[]
-): Promise<Map<string, number>> {
+): Promise<WorklogsTodayResult> {
   const authorList = accountIds.map((id) => `"${id}"`).join(', ');
   const jql = `worklogDate >= startOfDay() AND worklogAuthor in (${authorList})`;
 
@@ -241,6 +246,7 @@ export async function getWorklogsToday(
   });
   const accountIdSet = new Set(accountIds);
   const secondsByAuthor = new Map<string, number>();
+  const secondsByIssueByAuthor = new Map<string, Map<string, number>>();
 
   const BATCH_SIZE = 10;
   for (let i = 0; i < searchResult.issues.length; i += BATCH_SIZE) {
@@ -250,24 +256,39 @@ export async function getWorklogsToday(
         const wl = await jiraFetch<JiraWorklogResponse>(
           `/issue/${issue.key}/worklog`
         );
-        return wl.worklogs ?? [];
+        return {
+          issueKey: issue.key,
+          worklogs: wl.worklogs ?? [],
+        };
       })
     );
 
     for (const result of settled) {
       if (result.status !== 'fulfilled') continue;
-      for (const wl of result.value) {
+      const { issueKey, worklogs } = result.value;
+      for (const wl of worklogs) {
         const startedDate = wl.started?.slice(0, 10);
         const authorId = wl.author?.accountId;
         if (startedDate === todayPacific && accountIdSet.has(authorId)) {
+          const seconds = wl.timeSpentSeconds ?? 0;
           const prev = secondsByAuthor.get(authorId) ?? 0;
-          secondsByAuthor.set(authorId, prev + (wl.timeSpentSeconds ?? 0));
+          secondsByAuthor.set(authorId, prev + seconds);
+
+          let byAuthorForIssue = secondsByIssueByAuthor.get(issueKey);
+          if (!byAuthorForIssue) {
+            byAuthorForIssue = new Map<string, number>();
+            secondsByIssueByAuthor.set(issueKey, byAuthorForIssue);
+          }
+          byAuthorForIssue.set(authorId, (byAuthorForIssue.get(authorId) ?? 0) + seconds);
         }
       }
     }
   }
 
-  return secondsByAuthor;
+  return {
+    secondsByAuthor,
+    secondsByIssueByAuthor,
+  };
 }
 
 /**

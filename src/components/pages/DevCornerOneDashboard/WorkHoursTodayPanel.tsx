@@ -6,7 +6,6 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { HorizontalBarChart } from '@/components/charts';
 import type { HorizontalBarChartData } from '@/types/charts';
 import { LOADING_NOVA_DATA_PLEASE_WAIT, NOVA_CORE_DEVS } from '@/constants';
-import { useWorkHoursToday } from '@/hooks';
 import { useTheme } from '@/providers/ThemeProvider';
 import {
   getCurrentTargetHours,
@@ -29,9 +28,13 @@ interface HourThemeColors extends WorkHoursChartTheme {
 const formatHours = (seconds: number): number =>
   Math.round((seconds / 3600) * 100) / 100;
 
-export const WorkHoursTodayPanel = () => {
+export interface WorkHoursTodayPanelProps {
+  hours: Map<string, number>;
+  loading: boolean;
+}
+
+export const WorkHoursTodayPanel = ({ hours, loading }: WorkHoursTodayPanelProps) => {
   const { theme } = useTheme();
-  const { hours, loading } = useWorkHoursToday();
   const [themeColors, setThemeColors] = useState<HourThemeColors | null>(null);
   const [now, setNow] = useState<Date>(new Date());
 

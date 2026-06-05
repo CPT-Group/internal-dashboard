@@ -76,14 +76,16 @@ function drawPlaidOverlay(
   pulse: number
 ): void {
   if (bw <= 0 || bh <= 0) return;
-  const step = 8;
+  const step = 6;
   const shift = phase01 * step;
-  const redAlpha = (0.25 + 0.45 * pulse).toFixed(2);
-  const yellowAlpha = (0.30 + 0.45 * pulse).toFixed(2);
+  const redAlpha = (0.5 + 0.45 * pulse).toFixed(2);
+  const yellowAlpha = (0.45 + 0.5 * pulse).toFixed(2);
   ctx.save();
   pathRoundedRect(ctx, bx, by, bw, bh, 3);
   ctx.clip();
-  ctx.lineWidth = 2;
+  ctx.fillStyle = `rgba(255, 224, 102, ${(0.1 + 0.1 * pulse).toFixed(2)})`;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.lineWidth = 2.8;
   ctx.strokeStyle = `rgba(220, 38, 38, ${redAlpha})`;
   for (let k = -bh - shift; k < bw + bh; k += step) {
     ctx.beginPath();
@@ -93,6 +95,14 @@ function drawPlaidOverlay(
   }
   ctx.strokeStyle = `rgba(234, 179, 8, ${yellowAlpha})`;
   for (let k = -bh - shift + step * 0.5; k < bw + bh; k += step) {
+    ctx.beginPath();
+    ctx.moveTo(bx + k, by + bh);
+    ctx.lineTo(bx + k + bh, by);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = `rgba(255, 245, 157, ${(0.38 + 0.3 * pulse).toFixed(2)})`;
+  for (let k = -bh - shift + step * 0.25; k < bw + bh; k += step) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
     ctx.lineTo(bx + k + bh, by);
