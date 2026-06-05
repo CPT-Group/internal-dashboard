@@ -2,14 +2,15 @@
 @use '../mixins/glass' as glass;
 
 // Miami Vice Theme – matches cpt-internal-tools (1980s synthwave: hot-pink
-// primary + electric-blue accent over a deep navy Miami night). BLUE-forward:
+// primary + neon baby blue accent over a deep navy Miami night). BLUE-forward:
 // the night sky is navy (#0a1a3f), surfaces are navy panels, and the accent is
-// electric cyan-blue (#2ec5ff) — pink stays the primary for that neon glow.
+// neon baby blue (#5fd9ff) — pink stays the primary for that neon glow.
 // Palette hand-translated from the main app's `customThemes.ts` `miami-vice`
 // entry into concrete hex + rgba (no color-mix — Samsung Tizen TV constraint).
 // Explicit html/body rules ensure background and text apply even if variable
 // order is wrong; a Tizen-safe linear-gradient adds the synthwave backdrop
-// (hot-pink → cyan over navy) over the solid `--page-background` base.
+// (hot-pink → neon baby blue over navy) over the solid `--page-background`
+// base.
 
 html[data-theme='miami-vice'] {
   background-color: #0a1a3f !important;
@@ -26,7 +27,7 @@ html[data-theme='miami-vice'] body {
     160deg,
     rgba(255, 45, 149, 0.1) 0%,
     rgba(10, 26, 63, 0) 42%,
-    rgba(46, 197, 255, 0.12) 100%
+    rgba(95, 217, 255, 0.12) 100%
   ) !important;
   color: #e6f3ff !important;
 }
@@ -34,7 +35,7 @@ html[data-theme='miami-vice'] body {
 html[data-theme='miami-vice'],
 [data-theme='miami-vice'] {
   --header-bg: #0c2049 !important;
-  --header-fg: #57d6ff !important;
+  --header-fg: #7ce3ff !important;
   --header-border: 1px solid #1d3e72 !important;
   --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.45) !important;
   --window-bg: #0a1a3f !important;
@@ -50,8 +51,8 @@ html[data-theme='miami-vice'],
   --button-fg: #e6f3ff !important;
   --button-hover-bg: var(--surface-hover) !important;
   --menu-item-hover-bg: #1d3e72 !important;
-  --status-icon-fill: #2ec5ff !important;
-  --status-icon-stroke: #2ec5ff !important;
+  --status-icon-fill: #5fd9ff !important;
+  --status-icon-stroke: #5fd9ff !important;
   --status-icon-stroke-offline: #2a5290 !important;
   --page-background: #0a1a3f !important;
   --text-primary: #e6f3ff !important;
@@ -68,7 +69,7 @@ html[data-theme='miami-vice'],
   --surface-card: #112a55 !important;
   --surface-overlay: #112a55 !important;
   --surface-border: #1d3e72 !important;
-  --surface-hover: rgba(46, 197, 255, 0.12) !important;
+  --surface-hover: rgba(95, 217, 255, 0.12) !important;
   --surface-0: #07142e !important;
   --surface-50: #0a1a3f !important;
   --surface-100: #112a55 !important;
@@ -82,7 +83,7 @@ html[data-theme='miami-vice'],
   --surface-900: #e6f3ff !important;
   --surface-a: #112a55 !important;
   --surface-b: #0a1a3f !important;
-  --surface-c: rgba(46, 197, 255, 0.08) !important;
+  --surface-c: rgba(95, 217, 255, 0.08) !important;
   --surface-d: #1d3e72 !important;
   --surface-e: #112a55 !important;
   --surface-f: #112a55 !important;
@@ -108,14 +109,14 @@ html[data-theme='miami-vice'],
 
   // Liquid Glass — fill is a LIGHTER navy (rgba #112a55-ish raised) than page
   // (#0a1a3f) so panels lift off the synthwave backdrop, with a bright hot-pink
-  // rim, an electric-blue ripple, and a pink top sheen + glow for a backlit-
+  // rim, a neon baby blue ripple, and a pink top sheen + glow for a backlit-
   // glass read. Strong fill (~0.9) keeps sticky DataTable headers opaque.
   @include glass.glass-tokens(
     rgba(17, 42, 85, 0.55),
     rgba(17, 42, 85, 0.9),
     rgba(255, 45, 149, 0.42),
     rgba(255, 45, 149, 0.08),
-    rgba(46, 197, 255, 0.3),
+    rgba(95, 217, 255, 0.3),
     rgba(255, 45, 149, 0.16),
     rgba(255, 255, 255, 0.05),
     rgba(0, 0, 0, 0.5),
@@ -127,7 +128,7 @@ html[data-theme='miami-vice'],
   --corner-info-card-border: #2a5290 !important;
   --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
   --corner-info-card-divider: rgba(255, 45, 149, 0.2) !important;
-  --corner-info-card-hover-bg: rgba(46, 197, 255, 0.14) !important;
+  --corner-info-card-hover-bg: rgba(95, 217, 255, 0.14) !important;
   --tag-today-bg: rgba(255, 45, 149, 0.25) !important;
   --tag-today-text: #ff93d1 !important;
   --tag-today-border: rgba(255, 45, 149, 0.5) !important;
@@ -141,27 +142,27 @@ html[data-theme='miami-vice'],
   --chart-warning: rgba(255, 179, 71, 0.9) !important;
   --chart-warning-border: rgb(255, 179, 71) !important;
   --chart-label-color: #ffffff !important;
-  --chart-info: rgba(46, 197, 255, 0.78) !important;
-  --chart-info-border: rgb(46, 197, 255) !important;
+  --chart-info: rgba(95, 217, 255, 0.78) !important;
+  --chart-info-border: rgb(95, 217, 255) !important;
   --chart-orange: rgba(255, 179, 71, 0.72) !important;
   --chart-orange-border: rgb(255, 179, 71) !important;
-  --nova-accent: rgba(46, 197, 255, 0.7) !important;
-  --nova-accent-bg: rgba(46, 197, 255, 0.35) !important;
-  --nova-accent-border: rgb(46, 197, 255) !important;
+  --nova-accent: rgba(95, 217, 255, 0.7) !important;
+  --nova-accent-bg: rgba(95, 217, 255, 0.35) !important;
+  --nova-accent-border: rgb(95, 217, 255) !important;
   --nova-accent-text: #ffffff !important;
   --bug-accent-bg: rgba(255, 77, 109, 0.35) !important;
   --bug-accent-text: #ffffff !important;
   --github-repo-label-color: #e6f3ff !important;
-  --github-repo-api-bg: rgba(46, 197, 255, 0.5) !important;
-  --github-repo-api-border: rgba(46, 197, 255, 0.85) !important;
+  --github-repo-api-bg: rgba(95, 217, 255, 0.5) !important;
+  --github-repo-api-border: rgba(95, 217, 255, 0.85) !important;
   --github-repo-tools-bg: rgba(44, 224, 165, 0.35) !important;
   --github-repo-tools-border: rgba(44, 224, 165, 0.75) !important;
   --github-repo-nuget-bg: rgba(173, 127, 255, 0.34) !important;
   --github-repo-nuget-border: rgba(173, 127, 255, 0.75) !important;
   --github-repo-migrations-bg: rgba(255, 179, 71, 0.34) !important;
   --github-repo-migrations-border: rgba(255, 179, 71, 0.74) !important;
-  --github-repo-infra-bg: rgba(46, 197, 255, 0.32) !important;
-  --github-repo-infra-border: rgba(46, 197, 255, 0.72) !important;
+  --github-repo-infra-bg: rgba(95, 217, 255, 0.32) !important;
+  --github-repo-infra-border: rgba(95, 217, 255, 0.72) !important;
   --github-deploy-progressbar-track-bg: rgba(29, 62, 114, 0.52) !important;
   --github-deploy-progressbar-fill: rgba(255, 45, 149, 0.8) !important;
   --github-deploy-surface-muted-bg: rgba(17, 42, 85, 0.88) !important;
@@ -178,11 +179,11 @@ html[data-theme='miami-vice'],
   --github-deploy-inline-running-track: rgba(255, 179, 71, 0.2) !important;
   --github-deploy-inline-queued-track: rgba(255, 179, 71, 0.22) !important;
   --github-deploy-footer-ticker-bg: rgba(7, 20, 46, 0.9) !important;
-  --github-deploy-footer-ticker-border: rgba(46, 197, 255, 0.34) !important;
-  --github-deploy-footer-ticker-text: #2ec5ff !important;
-  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(46, 197, 255, 0.35) !important;
+  --github-deploy-footer-ticker-border: rgba(95, 217, 255, 0.34) !important;
+  --github-deploy-footer-ticker-text: #5fd9ff !important;
+  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(95, 217, 255, 0.35) !important;
   --content-text-size: 1.06rem !important;
-  --github-deploy-timeline-meta-color: #2ec5ff !important;
+  --github-deploy-timeline-meta-color: #5fd9ff !important;
   --data-quality-valid: rgba(44, 224, 165, 0.5) !important;
   --data-quality-warning: rgba(255, 179, 71, 0.5) !important;
   --data-quality-error: rgba(255, 77, 109, 0.55) !important;
@@ -199,8 +200,8 @@ html[data-theme='miami-vice'],
   --toast-success-bg: rgba(44, 224, 165, 0.2) !important;
   --toast-success-border: #2ce0a5 !important;
   --toast-success-text: #b6f7e0 !important;
-  --toast-info-bg: rgba(46, 197, 255, 0.2) !important;
-  --toast-info-border: #2ec5ff !important;
+  --toast-info-bg: rgba(95, 217, 255, 0.2) !important;
+  --toast-info-border: #5fd9ff !important;
   --toast-info-text: #bce8ff !important;
   --toast-warn-bg: rgba(255, 179, 71, 0.2) !important;
   --toast-warn-border: #ffb347 !important;
@@ -216,7 +217,7 @@ html[data-theme='miami-vice'],
     #06122e,
     rgb(44, 224, 165),
     #04241a,
-    rgb(46, 197, 255),
+    rgb(95, 217, 255),
     #04141d,
     rgb(255, 179, 71),
     #1f1300,
