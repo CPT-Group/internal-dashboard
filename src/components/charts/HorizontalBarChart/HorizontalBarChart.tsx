@@ -78,9 +78,10 @@ function drawPlaidOverlay(
   if (bw <= 0 || bh <= 0) return;
   const redStep = 14;
   const greenStep = 13;
-  const redShift = phase01 * redStep;
-  const greenShift = phase01 * greenStep;
-  const darkBandShift = phase01 * 8;
+  // Keep motion as clear left-to-right x-axis travel on TV.
+  const redShiftX = phase01 * redStep;
+  const greenShiftX = phase01 * greenStep;
+  const darkBandShiftX = phase01 * 8;
   const redAlpha = (0.42 + 0.22 * pulse).toFixed(2);
   const greenAlpha = (0.38 + 0.2 * pulse).toFixed(2);
   const darkAlpha = (0.12 + 0.1 * pulse).toFixed(2);
@@ -95,7 +96,7 @@ function drawPlaidOverlay(
   // Diagonal red family.
   ctx.lineWidth = 3;
   ctx.strokeStyle = `rgba(196, 48, 48, ${redAlpha})`;
-  for (let k = -bh - redShift; k < bw + bh; k += redStep) {
+  for (let k = -bh - redStep + redShiftX; k < bw + bh; k += redStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by);
     ctx.lineTo(bx + k + bh, by + bh);
@@ -103,7 +104,7 @@ function drawPlaidOverlay(
   }
   ctx.lineWidth = 1.2;
   ctx.strokeStyle = `rgba(255, 140, 140, ${(0.26 + 0.2 * pulse).toFixed(2)})`;
-  for (let k = -bh - redShift + 4; k < bw + bh; k += redStep) {
+  for (let k = -bh - redStep + redShiftX + 4; k < bw + bh; k += redStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by);
     ctx.lineTo(bx + k + bh, by + bh);
@@ -113,7 +114,7 @@ function drawPlaidOverlay(
   // Opposite diagonal green family.
   ctx.lineWidth = 2.8;
   ctx.strokeStyle = `rgba(40, 136, 72, ${greenAlpha})`;
-  for (let k = -bh + greenShift; k < bw + bh; k += greenStep) {
+  for (let k = -bh - greenStep + greenShiftX; k < bw + bh; k += greenStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
     ctx.lineTo(bx + k + bh, by);
@@ -121,7 +122,7 @@ function drawPlaidOverlay(
   }
   ctx.lineWidth = 1.1;
   ctx.strokeStyle = `rgba(143, 227, 152, ${(0.24 + 0.18 * pulse).toFixed(2)})`;
-  for (let k = -bh + greenShift + 3; k < bw + bh; k += greenStep) {
+  for (let k = -bh - greenStep + greenShiftX + 3; k < bw + bh; k += greenStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
     ctx.lineTo(bx + k + bh, by);
@@ -132,18 +133,14 @@ function drawPlaidOverlay(
   ctx.fillStyle = `rgba(18, 11, 11, ${darkAlpha})`;
   const vBandStep = 11;
   for (
-    let x = bx - vBandStep + (darkBandShift % vBandStep);
+    let x = bx - vBandStep + (darkBandShiftX % vBandStep);
     x < bx + bw;
     x += vBandStep
   ) {
     ctx.fillRect(x, by, 1.2, bh);
   }
   const hBandStep = 7;
-  for (
-    let y = by - hBandStep + ((darkBandShift * 0.7) % hBandStep);
-    y < by + bh;
-    y += hBandStep
-  ) {
+  for (let y = by - hBandStep; y < by + bh; y += hBandStep) {
     ctx.fillRect(bx, y, bw, 0.9);
   }
   ctx.restore();
