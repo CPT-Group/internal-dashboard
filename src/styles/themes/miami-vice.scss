@@ -3,7 +3,7 @@
 
 // Miami Vice Theme – matches cpt-internal-tools (1980s synthwave: hot-pink
 // primary + neon baby blue accent over a deep navy Miami night). BLUE-forward:
-// the night sky is navy (#0a1a3f), surfaces are navy panels, and the accent is
+// the night sky is navy (#102a57), surfaces are navy panels, and the accent is
 // neon baby blue (#5fd9ff) — pink stays the primary for that neon glow.
 // Palette hand-translated from the main app's `customThemes.ts` `miami-vice`
 // entry into concrete hex + rgba (no color-mix — Samsung Tizen TV constraint).
@@ -13,20 +13,20 @@
 // base.
 
 html[data-theme='miami-vice'] {
-  background-color: #0a1a3f !important;
+  background-color: #102a57 !important;
   background-image: linear-gradient(
     160deg,
-    #14264f 0%,
-    #0a1a3f 50%,
-    #0a2347 100%
+    #1a3667 0%,
+    #102a57 50%,
+    #10335f 100%
   ) !important;
 }
 html[data-theme='miami-vice'] body {
-  background-color: #0a1a3f !important;
+  background-color: #102a57 !important;
   background-image: linear-gradient(
     160deg,
     rgba(255, 45, 149, 0.1) 0%,
-    rgba(10, 26, 63, 0) 42%,
+    rgba(16, 42, 87, 0) 42%,
     rgba(95, 217, 255, 0.12) 100%
   ) !important;
   color: #e6f3ff !important;
@@ -36,25 +36,25 @@ html[data-theme='miami-vice'],
 [data-theme='miami-vice'] {
   --header-bg: #0c2049 !important;
   --header-fg: #7ce3ff !important;
-  --header-border: 1px solid #1d3e72 !important;
+  --header-border: 1px solid #244a82 !important;
   --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.45) !important;
-  --window-bg: #0a1a3f !important;
+  --window-bg: #102a57 !important;
   --window-fg: #e6f3ff !important;
-  --window-border: 1px solid #1d3e72 !important;
-  --window-surface-bg: #112a55 !important;
+  --window-border: 1px solid #244a82 !important;
+  --window-surface-bg: #173565 !important;
   --window-surface-fg: #e6f3ff !important;
   --window-surface-border: 1px solid #2a5290 !important;
   --input-bg: #0c2049 !important;
   --input-fg: #e6f3ff !important;
-  --input-border: 1px solid #1d3e72 !important;
+  --input-border: 1px solid #244a82 !important;
   --button-bg: var(--window-surface-bg) !important;
   --button-fg: #e6f3ff !important;
   --button-hover-bg: var(--surface-hover) !important;
-  --menu-item-hover-bg: #1d3e72 !important;
+  --menu-item-hover-bg: #244a82 !important;
   --status-icon-fill: #5fd9ff !important;
   --status-icon-stroke: #5fd9ff !important;
   --status-icon-stroke-offline: #2a5290 !important;
-  --page-background: #0a1a3f !important;
+  --page-background: #102a57 !important;
   --text-primary: #e6f3ff !important;
   --button-primary-background: #ff2d95 !important;
   --button-primary-background-hover: #ff52a8 !important;
@@ -64,16 +64,16 @@ html[data-theme='miami-vice'],
   --highlight-bg: rgba(255, 45, 149, 0.16) !important;
   --highlight-text-color: #e6f3ff !important;
   --color-danger: #ff4d6d !important;
-  --surface-ground: #0a1a3f !important;
-  --surface-section: #0a1a3f !important;
-  --surface-card: #112a55 !important;
-  --surface-overlay: #112a55 !important;
-  --surface-border: #1d3e72 !important;
+  --surface-ground: #102a57 !important;
+  --surface-section: #102a57 !important;
+  --surface-card: #173565 !important;
+  --surface-overlay: #173565 !important;
+  --surface-border: #244a82 !important;
   --surface-hover: rgba(95, 217, 255, 0.12) !important;
   --surface-0: #07142e !important;
-  --surface-50: #0a1a3f !important;
-  --surface-100: #112a55 !important;
-  --surface-200: #1d3e72 !important;
+  --surface-50: #102a57 !important;
+  --surface-100: #173565 !important;
+  --surface-200: #244a82 !important;
   --surface-300: #2a5290 !important;
   --surface-400: #3a6bb5 !important;
   --surface-500: #4f8ad6 !important;
@@ -81,12 +81,12 @@ html[data-theme='miami-vice'],
   --surface-700: #9fccff !important;
   --surface-800: #cfe8ff !important;
   --surface-900: #e6f3ff !important;
-  --surface-a: #112a55 !important;
-  --surface-b: #0a1a3f !important;
+  --surface-a: #173565 !important;
+  --surface-b: #102a57 !important;
   --surface-c: rgba(95, 217, 255, 0.08) !important;
-  --surface-d: #1d3e72 !important;
-  --surface-e: #112a55 !important;
-  --surface-f: #112a55 !important;
+  --surface-d: #244a82 !important;
+  --surface-e: #173565 !important;
+  --surface-f: #173565 !important;
   --gray-50: #e6f3ff !important;
   --gray-100: #cfe8ff !important;
   --gray-200: #9fccff !important;
@@ -94,26 +94,26 @@ html[data-theme='miami-vice'],
   --gray-400: #4f8ad6 !important;
   --gray-500: #3a6bb5 !important;
   --gray-600: #2a5290 !important;
-  --gray-700: #1d3e72 !important;
-  --gray-800: #112a55 !important;
-  --gray-900: #0a1a3f !important;
+  --gray-700: #244a82 !important;
+  --gray-800: #173565 !important;
+  --gray-900: #102a57 !important;
   --text-color: #e6f3ff !important;
   --text-color-secondary: #8fb3d8 !important;
   --primary-color: #ff2d95 !important;
   --primary-color-text: #06122e !important;
-  --scrollbar-track-bg: #112a55 !important;
-  --scrollbar-thumb-bg: #1d3e72 !important;
+  --scrollbar-track-bg: #173565 !important;
+  --scrollbar-thumb-bg: #244a82 !important;
   --scrollbar-thumb-hover-bg: #2a5290 !important;
   --card-border: rgba(255, 45, 149, 0.2) !important;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 45, 149, 0.1) !important;
 
-  // Liquid Glass — fill is a LIGHTER navy (rgba #112a55-ish raised) than page
-  // (#0a1a3f) so panels lift off the synthwave backdrop, with a bright hot-pink
+  // Liquid Glass — fill is a LIGHTER navy (rgba #173565-ish raised) than page
+  // (#102a57) so panels lift off the synthwave backdrop, with a bright hot-pink
   // rim, a neon baby blue ripple, and a pink top sheen + glow for a backlit-
   // glass read. Strong fill (~0.9) keeps sticky DataTable headers opaque.
   @include glass.glass-tokens(
-    rgba(17, 42, 85, 0.55),
-    rgba(17, 42, 85, 0.9),
+    rgba(23, 53, 101, 0.55),
+    rgba(23, 53, 101, 0.9),
     rgba(255, 45, 149, 0.42),
     rgba(255, 45, 149, 0.08),
     rgba(95, 217, 255, 0.3),
@@ -124,7 +124,7 @@ html[data-theme='miami-vice'],
     rgba(255, 45, 149, 0.16)
   );
 
-  --corner-info-card-bg: rgba(17, 42, 85, 0.65) !important;
+  --corner-info-card-bg: rgba(23, 53, 101, 0.65) !important;
   --corner-info-card-border: #2a5290 !important;
   --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
   --corner-info-card-divider: rgba(255, 45, 149, 0.2) !important;
@@ -163,9 +163,9 @@ html[data-theme='miami-vice'],
   --github-repo-migrations-border: rgba(255, 179, 71, 0.74) !important;
   --github-repo-infra-bg: rgba(95, 217, 255, 0.32) !important;
   --github-repo-infra-border: rgba(95, 217, 255, 0.72) !important;
-  --github-deploy-progressbar-track-bg: rgba(29, 62, 114, 0.52) !important;
+  --github-deploy-progressbar-track-bg: rgba(36, 74, 130, 0.52) !important;
   --github-deploy-progressbar-fill: rgba(255, 45, 149, 0.8) !important;
-  --github-deploy-surface-muted-bg: rgba(17, 42, 85, 0.88) !important;
+  --github-deploy-surface-muted-bg: rgba(23, 53, 101, 0.88) !important;
   --github-deploy-surface-muted-border: rgba(42, 82, 144, 0.55) !important;
   --github-deploy-branch-pill-bg: rgba(7, 20, 46, 0.9) !important;
   --github-deploy-branch-pill-border: rgba(42, 82, 144, 0.55) !important;
@@ -193,7 +193,7 @@ html[data-theme='miami-vice'],
   --progress-spinner-color: var(--primary-color) !important;
 
   // Ported from cpt-internal-tools for PrimeReact parity
-  --multiselect-chip-bg: #1d3e72 !important;
+  --multiselect-chip-bg: #244a82 !important;
   --multiselect-chip-fg: #e6f3ff !important;
   --multiselect-chip-icon-fg: #8fb3d8 !important;
   --multiselect-chip-border: 1px solid #2a5290 !important;
@@ -209,7 +209,7 @@ html[data-theme='miami-vice'],
   --toast-error-bg: rgba(255, 77, 109, 0.22) !important;
   --toast-error-border: #ff4d6d !important;
   --toast-error-text: #ffd2da !important;
-  --cpt-skeleton-bg: #1d3e72 !important;
+  --cpt-skeleton-bg: #244a82 !important;
   --cpt-skeleton-sheen: rgba(255, 45, 149, 0.28) !important;
 
   @include badge.badge-theme-tokens(
