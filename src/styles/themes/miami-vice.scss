@@ -2,117 +2,120 @@
 @use '../mixins/glass' as glass;
 
 // Miami Vice Theme – matches cpt-internal-tools (1980s synthwave: hot-pink
-// primary + electric-blue accent over a deep neon-violet Miami night).
+// primary + electric-blue accent over a deep navy Miami night). BLUE-forward:
+// the night sky is navy (#0a1a3f), surfaces are navy panels, and the accent is
+// electric cyan-blue (#2ec5ff) — pink stays the primary for that neon glow.
 // Palette hand-translated from the main app's `customThemes.ts` `miami-vice`
 // entry into concrete hex + rgba (no color-mix — Samsung Tizen TV constraint).
 // Explicit html/body rules ensure background and text apply even if variable
 // order is wrong; a Tizen-safe linear-gradient adds the synthwave backdrop
-// (magenta → deep purple → cyan) over the solid `--page-background` base.
+// (hot-pink → cyan over navy) over the solid `--page-background` base.
 
 html[data-theme='miami-vice'] {
-  background-color: #190b2e !important;
+  background-color: #0a1a3f !important;
   background-image: linear-gradient(
     160deg,
-    #2a0d4e 0%,
-    #190b2e 48%,
-    #0c1b3a 100%
+    #14264f 0%,
+    #0a1a3f 50%,
+    #0a2347 100%
   ) !important;
 }
 html[data-theme='miami-vice'] body {
-  background-color: #190b2e !important;
+  background-color: #0a1a3f !important;
   background-image: linear-gradient(
     160deg,
     rgba(255, 45, 149, 0.1) 0%,
-    rgba(25, 11, 46, 0) 42%,
-    rgba(69, 214, 255, 0.1) 100%
+    rgba(10, 26, 63, 0) 42%,
+    rgba(46, 197, 255, 0.12) 100%
   ) !important;
-  color: #ffe3f4 !important;
+  color: #e6f3ff !important;
 }
 
 html[data-theme='miami-vice'],
 [data-theme='miami-vice'] {
-  --header-bg: #1d0d39 !important;
-  --header-fg: #ff93d1 !important;
-  --header-border: 1px solid #3b1f63 !important;
+  --header-bg: #0c2049 !important;
+  --header-fg: #57d6ff !important;
+  --header-border: 1px solid #1d3e72 !important;
   --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.45) !important;
-  --window-bg: #190b2e !important;
-  --window-fg: #ffe3f4 !important;
-  --window-border: 1px solid #3b1f63 !important;
-  --window-surface-bg: #261146 !important;
-  --window-surface-fg: #ffe3f4 !important;
-  --window-surface-border: 1px solid #4d2a7d !important;
-  --input-bg: #1d0d39 !important;
-  --input-fg: #ffe3f4 !important;
-  --input-border: 1px solid #3b1f63 !important;
+  --window-bg: #0a1a3f !important;
+  --window-fg: #e6f3ff !important;
+  --window-border: 1px solid #1d3e72 !important;
+  --window-surface-bg: #112a55 !important;
+  --window-surface-fg: #e6f3ff !important;
+  --window-surface-border: 1px solid #2a5290 !important;
+  --input-bg: #0c2049 !important;
+  --input-fg: #e6f3ff !important;
+  --input-border: 1px solid #1d3e72 !important;
   --button-bg: var(--window-surface-bg) !important;
-  --button-fg: #ffe3f4 !important;
+  --button-fg: #e6f3ff !important;
   --button-hover-bg: var(--surface-hover) !important;
-  --menu-item-hover-bg: #3b1f63 !important;
-  --status-icon-fill: #45d6ff !important;
-  --status-icon-stroke: #45d6ff !important;
-  --status-icon-stroke-offline: #6a3fa0 !important;
-  --page-background: #190b2e !important;
-  --text-primary: #ffe3f4 !important;
+  --menu-item-hover-bg: #1d3e72 !important;
+  --status-icon-fill: #2ec5ff !important;
+  --status-icon-stroke: #2ec5ff !important;
+  --status-icon-stroke-offline: #2a5290 !important;
+  --page-background: #0a1a3f !important;
+  --text-primary: #e6f3ff !important;
   --button-primary-background: #ff2d95 !important;
   --button-primary-background-hover: #ff52a8 !important;
-  --button-primary-text: #1a0633 !important;
-  --maskbg: rgba(12, 5, 26, 0.78) !important;
+  --button-primary-text: #06122e !important;
+  --maskbg: rgba(6, 14, 33, 0.78) !important;
   --focus-ring: 0 0 0 0.2rem rgba(255, 45, 149, 0.35) !important;
   --highlight-bg: rgba(255, 45, 149, 0.16) !important;
-  --highlight-text-color: #ffe3f4 !important;
+  --highlight-text-color: #e6f3ff !important;
   --color-danger: #ff4d6d !important;
-  --surface-ground: #190b2e !important;
-  --surface-section: #190b2e !important;
-  --surface-card: #261146 !important;
-  --surface-overlay: #261146 !important;
-  --surface-border: #3b1f63 !important;
-  --surface-hover: rgba(69, 214, 255, 0.12) !important;
-  --surface-0: #140827 !important;
-  --surface-50: #190b2e !important;
-  --surface-100: #261146 !important;
-  --surface-200: #3b1f63 !important;
-  --surface-300: #4d2a7d !important;
-  --surface-400: #6a3fa0 !important;
-  --surface-500: #8a5bc0 !important;
-  --surface-600: #a87fd6 !important;
-  --surface-700: #c9a8ff !important;
-  --surface-800: #ffd6ef !important;
-  --surface-900: #ffe3f4 !important;
-  --surface-a: #261146 !important;
-  --surface-b: #190b2e !important;
-  --surface-c: rgba(69, 214, 255, 0.08) !important;
-  --surface-d: #3b1f63 !important;
-  --surface-e: #261146 !important;
-  --surface-f: #261146 !important;
-  --gray-50: #ffe3f4 !important;
-  --gray-100: #ffd6ef !important;
-  --gray-200: #c9a8ff !important;
-  --gray-300: #a87fd6 !important;
-  --gray-400: #8a5bc0 !important;
-  --gray-500: #6a3fa0 !important;
-  --gray-600: #4d2a7d !important;
-  --gray-700: #3b1f63 !important;
-  --gray-800: #261146 !important;
-  --gray-900: #190b2e !important;
-  --text-color: #ffe3f4 !important;
-  --text-color-secondary: #b98fd0 !important;
+  --surface-ground: #0a1a3f !important;
+  --surface-section: #0a1a3f !important;
+  --surface-card: #112a55 !important;
+  --surface-overlay: #112a55 !important;
+  --surface-border: #1d3e72 !important;
+  --surface-hover: rgba(46, 197, 255, 0.12) !important;
+  --surface-0: #07142e !important;
+  --surface-50: #0a1a3f !important;
+  --surface-100: #112a55 !important;
+  --surface-200: #1d3e72 !important;
+  --surface-300: #2a5290 !important;
+  --surface-400: #3a6bb5 !important;
+  --surface-500: #4f8ad6 !important;
+  --surface-600: #6fa8e8 !important;
+  --surface-700: #9fccff !important;
+  --surface-800: #cfe8ff !important;
+  --surface-900: #e6f3ff !important;
+  --surface-a: #112a55 !important;
+  --surface-b: #0a1a3f !important;
+  --surface-c: rgba(46, 197, 255, 0.08) !important;
+  --surface-d: #1d3e72 !important;
+  --surface-e: #112a55 !important;
+  --surface-f: #112a55 !important;
+  --gray-50: #e6f3ff !important;
+  --gray-100: #cfe8ff !important;
+  --gray-200: #9fccff !important;
+  --gray-300: #6fa8e8 !important;
+  --gray-400: #4f8ad6 !important;
+  --gray-500: #3a6bb5 !important;
+  --gray-600: #2a5290 !important;
+  --gray-700: #1d3e72 !important;
+  --gray-800: #112a55 !important;
+  --gray-900: #0a1a3f !important;
+  --text-color: #e6f3ff !important;
+  --text-color-secondary: #8fb3d8 !important;
   --primary-color: #ff2d95 !important;
-  --primary-color-text: #1a0633 !important;
-  --scrollbar-track-bg: #261146 !important;
-  --scrollbar-thumb-bg: #3b1f63 !important;
-  --scrollbar-thumb-hover-bg: #4d2a7d !important;
+  --primary-color-text: #06122e !important;
+  --scrollbar-track-bg: #112a55 !important;
+  --scrollbar-thumb-bg: #1d3e72 !important;
+  --scrollbar-thumb-hover-bg: #2a5290 !important;
   --card-border: rgba(255, 45, 149, 0.2) !important;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 45, 149, 0.1) !important;
 
-  // Liquid Glass — fill is a LIGHTER neon-violet (#2e184e) than page (#190b2e)
-  // so panels lift off the synthwave backdrop, with a bright hot-pink rim, an
-  // electric-blue ripple, and a pink top sheen + glow for a backlit-glass read.
+  // Liquid Glass — fill is a LIGHTER navy (rgba #112a55-ish raised) than page
+  // (#0a1a3f) so panels lift off the synthwave backdrop, with a bright hot-pink
+  // rim, an electric-blue ripple, and a pink top sheen + glow for a backlit-
+  // glass read. Strong fill (~0.9) keeps sticky DataTable headers opaque.
   @include glass.glass-tokens(
-    rgba(46, 24, 78, 0.55),
-    rgba(31, 14, 54, 0.92),
+    rgba(17, 42, 85, 0.55),
+    rgba(17, 42, 85, 0.9),
     rgba(255, 45, 149, 0.42),
     rgba(255, 45, 149, 0.08),
-    rgba(69, 214, 255, 0.3),
+    rgba(46, 197, 255, 0.3),
     rgba(255, 45, 149, 0.16),
     rgba(255, 255, 255, 0.05),
     rgba(0, 0, 0, 0.5),
@@ -120,11 +123,11 @@ html[data-theme='miami-vice'],
     rgba(255, 45, 149, 0.16)
   );
 
-  --corner-info-card-bg: rgba(38, 17, 70, 0.65) !important;
-  --corner-info-card-border: #4d2a7d !important;
+  --corner-info-card-bg: rgba(17, 42, 85, 0.65) !important;
+  --corner-info-card-border: #2a5290 !important;
   --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
   --corner-info-card-divider: rgba(255, 45, 149, 0.2) !important;
-  --corner-info-card-hover-bg: rgba(69, 214, 255, 0.14) !important;
+  --corner-info-card-hover-bg: rgba(46, 197, 255, 0.14) !important;
   --tag-today-bg: rgba(255, 45, 149, 0.25) !important;
   --tag-today-text: #ff93d1 !important;
   --tag-today-border: rgba(255, 45, 149, 0.5) !important;
@@ -138,34 +141,34 @@ html[data-theme='miami-vice'],
   --chart-warning: rgba(255, 179, 71, 0.9) !important;
   --chart-warning-border: rgb(255, 179, 71) !important;
   --chart-label-color: #ffffff !important;
-  --chart-info: rgba(69, 214, 255, 0.78) !important;
-  --chart-info-border: rgb(69, 214, 255) !important;
+  --chart-info: rgba(46, 197, 255, 0.78) !important;
+  --chart-info-border: rgb(46, 197, 255) !important;
   --chart-orange: rgba(255, 179, 71, 0.72) !important;
   --chart-orange-border: rgb(255, 179, 71) !important;
-  --nova-accent: rgba(69, 214, 255, 0.7) !important;
-  --nova-accent-bg: rgba(69, 214, 255, 0.35) !important;
-  --nova-accent-border: rgb(69, 214, 255) !important;
+  --nova-accent: rgba(46, 197, 255, 0.7) !important;
+  --nova-accent-bg: rgba(46, 197, 255, 0.35) !important;
+  --nova-accent-border: rgb(46, 197, 255) !important;
   --nova-accent-text: #ffffff !important;
   --bug-accent-bg: rgba(255, 77, 109, 0.35) !important;
   --bug-accent-text: #ffffff !important;
-  --github-repo-label-color: #ffe3f4 !important;
-  --github-repo-api-bg: rgba(69, 214, 255, 0.5) !important;
-  --github-repo-api-border: rgba(69, 214, 255, 0.85) !important;
+  --github-repo-label-color: #e6f3ff !important;
+  --github-repo-api-bg: rgba(46, 197, 255, 0.5) !important;
+  --github-repo-api-border: rgba(46, 197, 255, 0.85) !important;
   --github-repo-tools-bg: rgba(44, 224, 165, 0.35) !important;
   --github-repo-tools-border: rgba(44, 224, 165, 0.75) !important;
   --github-repo-nuget-bg: rgba(173, 127, 255, 0.34) !important;
   --github-repo-nuget-border: rgba(173, 127, 255, 0.75) !important;
   --github-repo-migrations-bg: rgba(255, 179, 71, 0.34) !important;
   --github-repo-migrations-border: rgba(255, 179, 71, 0.74) !important;
-  --github-repo-infra-bg: rgba(69, 214, 255, 0.32) !important;
-  --github-repo-infra-border: rgba(69, 214, 255, 0.72) !important;
-  --github-deploy-progressbar-track-bg: rgba(59, 31, 99, 0.52) !important;
+  --github-repo-infra-bg: rgba(46, 197, 255, 0.32) !important;
+  --github-repo-infra-border: rgba(46, 197, 255, 0.72) !important;
+  --github-deploy-progressbar-track-bg: rgba(29, 62, 114, 0.52) !important;
   --github-deploy-progressbar-fill: rgba(255, 45, 149, 0.8) !important;
-  --github-deploy-surface-muted-bg: rgba(38, 17, 70, 0.88) !important;
-  --github-deploy-surface-muted-border: rgba(77, 42, 125, 0.55) !important;
-  --github-deploy-branch-pill-bg: rgba(31, 14, 54, 0.9) !important;
-  --github-deploy-branch-pill-border: rgba(77, 42, 125, 0.55) !important;
-  --github-deploy-branch-pill-text: #ffe3f4 !important;
+  --github-deploy-surface-muted-bg: rgba(17, 42, 85, 0.88) !important;
+  --github-deploy-surface-muted-border: rgba(42, 82, 144, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(7, 20, 46, 0.9) !important;
+  --github-deploy-branch-pill-border: rgba(42, 82, 144, 0.55) !important;
+  --github-deploy-branch-pill-text: #e6f3ff !important;
   --github-deploy-running-chip-bg: rgba(255, 179, 71, 0.14) !important;
   --github-deploy-running-chip-border: rgba(255, 179, 71, 0.5) !important;
   --github-deploy-running-chip-text: #ffd9a8 !important;
@@ -174,46 +177,46 @@ html[data-theme='miami-vice'],
   --github-deploy-queue-chip-text: #ffe9c8 !important;
   --github-deploy-inline-running-track: rgba(255, 179, 71, 0.2) !important;
   --github-deploy-inline-queued-track: rgba(255, 179, 71, 0.22) !important;
-  --github-deploy-footer-ticker-bg: rgba(31, 14, 54, 0.9) !important;
-  --github-deploy-footer-ticker-border: rgba(69, 214, 255, 0.34) !important;
-  --github-deploy-footer-ticker-text: #45d6ff !important;
-  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(69, 214, 255, 0.35) !important;
+  --github-deploy-footer-ticker-bg: rgba(7, 20, 46, 0.9) !important;
+  --github-deploy-footer-ticker-border: rgba(46, 197, 255, 0.34) !important;
+  --github-deploy-footer-ticker-text: #2ec5ff !important;
+  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(46, 197, 255, 0.35) !important;
   --content-text-size: 1.06rem !important;
-  --github-deploy-timeline-meta-color: #45d6ff !important;
+  --github-deploy-timeline-meta-color: #2ec5ff !important;
   --data-quality-valid: rgba(44, 224, 165, 0.5) !important;
   --data-quality-warning: rgba(255, 179, 71, 0.5) !important;
   --data-quality-error: rgba(255, 77, 109, 0.55) !important;
-  --data-quality-empty: rgba(138, 91, 192, 0.3) !important;
+  --data-quality-empty: rgba(79, 138, 214, 0.3) !important;
   --progress-spinner-size-sm: 14px !important;
   --progress-spinner-size-md: 18px !important;
   --progress-spinner-color: var(--primary-color) !important;
 
   // Ported from cpt-internal-tools for PrimeReact parity
-  --multiselect-chip-bg: #3b1f63 !important;
-  --multiselect-chip-fg: #ffe3f4 !important;
-  --multiselect-chip-icon-fg: #b98fd0 !important;
-  --multiselect-chip-border: 1px solid #4d2a7d !important;
+  --multiselect-chip-bg: #1d3e72 !important;
+  --multiselect-chip-fg: #e6f3ff !important;
+  --multiselect-chip-icon-fg: #8fb3d8 !important;
+  --multiselect-chip-border: 1px solid #2a5290 !important;
   --toast-success-bg: rgba(44, 224, 165, 0.2) !important;
   --toast-success-border: #2ce0a5 !important;
   --toast-success-text: #b6f7e0 !important;
-  --toast-info-bg: rgba(69, 214, 255, 0.2) !important;
-  --toast-info-border: #45d6ff !important;
-  --toast-info-text: #b6ecff !important;
+  --toast-info-bg: rgba(46, 197, 255, 0.2) !important;
+  --toast-info-border: #2ec5ff !important;
+  --toast-info-text: #bce8ff !important;
   --toast-warn-bg: rgba(255, 179, 71, 0.2) !important;
   --toast-warn-border: #ffb347 !important;
   --toast-warn-text: #ffe9c8 !important;
   --toast-error-bg: rgba(255, 77, 109, 0.22) !important;
   --toast-error-border: #ff4d6d !important;
   --toast-error-text: #ffd2da !important;
-  --cpt-skeleton-bg: #3b1f63 !important;
+  --cpt-skeleton-bg: #1d3e72 !important;
   --cpt-skeleton-sheen: rgba(255, 45, 149, 0.28) !important;
 
   @include badge.badge-theme-tokens(
     #ff2d95,
-    #1a0633,
+    #06122e,
     rgb(44, 224, 165),
     #04241a,
-    rgb(69, 214, 255),
+    rgb(46, 197, 255),
     #04141d,
     rgb(255, 179, 71),
     #1f1300,
