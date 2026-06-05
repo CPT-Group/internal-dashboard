@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **NOVA-2684 — Dev Corner One impediment freshness**: Added a lightweight impediment-only Jira refresh path in `operationalJiraStore` and wired `DevCornerOneDashboard` to poll that path every 60s independent of the broader operational cache TTL, so newly flagged NOVA impediments appear on the TV promptly without waiting for a full board refresh.
 - **Dev Corner One — Team Activity chips**: Replaced inline per-ticket hour text (`| 1.25h`) with a compact PrimeReact `Tag` badge inside each ticket chip, preserving existing worklog-hour calculations while improving TV readability and spacing.
 - **Dev Corner One — Team Activity chips (PLAID-110 UX tweak)**: Added a compact numeric ticket badge (`2146` from `NOVA-2146`, with fallback to original key when format is not `<PREFIX>-<number>`) and switched chip summary text to overflow-aware marquee scrolling so long titles smoothly auto-scroll instead of hard ellipsis while preserving the existing hours badge UI.
 - **Dev Corner One — Work Hours + Team Activity follow-up**: Strengthened the Canvas plaid visibility for `>=110%` target bars (denser stripes, thicker red/yellow strokes, brighter pulse, subtle yellow underlay) while keeping legacy Tizen-safe drawing paths. Reused the existing `/api/jira/worklogs-today` flow to return issue-level worklog seconds and now append per-ticket logged hours to Team Activity in-progress chips (`Summary | 1.25h`, `0.00h` fallback).

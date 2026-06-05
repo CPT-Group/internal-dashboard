@@ -26,16 +26,27 @@ const formatCloseTime = (hours: number | null): string => {
 export const DevCornerOneDashboard = () => {
   const { cycleTheme } = useTheme();
   const { hours, hoursByIssue, loading: workHoursLoading } = useWorkHoursToday();
-  const { fetchOperationalData, isStale, loading, error, getAnalytics, impedimentAnalytics } =
+  const {
+    fetchOperationalData,
+    fetchImpedimentData,
+    isStale,
+    isImpedimentStale,
+    loading,
+    error,
+    getAnalytics,
+    impedimentAnalytics,
+  } =
     useOperationalJiraStore();
 
   useEffect(() => {
     if (isStale()) void fetchOperationalData();
+    if (isImpedimentStale()) void fetchImpedimentData();
     const interval = setInterval(() => {
       if (isStale()) void fetchOperationalData();
+      if (isImpedimentStale()) void fetchImpedimentData();
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [fetchOperationalData, isStale]);
+  }, [fetchImpedimentData, fetchOperationalData, isImpedimentStale, isStale]);
 
   const analytics = getAnalytics();
   const { kpis, throughputRatio, teamActivity } = analytics;
