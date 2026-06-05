@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react';
 import { Badge } from 'primereact/badge';
 import { Chip } from 'primereact/chip';
+import { Tag } from 'primereact/tag';
 import type { TeamMemberActivity } from '@/types';
 import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
@@ -19,8 +20,8 @@ const formatTicketHours = (seconds: number): string => {
   return `${(Math.round((seconds / 3600) * 100) / 100).toFixed(2)}h`;
 };
 
-const buildTicketLabel = (key: string, summary: string, seconds: number): string =>
-  `${summary.trim() || key} | ${formatTicketHours(seconds)}`;
+const buildTicketSummary = (key: string, summary: string): string =>
+  summary.trim() || key;
 
 const MemberCard = ({
   m,
@@ -47,11 +48,18 @@ const MemberCard = ({
         {m.inProgressKeys.map((key, i) => (
           <Chip
             key={key}
-            label={buildTicketLabel(
-              key,
-              m.inProgressSummaries[i] ?? '',
-              hoursByIssue.get(key)?.get(m.accountId) ?? 0
-            )}
+            template={
+              <div className={styles.ticketChipContent}>
+                <span className={styles.ticketChipSummary}>
+                  {buildTicketSummary(key, m.inProgressSummaries[i] ?? '')}
+                </span>
+                <Tag
+                  value={formatTicketHours(hoursByIssue.get(key)?.get(m.accountId) ?? 0)}
+                  rounded
+                  className={styles.ticketHoursTag}
+                />
+              </div>
+            }
             className={`${styles.ticketChip} ${
               m.inProgressIsBug[i]
                 ? styles.ticketChipBug
