@@ -315,79 +315,103 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       ds.borderWidth = newWidths;
     }
 
-    const ctx: CanvasRenderingContext2D = chart.ctx;
     chart.update('none');
-
-    const meta = chart.getDatasetMeta(0);
-    for (let i = 0; i < meta.data.length; i++) {
-      const bar = meta.data[i];
-      if (!bar) continue;
-
-      const props = bar.getProps(['x', 'y', 'width', 'height', 'base'], true);
-      const bx = props.base ?? 0;
-      const bw = (props.x ?? 0) - bx;
-      const by = (props.y ?? 0) - (props.height ?? 0) / 2;
-      const bh = props.height ?? 0;
-      if (bw <= 0 || bh <= 0) continue;
-
-      const level = levels[i] ?? 'none';
-      const plaidLevel = level === 'none' ? 'full' : level;
-      const plaidSweep = (globalPhase * speedForLevel(plaidLevel)) % 1;
-      // Keep plaid visibly present in static moments, not only at pulse peaks.
-      const plaidPulse = 0.6 + 0.4 * pulseForPhase01(plaidSweep);
-      if (plaidFlags[i]) drawPlaidOverlay(ctx, bx, by, bw, bh, plaidSweep, plaidPulse);
-
-      if (level === 'none') continue;
-      const rgb = parseRGB(borders[i]);
-      if (!rgb) continue;
-      const sweep = (globalPhase * speedForLevel(level)) % 1;
-      const pulse = pulseForPhase01(sweep);
-      const profile = profileForLevel(level);
-
-      const blur = profile.maxBlur * pulse;
-      if (blur >= 0.5) {
-        ctx.save();
-        ctx.shadowColor = rgbaStr(rgb, 0.75 * pulse);
-        ctx.shadowBlur = blur;
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = rgbaStr(rgb, 0.45 * pulse);
-        pathRoundedRect(ctx, bx, by, bw, bh, 3);
-        ctx.stroke();
-        ctx.restore();
-
-        // Subtle animated gradient sheen so bar bodies feel alive on TV.
-        const shimmerWidth = Math.max(20, bw * 0.34);
-        const shimmerX = bx + (bw + shimmerWidth) * sweep - shimmerWidth;
-        const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
-        shimmer.addColorStop(0, 'rgba(255,255,255,0)');
-        shimmer.addColorStop(0.5, `rgba(255,255,255,${(profile.shimmerPeak * pulse).toFixed(2)})`);
-        shimmer.addColorStop(1, 'rgba(255,255,255,0)');
-
-        const surgeWidth = Math.max(22, bw * 0.4);
-        const surgeX = bx + (bw + surgeWidth) * ((sweep + 0.35) % 1) - surgeWidth;
-        const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
-        surge.addColorStop(0, 'rgba(0,0,0,0)');
-        surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * pulse));
-        surge.addColorStop(1, 'rgba(0,0,0,0)');
-
-        ctx.save();
-        ctx.fillStyle = shimmer;
-        pathRoundedRect(ctx, bx, by, bw, bh, 3);
-        ctx.clip();
-        ctx.fillRect(bx, by, bw, bh);
-        ctx.fillStyle = surge;
-        ctx.fillRect(bx, by, bw, bh);
-        ctx.restore();
-      }
-
-      // Red/full bars get a blinking hazard icon near the bar end.
-      if (level === 'full' && pulse > 0.55) {
-        const iconX = (props.x ?? 0) - 10;
-        const iconY = props.y ?? 0;
-        drawHazardTriangle(ctx, iconX, iconY, 10, rgbaStr(rgb, 0.95));
-      }
-    }
   }, [data.flashLevels, data.borderColors, data.colors, data.plaidOverlay, theme?.barPrimary]);
+
+  const animatedOverlayPlugin = useMemo<Plugin<'bar'>>(
+    () => ({
+      id: 'horizontal-bar-animated-overlay',
+      afterDatasetsDraw: (chart) => {
+        const levels = data.flashLevels ?? [];
+        const borders = data.borderColors ?? [];
+        const plaidFlags = data.plaidOverlay ?? [];
+        const globalPhase = phaseRef.current;
+        const ctx: CanvasRenderingContext2D = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+
+        for (let i = 0; i < meta.data.length; i++) {
+          const bar = meta.data[i];
+          if (!bar) continue;
+
+          const props = bar.getProps(['x', 'y', 'width', 'height', 'base'], true);
+          const bx = props.base ?? 0;
+          const bw = (props.x ?? 0) - bx;
+          const by = (props.y ?? 0) - (props.height ?? 0) / 2;
+          const bh = props.height ?? 0;
+          if (bw <= 0 || bh <= 0) continue;
+
+          const level = levels[i] ?? 'none';
+          const plaidLevel = level === 'none' ? 'full' : level;
+          const plaidSweep = (globalPhase * speedForLevel(plaidLevel)) % 1;
+          // Keep plaid visibly present in static moments, not only at pulse peaks.
+          const plaidPulse = 0.6 + 0.4 * pulseForPhase01(plaidSweep);
+          if (plaidFlags[i]) {
+            drawPlaidOverlay(ctx, bx, by, bw, bh, plaidSweep, plaidPulse);
+          }
+
+          if (level === 'none') continue;
+          const rgb = parseRGB(borders[i]);
+          if (!rgb) continue;
+
+          const sweep = (globalPhase * speedForLevel(level)) % 1;
+          const pulse = pulseForPhase01(sweep);
+          const profile = profileForLevel(level);
+          const blur = profile.maxBlur * pulse;
+
+          if (blur >= 0.5) {
+            ctx.save();
+            ctx.shadowColor = rgbaStr(rgb, 0.75 * pulse);
+            ctx.shadowBlur = blur;
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = rgbaStr(rgb, 0.45 * pulse);
+            pathRoundedRect(ctx, bx, by, bw, bh, 3);
+            ctx.stroke();
+            ctx.restore();
+
+            // Subtle animated gradient sheen so bar bodies feel alive on TV.
+            const shimmerWidth = Math.max(20, bw * 0.34);
+            const shimmerX = bx + (bw + shimmerWidth) * sweep - shimmerWidth;
+            const shimmer = ctx.createLinearGradient(
+              shimmerX,
+              by,
+              shimmerX + shimmerWidth,
+              by
+            );
+            shimmer.addColorStop(0, 'rgba(255,255,255,0)');
+            shimmer.addColorStop(
+              0.5,
+              `rgba(255,255,255,${(profile.shimmerPeak * pulse).toFixed(2)})`
+            );
+            shimmer.addColorStop(1, 'rgba(255,255,255,0)');
+
+            const surgeWidth = Math.max(22, bw * 0.4);
+            const surgeX = bx + (bw + surgeWidth) * ((sweep + 0.35) % 1) - surgeWidth;
+            const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
+            surge.addColorStop(0, 'rgba(0,0,0,0)');
+            surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * pulse));
+            surge.addColorStop(1, 'rgba(0,0,0,0)');
+
+            ctx.save();
+            ctx.fillStyle = shimmer;
+            pathRoundedRect(ctx, bx, by, bw, bh, 3);
+            ctx.clip();
+            ctx.fillRect(bx, by, bw, bh);
+            ctx.fillStyle = surge;
+            ctx.fillRect(bx, by, bw, bh);
+            ctx.restore();
+          }
+
+          // Red/full bars get a blinking hazard icon near the bar end.
+          if (level === 'full' && pulse > 0.55) {
+            const iconX = (props.x ?? 0) - 10;
+            const iconY = props.y ?? 0;
+            drawHazardTriangle(ctx, iconX, iconY, 10, rgbaStr(rgb, 0.95));
+          }
+        }
+      },
+    }),
+    [data.flashLevels, data.borderColors, data.plaidOverlay]
+  );
 
   useEffect(() => {
     if (!hasAnimation) return;
@@ -563,7 +587,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
         type="bar"
         data={chartData}
         options={options}
-        plugins={[ChartDataLabels, targetMarkerPlugin]}
+        plugins={[animatedOverlayPlugin, ChartDataLabels, targetMarkerPlugin]}
         className={styles.chart}
       />
     </div>
