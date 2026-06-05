@@ -4,6 +4,51 @@ import { JIRA_FLAGGED_IMPEDIMENT_VALUE } from '@/constants'
 const MAX_CACHE_KEYS = 500
 const sentFlagNotifications = new Set<string>()
 const TRACKED_PROJECT_KEYS = new Set(['NOVA'])
+const TEAMS_ADAPTIVE_CARD_CONTENT_TYPE =
+  'application/vnd.microsoft.card.adaptive'
+
+interface TeamsMentionConfig {
+  userId: string | null
+  userName: string
+  fallbackLabel: string
+}
+
+interface TeamsMentionEntity {
+  type: 'mention'
+  text: string
+  mentioned: {
+    id: string
+    name: string
+  }
+}
+
+interface TeamsAdaptiveTextBlock {
+  type: 'TextBlock'
+  text: string
+  wrap: boolean
+  weight?: 'Bolder'
+}
+
+interface TeamsAdaptiveCardContent {
+  $schema: 'http://adaptivecards.io/schemas/adaptive-card.json'
+  type: 'AdaptiveCard'
+  version: '1.2'
+  body: TeamsAdaptiveTextBlock[]
+  msteams?: {
+    entities: TeamsMentionEntity[]
+  }
+}
+
+interface TeamsAdaptiveCardAttachment {
+  contentType: typeof TEAMS_ADAPTIVE_CARD_CONTENT_TYPE
+  contentUrl: null
+  content: TeamsAdaptiveCardContent
+}
+
+interface TeamsAdaptiveMessagePayload {
+  type: 'message'
+  attachments: TeamsAdaptiveCardAttachment[]
+}
 
 function isDone(issue: JiraIssue): boolean {
   return issue.fields?.status?.statusCategory?.key === 'done'
@@ -75,14 +120,50 @@ async function postTeamsMessage(text: string): Promise<boolean> {
   }
 }
 
+async function postTeamsPayload(
+  payload: TeamsAdaptiveMessagePayload
+): Promise<boolean> {
+  const url = process.env.JIRA_IMPEDIMENTS_TEAMS_WEBHOOK_URL?.trim()
+  if (!url?.startsWith('http')) {
+    return false
+  }
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function toMentionConfig(): TeamsMentionConfig {
+  const configuredName = process.env.JIRA_IMPEDIMENTS_TEAMS_MENTION_USER_NAME
+    ?.trim()
+  const userName = configuredName?.length ? configuredName : 'Brandon Fay'
+  const fallbackLabel = process.env.JIRA_IMPEDIMENTS_TEAMS_MENTION_LABEL
+    ?.trim()
+  const userId = process.env.JIRA_IMPEDIMENTS_TEAMS_MENTION_USER_ID?.trim()
+  return {
+    userId: userId?.length ? userId : null,
+    userName,
+    fallbackLabel:
+      fallbackLabel?.length ? fallbackLabel : `@${userName}`,
+  }
+}
+
 function formatTeamsMessage(issue: JiraIssue): string {
   const issueKey = issue.key
   const summary = issue.fields?.summary ?? '(no summary)'
   const status = issue.fields?.status?.name ?? 'Unknown'
   const reason = toReason(issue)
   const url = toIssueUrl(issueKey)
+  const mentionConfig = toMentionConfig()
   return [
     '🚩 Jira impediment flagged',
+    `Attention: ${mentionConfig.fallbackLabel}`,
     `Ticket: [${issueKey}](${url})`,
     `Summary: ${summary}`,
     `Status: ${status}`,
@@ -90,10 +171,59 @@ function formatTeamsMessage(issue: JiraIssue): string {
   ].join('\n')
 }
 
+function toAdaptiveCardPayload(
+  issue: JiraIssue,
+  mentionConfig: TeamsMentionConfig
+): TeamsAdaptiveMessagePayload | null {
+  if (!mentionConfig.userId) {
+    return null
+  }
+  const issueKey = issue.key
+  const summary = issue.fields?.summary ?? '(no summary)'
+  const status = issue.fields?.status?.name ?? 'Unknown'
+  const reason = toReason(issue)
+  const url = toIssueUrl(issueKey)
+  const mentionText = `<at>${mentionConfig.userName}</at>`
+  const body: TeamsAdaptiveTextBlock[] = [
+    { type: 'TextBlock', text: '🚩 Jira impediment flagged', wrap: true, weight: 'Bolder' },
+    { type: 'TextBlock', text: `Attention: ${mentionText}`, wrap: true },
+    { type: 'TextBlock', text: `Ticket: [${issueKey}](${url})`, wrap: true },
+    { type: 'TextBlock', text: `Summary: ${summary}`, wrap: true },
+    { type: 'TextBlock', text: `Status: ${status}`, wrap: true },
+    { type: 'TextBlock', text: `Flag message: ${reason}`, wrap: true },
+  ]
+  const mentionEntity: TeamsMentionEntity = {
+    type: 'mention',
+    text: mentionText,
+    mentioned: {
+      id: mentionConfig.userId,
+      name: mentionConfig.userName,
+    },
+  }
+  return {
+    type: 'message',
+    attachments: [
+      {
+        contentType: TEAMS_ADAPTIVE_CARD_CONTENT_TYPE,
+        contentUrl: null,
+        content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+          type: 'AdaptiveCard',
+          version: '1.2',
+          body,
+          msteams: { entities: [mentionEntity] },
+        },
+      },
+    ],
+  }
+}
+
 export async function notifyImpedimentFlaggedTeamsIfNeeded(issues: JiraIssue[]): Promise<void> {
   if (issues.length === 0) {
     return
   }
+
+  const mentionConfig = toMentionConfig()
 
   for (const issue of issues) {
     if (!shouldNotifyForIssue(issue)) {
@@ -103,7 +233,11 @@ export async function notifyImpedimentFlaggedTeamsIfNeeded(issues: JiraIssue[]):
     if (sentFlagNotifications.has(dedupKey)) {
       continue
     }
-    const sent = await postTeamsMessage(formatTeamsMessage(issue))
+    const mentionPayload = toAdaptiveCardPayload(issue, mentionConfig)
+    const sent = mentionPayload
+      ? (await postTeamsPayload(mentionPayload)) ||
+        (await postTeamsMessage(formatTeamsMessage(issue)))
+      : await postTeamsMessage(formatTeamsMessage(issue))
     if (sent) {
       sentFlagNotifications.add(dedupKey)
       trimCache()
