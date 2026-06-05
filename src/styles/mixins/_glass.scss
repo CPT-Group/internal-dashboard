@@ -1,0 +1,58 @@
+/// Liquid Glass token emitter (Tizen-safe, pre-2020 CSS).
+///
+/// Single source of truth for the glass *structure* (sheen gradient + layered
+/// shadow). Each theme passes only its **precomputed rgba()** colors — there is
+/// NO `color-mix()` (CSS 2023, unsupported on old Tizen Chromium) and NO
+/// `backdrop-filter` (unreliable on old Tizen). The effect is built entirely
+/// from translucent rgba fills + a visible rim border + a top-down linear
+/// sheen + a drop shadow with an inset top highlight, so the glass reads even
+/// without compositing the live backdrop — and reads on LIGHT themes, where a
+/// translucent light surface over a light page is nearly invisible from alpha
+/// alone.
+///
+/// Edit-in-one-place: tune the gradient stops / shadow geometry here to restyle
+/// every theme at once; tune a single theme's tone by editing its `@include`.
+///
+/// @param {Color} $card-bg         Main panel/card/tile fill. Target **40–75%**
+///                                 alpha AND a tone clearly OFF the page bg.
+/// @param {Color} $card-bg-strong  Near-opaque (~90%) variant — ONLY for
+///                                 scroll-sticky DataTable headers so
+///                                 auto-scrolling rows never bleed through.
+/// @param {Color} $border          Visible glass rim hairline (keep it bright).
+/// @param {Color} $row-stripe      Faint stripe tint for translucent rows.
+/// @param {Color} $ripple          Translucent primary (replaces a color-mix()).
+/// @param {Color} $sheen-top       Top-edge sheen highlight (brighter on light).
+/// @param {Color} $sheen-mid       Mid sheen wash (fades to transparent).
+/// @param {Color} $shadow-drop     Main drop-shadow color/alpha (depth/lift).
+/// @param {Color} $shadow-inset    Inset top highlight (the lit glass edge).
+/// @param {Color} $glow            Optional colored outer glow; pass a fully
+///                                 transparent rgba to disable.
+@mixin glass-tokens(
+  $card-bg,
+  $card-bg-strong,
+  $border,
+  $row-stripe,
+  $ripple,
+  $sheen-top,
+  $sheen-mid,
+  $shadow-drop,
+  $shadow-inset,
+  $glow: rgba(0, 0, 0, 0)
+) {
+  --glass-card-bg: #{$card-bg} !important;
+  --glass-card-bg-strong: #{$card-bg-strong} !important;
+  --glass-border: #{$border} !important;
+  // Top-down sheen: a lit top edge fading to transparent — gives the surface a
+  // "pane of glass catching light" read independent of any backdrop blur.
+  --glass-sheen: linear-gradient(
+    180deg,
+    #{$sheen-top} 0%,
+    #{$sheen-mid} 42%,
+    rgba(255, 255, 255, 0) 78%
+  ) !important;
+  // Drop shadow (lift) + optional colored glow + inset top highlight (lit rim).
+  --glass-shadow: 0 10px 26px #{$shadow-drop}, 0 0 18px #{$glow},
+    inset 0 1px 0 #{$shadow-inset} !important;
+  --glass-row-stripe: #{$row-stripe} !important;
+  --ripple-bg: #{$ripple} !important;
+}

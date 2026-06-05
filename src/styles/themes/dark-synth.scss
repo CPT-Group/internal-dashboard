@@ -1,4 +1,5 @@
 @use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
 
 // Dark Synth Theme – matches cpt-internal-tools (synthwave purple/cyan)
 // Explicit html/body rules ensure background and text apply even if variable order is wrong.
@@ -86,20 +87,19 @@ html[data-theme='dark-synth'],
   --card-border: rgba(184, 114, 249, 0.2) !important;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 12px rgba(184, 114, 249, 0.08) !important;
 
-  // Liquid Glass (Tizen-safe rgba/gradient/shadow — no color-mix/backdrop-filter)
-  --glass-card-bg: rgba(26, 10, 46, 0.64) !important;
-  --glass-card-bg-strong: rgba(20, 7, 38, 0.92) !important;
-  --glass-border: rgba(184, 114, 249, 0.3) !important;
-  --glass-sheen: linear-gradient(
-    135deg,
-    rgba(184, 114, 249, 0.12) 0%,
-    rgba(255, 255, 255, 0.04) 30%,
-    rgba(255, 255, 255, 0) 62%
-  ) !important;
-  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 14px rgba(184, 114, 249, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
-  --glass-row-stripe: rgba(184, 114, 249, 0.07) !important;
-  --ripple-bg: rgba(36, 205, 197, 0.28) !important;
+  // Liquid Glass — fill is a LIGHTER purple than page (#0c0020) so it lifts off.
+  @include glass.glass-tokens(
+    rgba(42, 31, 78, 0.58),
+    rgba(20, 7, 38, 0.92),
+    rgba(184, 114, 249, 0.4),
+    rgba(184, 114, 249, 0.08),
+    rgba(36, 205, 197, 0.3),
+    rgba(184, 114, 249, 0.16),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.08),
+    rgba(184, 114, 249, 0.14)
+  );
   --corner-info-card-bg: rgba(26, 10, 46, 0.65) !important;
   --corner-info-card-border: #5c4d7a !important;
   --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;

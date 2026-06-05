@@ -1,4 +1,5 @@
 @use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
 
 // CPT Dark Theme – matches cpt-internal-tools
 
@@ -77,19 +78,19 @@ html[data-theme='dark'],
   --card-border: rgba(255, 255, 255, 0.06) !important;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.08) !important;
 
-  // Liquid Glass (Tizen-safe rgba/gradient/shadow — no color-mix/backdrop-filter)
-  --glass-card-bg: rgba(26, 45, 68, 0.62) !important;
-  --glass-card-bg-strong: rgba(15, 26, 40, 0.92) !important;
-  --glass-border: rgba(96, 165, 250, 0.28) !important;
-  --glass-sheen: linear-gradient(
-    135deg,
-    rgba(96, 165, 250, 0.1) 0%,
-    rgba(255, 255, 255, 0.04) 30%,
-    rgba(255, 255, 255, 0) 62%
-  ) !important;
-  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-  --glass-row-stripe: rgba(96, 165, 250, 0.06) !important;
-  --ripple-bg: rgba(96, 165, 250, 0.28) !important;
+  // Liquid Glass — fill is a LIGHTER slate-blue than page (#0f1a28) so it lifts.
+  @include glass.glass-tokens(
+    rgba(35, 58, 82, 0.56),
+    rgba(15, 26, 40, 0.92),
+    rgba(120, 180, 255, 0.34),
+    rgba(96, 165, 250, 0.08),
+    rgba(96, 165, 250, 0.3),
+    rgba(140, 190, 255, 0.14),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.42),
+    rgba(255, 255, 255, 0.07),
+    rgba(96, 165, 250, 0.1)
+  );
   --corner-info-card-bg: rgba(26, 45, 68, 0.68) !important;
   --corner-info-card-border: #3a5566 !important;
   --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;

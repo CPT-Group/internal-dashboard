@@ -118,7 +118,7 @@ body {
   font-size: 0.75rem;
   border-radius: var(--border-radius);
   border: 1px solid var(--glass-border, var(--surface-border));
-  background-color: var(--glass-card-bg-strong, var(--surface-card));
+  background-color: var(--glass-card-bg, var(--surface-card));
   background-image: var(--glass-sheen, none);
   color: var(--text-color);
   cursor: pointer;
@@ -667,7 +667,7 @@ body {
 .p-panel .p-panel-header {
   border: 1px solid var(--glass-border, var(--surface-border)) !important;
   padding: var(--content-padding, 1rem) !important;
-  background-color: var(--glass-card-bg-strong, var(--surface-card)) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
   background-image: var(--glass-sheen, none) !important;
   color: var(--text-color) !important;
   border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
@@ -1005,7 +1005,7 @@ body {
   background: rgba(0, 0, 0, 0.55) !important;
 }
 .p-dialog {
-  background-color: var(--glass-card-bg-strong, var(--surface-card)) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
   background-image: var(--glass-sheen, none) !important;
   color: var(--text-color) !important;
   border: 1px solid var(--glass-border, var(--surface-border)) !important;
