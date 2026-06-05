@@ -84,6 +84,13 @@ cp .env.example .env.local   # then fill in credentials (see AGENTS.md)
 
 Copy **`.env.example`** to **`.env.local`** and add credentials. Jira TV dashboards need `KYLE_EMAIL` and `KYLE_JIRA_TOKEN`; SQL-backed features need `DB_*` / `PROD_DB_*`. The UI starts without secrets, but live data routes will be empty or error until env is set.
 
+Impediment Teams alerts can optionally mention a specific user when using a Teams Incoming Webhook Adaptive Card payload:
+
+- `JIRA_IMPEDIMENTS_TEAMS_WEBHOOK_URL`: Teams Incoming Webhook URL used by `/api/jira/search` impediment notifications.
+- `JIRA_IMPEDIMENTS_TEAMS_MENTION_USER_ID`: mention target identity (Microsoft Entra Object ID or UPN) for true Teams @mention rendering.
+- `JIRA_IMPEDIMENTS_TEAMS_MENTION_USER_NAME`: optional display name for mention token (defaults to `Brandon Fay`).
+- `JIRA_IMPEDIMENTS_TEAMS_MENTION_LABEL`: plain-text fallback label when mention ID is not configured (defaults to `@Brandon Fay`).
+
 ### Development
 
 ```bash
