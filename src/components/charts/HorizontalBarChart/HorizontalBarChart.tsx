@@ -65,34 +65,47 @@ function pathRoundedRect(
   ctx.closePath();
 }
 
-const PLAID_RED = 'rgba(220, 38, 38, 0.44)';
-const PLAID_GREEN = 'rgba(34, 197, 94, 0.4)';
-
-/** Red/green diagonal plaid drawn in Canvas (no CSS) for 200%+ target tiers on TV. */
+/** Red/yellow diagonal plaid drawn in Canvas (no CSS) for 110%+ target tiers on TV. */
 function drawPlaidOverlay(
   ctx: CanvasRenderingContext2D,
   bx: number,
   by: number,
   bw: number,
   bh: number,
-  phase01: number
+  phase01: number,
+  pulse: number
 ): void {
   if (bw <= 0 || bh <= 0) return;
-  const step = 8;
+  const step = 5;
   const shift = phase01 * step;
+  const redAlpha = (0.62 + 0.3 * pulse).toFixed(2);
+  const yellowAlpha = (0.58 + 0.34 * pulse).toFixed(2);
   ctx.save();
   pathRoundedRect(ctx, bx, by, bw, bh, 3);
   ctx.clip();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = PLAID_RED;
+  // Dark underlay keeps stripes readable on bright "ahead" fills.
+  ctx.fillStyle = `rgba(76, 11, 11, ${(0.16 + 0.08 * pulse).toFixed(2)})`;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle = `rgba(255, 224, 102, ${(0.16 + 0.12 * pulse).toFixed(2)})`;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.lineWidth = 3.2;
+  ctx.strokeStyle = `rgba(220, 38, 38, ${redAlpha})`;
   for (let k = -bh - shift; k < bw + bh; k += step) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by);
     ctx.lineTo(bx + k + bh, by + bh);
     ctx.stroke();
   }
-  ctx.strokeStyle = PLAID_GREEN;
+  ctx.strokeStyle = `rgba(234, 179, 8, ${yellowAlpha})`;
   for (let k = -bh - shift + step * 0.5; k < bw + bh; k += step) {
+    ctx.beginPath();
+    ctx.moveTo(bx + k, by + bh);
+    ctx.lineTo(bx + k + bh, by);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = `rgba(255, 245, 157, ${(0.48 + 0.24 * pulse).toFixed(2)})`;
+  for (let k = -bh - shift + step * 0.25; k < bw + bh; k += step) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
     ctx.lineTo(bx + k + bh, by);
@@ -251,70 +264,64 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
     const chart = chartRef.current?.getChart();
     if (!chart) return;
     const ds = chart.data.datasets[0];
-    const levels = data.flashLevels;
-    const borders = data.borderColors;
-    if (!ds || !levels?.length || !borders?.length) return;
+    if (!ds) return;
+
+    const levels = data.flashLevels ?? [];
+    const borders = data.borderColors ?? [];
+    const plaidFlags = data.plaidOverlay ?? [];
 
     phaseRef.current += STEP;
     if (phaseRef.current > 1) phaseRef.current -= 1;
     const globalPhase = phaseRef.current;
 
-    const newFills: string[] = [];
-    const newBorders: string[] = [];
-    const newWidths: number[] = [];
-    const hasCustomColors = Array.isArray(data.colors) && data.colors.length === borders.length;
-    const baseFills = hasCustomColors
-      ? data.colors as string[]
-      : Array.from({ length: borders.length }, () => theme?.barPrimary ?? 'rgba(36,205,197,0.82)');
+    if (levels.length > 0 && borders.length > 0) {
+      const newFills: string[] = [];
+      const newBorders: string[] = [];
+      const newWidths: number[] = [];
+      const hasCustomColors = Array.isArray(data.colors) && data.colors.length === borders.length;
+      const baseFills = hasCustomColors
+        ? data.colors as string[]
+        : Array.from({ length: borders.length }, () => theme?.barPrimary ?? 'rgba(36,205,197,0.82)');
 
-    for (let i = 0; i < borders.length; i++) {
-      const level = levels[i];
-      const fillRgb = parseRGB(baseFills[i]);
-      const rgb = parseRGB(borders[i]);
-      const sweep = (globalPhase * speedForLevel(level)) % 1;
-      const pulse = pulseForPhase01(sweep);
-      const profile = profileForLevel(level);
+      for (let i = 0; i < borders.length; i++) {
+        const level = levels[i] ?? 'none';
+        const fillRgb = parseRGB(baseFills[i]);
+        const rgb = parseRGB(borders[i]);
+        const sweep = (globalPhase * speedForLevel(level)) % 1;
+        const pulse = pulseForPhase01(sweep);
+        const profile = profileForLevel(level);
 
-      if (!rgb) {
-        newFills.push(baseFills[i]);
-        newBorders.push(borders[i]);
-        newWidths.push(BORDER_WIDTH);
-        continue;
+        if (!rgb) {
+          newFills.push(baseFills[i]);
+          newBorders.push(borders[i]);
+          newWidths.push(BORDER_WIDTH);
+          continue;
+        }
+
+        if (level === 'none' || !fillRgb) {
+          newFills.push(baseFills[i]);
+          newBorders.push(borders[i]);
+          newWidths.push(BORDER_WIDTH);
+          continue;
+        }
+
+        newFills.push(rgbaStr(fillRgb, profile.fillMin + profile.fillRange * pulse));
+        newBorders.push(rgbaStr(rgb, profile.borderMin + profile.borderRange * pulse));
+        newWidths.push(BORDER_WIDTH + profile.widthBoost * pulse);
       }
 
-      if (level === 'none' || !fillRgb) {
-        newFills.push(baseFills[i]);
-        newBorders.push(borders[i]);
-        newWidths.push(BORDER_WIDTH);
-        continue;
-      }
-
-      newFills.push(rgbaStr(fillRgb, profile.fillMin + profile.fillRange * pulse));
-      newBorders.push(rgbaStr(rgb, profile.borderMin + profile.borderRange * pulse));
-      newWidths.push(BORDER_WIDTH + profile.widthBoost * pulse);
+      ds.backgroundColor = newFills;
+      ds.borderColor = newBorders;
+      ds.borderWidth = newWidths;
     }
-
-    ds.backgroundColor = newFills;
-    ds.borderColor = newBorders;
-    ds.borderWidth = newWidths;
 
     const ctx: CanvasRenderingContext2D = chart.ctx;
     chart.update('none');
 
     const meta = chart.getDatasetMeta(0);
-    for (let i = 0; i < levels.length; i++) {
-      const level = levels[i];
-      if (level === 'none') continue;
+    for (let i = 0; i < meta.data.length; i++) {
       const bar = meta.data[i];
       if (!bar) continue;
-      const rgb = parseRGB(borders[i]);
-      if (!rgb) continue;
-      const sweep = (globalPhase * speedForLevel(level)) % 1;
-      const pulse = pulseForPhase01(sweep);
-      const profile = profileForLevel(level);
-
-      const blur = profile.maxBlur * pulse;
-      if (blur < 0.5) continue;
 
       const props = bar.getProps(['x', 'y', 'width', 'height', 'base'], true);
       const bx = props.base ?? 0;
@@ -323,42 +330,54 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       const bh = props.height ?? 0;
       if (bw <= 0 || bh <= 0) continue;
 
-      ctx.save();
-      ctx.shadowColor = rgbaStr(rgb, 0.75 * pulse);
-      ctx.shadowBlur = blur;
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = rgbaStr(rgb, 0.45 * pulse);
-      pathRoundedRect(ctx, bx, by, bw, bh, 3);
-      ctx.stroke();
-      ctx.restore();
+      const level = levels[i] ?? 'none';
+      const plaidLevel = level === 'none' ? 'full' : level;
+      const plaidSweep = (globalPhase * speedForLevel(plaidLevel)) % 1;
+      // Keep plaid visibly present in static moments, not only at pulse peaks.
+      const plaidPulse = 0.6 + 0.4 * pulseForPhase01(plaidSweep);
+      if (plaidFlags[i]) drawPlaidOverlay(ctx, bx, by, bw, bh, plaidSweep, plaidPulse);
 
-      // Subtle animated gradient sheen so bar bodies feel alive on TV.
-      const shimmerWidth = Math.max(20, bw * 0.34);
-      const shimmerX = bx + (bw + shimmerWidth) * sweep - shimmerWidth;
-      const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
-      shimmer.addColorStop(0, 'rgba(255,255,255,0)');
-      shimmer.addColorStop(0.5, `rgba(255,255,255,${(profile.shimmerPeak * pulse).toFixed(2)})`);
-      shimmer.addColorStop(1, 'rgba(255,255,255,0)');
+      if (level === 'none') continue;
+      const rgb = parseRGB(borders[i]);
+      if (!rgb) continue;
+      const sweep = (globalPhase * speedForLevel(level)) % 1;
+      const pulse = pulseForPhase01(sweep);
+      const profile = profileForLevel(level);
 
-      const surgeWidth = Math.max(22, bw * 0.4);
-      const surgeX = bx + (bw + surgeWidth) * ((sweep + 0.35) % 1) - surgeWidth;
-      const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
-      surge.addColorStop(0, 'rgba(0,0,0,0)');
-      surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * pulse));
-      surge.addColorStop(1, 'rgba(0,0,0,0)');
+      const blur = profile.maxBlur * pulse;
+      if (blur >= 0.5) {
+        ctx.save();
+        ctx.shadowColor = rgbaStr(rgb, 0.75 * pulse);
+        ctx.shadowBlur = blur;
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = rgbaStr(rgb, 0.45 * pulse);
+        pathRoundedRect(ctx, bx, by, bw, bh, 3);
+        ctx.stroke();
+        ctx.restore();
 
-      ctx.save();
-      ctx.fillStyle = shimmer;
-      pathRoundedRect(ctx, bx, by, bw, bh, 3);
-      ctx.clip();
-      ctx.fillRect(bx, by, bw, bh);
-      ctx.fillStyle = surge;
-      ctx.fillRect(bx, by, bw, bh);
-      ctx.restore();
+        // Subtle animated gradient sheen so bar bodies feel alive on TV.
+        const shimmerWidth = Math.max(20, bw * 0.34);
+        const shimmerX = bx + (bw + shimmerWidth) * sweep - shimmerWidth;
+        const shimmer = ctx.createLinearGradient(shimmerX, by, shimmerX + shimmerWidth, by);
+        shimmer.addColorStop(0, 'rgba(255,255,255,0)');
+        shimmer.addColorStop(0.5, `rgba(255,255,255,${(profile.shimmerPeak * pulse).toFixed(2)})`);
+        shimmer.addColorStop(1, 'rgba(255,255,255,0)');
 
-      const plaidFlags = data.plaidOverlay;
-      if (plaidFlags?.[i]) {
-        drawPlaidOverlay(ctx, bx, by, bw, bh, sweep);
+        const surgeWidth = Math.max(22, bw * 0.4);
+        const surgeX = bx + (bw + surgeWidth) * ((sweep + 0.35) % 1) - surgeWidth;
+        const surge = ctx.createLinearGradient(surgeX, by, surgeX + surgeWidth, by);
+        surge.addColorStop(0, 'rgba(0,0,0,0)');
+        surge.addColorStop(0.5, rgbaStr(rgb, profile.surgePeak * pulse));
+        surge.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.save();
+        ctx.fillStyle = shimmer;
+        pathRoundedRect(ctx, bx, by, bw, bh, 3);
+        ctx.clip();
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = surge;
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.restore();
       }
 
       // Red/full bars get a blinking hazard icon near the bar end.

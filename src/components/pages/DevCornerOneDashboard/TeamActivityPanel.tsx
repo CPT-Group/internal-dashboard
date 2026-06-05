@@ -3,17 +3,40 @@
 import type { CSSProperties } from 'react';
 import { Badge } from 'primereact/badge';
 import { Chip } from 'primereact/chip';
+import { Tag } from 'primereact/tag';
+import { MarqueeTicker } from '@/components/ui';
 import type { TeamMemberActivity } from '@/types';
 import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
 
 export interface TeamActivityPanelProps {
   members: TeamMemberActivity[];
+  hoursByIssue: Map<string, Map<string, number>>;
 }
 
 const firstName = (name: string) => name.split(' ')[0] ?? name;
 
-const MemberCard = ({ m }: { m: TeamMemberActivity }) => {
+const formatTicketHours = (seconds: number): string => {
+  if (seconds <= 0) return '0.00h';
+  return `${(Math.round((seconds / 3600) * 100) / 100).toFixed(2)}h`;
+};
+
+const buildTicketSummary = (key: string, summary: string): string =>
+  summary.trim() || key;
+
+const buildTicketNumberLabel = (key: string): string => {
+  const match = /^([^-]+)-(\d+)$/.exec(key.trim());
+  if (!match) return key;
+  return match[2];
+};
+
+const MemberCard = ({
+  m,
+  hoursByIssue,
+}: {
+  m: TeamMemberActivity;
+  hoursByIssue: Map<string, Map<string, number>>;
+}) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 10, pauseMs: 4000 });
 
   return (
@@ -32,7 +55,24 @@ const MemberCard = ({ m }: { m: TeamMemberActivity }) => {
         {m.inProgressKeys.map((key, i) => (
           <Chip
             key={key}
-            label={m.inProgressSummaries[i] ?? ''}
+            template={
+              <div className={styles.ticketChipContent}>
+                <span className={styles.ticketChipKey}>{buildTicketNumberLabel(key)}</span>
+                <span className={styles.ticketChipSummary}>
+                  <MarqueeTicker
+                    text={buildTicketSummary(key, m.inProgressSummaries[i] ?? '')}
+                    className={styles.ticketChipSummaryTicker}
+                    durationSeconds={20}
+                    gapRem={1.5}
+                  />
+                </span>
+                <Tag
+                  value={formatTicketHours(hoursByIssue.get(key)?.get(m.accountId) ?? 0)}
+                  rounded
+                  className={styles.ticketHoursTag}
+                />
+              </div>
+            }
             className={`${styles.ticketChip} ${
               m.inProgressIsBug[i]
                 ? styles.ticketChipBug
@@ -47,7 +87,7 @@ const MemberCard = ({ m }: { m: TeamMemberActivity }) => {
   );
 };
 
-export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
+export const TeamActivityPanel = ({ members, hoursByIssue }: TeamActivityPanelProps) => {
   return (
     <div className={styles.teamSection}>
       <div
@@ -57,7 +97,7 @@ export const TeamActivityPanel = ({ members }: TeamActivityPanelProps) => {
         }
       >
         {members.map((m) => (
-          <MemberCard key={m.accountId} m={m} />
+          <MemberCard key={m.accountId} m={m} hoursByIssue={hoursByIssue} />
         ))}
       </div>
     </div>

@@ -11,6 +11,11 @@ export interface JiraSearchClientResult {
   total: number;
 }
 
+export interface WorkHoursTodayData {
+  byAuthorSeconds: Map<string, number>;
+  byIssueByAuthorSeconds: Map<string, Map<string, number>>;
+}
+
 /**
  * Fetch transition dates (FROM "New") for a batch of issue keys.
  * Returns a map of issueKey → ISO date string.
@@ -33,15 +38,31 @@ export async function jiraTransitionDates(
  */
 export async function fetchWorkHoursToday(
   accountIds: string[]
-): Promise<Map<string, number>> {
+): Promise<WorkHoursTodayData> {
   const q = new URLSearchParams();
   q.set('accountIds', accountIds.join(','));
   const res = await fetch(`/api/jira/worklogs-today?${q.toString()}`);
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error ?? `HTTP ${res.status}`);
-  return new Map(
+  const byAuthorSeconds = new Map(
     Object.entries(json.hours ?? {}).map(([id, secs]) => [id, Number(secs)])
   );
+  const byIssueByAuthorSeconds = new Map<string, Map<string, number>>(
+    Object.entries(json.hoursByIssue ?? {}).map(([issueKey, byAuthorRaw]) => {
+      const byAuthorObject =
+        byAuthorRaw && typeof byAuthorRaw === 'object'
+          ? (byAuthorRaw as Record<string, number>)
+          : {};
+      const byAuthorMap = new Map(
+        Object.entries(byAuthorObject).map(([accountId, seconds]) => [
+          accountId,
+          Number(seconds),
+        ])
+      );
+      return [issueKey, byAuthorMap];
+    })
+  );
+  return { byAuthorSeconds, byIssueByAuthorSeconds };
 }
 
 export async function jiraSearch(

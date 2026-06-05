@@ -11,16 +11,20 @@ const POLL_MS = 10 * 60 * 1000;
 
 /**
  * Fetches work hours logged today (Pacific time) for the 4 core devs.
- * Returns { hours: Map<accountId, totalSeconds>, loading }.
+ * Returns author totals plus issue-level breakdown for those same worklogs.
  */
 export function useWorkHoursToday() {
   const [hours, setHours] = useState<Map<string, number>>(new Map());
+  const [hoursByIssue, setHoursByIssue] = useState<Map<string, Map<string, number>>>(
+    new Map()
+  );
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
       const result = await fetchWorkHoursToday(CORE_DEV_IDS);
-      setHours(result);
+      setHours(result.byAuthorSeconds);
+      setHoursByIssue(result.byIssueByAuthorSeconds);
     } catch (err) {
       console.error('Failed to fetch work hours:', err);
     } finally {
@@ -34,5 +38,5 @@ export function useWorkHoursToday() {
     return () => clearInterval(id);
   }, [refresh]);
 
-  return { hours, loading };
+  return { hours, hoursByIssue, loading };
 }
