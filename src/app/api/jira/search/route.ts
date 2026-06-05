@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server';
 import { searchIssues } from '@/services/api/jiraService';
+import { notifyImpedimentFlaggedTeamsIfNeeded } from '@/services/jira/impediments';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +28,8 @@ export async function GET(request: NextRequest) {
       maxResults: maxResults ? Math.min(Number(maxResults), 500) : 100,
       fields: fields?.length ? fields : undefined,
     });
+
+    await notifyImpedimentFlaggedTeamsIfNeeded(result.issues);
 
     return Response.json({ success: true, ...result });
   } catch (error) {

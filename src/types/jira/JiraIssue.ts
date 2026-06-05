@@ -51,6 +51,12 @@ export interface JiraIssueLink {
   inwardIssue?: JiraLinkedIssueRef | null;
 }
 
+export interface JiraFlagOption {
+  id: string;
+  value: string;
+  self?: string;
+}
+
 export interface JiraIssueFields {
   summary: string;
   status: JiraIssueStatus;
@@ -76,6 +82,8 @@ export interface JiraIssueFields {
   components?: Array<{ id: string; name: string }> | null;
   /** Tech Owner – the dev who actually does the work (customfield_10193). */
   customfield_10193?: JiraUser | null;
+  /** Jira flag field ("Flagged"), used for impediment tracking. */
+  customfield_10021?: JiraFlagOption[] | null;
   /** NOVA project — "NOVA Components" single-select (customfield_10754). */
   customfield_10754?: { value?: string; id?: string; self?: string } | null;
 }

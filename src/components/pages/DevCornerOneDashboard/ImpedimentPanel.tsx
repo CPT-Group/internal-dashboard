@@ -22,19 +22,13 @@ const impedimentBody = (row: ImpedimentView) => (
   </div>
 );
 
-const blocksBody = (row: ImpedimentView) => (
-  <div className={styles.blocksCell}>
-    {row.blockedStories.map((story) => {
-      const pillClass = story.key.startsWith('NOVA-')
-        ? `${styles.storyKeyPill} ${styles.storyKeyPillNova}`
-        : styles.storyKeyPill;
-      return (
-        <span key={story.key} className="p-overlay-badge">
-          <span className={pillClass}>{story.key}</span>
-          <Badge value="1" severity="warning" />
-        </span>
-      );
-    })}
+const flagBody = (row: ImpedimentView) => (
+  <div className={styles.flagCell}>
+    <span className="p-overlay-badge">
+      <span className={styles.storyKeyPill}>Flagged</span>
+      <Badge value="!" severity="warning" />
+    </span>
+    <span className={styles.flagReason}>{truncate(row.flagReason, 32)}</span>
   </div>
 );
 
@@ -63,7 +57,7 @@ export const ImpedimentPanel = ({ analytics }: ImpedimentPanelProps) => {
         >
           <Column header="Impediment" body={impedimentBody} style={{ minWidth: '140px' }} />
           <Column field="statusName" header="Status" style={{ width: '90px' }} />
-          <Column header="Blocks" body={blocksBody} style={{ minWidth: '120px' }} />
+          <Column header="Flag" body={flagBody} style={{ minWidth: '120px' }} />
           <Column
             header="Age"
             body={(row: ImpedimentView) => `${row.ageDays}d`}

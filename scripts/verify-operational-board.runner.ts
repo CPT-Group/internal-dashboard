@@ -128,26 +128,9 @@ async function main(): Promise<void> {
     transitionDates: new Map(),
   });
 
-  let impedimentDraft = buildImpedimentAnalytics({
-    openOperationalIssues: open,
-    linkCarrierIssues: linkCarriers,
-  });
-  const missingBlockerKeys = impedimentDraft.activeImpediments
-    .map((row) => row.key)
-    .filter(
-      (key) => !linkCarriers.some((i) => i.key === key) && !open.some((i) => i.key === key)
-    );
-  let enrichmentIssues: JiraIssue[] = [];
-  if (missingBlockerKeys.length > 0) {
-    const enrichJql = `key in (${missingBlockerKeys.join(',')}) ORDER BY updated DESC`;
-    enrichmentIssues = filterIssuesNovaMinKey(
-      await jiraSearch(enrichJql, missingBlockerKeys.length, uniqueFields)
-    );
-  }
   const impedimentAnalytics = buildImpedimentAnalytics({
     openOperationalIssues: open,
     linkCarrierIssues: linkCarriers,
-    enrichmentIssues,
   });
 
   const openActive = open.filter((i) => i.fields?.status?.statusCategory?.key !== 'done');
@@ -159,7 +142,7 @@ async function main(): Promise<void> {
   console.log(`Open (board JQL):     ${openActive.length}`);
   console.log(`Limbo KPI:            ${analytics.kpis.limboCount}`);
   console.log(`In progress (TO):     ${totalInProgressTechOwner.length} total | ${analytics.inProgressTickets.length} on Dev 2 slide (max 20)`);
-  console.log(`Impediments KPI:      ${impedimentAnalytics.impedimentCount} blockers | ${impedimentAnalytics.impactedStoryCount} stories impacted`);
+  console.log(`Impediments KPI:      ${impedimentAnalytics.impedimentCount} flagged tickets`);
 
   console.log('\n=== Dev Corner One — Team Activity (assignee × in progress) ===');
   for (const member of analytics.teamActivity) {
@@ -183,8 +166,7 @@ async function main(): Promise<void> {
     console.log('  (none)');
   }
   for (const row of impedimentAnalytics.activeImpediments) {
-    const blocked = row.blockedStories.map((s) => s.key).join(', ');
-    console.log(`  ${row.key} | ${row.statusName} | ${row.ageDays}d | blocks: ${blocked}`);
+    console.log(`  ${row.key} | ${row.statusName} | ${row.ageDays}d | flag: ${row.flagReason}`);
   }
 
   console.log('\n=== Attribution gaps (in progress by Tech Owner, assignee is someone else) ===');
@@ -238,16 +220,14 @@ async function main(): Promise<void> {
   }
   if (failures.length === 0) console.log('  OK teamActivity in-progress keys match assignee + indeterminate');
 
-  let blockedStoryOk = true;
+  let flagReasonOk = true;
   for (const row of impedimentAnalytics.activeImpediments) {
-    for (const story of row.blockedStories) {
-      if (!openActive.some((i) => i.key === story.key)) {
-        fail(`blocked story ${story.key} not in operational open set`);
-        blockedStoryOk = false;
-      }
+    if (row.flagReason.trim().length === 0) {
+      fail(`flagged impediment ${row.key} has empty flag reason`);
+      flagReasonOk = false;
     }
   }
-  if (blockedStoryOk) console.log('  OK all blocked stories are in operational open scope');
+  if (flagReasonOk) console.log('  OK all impediments include a flag reason');
 
   console.log('');
   if (failures.length > 0) {
