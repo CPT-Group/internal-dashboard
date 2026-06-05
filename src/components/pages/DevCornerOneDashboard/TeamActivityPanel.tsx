@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { Badge } from 'primereact/badge';
 import { Chip } from 'primereact/chip';
 import { Tag } from 'primereact/tag';
+import { MarqueeTicker } from '@/components/ui';
 import type { TeamMemberActivity } from '@/types';
 import { useAutoScroll } from '@/hooks';
 import styles from './DevCornerOneDashboard.module.scss';
@@ -22,6 +23,12 @@ const formatTicketHours = (seconds: number): string => {
 
 const buildTicketSummary = (key: string, summary: string): string =>
   summary.trim() || key;
+
+const buildTicketNumberLabel = (key: string): string => {
+  const match = /^([^-]+)-(\d+)$/.exec(key.trim());
+  if (!match) return key;
+  return match[2];
+};
 
 const MemberCard = ({
   m,
@@ -50,8 +57,14 @@ const MemberCard = ({
             key={key}
             template={
               <div className={styles.ticketChipContent}>
+                <span className={styles.ticketChipKey}>{buildTicketNumberLabel(key)}</span>
                 <span className={styles.ticketChipSummary}>
-                  {buildTicketSummary(key, m.inProgressSummaries[i] ?? '')}
+                  <MarqueeTicker
+                    text={buildTicketSummary(key, m.inProgressSummaries[i] ?? '')}
+                    className={styles.ticketChipSummaryTicker}
+                    durationSeconds={20}
+                    gapRem={1.5}
+                  />
                 </span>
                 <Tag
                   value={formatTicketHours(hoursByIssue.get(key)?.get(m.accountId) ?? 0)}

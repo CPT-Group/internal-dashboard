@@ -374,19 +374,38 @@
 .ticketChipContent {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.5rem;
   width: 100%;
   min-width: 0;
 }
 
+.ticketChipKey {
+  flex-shrink: 0;
+  min-width: 2.6rem;
+  max-width: 3.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: calc(var(--dev1-panel-text-sm) * 0.88);
+  line-height: 1.1;
+  padding: 0.16rem 0.36rem;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-100);
+  color: var(--text-color-secondary);
+}
+
 .ticketChipSummary {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   line-height: 1.35;
+}
+
+.ticketChipSummaryTicker {
+  display: block;
+  width: 100%;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: inherit;
 }
 
 .ticketHoursTag {
@@ -409,6 +428,12 @@
   backdrop-filter: blur(4px);
 
   :global(.p-chip-text) {
+    color: var(--nova-accent-text);
+  }
+
+  .ticketChipKey {
+    border-color: var(--nova-accent-border);
+    background: var(--nova-accent-bg);
     color: var(--nova-accent-text);
   }
 
@@ -447,6 +472,12 @@
   :global(.p-chip-text) {
     color: var(--bug-accent-text) !important;
     font-weight: 700;
+  }
+
+  .ticketChipKey {
+    border-color: rgba(239, 68, 68, 0.75);
+    background: rgba(127, 29, 29, 0.38);
+    color: var(--bug-accent-text);
   }
 
   .ticketHoursTag {
