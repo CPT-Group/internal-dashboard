@@ -65,33 +65,33 @@ function pathRoundedRect(
   ctx.closePath();
 }
 
-const PLAID_RED = 'rgba(220, 38, 38, 0.44)';
-const PLAID_GREEN = 'rgba(34, 197, 94, 0.4)';
-
-/** Red/green diagonal plaid drawn in Canvas (no CSS) for 200%+ target tiers on TV. */
+/** Red/yellow diagonal plaid drawn in Canvas (no CSS) for 110%+ target tiers on TV. */
 function drawPlaidOverlay(
   ctx: CanvasRenderingContext2D,
   bx: number,
   by: number,
   bw: number,
   bh: number,
-  phase01: number
+  phase01: number,
+  pulse: number
 ): void {
   if (bw <= 0 || bh <= 0) return;
   const step = 8;
   const shift = phase01 * step;
+  const redAlpha = (0.25 + 0.45 * pulse).toFixed(2);
+  const yellowAlpha = (0.30 + 0.45 * pulse).toFixed(2);
   ctx.save();
   pathRoundedRect(ctx, bx, by, bw, bh, 3);
   ctx.clip();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = PLAID_RED;
+  ctx.strokeStyle = `rgba(220, 38, 38, ${redAlpha})`;
   for (let k = -bh - shift; k < bw + bh; k += step) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by);
     ctx.lineTo(bx + k + bh, by + bh);
     ctx.stroke();
   }
-  ctx.strokeStyle = PLAID_GREEN;
+  ctx.strokeStyle = `rgba(234, 179, 8, ${yellowAlpha})`;
   for (let k = -bh - shift + step * 0.5; k < bw + bh; k += step) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
@@ -358,7 +358,7 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
 
       const plaidFlags = data.plaidOverlay;
       if (plaidFlags?.[i]) {
-        drawPlaidOverlay(ctx, bx, by, bw, bh, sweep);
+        drawPlaidOverlay(ctx, bx, by, bw, bh, sweep, pulse);
       }
 
       // Red/full bars get a blinking hazard icon near the bar end.

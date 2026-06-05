@@ -34,7 +34,7 @@ export function getWorkHoursZone(hours: number, targetHours: number): WorkHoursZ
   if (ratio <= 0.5) return 'critical';
   if (ratio <= 0.75) return 'warn';
   if (ratio <= 1) return 'onTrack';
-  if (ratio < 2) return 'overTarget';
+  if (ratio < 1.1) return 'overTarget';
   return 'plaid';
 }
 

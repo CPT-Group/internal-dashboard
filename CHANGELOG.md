@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cursor analytics billing reliability**: **`src/lib/cursorAdminHttp.ts`** (18/min rate limit, 429 backoff, ETag disk cache); **`src/lib/cursorBillingStore.ts`** + **`npm run cursor-analytics:sync-billing`** (per-UTC-day shards under **`kyleOutput/cursor-billing-store/`**); **`npm run test:cursor-billing-store`**; **`GET /api/cursor-analytics?includeAdmin=quick`** (live spend + daily only) vs **`includeAdmin=1`** (store merge, no HTTP event pagination). Dashboard **Quick refresh**, billing store coverage panel, Sprint default when toggling to API mode, blocked dollar trend when store incomplete.
 - **Cursor analytics password gate**: **`CURSOR_ANALYTICS_PASSWORD`** (e.g. `cpt-nova-team`) protects **`/cursor-analytics`** and **`/api/cursor-analytics`** via middleware; **`/cursor-analytics/login`** + **`POST /api/cursor-analytics/auth`** set an httpOnly session cookie. Unset env = no gate (open route).
 - **AGENTS.md — CPT2K16 CleanClaims SSN program (NOVA-2451 / NOVA-2454)**: Documented completed audit/remediation on CPT2K16 (encrypt pipeline, strict update rules, results, 58 placeholders). Operational scripts/CSVs remain gitignored under `cursorScripts/jira/` — not shipped in this app repo.
+- **`.env.example`**: Root env template for Jira, SQL, GitHub, Website Health, Cursor analytics, and Salesforce (copy to `.env.local`).
 
 ### Removed
 
@@ -23,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Plaid work-hours overlay now triggers at 110% of rolling target (was 200%); stripe colors changed from red/green to red/yellow; stripes now pulse in opacity in addition to scrolling
+- **Agent compatibility doc fixes**: README dev port **3333** (prod `npm start` on 3000), correct TV routes (`/tv/dev-corner-one`, etc.), `.env.example`, refreshed `docs/app-overview.md` (operational Jira store, current dashboards). Added `npm run typecheck`; website-health skill API examples use port 3333.
 - **Jira automation — Tech Owner on assignee change**: Created three ENABLED rules (`[Data team] Assignee changed → set Tech Owner`) for **NOVA**, **OPRD**, and **CM** — when `cf[10193]` is empty and assignee is Kyle/Roy/James/Brandon, set Tech Owner (Kyle→Kyle; Roy/James/Brandon→Roy). Re-enabled **Case Update Requests & Bugs Auto Add to Sprint** (`019d356a`). Scripts: `create-tech-owner-on-assignee-rule.mjs`, `enable-case-update-bugs-rule.mjs`.
 - **Jira component backfill (NOVA high-confidence)**: Applied **21** component tags on open NOVA tickets via `backfill-missing-components.mjs --min-confidence high` (mostly ATLAS; Interactive Website, Weekly Reports, Internal Tools where matched).
 - **Dev Corner Two — GitHub deploy cards**: Disabled body auto-scroll; cards fill the slide grid (`1fr` rows) so they grow on large screens. Removed duplicate per-env **In Progress** / queue badges under swim lanes (header tags only). Footer ticker stays pinned below lanes without clipping; lanes scroll internally only if space is tight.
