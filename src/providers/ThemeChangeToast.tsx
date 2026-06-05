@@ -14,6 +14,9 @@ const TITLE_BY_THEME: Record<string, string> = {
   light: 'Light',
   'dark-synth': 'Dark Synth',
   'ms-access-2010': 'MS Access 2010',
+  khaki: 'Khaki',
+  'light-synth': 'Light Synth',
+  'flight-deck-hud': 'Flight Deck HUD',
 };
 
 function readThemeFromEvent(event: Event): string | null {

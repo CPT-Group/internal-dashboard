@@ -1,3 +1,5 @@
+@use 'mixins/glass' as glass;
+
 // Design tokens – default dark-synth (matches cpt-internal-tools). Theme files override.
 // PrimeReact theme CSS is loaded first; our SCSS loads after so these values apply.
 :root {
@@ -99,6 +101,22 @@
   --scrollbar-thumb-hover-bg: var(--surface-400) !important;
   --card-border: rgba(184, 114, 249, 0.2) !important;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 12px rgba(184, 114, 249, 0.08) !important;
+
+  // Liquid Glass defaults (= dark-synth). See mixins/_glass.scss for the recipe.
+  // Fill is a LIGHTER purple than the page (#0c0020) so the frosted panel lifts
+  // off the background; bright rim + glow + sheen make the glass read.
+  @include glass.glass-tokens(
+    rgba(42, 31, 78, 0.58),
+    rgba(20, 7, 38, 0.92),
+    rgba(184, 114, 249, 0.4),
+    rgba(184, 114, 249, 0.08),
+    rgba(36, 205, 197, 0.3),
+    rgba(184, 114, 249, 0.16),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.08),
+    rgba(184, 114, 249, 0.14)
+  );
   --corner-info-card-bg: rgba(26, 10, 46, 0.65) !important;
   --corner-info-card-border: var(--surface-400, #5c4d7a) !important;
   --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;

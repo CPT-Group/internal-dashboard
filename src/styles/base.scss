@@ -117,11 +117,12 @@ body {
   padding: 0.35rem 0.75rem;
   font-size: 0.75rem;
   border-radius: var(--border-radius);
-  border: 1px solid var(--surface-border);
-  background: var(--surface-card);
+  border: 1px solid var(--glass-border, var(--surface-border));
+  background-color: var(--glass-card-bg, var(--surface-card));
+  background-image: var(--glass-sheen, none);
   color: var(--text-color);
   cursor: pointer;
-  box-shadow: var(--card-shadow);
+  box-shadow: var(--glass-shadow, var(--card-shadow));
 }
 .theme-switcher-sticky:hover {
   background: var(--surface-hover);
@@ -607,13 +608,18 @@ body {
   animation: p-progress-spinner-dash 1.5s ease-in-out infinite !important;
 }
 
-// --- Card ---
+// --- Card (Liquid Glass) ---
+// Frosted translucent fill + diagonal sheen + glass rim + layered shadow.
+// `background-image` carries the sheen; `background-color` carries the rgba
+// fill (so the gradient sits over the translucent base). All values resolve
+// to Tizen-safe rgba()/linear-gradient — no color-mix / backdrop-filter.
 .p-card {
-  background: var(--surface-card) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
+  background-image: var(--glass-sheen, none) !important;
   color: var(--text-color) !important;
-  border: 1px solid var(--surface-border) !important;
+  border: 1px solid var(--glass-border, var(--surface-border)) !important;
   border-radius: var(--border-radius) !important;
-  box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.2)) !important;
+  box-shadow: var(--glass-shadow, var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.2))) !important;
 }
 .p-card .p-card-subtitle {
   color: var(--text-color-secondary) !important;
@@ -659,9 +665,10 @@ body {
 
 // --- Panel ---
 .p-panel .p-panel-header {
-  border: 1px solid var(--surface-border) !important;
+  border: 1px solid var(--glass-border, var(--surface-border)) !important;
   padding: var(--content-padding, 1rem) !important;
-  background: var(--surface-card) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
+  background-image: var(--glass-sheen, none) !important;
   color: var(--text-color) !important;
   border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
 }
@@ -682,32 +689,35 @@ body {
 }
 .p-panel .p-panel-content {
   padding: var(--content-padding, 1rem) !important;
-  border: 1px solid var(--surface-border) !important;
-  background: var(--surface-card) !important;
+  border: 1px solid var(--glass-border, var(--surface-border)) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
   color: var(--text-color) !important;
   border-top: 0 none !important;
   border-radius: 0 0 var(--border-radius) var(--border-radius) !important;
 }
 .p-panel .p-panel-footer {
   padding: var(--content-padding, 1rem) !important;
-  border: 1px solid var(--surface-border) !important;
-  background: var(--surface-card) !important;
+  border: 1px solid var(--glass-border, var(--surface-border)) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
   color: var(--text-color) !important;
   border-top: 0 none !important;
 }
 
 // --- DataTable ---
+// DataTable surfaces are translucent so the host card's glass reads as a
+// single frosted pane. Sticky/scrollable headers below stay near-opaque so
+// auto-scrolling rows never bleed through the column header on TVs.
 .p-datatable .p-datatable-header,
 .p-datatable .p-datatable-footer {
-  background: var(--surface-card) !important;
+  background-color: var(--glass-card-bg-strong, var(--surface-card)) !important;
   color: var(--text-color-secondary) !important;
-  border-color: var(--surface-border) !important;
+  border-color: var(--glass-border, var(--surface-border)) !important;
 }
 .p-datatable .p-datatable-thead > tr > th,
 .p-datatable .p-datatable-tfoot > tr > td {
-  background: var(--surface-card) !important;
+  background-color: var(--glass-card-bg-strong, var(--surface-card)) !important;
   color: var(--text-color) !important;
-  border-color: var(--surface-border) !important;
+  border-color: var(--glass-border, var(--surface-border)) !important;
 }
 .p-datatable .p-sortable-column .p-sortable-column-icon {
   color: var(--text-color-secondary) !important;
@@ -732,11 +742,11 @@ body {
   box-shadow: var(--focus-ring) !important;
 }
 .p-datatable .p-datatable-tbody > tr {
-  background: var(--surface-card) !important;
+  background-color: transparent !important;
   color: var(--text-color) !important;
 }
 .p-datatable .p-datatable-tbody > tr > td {
-  border-color: var(--surface-border) !important;
+  border-color: var(--glass-border, var(--surface-border)) !important;
 }
 .p-datatable .p-datatable-tbody > tr > td.p-highlight,
 .p-datatable .p-datatable-tbody > tr.p-highlight {
@@ -758,11 +768,11 @@ body {
 .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot,
 .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-virtualscroller > .p-datatable-table > .p-datatable-thead,
 .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-virtualscroller > .p-datatable-table > .p-datatable-tfoot {
-  background: var(--surface-card) !important;
-  background-color: var(--surface-card) !important;
+  background: var(--glass-card-bg-strong, var(--surface-card)) !important;
+  background-color: var(--glass-card-bg-strong, var(--surface-card)) !important;
 }
 .p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd {
-  background: var(--surface-e) !important;
+  background-color: var(--glass-row-stripe, var(--surface-e)) !important;
 }
 .p-datatable.p-datatable-striped .p-datatable-tbody > tr.p-row-odd.p-highlight {
   background: var(--highlight-bg) !important;
@@ -995,16 +1005,17 @@ body {
   background: rgba(0, 0, 0, 0.55) !important;
 }
 .p-dialog {
-  background: var(--surface-card) !important;
+  background-color: var(--glass-card-bg, var(--surface-card)) !important;
+  background-image: var(--glass-sheen, none) !important;
   color: var(--text-color) !important;
-  border: 1px solid var(--surface-border) !important;
+  border: 1px solid var(--glass-border, var(--surface-border)) !important;
   border-radius: var(--border-radius) !important;
-  box-shadow: var(--card-shadow, 0 2px 10px rgba(0, 0, 0, 0.3)) !important;
+  box-shadow: var(--glass-shadow, var(--card-shadow, 0 2px 10px rgba(0, 0, 0, 0.3))) !important;
 }
 .p-dialog .p-dialog-header {
-  background: var(--surface-card) !important;
+  background: transparent !important;
   color: var(--text-color) !important;
-  border-bottom: 1px solid var(--surface-border) !important;
+  border-bottom: 1px solid var(--glass-border, var(--surface-border)) !important;
 }
 .p-dialog .p-dialog-header .p-dialog-title {
   color: var(--text-color) !important;
@@ -1020,13 +1031,13 @@ body {
   box-shadow: var(--focus-ring) !important;
 }
 .p-dialog .p-dialog-content {
-  background: var(--surface-card) !important;
+  background: transparent !important;
   color: var(--text-color) !important;
 }
 .p-dialog .p-dialog-footer {
-  background: var(--surface-card) !important;
+  background: transparent !important;
   color: var(--text-color) !important;
-  border-top: 1px solid var(--surface-border) !important;
+  border-top: 1px solid var(--glass-border, var(--surface-border)) !important;
 }
 
 // --- Skeleton ---
@@ -1403,8 +1414,10 @@ body {
 }
 
 // --- Ripple (ensures theme primary color shows; opacity kept subtle) ------
+// Tizen-safe: uses a precomputed translucent-primary token per theme instead
+// of color-mix() (CSS 2023, unsupported on old Tizen Chromium).
 .p-ripple-element {
-  background: color-mix(in srgb, var(--primary-color) 28%, transparent) !important;
+  background: var(--ripple-bg, rgba(36, 205, 197, 0.28)) !important;
 }
 
 // --- VirtualScroller background (inherits table background) ---------------
