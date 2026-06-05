@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dev Corner One — Work Hours plaid bars**: Restored value-label visibility for plaid-overlay bars by drawing animated plaid/glow overlays before `ChartDataLabels`, keeping labels clearly readable with the existing Tizen-safe Canvas rendering.
 - **Dev Corner One — Work Hours plaid visibility follow-up**: `>=110%` bars now render plaid every animation frame with a stronger baseline pulse so stripes remain obvious in screenshot/static moments. Canvas pattern contrast was increased (subtle dark underlay + denser/thicker red/yellow stripes) while keeping Tizen-safe drawing paths.
 - **`/cursor-analytics` Team cost trend**: Chart.js scale id mismatch (`datasets` used `yAxisID: 'y1'` but options defined `scales.y`) left an empty right axis near **$0–$1** while the line scaled on the auto axis — tooltips showed real USD (e.g. **$85**) but the chart looked broken. **`CursorSpendTrendChart`** now defines **`scales.y1`** to match the datasets.
 - **`/cursor-analytics` Chart.js `ChunkLoadError` when toggling to CSV estimate**: PrimeReact `Chart` normally lazy-loads `chart.js/auto`; under **Next.js Turbopack + HMR** that chunk could 404 after remounts. **`src/lib/primeChartJsBootstrap.ts`** eagerly imports `chart.js/auto` and assigns **`globalThis.Chart`** before `primereact/chart` loads; **`CursorSpendTrendChart`** imports it first (client-only). Removed the `chart.js` type import from the trend chart in favor of a local dataset interface.
