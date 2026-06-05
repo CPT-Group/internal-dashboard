@@ -1,0 +1,262 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// Miami Vice Theme – matches cpt-internal-tools (1980s synthwave: hot-pink
+// primary + electric-blue accent over a deep neon-violet Miami night).
+// Palette hand-translated from the main app's `customThemes.ts` `miami-vice`
+// entry into concrete hex + rgba (no color-mix — Samsung Tizen TV constraint).
+// Explicit html/body rules ensure background and text apply even if variable
+// order is wrong; a Tizen-safe linear-gradient adds the synthwave backdrop
+// (magenta → deep purple → cyan) over the solid `--page-background` base.
+
+html[data-theme='miami-vice'] {
+  background-color: #190b2e !important;
+  background-image: linear-gradient(
+    160deg,
+    #2a0d4e 0%,
+    #190b2e 48%,
+    #0c1b3a 100%
+  ) !important;
+}
+html[data-theme='miami-vice'] body {
+  background-color: #190b2e !important;
+  background-image: linear-gradient(
+    160deg,
+    rgba(255, 45, 149, 0.1) 0%,
+    rgba(25, 11, 46, 0) 42%,
+    rgba(69, 214, 255, 0.1) 100%
+  ) !important;
+  color: #ffe3f4 !important;
+}
+
+html[data-theme='miami-vice'],
+[data-theme='miami-vice'] {
+  --header-bg: #1d0d39 !important;
+  --header-fg: #ff93d1 !important;
+  --header-border: 1px solid #3b1f63 !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+  --window-bg: #190b2e !important;
+  --window-fg: #ffe3f4 !important;
+  --window-border: 1px solid #3b1f63 !important;
+  --window-surface-bg: #261146 !important;
+  --window-surface-fg: #ffe3f4 !important;
+  --window-surface-border: 1px solid #4d2a7d !important;
+  --input-bg: #1d0d39 !important;
+  --input-fg: #ffe3f4 !important;
+  --input-border: 1px solid #3b1f63 !important;
+  --button-bg: var(--window-surface-bg) !important;
+  --button-fg: #ffe3f4 !important;
+  --button-hover-bg: var(--surface-hover) !important;
+  --menu-item-hover-bg: #3b1f63 !important;
+  --status-icon-fill: #45d6ff !important;
+  --status-icon-stroke: #45d6ff !important;
+  --status-icon-stroke-offline: #6a3fa0 !important;
+  --page-background: #190b2e !important;
+  --text-primary: #ffe3f4 !important;
+  --button-primary-background: #ff2d95 !important;
+  --button-primary-background-hover: #ff52a8 !important;
+  --button-primary-text: #1a0633 !important;
+  --maskbg: rgba(12, 5, 26, 0.78) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(255, 45, 149, 0.35) !important;
+  --highlight-bg: rgba(255, 45, 149, 0.16) !important;
+  --highlight-text-color: #ffe3f4 !important;
+  --color-danger: #ff4d6d !important;
+  --surface-ground: #190b2e !important;
+  --surface-section: #190b2e !important;
+  --surface-card: #261146 !important;
+  --surface-overlay: #261146 !important;
+  --surface-border: #3b1f63 !important;
+  --surface-hover: rgba(69, 214, 255, 0.12) !important;
+  --surface-0: #140827 !important;
+  --surface-50: #190b2e !important;
+  --surface-100: #261146 !important;
+  --surface-200: #3b1f63 !important;
+  --surface-300: #4d2a7d !important;
+  --surface-400: #6a3fa0 !important;
+  --surface-500: #8a5bc0 !important;
+  --surface-600: #a87fd6 !important;
+  --surface-700: #c9a8ff !important;
+  --surface-800: #ffd6ef !important;
+  --surface-900: #ffe3f4 !important;
+  --surface-a: #261146 !important;
+  --surface-b: #190b2e !important;
+  --surface-c: rgba(69, 214, 255, 0.08) !important;
+  --surface-d: #3b1f63 !important;
+  --surface-e: #261146 !important;
+  --surface-f: #261146 !important;
+  --gray-50: #ffe3f4 !important;
+  --gray-100: #ffd6ef !important;
+  --gray-200: #c9a8ff !important;
+  --gray-300: #a87fd6 !important;
+  --gray-400: #8a5bc0 !important;
+  --gray-500: #6a3fa0 !important;
+  --gray-600: #4d2a7d !important;
+  --gray-700: #3b1f63 !important;
+  --gray-800: #261146 !important;
+  --gray-900: #190b2e !important;
+  --text-color: #ffe3f4 !important;
+  --text-color-secondary: #b98fd0 !important;
+  --primary-color: #ff2d95 !important;
+  --primary-color-text: #1a0633 !important;
+  --scrollbar-track-bg: #261146 !important;
+  --scrollbar-thumb-bg: #3b1f63 !important;
+  --scrollbar-thumb-hover-bg: #4d2a7d !important;
+  --card-border: rgba(255, 45, 149, 0.2) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 45, 149, 0.1) !important;
+
+  // Liquid Glass — fill is a LIGHTER neon-violet (#2e184e) than page (#190b2e)
+  // so panels lift off the synthwave backdrop, with a bright hot-pink rim, an
+  // electric-blue ripple, and a pink top sheen + glow for a backlit-glass read.
+  @include glass.glass-tokens(
+    rgba(46, 24, 78, 0.55),
+    rgba(31, 14, 54, 0.92),
+    rgba(255, 45, 149, 0.42),
+    rgba(255, 45, 149, 0.08),
+    rgba(69, 214, 255, 0.3),
+    rgba(255, 45, 149, 0.16),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 45, 149, 0.16)
+  );
+
+  --corner-info-card-bg: rgba(38, 17, 70, 0.65) !important;
+  --corner-info-card-border: #4d2a7d !important;
+  --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  --corner-info-card-divider: rgba(255, 45, 149, 0.2) !important;
+  --corner-info-card-hover-bg: rgba(69, 214, 255, 0.14) !important;
+  --tag-today-bg: rgba(255, 45, 149, 0.25) !important;
+  --tag-today-text: #ff93d1 !important;
+  --tag-today-border: rgba(255, 45, 149, 0.5) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(255, 45, 149, 0.82) !important;
+  --chart-bar-primary-border: rgb(255, 45, 149) !important;
+  --chart-success: rgba(44, 224, 165, 0.78) !important;
+  --chart-success-border: rgb(44, 224, 165) !important;
+  --chart-danger: rgba(255, 77, 109, 0.78) !important;
+  --chart-danger-border: rgb(255, 77, 109) !important;
+  --chart-warning: rgba(255, 179, 71, 0.9) !important;
+  --chart-warning-border: rgb(255, 179, 71) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(69, 214, 255, 0.78) !important;
+  --chart-info-border: rgb(69, 214, 255) !important;
+  --chart-orange: rgba(255, 179, 71, 0.72) !important;
+  --chart-orange-border: rgb(255, 179, 71) !important;
+  --nova-accent: rgba(69, 214, 255, 0.7) !important;
+  --nova-accent-bg: rgba(69, 214, 255, 0.35) !important;
+  --nova-accent-border: rgb(69, 214, 255) !important;
+  --nova-accent-text: #ffffff !important;
+  --bug-accent-bg: rgba(255, 77, 109, 0.35) !important;
+  --bug-accent-text: #ffffff !important;
+  --github-repo-label-color: #ffe3f4 !important;
+  --github-repo-api-bg: rgba(69, 214, 255, 0.5) !important;
+  --github-repo-api-border: rgba(69, 214, 255, 0.85) !important;
+  --github-repo-tools-bg: rgba(44, 224, 165, 0.35) !important;
+  --github-repo-tools-border: rgba(44, 224, 165, 0.75) !important;
+  --github-repo-nuget-bg: rgba(173, 127, 255, 0.34) !important;
+  --github-repo-nuget-border: rgba(173, 127, 255, 0.75) !important;
+  --github-repo-migrations-bg: rgba(255, 179, 71, 0.34) !important;
+  --github-repo-migrations-border: rgba(255, 179, 71, 0.74) !important;
+  --github-repo-infra-bg: rgba(69, 214, 255, 0.32) !important;
+  --github-repo-infra-border: rgba(69, 214, 255, 0.72) !important;
+  --github-deploy-progressbar-track-bg: rgba(59, 31, 99, 0.52) !important;
+  --github-deploy-progressbar-fill: rgba(255, 45, 149, 0.8) !important;
+  --github-deploy-surface-muted-bg: rgba(38, 17, 70, 0.88) !important;
+  --github-deploy-surface-muted-border: rgba(77, 42, 125, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(31, 14, 54, 0.9) !important;
+  --github-deploy-branch-pill-border: rgba(77, 42, 125, 0.55) !important;
+  --github-deploy-branch-pill-text: #ffe3f4 !important;
+  --github-deploy-running-chip-bg: rgba(255, 179, 71, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(255, 179, 71, 0.5) !important;
+  --github-deploy-running-chip-text: #ffd9a8 !important;
+  --github-deploy-queue-chip-bg: rgba(255, 179, 71, 0.22) !important;
+  --github-deploy-queue-chip-border: rgba(255, 179, 71, 0.55) !important;
+  --github-deploy-queue-chip-text: #ffe9c8 !important;
+  --github-deploy-inline-running-track: rgba(255, 179, 71, 0.2) !important;
+  --github-deploy-inline-queued-track: rgba(255, 179, 71, 0.22) !important;
+  --github-deploy-footer-ticker-bg: rgba(31, 14, 54, 0.9) !important;
+  --github-deploy-footer-ticker-border: rgba(69, 214, 255, 0.34) !important;
+  --github-deploy-footer-ticker-text: #45d6ff !important;
+  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(69, 214, 255, 0.35) !important;
+  --content-text-size: 1.06rem !important;
+  --github-deploy-timeline-meta-color: #45d6ff !important;
+  --data-quality-valid: rgba(44, 224, 165, 0.5) !important;
+  --data-quality-warning: rgba(255, 179, 71, 0.5) !important;
+  --data-quality-error: rgba(255, 77, 109, 0.55) !important;
+  --data-quality-empty: rgba(138, 91, 192, 0.3) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  // Ported from cpt-internal-tools for PrimeReact parity
+  --multiselect-chip-bg: #3b1f63 !important;
+  --multiselect-chip-fg: #ffe3f4 !important;
+  --multiselect-chip-icon-fg: #b98fd0 !important;
+  --multiselect-chip-border: 1px solid #4d2a7d !important;
+  --toast-success-bg: rgba(44, 224, 165, 0.2) !important;
+  --toast-success-border: #2ce0a5 !important;
+  --toast-success-text: #b6f7e0 !important;
+  --toast-info-bg: rgba(69, 214, 255, 0.2) !important;
+  --toast-info-border: #45d6ff !important;
+  --toast-info-text: #b6ecff !important;
+  --toast-warn-bg: rgba(255, 179, 71, 0.2) !important;
+  --toast-warn-border: #ffb347 !important;
+  --toast-warn-text: #ffe9c8 !important;
+  --toast-error-bg: rgba(255, 77, 109, 0.22) !important;
+  --toast-error-border: #ff4d6d !important;
+  --toast-error-text: #ffd2da !important;
+  --cpt-skeleton-bg: #3b1f63 !important;
+  --cpt-skeleton-sheen: rgba(255, 45, 149, 0.28) !important;
+
+  @include badge.badge-theme-tokens(
+    #ff2d95,
+    #1a0633,
+    rgb(44, 224, 165),
+    #04241a,
+    rgb(69, 214, 255),
+    #04141d,
+    rgb(255, 179, 71),
+    #1f1300,
+    rgb(255, 77, 109),
+    #ffffff,
+    rgb(255, 77, 109)
+  );
+  @include badge.badge-theme-rules();
+}
+
+// Dialog – theme colors (from cpt-internal-tools)
+html[data-theme='miami-vice'] .p-dialog,
+[data-theme='miami-vice'] .p-dialog {
+  background: var(--window-surface-bg) !important;
+  border: var(--window-surface-border) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='miami-vice'] .p-dialog .p-dialog-header,
+[data-theme='miami-vice'] .p-dialog .p-dialog-header {
+  background: var(--header-bg) !important;
+  color: var(--header-fg) !important;
+  border-bottom: var(--header-border) !important;
+}
+html[data-theme='miami-vice'] .p-dialog .p-dialog-title,
+[data-theme='miami-vice'] .p-dialog .p-dialog-title {
+  color: var(--header-fg) !important;
+}
+html[data-theme='miami-vice'] .p-dialog .p-dialog-content,
+[data-theme='miami-vice'] .p-dialog .p-dialog-content {
+  background: var(--window-surface-bg) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='miami-vice'] .p-dialog .p-dialog-footer,
+[data-theme='miami-vice'] .p-dialog .p-dialog-footer {
+  background: var(--window-surface-bg) !important;
+  border-top: var(--window-surface-border) !important;
+}
+html[data-theme='miami-vice'] .p-dialog .p-dialog-header-icon,
+[data-theme='miami-vice'] .p-dialog .p-dialog-header-icon {
+  color: var(--header-fg) !important;
+}
+html[data-theme='miami-vice'] .p-dialog .p-dialog-header-icon:hover,
+[data-theme='miami-vice'] .p-dialog .p-dialog-header-icon:hover {
+  color: var(--text-color-secondary) !important;
+  background: var(--surface-hover) !important;
+}

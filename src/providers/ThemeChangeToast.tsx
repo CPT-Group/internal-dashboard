@@ -17,6 +17,7 @@ const TITLE_BY_THEME: Record<string, string> = {
   khaki: 'Khaki',
   'light-synth': 'Light Synth',
   'flight-deck-hud': 'Flight Deck HUD',
+  'miami-vice': 'Miami Vice',
 };
 
 function readThemeFromEvent(event: Event): string | null {
