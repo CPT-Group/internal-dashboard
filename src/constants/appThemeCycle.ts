@@ -3,7 +3,7 @@
  * Keep in sync with the `valid` array in `src/app/layout.tsx` theme-init inline script.
  *
  * Cycle: dark → light → dark-synth → ms-access-2010 → khaki → light-synth →
- *        flight-deck-hud → dark → …
+ *        flight-deck-hud → miami-vice → dark → …
  */
 export const APP_THEME_CYCLE_ORDER = [
   'dark',
@@ -13,6 +13,7 @@ export const APP_THEME_CYCLE_ORDER = [
   'khaki',
   'light-synth',
   'flight-deck-hud',
+  'miami-vice',
 ] as const;
 
 export type AppTheme = (typeof APP_THEME_CYCLE_ORDER)[number];
