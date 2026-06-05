@@ -65,7 +65,7 @@ function pathRoundedRect(
   ctx.closePath();
 }
 
-/** Red/yellow diagonal plaid drawn in Canvas (no CSS) for 110%+ target tiers on TV. */
+/** Multi-stripe plaid drawn in Canvas (no CSS) for 110%+ target tiers on TV. */
 function drawPlaidOverlay(
   ctx: CanvasRenderingContext2D,
   bx: number,
@@ -76,40 +76,75 @@ function drawPlaidOverlay(
   pulse: number
 ): void {
   if (bw <= 0 || bh <= 0) return;
-  const step = 5;
-  const shift = phase01 * step;
-  const redAlpha = (0.62 + 0.3 * pulse).toFixed(2);
-  const yellowAlpha = (0.58 + 0.34 * pulse).toFixed(2);
+  const redStep = 14;
+  const greenStep = 13;
+  const redShift = phase01 * redStep;
+  const greenShift = phase01 * greenStep;
+  const darkBandShift = phase01 * 8;
+  const redAlpha = (0.42 + 0.22 * pulse).toFixed(2);
+  const greenAlpha = (0.38 + 0.2 * pulse).toFixed(2);
+  const darkAlpha = (0.12 + 0.1 * pulse).toFixed(2);
   ctx.save();
   pathRoundedRect(ctx, bx, by, bw, bh, 3);
   ctx.clip();
-  // Dark underlay keeps stripes readable on bright "ahead" fills.
-  ctx.fillStyle = `rgba(76, 11, 11, ${(0.16 + 0.08 * pulse).toFixed(2)})`;
+  // Dark tint underlay keeps cross-stripes readable on bright fill colors.
+  ctx.fillStyle = `rgba(40, 15, 15, ${(0.14 + 0.08 * pulse).toFixed(2)})`;
   ctx.fillRect(bx, by, bw, bh);
-  ctx.fillStyle = `rgba(255, 224, 102, ${(0.16 + 0.12 * pulse).toFixed(2)})`;
+  ctx.fillStyle = `rgba(24, 53, 31, ${(0.1 + 0.06 * pulse).toFixed(2)})`;
   ctx.fillRect(bx, by, bw, bh);
-  ctx.lineWidth = 3.2;
-  ctx.strokeStyle = `rgba(220, 38, 38, ${redAlpha})`;
-  for (let k = -bh - shift; k < bw + bh; k += step) {
+  // Diagonal red family.
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = `rgba(196, 48, 48, ${redAlpha})`;
+  for (let k = -bh - redShift; k < bw + bh; k += redStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by);
     ctx.lineTo(bx + k + bh, by + bh);
     ctx.stroke();
   }
-  ctx.strokeStyle = `rgba(234, 179, 8, ${yellowAlpha})`;
-  for (let k = -bh - shift + step * 0.5; k < bw + bh; k += step) {
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = `rgba(255, 140, 140, ${(0.26 + 0.2 * pulse).toFixed(2)})`;
+  for (let k = -bh - redShift + 4; k < bw + bh; k += redStep) {
+    ctx.beginPath();
+    ctx.moveTo(bx + k, by);
+    ctx.lineTo(bx + k + bh, by + bh);
+    ctx.stroke();
+  }
+
+  // Opposite diagonal green family.
+  ctx.lineWidth = 2.8;
+  ctx.strokeStyle = `rgba(40, 136, 72, ${greenAlpha})`;
+  for (let k = -bh + greenShift; k < bw + bh; k += greenStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
     ctx.lineTo(bx + k + bh, by);
     ctx.stroke();
   }
-  ctx.lineWidth = 1.4;
-  ctx.strokeStyle = `rgba(255, 245, 157, ${(0.48 + 0.24 * pulse).toFixed(2)})`;
-  for (let k = -bh - shift + step * 0.25; k < bw + bh; k += step) {
+  ctx.lineWidth = 1.1;
+  ctx.strokeStyle = `rgba(143, 227, 152, ${(0.24 + 0.18 * pulse).toFixed(2)})`;
+  for (let k = -bh + greenShift + 3; k < bw + bh; k += greenStep) {
     ctx.beginPath();
     ctx.moveTo(bx + k, by + bh);
     ctx.lineTo(bx + k + bh, by);
     ctx.stroke();
+  }
+
+  // Dark accent bands reinforce a woven plaid feel without noisy flicker.
+  ctx.fillStyle = `rgba(18, 11, 11, ${darkAlpha})`;
+  const vBandStep = 11;
+  for (
+    let x = bx - vBandStep + (darkBandShift % vBandStep);
+    x < bx + bw;
+    x += vBandStep
+  ) {
+    ctx.fillRect(x, by, 1.2, bh);
+  }
+  const hBandStep = 7;
+  for (
+    let y = by - hBandStep + ((darkBandShift * 0.7) % hBandStep);
+    y < by + bh;
+    y += hBandStep
+  ) {
+    ctx.fillRect(bx, y, bw, 0.9);
   }
   ctx.restore();
 }

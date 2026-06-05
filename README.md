@@ -4,7 +4,7 @@ Internal TV dashboard application for displaying company stats, heat maps, and o
 
 ## Overview
 
-This is a Next.js-based dashboard application designed to run on internal TVs throughout the office. Each TV can be configured to display different dashboard content via routes like `/tv/conference-room`, `/tv/dev`, etc.
+This is a Next.js-based dashboard application designed to run on internal TVs throughout the office. Each TV is pointed at a route such as `/tv/dev-corner-one`, `/tv/dev-corner-two`, or `/tv/conference-room` (see **TV Routes** below).
 
 ## Agent Skills
 
@@ -27,13 +27,13 @@ Project skills live in `.cursor/skills/`. Use these slash-style prompts in chat 
 
 ## Tech Stack
 
-- **Framework**: Next.js 16.1.6 (App Router)
-- **React**: 19.2.3
+- **Framework**: Next.js 16 (App Router)
+- **React**: 19
 - **TypeScript**: Latest (strict mode)
-- **UI Library**: PrimeReact 10.9.7, PrimeFlex 4.0.0, PrimeIcons 7.0.0
-- **State Management**: Zustand 5.0.10
-- **Form Handling**: react-hook-form 7.71.1
-- **Date Utilities**: date-fns 4.1.0
+- **UI Library**: PrimeReact 10.9.x, PrimeFlex 4, PrimeIcons 7
+- **State Management**: Zustand 5
+- **Form Handling**: react-hook-form 7
+- **Date Utilities**: date-fns 4
 
 ## Project Structure
 
@@ -79,7 +79,10 @@ src/
 
 ```bash
 npm install
+cp .env.example .env.local   # then fill in credentials (see AGENTS.md)
 ```
+
+Copy **`.env.example`** to **`.env.local`** and add credentials. Jira TV dashboards need `KYLE_EMAIL` and `KYLE_JIRA_TOKEN`; SQL-backed features need `DB_*` / `PROD_DB_*`. The UI starts without secrets, but live data routes will be empty or error until env is set.
 
 ### Development
 
@@ -87,7 +90,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser.
+Open [http://localhost:3333](http://localhost:3333) with your browser.
+
+Do **not** run `next dev` directly — use `npm run dev` so slide-list generation and cursor-analytics summary scripts run first (see `AGENTS.md`).
 
 ### Build
 
@@ -97,9 +102,13 @@ npm run build
 
 ### Start Production Server
 
+Requires a successful `npm run build` first (`next start` needs a `.next` BUILD_ID).
+
 ```bash
 npm start
 ```
+
+Production serves on [http://localhost:3000](http://localhost:3000) by default (Next.js default port).
 
 ## Features
 
@@ -125,9 +134,19 @@ SCSS-based theme system (aligned with cpt-internal-tools):
 
 ### TV Routes
 
-- Static routes: `/tv/conference-room`, `/tv/dev`, etc.
-- Dynamic routes: `/tv/[roomName]` for flexible room names
-- Each route can display different dashboard configurations
+Active TV slugs (see `src/constants/routes.ts`):
+
+| Route | Dashboard |
+|-------|-----------|
+| `/tv/dev-corner-one` | Dev Corner One — developer KPIs, work hours, impediments, team activity |
+| `/tv/dev-corner-two` | Dev Corner Two — company-facing carousel (in progress, completed, GitHub deploy) |
+| `/tv/trevor` | Trevor's Screen — NOVA team load and tickets |
+| `/tv/conference-room` | Conference Room — background slideshow |
+| `/tv/jackie` | Jackie's Office — background slideshow |
+| `/tv/julie` | Julie's Office — background slideshow |
+| `/tv/github-activity` | GitHub webhook activity feed |
+
+Dynamic route: `/tv/[roomName]` resolves through `TVDashboard` by room name.
 
 ## Development Guidelines
 
@@ -204,13 +223,13 @@ This project follows semantic versioning with custom increment rules:
 - **Patch (0.0.1)**: Small changes, bug fixes
 - **Minor (0.1.0)**: Medium changes, new features
 - **Major (1.0.0)**: Major releases, production-ready
-- **Current Version**: 0.1.2
 
-See `package.json` for current version and `CHANGELOG.md` for version history.
+See `package.json` for the current version and `CHANGELOG.md` for version history.
 
 ## Documentation
 
-- **`docs/app-overview.md`** – **Start here.** What the app is for, who it’s for, routes, data, and current implementation (TV dashboards, Jira NOVA, conference room, etc.).
+- **`AGENTS.md`** (repo root) – **Start here for AI agents and deep Jira/dashboard context.** Setup, validation, env vars, TV layout rules.
+- **`docs/app-overview.md`** – Human-oriented overview: routes, data sources, ports, current dashboards.
 - `docs/dashboard-planning.md` - Route structure, home design, dev dashboard layout
 - `docs/coding-style.md` - Comprehensive coding style guidelines with examples
 - `docs/pet-peeves.md` - Code smells and anti-patterns
@@ -229,8 +248,8 @@ See `package.json` for current version and `CHANGELOG.md` for version history.
 - **Version**: See `package.json` (e.g. 0.1.x)
 - **Theme**: dark-synth (default), dark, light, ms-access-2010; switch on home page only. See `docs/theme-system.md`.
 - **Home**: Card-based TV dashboard selector; links to `/tv/{roomName}`
-- **TV dashboards**: Dev Corner Two (NOVA Jira – stats, charts, table); Conference Room (custom background); Jackie's Office (`/tv/jackie`) and Julie's Office (`/tv/julie`) with rotating background slideshows and corner name badges; dev-corner-one shares Operational Jira dashboard
-- **Data**: Jira NOVA via API + Zustand store (5‑min cache); JSON-driven architecture for future sources
+- **TV dashboards**: Dev Corner One (developer operational analytics); Dev Corner Two (company-facing carousel + GitHub deploy); Trevor's Screen (NOVA load); Conference Room, Jackie, Julie (slideshow backgrounds); `/tv/github-activity` (webhook feed)
+- **Data**: Operational Jira (CM + OPRD + NOVA) via `operationalJiraStore`; cache TTL 20 min business hours / 60 min off-hours Pacific
 
 ## License
 

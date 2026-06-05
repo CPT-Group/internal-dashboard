@@ -2,65 +2,65 @@
 
 ## Purpose
 
-**CPT Group Internal Dashboard** is a web application built to run on **office TVs** (typically 5–7 screens) across the organization. It displays **team analytics, metrics, and data visualizations** for 24/7 viewing. Each TV navigates directly to a specific URL (e.g. `/tv/dev-corner-two` or `/tv/conference-room`); there is no per-user login—access is IP-restricted to internal networks.
+**CPT Group Internal Dashboard** is a Next.js app built to run on **office TVs** and a few desktop routes (Website Health, Cursor analytics). Each TV navigates directly to a URL (e.g. `/tv/dev-corner-one` or `/tv/conference-room`); there is no per-user login on TV routes—access is IP-restricted to internal networks.
 
 ## Audience & Context
 
-- **Primary users**: Internal staff viewing information on shared office TVs.
-- **Use case**: Ambient display of Jira stats, sprint/team metrics, and (future) lobby/conference/break-room content.
-- **Operation**: 24/7; dashboards are designed to fit a single screen (no scrolling), with TV-friendly contrast and layout.
+- **Primary users**: Internal staff viewing information on shared office TVs; case managers and devs on Website Health.
+- **Use case**: Ambient display of Jira operational metrics, GitHub deploy status, slideshow backgrounds, and (locally) website submission health checks.
+- **Operation**: TVs run 24/7 with auto-refresh (soft poll + periodic full page reload). Layouts are single-screen, no page scroll.
 
 ## What the App Does Today
 
-| Area | Description |
-|------|-------------|
-| **Home (`/`)** | Card-based navigation to each TV dashboard. Large touch targets, theme-aware. |
-| **TV routes (`/tv/...`)** | One dashboard per room. Each TV is pointed at a specific route. |
-| **Dev Corner Two (`/tv/dev-corner-two`)** | **NOVA** Jira dashboard: open/today/late/done counts, bar chart by assignee, doughnut distribution, “By assignee” table with Open, Today, Late, Bugs, Done and conditional formatting. Data from Jira API (project NOVA), 5‑min cache, 1‑min refresh when stale. Client-only (dynamic import, no SSR) to avoid hydration issues. |
-| **Conference Room (`/tv/conference-room`)** | Full-viewport dashboard with custom background image; placeholder content ready for future widgets (e.g. calendar, meetings). |
-| **Jackie's Office (`/tv/jackie`)** | Full-viewport dashboard with rotating background slideshow and corner name badge ("Jackie – Vice President, Operations"). Background images from `public/backgrounds/jackies-cute-backgrounds/`. |
-| **Julie's Office (`/tv/julie`)** | Full-viewport dashboard with rotating unicorn-themed background and corner name badge ("Julie Green – CPT President & Unicorn Expert"). Background images from `public/backgrounds/julies-unicorns/`. |
-| **Other rooms** | `dev-corner-one` is defined in routes and on the home cards but currently shares the same Operational Jira dashboard as dev-corner-two. |
+| Area | Route | Description |
+|------|-------|-------------|
+| **Home** | `/` | Card-based navigation to each TV dashboard. Theme switcher (home only). |
+| **Dev Corner One** | `/tv/dev-corner-one` | Developer-focused: KPI strip (Limbo, Landed/Closed Today, throughput), Work Hours Today, Impediments, NOVA Team Activity. Uses shared `operationalJiraStore`. |
+| **Dev Corner Two** | `/tv/dev-corner-two` | Company-facing carousel: In Progress, Recently Completed, Requested, Completions by dev, GitHub CD deploy status. Same operational Jira data, different panels than Dev Corner One. |
+| **Trevor's Screen** | `/tv/trevor` | NOVA-focused mobile-friendly view: KPIs, board×component chart, team load, NOVA tickets table. |
+| **Conference Room** | `/tv/conference-room` | Full-viewport rotating background slideshow. |
+| **Jackie's Office** | `/tv/jackie` | Rotating backgrounds + corner name badge. |
+| **Julie's Office** | `/tv/julie` | Rotating unicorn-themed backgrounds + corner name badge. |
+| **GitHub activity** | `/tv/github-activity` | Webhook delivery feed carousel (route works when opened directly; may not appear on home cards). |
+| **Website Health** | `/website-health` | Mobile-first discrepancy scanner (not a TV route). |
+| **Cursor analytics** | `/cursor-analytics` | Team usage dashboard (optional password gate). |
+
+Room names and home-card labels live in `src/constants/routes.ts` and `src/constants/DASHBOARD_LIST.ts`. Routing is implemented in `src/components/pages/TVDashboard/TVDashboard.tsx`.
 
 ## Route Structure
 
-- **`/`** – Home; dashboard selector (cards link to `/tv/{roomName}`).
-- **`/tv/conference-room`** – Static route; renders `TVDashboard` with `roomName="conference-room"` (Conference Room dashboard with background).
-- **`/tv/[roomName]`** – Dynamic route for any room; same `TVDashboard` by room name. Implements: `dev-corner-two` → NovaDashboard, `conference-room` → ConferenceRoomDashboard; others → null.
-
-Room names and labels live in `src/constants/routes.ts` and `src/constants/DASHBOARD_LIST.ts`.
+- **`/`** – Home; dashboard selector.
+- **`/tv/[roomName]`** – Dynamic TV route; `TVDashboard` switches on `roomName` to the dashboards listed above.
+- **`/website-health`**, **`/cursor-analytics`** – Non-TV routes.
 
 ## Data & Integrations
 
-- **Jira (NOVA)**: Used by Dev Corner Two. Server-side API via `src/services/api/jiraService.ts` and Next.js API routes under `src/app/api/jira/`. Credentials from env (e.g. `JIRA_BASE_URL`, `KYLE_EMAIL`, `KYLE_JIRA_TOKEN`). Store: `jiraNovaStore` (Zustand), 5‑min TTL, fetches open/today/overdue/done and derives by-assignee stats and bug counts.
-- **Theme**: Light/dark from `public/themes/` (e.g. `cpt-legacy-dark`, `cpt-legacy-light`). Theme choice in localStorage; no global style overrides outside theme files per project rules.
-- **Other data**: Architecture supports API, cron, and static JSON; only Jira is wired for a TV screen so far.
+- **Operational Jira (CM + OPRD + NOVA)**: Shared `operationalJiraStore` powers Dev Corner One, Dev Corner Two, and Trevor's Screen. Server API via `src/services/api/` and routes under `src/app/api/jira/`. Credentials: `KYLE_EMAIL`, `KYLE_JIRA_TOKEN` (see `.env.example`). Cache TTL: **20 min** business hours / **60 min** off-hours Pacific (`getJiraCacheTtl()`).
+- **GitHub**: Deploy status (Actions API) on Dev Corner Two; webhook cache for `/tv/github-activity`. Optional tokens in `.env.local`.
+- **SQL Server**: Website Health compares website `Submissions` (prod host) vs 2K16 `CleanClaims`. Requires VPN + `DB_*` / `PROD_DB_*` env vars.
+- **Theme**: SCSS variables + `data-theme` on `<html>` (dark-synth default). See `docs/theme-system.md`.
 
-## Tech Stack (Relevant to This App)
+## Dev & Production Ports
 
-- **Next.js** (App Router), **React**, **TypeScript**
-- **PrimeReact** (Card, Chart, DataTable, Tag, Skeleton, etc.), **PrimeFlex**, **PrimeIcons**
-- **Zustand** for TV dashboard state (e.g. Jira NOVA cache)
-- **Chart.js** (via PrimeReact Chart) for bar and doughnut charts
-- Styling: theme CSS + `globals.css` for layout (e.g. `.nova-dashboard-content`, `.conference-dashboard-content`)
+| Command | Port | Notes |
+|---------|------|-------|
+| `npm run dev` | **3333** | Always use this script (not bare `next dev`) — runs slide-list and cursor-analytics predev scripts. |
+| `npm run build` then `npm start` | **3000** | Production server default. |
 
-## Design Conventions
+Open [http://localhost:3333](http://localhost:3333) after `npm run dev`.
 
-- **TV screens**: Single-screen layout (no page scroll). Use `min-height: 100vh; max-height: 100vh; overflow: hidden` and flex so content (e.g. table) scrolls inside its area if needed.
-- **No header/title on TV**: Room is known from the URL; no redundant “Dev Corner Two” or “Conference Room” title on the dashboard.
-- **Console**: No `console.log`; check browser console for errors. See `docs/do-donts.md`.
-- **Changelog & version**: Every notable change gets a CHANGELOG entry and a semantic version bump in `package.json`.
+## Agent & Developer Docs
+
+- **`AGENTS.md`** (repo root) – Canonical context for AI agents: Jira workflow, analytics rules, env vars, validation (`npm run lint`, `npm run typecheck`, `npm run build`).
+- **`.env.example`** – Copy to `.env.local`; no secrets in repo.
 
 ## Supporting Docs
 
-- **`dashboard-planning.md`** – Route list, home design, dev dashboard structure (stats, charts, tables).
-- **`data-architecture.md`** – JSON-driven data sources.
-- **`jira-ticket-schema.md`** – Jira issue shape used for NOVA.
-- **`cpt-group-website-info.md`** – Reference info from [CPT Group](https://www.cptgroup.com/) (stats, contact, value props) for reels and future content.
-- **`versioning.md`** – Changelog and version rules.
-- **`do-donts.md`** – Console, errors, and general do’s and don’ts.
-- **`coding-style.md`**, **`primereact-theming.md`** – Code style and theming.
+- `docs/theme-system.md` – Theme tokens and usage.
+- `docs/data-architecture.md` – JSON-driven data sources.
+- `docs/jira-ticket-schema.md` – Jira issue shape for NOVA.
+- `CHANGELOG.md` – Version history.
 
 ## Summary
 
-This web app is the **internal TV dashboard for CPT Group**: it serves Jira-based NOVA metrics on Dev Corner Two, a branded Conference Room screen with custom background (and room for future content), and a home page to navigate to each room. Other rooms are stubbed for future dashboards. All TV views are built for one-screen, no-scroll, theme-aware display.
+This app is CPT Group's **internal TV dashboard suite**: operational Jira analytics on Dev Corner TVs, GitHub deploy visibility for the wider office, branded slideshow rooms, plus Website Health and Cursor analytics for desk use. Dev Corner One and Dev Corner Two intentionally show **different** panels from the same underlying store (non-redundancy rule—see `AGENTS.md`).

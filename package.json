@@ -9,6 +9,7 @@
     "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test:sql": "node scripts/test-sql-connections.cjs",
     "test:github-deploy-tokens": "node scripts/test-github-deploy-tokens.mjs",
     "test:impediment-analytics": "node scripts/test-impediment-analytics.mjs",

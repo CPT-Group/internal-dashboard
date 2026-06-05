@@ -162,11 +162,12 @@ Automation rules (the "When / If / Then" rules you see under Jira Project Settin
 ## Dev environment
 
 - **Install**: `npm install`
-- **Env**: Copy or create `.env.local` for any required env vars (e.g. JIRA/API keys if used). Do not commit secrets. Optional **SQL Server** keys (`DB_*` for CPT2K16, `PROD_DB_*` for interactive-site prod host **10.0.0.5**) match **slack-bot-manager** naming for future Website Health / read-only APIs; values live only in `.env.local`.
+- **Env**: Copy `.env.example` to `.env.local` and fill in values. Do not commit secrets. Optional **SQL Server** keys (`DB_*` for CPT2K16, `PROD_DB_*` for interactive-site prod host **10.0.0.5**) match **slack-bot-manager** naming for Website Health / read-only APIs.
 - **Website Health env**: Optional `WEBSITE_HEALTH_SITE_MAP_JSON` (`[{ "siteKey": "...", "websiteDbName": "...", "cleanClaimsDbName": "..." }]`) for multi-site checks; optional `WEBSITE_HEALTH_DEFAULT_2K16_DB` fallback and `WEBSITE_HEALTH_TEAMS_WEBHOOK_URL` for discrepancy-only Teams alerts.
 - **Dev server**: `npm run dev` — runs build-time scripts then starts Next.js on port **3333**.
 - **Build**: `npm run build` — same scripts then production build.
 - **Lint**: `npm run lint` (ESLint; type-aware rules on `src/**`).
+- **Typecheck**: `npm run typecheck` (`tsc --noEmit`, ~3s) — faster than `npm run build` for small `src/` edits; still run `npm run build` before finishing when build/codegen paths may be affected.
 - **SQL connectivity check**: `npm run test:sql` — loads `.env.local` and probes `DB_*` (CPT2K16) and `PROD_DB_*` (interactive-site prod) with a read-only query; run from a machine/VPN that can reach both hosts.
 - **`GET /api/cursor-analytics`** (default): reads **`data/cursor-analytics/cursor-analytics-summary.json`**, rebuilt from **`data/cursor-analytics/csv/*.csv`** on **`npm run dev`** / **`npm run build`** (`predev` / `prebuild`) and **`npm run cursor-analytics:regen`**. Override with **`CURSOR_ANALYTICS_SUMMARY_JSON`**. **Password gate**: set **`CURSOR_ANALYTICS_PASSWORD`** in `.env.local` / Netlify — middleware protects **`/cursor-analytics`** and **`/api/cursor-analytics/*`**; login at **`/cursor-analytics/login`**. **Team Admin API** (opt-in): **`includeAdmin=quick`** = live **`/teams/spend`** + **`/teams/daily-usage-data`** only; **`includeAdmin=1`** = quick + merge **billing store** shards (no live usage-event pagination on HTTP). Default monetary mode is **CSV estimate**; **API** mode uses store for **Charged (range)** and hides dollar trend when store coverage is incomplete. **CLI sync**: **`npm run cursor-analytics:sync-billing`** writes **`kyleOutput/cursor-billing-store/`** (`meta.json`, `days/YYYY-MM-DD.json`; override **`CURSOR_ANALYTICS_BILLING_STORE_DIR`**). Shared HTTP layer **`src/lib/cursorAdminHttp.ts`**: ~**18 req/min** (**`CURSOR_ANALYTICS_ADMIN_RPM`**), 429 backoff, ETag disk cache (**`CURSOR_ANALYTICS_HTTP_CACHE_DIR`**). **`npm run cursor-analytics:reconcile-day -- YYYY-MM-DD`** compares store shard vs live pull; **`npm run test:cursor-billing-store`** — merge fixtures. **Enterprise** agent-edits: **`CURSOR_ANALYTICS_AGENT_EDITS=1`**. See **`data/cursor-analytics/README.md`**. Styles in **`CursorAnalyticsDashboard.module.scss`**.
 
@@ -392,7 +393,8 @@ Before every commit and push:
    ```
    Stage the updated `.generated.ts` files along with any new/removed images.
 2. **Run `npm run lint`** before considering a task done.
-3. **Ensure `npm run build` succeeds** when touching code that affects the build or generated files.
+3. **Run `npm run typecheck`** for quick TypeScript verification on `src/` changes (optional when `npm run build` will run anyway).
+4. **Ensure `npm run build` succeeds** when touching code that affects the build or generated files.
 
 ## Versioning
 
