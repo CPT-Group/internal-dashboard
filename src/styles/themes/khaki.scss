@@ -1,0 +1,218 @@
+@use '../mixins/badge-theme' as badge;
+
+// Khaki Theme – matches cpt-internal-tools (warm khaki tans/creams, dark olive
+// green primary, earthy coffee-brown accent). Palette is hand-translated from
+// the main app's `customThemes.ts` `khaki` entry into concrete hex + rgba
+// (no color-mix — Samsung Tizen TV constraint).
+
+html[data-theme='khaki'],
+[data-theme='khaki'] {
+  --header-bg: #dccfa8 !important;
+  --header-fg: #2e2519 !important;
+  --header-border: 1px solid #c7b78c !important;
+  --header-shadow: 0 2px 4px rgba(46, 37, 25, 0.12) !important;
+  --window-bg: #fdfbf4 !important;
+  --window-fg: #2e2519 !important;
+  --window-border: 1px solid #d2c4a0 !important;
+  --window-surface-bg: #f5efe1 !important;
+  --window-surface-fg: #2e2519 !important;
+  --window-surface-border: 1px solid #d2c4a0 !important;
+  --input-bg: #fffdf7 !important;
+  --input-fg: #2e2519 !important;
+  --input-border: 1px solid #b9a87e !important;
+  --button-bg: var(--window-surface-bg) !important;
+  --button-fg: #2e2519 !important;
+  --button-hover-bg: var(--surface-hover) !important;
+  --menu-item-hover-bg: #ece3cf !important;
+  --status-icon-fill: #ffffff !important;
+  --status-icon-stroke: #ffffff !important;
+  --status-icon-stroke-offline: rgb(120, 111, 77) !important;
+  --page-background: #e9e1cd !important;
+  --text-primary: #2e2519 !important;
+  --button-primary-background: #556b2f !important;
+  --button-primary-background-hover: #45571f !important;
+  --button-primary-text: #ffffff !important;
+  --maskbg: rgba(46, 37, 25, 0.4) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(85, 107, 47, 0.35) !important;
+  --highlight-bg: rgba(85, 107, 47, 0.14) !important;
+  --highlight-text-color: #2e2519 !important;
+  --color-danger: #c0392b !important;
+  --surface-ground: #e9e1cd !important;
+  --surface-section: #e9e1cd !important;
+  --surface-card: #f5efe1 !important;
+  --surface-overlay: #f5efe1 !important;
+  --surface-border: #d2c4a0 !important;
+  --surface-hover: rgba(85, 107, 47, 0.08) !important;
+  --surface-0: #fdfbf4 !important;
+  --surface-50: #f9f4e8 !important;
+  --surface-100: #f5efe1 !important;
+  --surface-200: #ece3cf !important;
+  --surface-300: #d2c4a0 !important;
+  --surface-400: #b9a87e !important;
+  --surface-500: #9c8b62 !important;
+  --surface-600: #7e6f4d !important;
+  --surface-700: #5f553b !important;
+  --surface-800: #423b29 !important;
+  --surface-900: #2e2519 !important;
+  --surface-a: #f5efe1 !important;
+  --surface-b: #e9e1cd !important;
+  --surface-c: rgba(46, 37, 25, 0.03) !important;
+  --surface-d: #d2c4a0 !important;
+  --surface-e: #f9f4e8 !important;
+  --surface-f: #f5efe1 !important;
+  --gray-50: #f9f4e8 !important;
+  --gray-100: #f5efe1 !important;
+  --gray-200: #ece3cf !important;
+  --gray-300: #d2c4a0 !important;
+  --gray-400: #b9a87e !important;
+  --gray-500: #9c8b62 !important;
+  --gray-600: #7e6f4d !important;
+  --gray-700: #5f553b !important;
+  --gray-800: #423b29 !important;
+  --gray-900: #2e2519 !important;
+  --text-color: #2e2519 !important;
+  --text-color-secondary: #6b5d44 !important;
+  --primary-color: #556b2f !important;
+  --primary-color-text: #ffffff !important;
+  --scrollbar-track-bg: #ece3cf !important;
+  --scrollbar-thumb-bg: #d2c4a0 !important;
+  --scrollbar-thumb-hover-bg: #b9a87e !important;
+  --card-border: rgba(85, 107, 47, 0.14) !important;
+  --card-shadow: 0 2px 8px rgba(46, 37, 25, 0.1), 0 1px 2px rgba(46, 37, 25, 0.06) !important;
+
+  // Liquid Glass (Tizen-safe rgba/gradient/shadow — no color-mix/backdrop-filter)
+  --glass-card-bg: rgba(245, 239, 225, 0.66) !important;
+  --glass-card-bg-strong: rgba(250, 245, 234, 0.94) !important;
+  --glass-border: rgba(85, 107, 47, 0.26) !important;
+  --glass-sheen: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.12) 32%,
+    rgba(255, 255, 255, 0) 62%
+  ) !important;
+  --glass-shadow: 0 8px 22px rgba(46, 37, 25, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  --glass-row-stripe: rgba(85, 107, 47, 0.06) !important;
+  --ripple-bg: rgba(85, 107, 47, 0.26) !important;
+
+  --corner-info-card-bg: rgba(245, 239, 225, 0.74) !important;
+  --corner-info-card-border: #d2c4a0 !important;
+  --corner-info-card-shadow: 0 2px 8px rgba(46, 37, 25, 0.16) !important;
+  --corner-info-card-divider: rgba(120, 111, 77, 0.32) !important;
+  --corner-info-card-hover-bg: rgba(85, 107, 47, 0.08) !important;
+  --tag-today-bg: rgba(111, 78, 55, 0.16) !important;
+  --tag-today-text: #5a3d28 !important;
+  --tag-today-border: rgba(111, 78, 55, 0.4) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(85, 107, 47, 0.82) !important;
+  --chart-bar-primary-border: rgb(85, 107, 47) !important;
+  --chart-success: rgba(94, 168, 111, 0.78) !important;
+  --chart-success-border: rgb(94, 168, 111) !important;
+  --chart-danger: rgba(192, 57, 43, 0.78) !important;
+  --chart-danger-border: rgb(192, 57, 43) !important;
+  --chart-warning: rgba(202, 138, 4, 0.9) !important;
+  --chart-warning-border: rgb(202, 138, 4) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(111, 78, 55, 0.24) !important;
+  --chart-info-border: rgb(111, 78, 55) !important;
+  --chart-orange: rgba(176, 115, 38, 0.22) !important;
+  --chart-orange-border: rgb(176, 115, 38) !important;
+  --nova-accent: rgba(85, 107, 47, 0.7) !important;
+  --nova-accent-bg: rgba(85, 107, 47, 0.18) !important;
+  --nova-accent-border: rgb(85, 107, 47) !important;
+  --nova-accent-text: #34431d !important;
+  --bug-accent-bg: rgba(192, 57, 43, 0.2) !important;
+  --bug-accent-text: #711f1f !important;
+  --activity-badge-info-text: #4a3422 !important;
+  --activity-badge-warning-text: #7c4a12 !important;
+  --work-hours-badge-danger-text: #711f1f !important;
+  --work-hours-badge-zero-bg: rgba(192, 57, 43, 0.22) !important;
+  --work-hours-badge-zero-text: #711f1f !important;
+  --work-hours-badge-success-bg: rgba(94, 168, 111, 0.2) !important;
+  --work-hours-badge-success-text: #2d662d !important;
+  --work-hours-badge-over-bg: rgba(176, 115, 38, 0.2) !important;
+  --work-hours-badge-over-text: #7c4a12 !important;
+  --work-hours-badge-super-bg: rgba(85, 107, 47, 0.2) !important;
+  --work-hours-badge-super-text: #34431d !important;
+  --work-hours-danger-fill: rgba(192, 57, 43, 0.32) !important;
+  --work-hours-success-fill: rgba(94, 168, 111, 0.22) !important;
+  --work-hours-warning-fill: rgba(202, 138, 4, 0.24) !important;
+  --work-hours-orange-fill: rgba(176, 115, 38, 0.24) !important;
+  --work-hours-ahead-fill: rgba(85, 107, 47, 0.2) !important;
+  --work-hours-super-fill: rgba(111, 78, 55, 0.22) !important;
+  --work-hours-neutral-fill: rgba(85, 107, 47, 0.2) !important;
+  --work-hours-super-border: rgb(111, 78, 55) !important;
+  --github-repo-label-color: #2e2519 !important;
+  --github-repo-api-bg: rgba(111, 78, 55, 0.2) !important;
+  --github-repo-api-border: rgba(111, 78, 55, 0.5) !important;
+  --github-repo-tools-bg: rgba(94, 168, 111, 0.18) !important;
+  --github-repo-tools-border: rgba(94, 168, 111, 0.48) !important;
+  --github-repo-nuget-bg: rgba(120, 90, 160, 0.18) !important;
+  --github-repo-nuget-border: rgba(120, 90, 160, 0.48) !important;
+  --github-repo-migrations-bg: rgba(176, 115, 38, 0.2) !important;
+  --github-repo-migrations-border: rgba(176, 115, 38, 0.5) !important;
+  --github-repo-infra-bg: rgba(85, 107, 47, 0.18) !important;
+  --github-repo-infra-border: rgba(85, 107, 47, 0.48) !important;
+  --github-deploy-progressbar-track-bg: rgba(210, 196, 160, 0.5) !important;
+  --github-deploy-progressbar-fill: rgba(85, 107, 47, 0.85) !important;
+  --github-deploy-surface-muted-bg: rgba(245, 239, 225, 0.96) !important;
+  --github-deploy-surface-muted-border: rgba(185, 168, 126, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(250, 245, 234, 0.98) !important;
+  --github-deploy-branch-pill-border: rgba(185, 168, 126, 0.6) !important;
+  --github-deploy-branch-pill-text: #2e2519 !important;
+  --github-deploy-running-chip-bg: rgba(202, 138, 4, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(202, 138, 4, 0.5) !important;
+  --github-deploy-running-chip-text: #7c4a12 !important;
+  --github-deploy-queue-chip-bg: rgba(176, 115, 38, 0.2) !important;
+  --github-deploy-queue-chip-border: rgba(176, 115, 38, 0.55) !important;
+  --github-deploy-queue-chip-text: #7c4a12 !important;
+  --github-deploy-inline-running-track: rgba(202, 138, 4, 0.18) !important;
+  --github-deploy-inline-queued-track: rgba(176, 115, 38, 0.16) !important;
+  --github-deploy-footer-ticker-bg: rgba(250, 245, 234, 0.98) !important;
+  --github-deploy-footer-ticker-border: rgba(111, 78, 55, 0.34) !important;
+  --github-deploy-footer-ticker-text: #6f4e37 !important;
+  --github-deploy-footer-ticker-shadow: none !important;
+  --content-text-size: 1.05rem !important;
+  --github-deploy-timeline-meta-color: #6f4e37 !important;
+  --data-quality-valid: rgba(85, 107, 47, 0.4) !important;
+  --data-quality-warning: rgba(202, 138, 4, 0.4) !important;
+  --data-quality-error: rgba(192, 57, 43, 0.45) !important;
+  --data-quality-empty: rgba(156, 139, 98, 0.25) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  // PrimeReact parity
+  --multiselect-chip-bg: #ece3cf !important;
+  --multiselect-chip-fg: #2e2519 !important;
+  --multiselect-chip-icon-fg: #6b5d44 !important;
+  --multiselect-chip-border: 1px solid #d2c4a0 !important;
+  --toast-success-bg: #e2efd9 !important;
+  --toast-success-border: #5ea86f !important;
+  --toast-success-text: #2d662d !important;
+  --toast-info-bg: #ece0d4 !important;
+  --toast-info-border: #6f4e37 !important;
+  --toast-info-text: #4a3422 !important;
+  --toast-warn-bg: #f6eccf !important;
+  --toast-warn-border: #ca8a04 !important;
+  --toast-warn-text: #7c4a12 !important;
+  --toast-error-bg: #f2dede !important;
+  --toast-error-border: #c0392b !important;
+  --toast-error-text: #711f1f !important;
+  --cpt-skeleton-bg: #e3d9be !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.7) !important;
+
+  @include badge.badge-theme-tokens(
+    #556b2f,
+    #ffffff,
+    rgb(94, 168, 111),
+    #ffffff,
+    rgb(111, 78, 55),
+    #ffffff,
+    rgb(202, 138, 4),
+    #ffffff,
+    rgb(192, 57, 43),
+    #ffffff,
+    rgb(192, 57, 43)
+  );
+  @include badge.badge-theme-rules();
+}

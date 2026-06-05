@@ -77,6 +77,20 @@ html[data-theme='ms-access-2010'],
   --border-radius: 3px !important;
   --card-border: 1px solid #ababab !important;
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+
+  // Liquid Glass (Tizen-safe) — kept deliberately subtle to preserve the flat
+  // Windows/Access 2010 chrome identity (near-opaque fills, faint sheen).
+  --glass-card-bg: rgba(240, 242, 245, 0.82) !important;
+  --glass-card-bg-strong: rgba(240, 242, 245, 0.97) !important;
+  --glass-border: rgba(171, 171, 171, 0.7) !important;
+  --glass-sheen: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0) 50%
+  ) !important;
+  --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  --glass-row-stripe: rgba(0, 0, 0, 0.03) !important;
+  --ripple-bg: rgba(247, 150, 70, 0.26) !important;
   --corner-info-card-bg: rgba(240, 242, 245, 0.88) !important;
   --corner-info-card-border: #ababab !important;
   --corner-info-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.16) !important;
