@@ -35,9 +35,12 @@ interface OperationalJiraState {
   loading: boolean;
   error: string | null;
   lastFetched: number | null;
+  impedimentLastFetched: number | null;
   getAnalytics: () => OperationalAnalytics;
   fetchOperationalData: (force?: boolean) => Promise<void>;
+  fetchImpedimentData: (force?: boolean) => Promise<void>;
   isStale: () => boolean;
+  isImpedimentStale: () => boolean;
 }
 
 const emptyAnalytics = buildOperationalAnalytics({
@@ -54,6 +57,8 @@ const emptyImpedimentAnalytics = buildImpedimentAnalytics({
   linkCarrierIssues: [],
 });
 
+const IMPEDIMENT_REFRESH_INTERVAL_MS = 60_000;
+
 export const useOperationalJiraStore = create<OperationalJiraState>((set, get) => ({
   openIssues: [],
   landedToday: [],
@@ -68,11 +73,18 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
   loading: false,
   error: null,
   lastFetched: null,
+  impedimentLastFetched: null,
 
   isStale: () => {
     const last = get().lastFetched;
     if (last == null) return true;
     return Date.now() - last > getJiraCacheTtl();
+  },
+
+  isImpedimentStale: () => {
+    const last = get().impedimentLastFetched;
+    if (last == null) return true;
+    return Date.now() - last > IMPEDIMENT_REFRESH_INTERVAL_MS;
   },
 
   fetchOperationalData: async (force = false) => {
@@ -150,12 +162,37 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
         analytics,
         impedimentAnalytics,
         lastFetched: Date.now(),
+        impedimentLastFetched: Date.now(),
         loading: false,
         error: null,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch operational Jira data';
       set({ loading: false, error: message });
+    }
+  },
+
+  fetchImpedimentData: async (force = false) => {
+    if (get().loading) return;
+    if (!force && !get().isImpedimentStale()) return;
+    try {
+      const impedimentFields = [...JIRA_IMPEDIMENT_SEARCH_FIELDS];
+      const linkCarriers = await jiraSearch(
+        JIRA_IMPEDIMENT_LINK_CARRIERS_JQL,
+        JIRA_SEARCH_MAX_RESULTS,
+        impedimentFields
+      );
+      const linkCarriersFiltered = filterIssuesNovaMinKey(linkCarriers.issues);
+      const impedimentAnalytics = buildImpedimentAnalytics({
+        openOperationalIssues: get().openIssues,
+        linkCarrierIssues: linkCarriersFiltered,
+      });
+      set({
+        impedimentAnalytics,
+        impedimentLastFetched: Date.now(),
+      });
+    } catch {
+      // Keep existing operational data visible if this lightweight refresh fails.
     }
   },
 
