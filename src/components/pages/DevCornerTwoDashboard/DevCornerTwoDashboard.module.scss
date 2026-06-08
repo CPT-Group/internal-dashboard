@@ -315,6 +315,26 @@
   color: var(--text-color-secondary);
 }
 
+/* ── Code Freeze scoped overrides ── */
+/* Applied when an ancestor has data-freeze="true" (CodeFreezeOverlay wrapper). */
+:global([data-freeze='true']) {
+  .ticketCard {
+    border-color: rgba(140, 210, 255, 0.22) !important;
+    box-shadow: 0 0 14px rgba(80, 170, 240, 0.1) !important;
+  }
+
+  .ticketCardNova {
+    border-color: rgba(100, 200, 255, 0.55) !important;
+    background: rgba(30, 90, 145, 0.22) !important;
+    box-shadow: inset 3px 0 0 0 rgba(100, 200, 255, 0.7) !important;
+  }
+
+  .tableCard :global(.p-card) {
+    border-color: rgba(140, 210, 255, 0.22) !important;
+    box-shadow: 0 0 18px rgba(80, 170, 240, 0.12), 0 2px 8px rgba(0, 0, 0, 0.45) !important;
+  }
+}
+
 .loadingWrap {
   flex: 1;
   display: flex;

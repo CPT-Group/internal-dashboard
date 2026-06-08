@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <filter id="softBlur">
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+  </defs>
+  <!-- Scattered snow particles  a tile that repeats naturally -->
+  <g fill="rgba(210,235,255,0.55)" filter="url(#softBlur)">
+    <circle cx="22" cy="18" r="1.4"/>
+    <circle cx="75" cy="55" r="1.8"/>
+    <circle cx="140" cy="30" r="1.1"/>
+    <circle cx="190" cy="80" r="1.6"/>
+    <circle cx="260" cy="22" r="1.3"/>
+    <circle cx="320" cy="65" r="1.9"/>
+    <circle cx="380" cy="38" r="1.2"/>
+    <circle cx="38" cy="110" r="1.7"/>
+    <circle cx="100" cy="145" r="1.3"/>
+    <circle cx="160" cy="120" r="1.5"/>
+    <circle cx="228" cy="155" r="1.8"/>
+    <circle cx="295" cy="132" r="1.2"/>
+    <circle cx="355" cy="160" r="1.6"/>
+    <circle cx="55" cy="200" r="1.4"/>
+    <circle cx="118" cy="235" r="1.9"/>
+    <circle cx="175" cy="210" r="1.1"/>
+    <circle cx="240" cy="245" r="1.7"/>
+    <circle cx="310" cy="220" r="1.3"/>
+    <circle cx="372" cy="255" r="1.5"/>
+    <circle cx="28" cy="290" r="1.6"/>
+    <circle cx="88" cy="325" r="1.2"/>
+    <circle cx="152" cy="308" r="1.8"/>
+    <circle cx="215" cy="335" r="1.4"/>
+    <circle cx="278" cy="315" r="1.1"/>
+    <circle cx="340" cy="350" r="1.7"/>
+    <circle cx="395" cy="330" r="1.3"/>
+    <circle cx="12" cy="372" r="1.5"/>
+    <circle cx="70" cy="390" r="1.9"/>
+    <circle cx="130" cy="378" r="1.2"/>
+    <circle cx="195" cy="395" r="1.6"/>
+    <circle cx="258" cy="385" r="1.4"/>
+    <circle cx="325" cy="392" r="1.1"/>
+    <circle cx="388" cy="375" r="1.8"/>
+  </g>
+  <!-- Slightly larger, more visible flakes -->
+  <g fill="rgba(230,245,255,0.40)">
+    <circle cx="48" cy="42" r="2.8"/>
+    <circle cx="155" cy="88" r="2.4"/>
+    <circle cx="280" cy="50" r="3.0"/>
+    <circle cx="368" cy="100" r="2.6"/>
+    <circle cx="82" cy="175" r="2.5"/>
+    <circle cx="208" cy="190" r="2.9"/>
+    <circle cx="335" cy="170" r="2.3"/>
+    <circle cx="42" cy="275" r="2.7"/>
+    <circle cx="165" cy="260" r="2.4"/>
+    <circle cx="295" cy="280" r="2.8"/>
+    <circle cx="378" cy="265" r="2.2"/>
+    <circle cx="108" cy="360" r="2.6"/>
+    <circle cx="245" cy="345" r="2.9"/>
+    <circle cx="358" cy="355" r="2.3"/>
+  </g>
+</svg>
