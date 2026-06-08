@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dev Corner Two — GitHub deploy card: swap `cpt-infra` → P2P Go service**: Replaced the infra card (no active deploy workflows) with `cpt-group-p2p-go-service` using its `CD - Build & Deploy to On-Prem` workflow (ID 289926293). Updated `GITHUB_DEPLOY_MONITORS.ts`, `GITHUB_DEPLOY_LANE_WORKFLOWS.ts` fallback IDs, and `githubDeployDisplay.ts` tone mapping (`'infra'` → `'p2p'`; reuses existing `--github-repo-infra-*` CSS tokens so no theme files needed changing). SCSS class renamed `repoToneInfra` → `repoToneP2p`.
+
 ### Added
 
 - **NOVA-2684 — Dev Corner One flagged impediments + Teams alerting**: Switched impediment analytics from issue-link `Blocks` inference to Jira **Flagged = Impediment** tickets (`customfield_10021`) in operational scope, updated `ImpedimentPanel` columns to show flag status/reason, and added best-effort Teams notifications for newly seen flagged impediments via `JIRA_IMPEDIMENTS_TEAMS_WEBHOOK_URL` in `/api/jira/search` (message includes ticket link, summary, status, and flag text).
