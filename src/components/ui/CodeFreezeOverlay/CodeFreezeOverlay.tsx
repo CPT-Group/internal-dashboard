@@ -5,22 +5,56 @@ import { useCodeFreezeNotice } from '@/hooks/useCodeFreezeNotice';
 import { CODE_FREEZE_NOTICE_MESSAGE, CODE_FREEZE_NOTICE_SUBTEXT } from '@/constants/CODE_FREEZE';
 import styles from './CodeFreezeOverlay.module.scss';
 
+const FREEZE_THEME = 'code-freeze';
+
 interface Props {
-  /** Pass the children dashboards so this wrapper can apply freeze classes. */
   children: React.ReactNode;
 }
 
 /**
  * Wraps a TV dashboard with freeze-mode visuals and a periodic CODE FREEZE notice.
  *
- * - Adds `data-freeze="true"` attribute to the wrapper so scoped SCSS can target it.
- * - Renders SVG frost/snow layers (screen-edge ice, floating particles).
- * - Shows a blinking CODE FREEZE modal on the wall-clock schedule from `useCodeFreezeNotice`.
+ * Theme locking: sets data-theme="code-freeze" on <html> via a MutationObserver so
+ * ThemeProvider cannot override it while this overlay is mounted. The prior theme is
+ * restored on unmount.
+ *
+ * Renders: animated canvas snowfall, SVG frost-edge vignette, corner crystals, and
+ * the periodic blinking CODE FREEZE modal (wall-clock schedule from useCodeFreezeNotice).
  */
 export function CodeFreezeOverlay({ children }: Props) {
   const noticeVisible = useCodeFreezeNotice(true);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animRef = useRef<number | null>(null);
+
+  // Lock data-theme="code-freeze" on <html> — MutationObserver immediately corrects
+  // any override by ThemeProvider (localStorage read on mount).
+  useEffect(() => {
+    const root = document.documentElement;
+    const prevTheme = root.getAttribute('data-theme');
+
+    root.setAttribute('data-theme', FREEZE_THEME);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'data-theme') {
+          if (root.getAttribute('data-theme') !== FREEZE_THEME) {
+            root.setAttribute('data-theme', FREEZE_THEME);
+          }
+        }
+      }
+    });
+
+    observer.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+    return () => {
+      observer.disconnect();
+      if (prevTheme) {
+        root.setAttribute('data-theme', prevTheme);
+      } else {
+        root.removeAttribute('data-theme');
+      }
+    };
+  }, []);
 
   // Animate falling snow particles on canvas (Tizen-compatible: Canvas 2D only)
   useEffect(() => {
@@ -100,7 +134,7 @@ export function CodeFreezeOverlay({ children }: Props) {
   }, []);
 
   return (
-    <div className={styles.wrapper} data-freeze="true">
+    <div className={styles.wrapper}>
       {/* Underlying dashboard content */}
       {children}
 
