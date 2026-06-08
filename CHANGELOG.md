@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Code Freeze theme now fully locks on activation** (NOVA-2681): Previously the frost palette loaded briefly but was then overridden by the stored theme because `ThemeProvider`'s `useEffect` writes `data-theme` on `<html>` with `!important` rules on mount. `CodeFreezeOverlay` now locks `data-theme="code-freeze"` directly on `document.documentElement` via a `MutationObserver` that immediately corrects any override attempt. The prior theme is restored on unmount. CSS variable overrides were moved from the wrapper class into a proper `src/styles/themes/code-freeze.scss` theme file (same pattern as all other themes), covering the full ice/frost palette including surface, text, chart, badge, glass, and GitHub deploy tokens.
+
 ### Added
 
 - **NOVA-2681 — Code Freeze TV mode (Dev Corner One + Two)**: Added a single manual boolean flag (`CODE_FREEZE_ENABLED` in `src/constants/CODE_FREEZE.ts`) that, when `true`, wraps both Dev Corner dashboards with a winter/frost visual theme and a periodic alert. Visual treatment: animated canvas snowfall (Canvas 2D, Tizen-safe), SVG frost-edge vignette (`public/freeze/frost-edge.svg`), SVG snowflake crystals at all four corners (`public/freeze/frost-crystal.svg`), and CSS-variable overrides that shift the entire palette to an icy blue tone (deep navy backgrounds, sky-blue primary/accent, glacial card borders). Periodic notice: a full-screen `CODE FREEZE` modal (blinking heading + pulsing snowflake icon) appears on wall-clock half-hour boundaries (`CODE_FREEZE_NOTICE_INTERVAL_MS = 30 min`) and auto-closes after 5 minutes (`CODE_FREEZE_NOTICE_DURATION_MS`). The scheduler (`useCodeFreezeNotice`) uses modulo arithmetic on `Date.now()` so it survives page reloads and stays in sync regardless of when the TV last refreshed. All animations use `transform`/`opacity` only — no `color-mix()`, no `backdrop-filter`. Implemented in `src/components/ui/CodeFreezeOverlay/`, `src/hooks/useCodeFreezeNotice.ts`, and wired in `TVDashboard.tsx`.
