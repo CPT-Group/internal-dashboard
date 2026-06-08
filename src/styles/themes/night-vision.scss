@@ -1,23 +1,23 @@
 @use '../mixins/badge-theme' as badge;
 @use '../mixins/glass' as glass;
 
-// Flight Deck HUD Theme – matches cpt-internal-tools (aviation instrumentation:
+// Night Vision Theme – matches cpt-internal-tools (aviation instrumentation:
 // phosphor-green + cyan readouts on cockpit black-green, amber warnings).
 // Palette hand-translated from the main app's `customThemes.ts`
-// `flight-deck-hud` entry into concrete hex + rgba (no color-mix — Samsung
+// `night-vision` entry into concrete hex + rgba (no color-mix — Samsung
 // Tizen TV constraint). `glassHighlight rgba(124,245,192,0.85)` informs the
 // green-cyan glass rim below.
 
-html[data-theme='flight-deck-hud'] {
+html[data-theme='night-vision'] {
   background-color: #02100b !important;
 }
-html[data-theme='flight-deck-hud'] body {
+html[data-theme='night-vision'] body {
   background-color: #02100b !important;
   color: #c7f9e5 !important;
 }
 
-html[data-theme='flight-deck-hud'],
-[data-theme='flight-deck-hud'] {
+html[data-theme='night-vision'],
+[data-theme='night-vision'] {
   --header-bg: #04160f !important;
   --header-fg: #7af5c0 !important;
   --header-border: 1px solid #11402e !important;

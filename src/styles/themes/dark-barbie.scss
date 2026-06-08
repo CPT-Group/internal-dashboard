@@ -1,0 +1,252 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// Dark Barbie Theme – dark theme (near-black deep magenta page, bright pink
+// chrome text, hot Barbie pink primary, bubblegum pink accent). Palette is
+// concrete hex + rgba (no color-mix — Samsung Tizen TV constraint). Explicit
+// html/body rules ensure background and text apply correctly.
+
+html[data-theme='dark-barbie'] {
+  background-color: #0a0008 !important;
+}
+html[data-theme='dark-barbie'] body {
+  background-color: #0a0008 !important;
+  background-image: linear-gradient(
+    160deg,
+    rgba(233, 30, 140, 0.1) 0%,
+    rgba(10, 0, 8, 0) 42%,
+    rgba(255, 77, 184, 0.08) 100%
+  ) !important;
+  color: #fce4ec !important;
+}
+
+html[data-theme='dark-barbie'],
+[data-theme='dark-barbie'] {
+  --header-bg: #150009 !important;
+  --header-fg: #ff80c0 !important;
+  --header-border: 1px solid #3a001e !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+  --window-bg: #0a0008 !important;
+  --window-fg: #fce4ec !important;
+  --window-border: 1px solid #3a001e !important;
+  --window-surface-bg: #18000e !important;
+  --window-surface-fg: #fce4ec !important;
+  --window-surface-border: 1px solid #5a0035 !important;
+  --input-bg: #150009 !important;
+  --input-fg: #fce4ec !important;
+  --input-border: 1px solid #3a001e !important;
+  --button-bg: var(--window-surface-bg) !important;
+  --button-fg: #fce4ec !important;
+  --button-hover-bg: var(--surface-hover) !important;
+  --menu-item-hover-bg: #3a001e !important;
+  --status-icon-fill: #ff80c0 !important;
+  --status-icon-stroke: #ff80c0 !important;
+  --status-icon-stroke-offline: #5a0035 !important;
+  --page-background: #0a0008 !important;
+  --text-primary: #fce4ec !important;
+  --button-primary-background: #e91e8c !important;
+  --button-primary-background-hover: #ff4db8 !important;
+  --button-primary-text: #ffffff !important;
+  --maskbg: rgba(0, 0, 4, 0.78) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(233, 30, 140, 0.35) !important;
+  --highlight-bg: rgba(233, 30, 140, 0.16) !important;
+  --highlight-text-color: #fce4ec !important;
+  --color-danger: #f44336 !important;
+  --surface-ground: #0a0008 !important;
+  --surface-section: #0a0008 !important;
+  --surface-card: #18000e !important;
+  --surface-overlay: #18000e !important;
+  --surface-border: #3a001e !important;
+  --surface-hover: rgba(255, 77, 184, 0.12) !important;
+  --surface-0: #050003 !important;
+  --surface-50: #0a0008 !important;
+  --surface-100: #18000e !important;
+  --surface-200: #3a001e !important;
+  --surface-300: #5a0035 !important;
+  --surface-400: #7d0048 !important;
+  --surface-500: #b0005e !important;
+  --surface-600: #cf3585 !important;
+  --surface-700: #e87aba !important;
+  --surface-800: #f5b8d8 !important;
+  --surface-900: #fce4ec !important;
+  --surface-a: #18000e !important;
+  --surface-b: #0a0008 !important;
+  --surface-c: rgba(255, 77, 184, 0.08) !important;
+  --surface-d: #3a001e !important;
+  --surface-e: #18000e !important;
+  --surface-f: #18000e !important;
+  --gray-50: #fce4ec !important;
+  --gray-100: #f5b8d8 !important;
+  --gray-200: #e87aba !important;
+  --gray-300: #cf3585 !important;
+  --gray-400: #b0005e !important;
+  --gray-500: #7d0048 !important;
+  --gray-600: #5a0035 !important;
+  --gray-700: #3a001e !important;
+  --gray-800: #18000e !important;
+  --gray-900: #0a0008 !important;
+  --text-color: #fce4ec !important;
+  --text-color-secondary: #e87aba !important;
+  --primary-color: #e91e8c !important;
+  --primary-color-text: #ffffff !important;
+  --scrollbar-track-bg: #18000e !important;
+  --scrollbar-thumb-bg: #3a001e !important;
+  --scrollbar-thumb-hover-bg: #5a0035 !important;
+  --card-border: rgba(233, 30, 140, 0.2) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 12px rgba(233, 30, 140, 0.1) !important;
+
+  // Liquid Glass — dark barbie panels lift off the deep magenta backdrop with a
+  // bright hot-pink rim glow + bubblegum ripple for a backlit-glass read.
+  @include glass.glass-tokens(
+    rgba(24, 0, 14, 0.55),
+    rgba(24, 0, 14, 0.9),
+    rgba(233, 30, 140, 0.42),
+    rgba(233, 30, 140, 0.08),
+    rgba(255, 77, 184, 0.3),
+    rgba(255, 128, 192, 0.16),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.08),
+    rgba(233, 30, 140, 0.16)
+  );
+
+  --corner-info-card-bg: rgba(24, 0, 14, 0.65) !important;
+  --corner-info-card-border: #5a0035 !important;
+  --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  --corner-info-card-divider: rgba(233, 30, 140, 0.2) !important;
+  --corner-info-card-hover-bg: rgba(255, 77, 184, 0.14) !important;
+  --tag-today-bg: rgba(233, 30, 140, 0.25) !important;
+  --tag-today-text: #ff80c0 !important;
+  --tag-today-border: rgba(233, 30, 140, 0.5) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(233, 30, 140, 0.82) !important;
+  --chart-bar-primary-border: rgb(233, 30, 140) !important;
+  --chart-success: rgba(76, 175, 80, 0.78) !important;
+  --chart-success-border: rgb(76, 175, 80) !important;
+  --chart-danger: rgba(244, 67, 54, 0.78) !important;
+  --chart-danger-border: rgb(244, 67, 54) !important;
+  --chart-warning: rgba(255, 152, 0, 0.9) !important;
+  --chart-warning-border: rgb(255, 152, 0) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(41, 182, 246, 0.78) !important;
+  --chart-info-border: rgb(41, 182, 246) !important;
+  --chart-orange: rgba(255, 152, 0, 0.72) !important;
+  --chart-orange-border: rgb(255, 152, 0) !important;
+  --nova-accent: rgba(255, 77, 184, 0.7) !important;
+  --nova-accent-bg: rgba(255, 77, 184, 0.35) !important;
+  --nova-accent-border: rgb(255, 77, 184) !important;
+  --nova-accent-text: #ffffff !important;
+  --bug-accent-bg: rgba(244, 67, 54, 0.35) !important;
+  --bug-accent-text: #ffffff !important;
+  --github-repo-label-color: #fce4ec !important;
+  --github-repo-api-bg: rgba(41, 182, 246, 0.5) !important;
+  --github-repo-api-border: rgba(41, 182, 246, 0.85) !important;
+  --github-repo-tools-bg: rgba(76, 175, 80, 0.35) !important;
+  --github-repo-tools-border: rgba(76, 175, 80, 0.75) !important;
+  --github-repo-nuget-bg: rgba(255, 77, 184, 0.34) !important;
+  --github-repo-nuget-border: rgba(255, 77, 184, 0.75) !important;
+  --github-repo-migrations-bg: rgba(255, 152, 0, 0.34) !important;
+  --github-repo-migrations-border: rgba(255, 152, 0, 0.74) !important;
+  --github-repo-infra-bg: rgba(41, 182, 246, 0.32) !important;
+  --github-repo-infra-border: rgba(41, 182, 246, 0.72) !important;
+  --github-deploy-progressbar-track-bg: rgba(58, 0, 30, 0.52) !important;
+  --github-deploy-progressbar-fill: rgba(233, 30, 140, 0.8) !important;
+  --github-deploy-surface-muted-bg: rgba(24, 0, 14, 0.88) !important;
+  --github-deploy-surface-muted-border: rgba(90, 0, 53, 0.5) !important;
+  --github-deploy-branch-pill-bg: rgba(5, 0, 3, 0.9) !important;
+  --github-deploy-branch-pill-border: rgba(90, 0, 53, 0.55) !important;
+  --github-deploy-branch-pill-text: #fce4ec !important;
+  --github-deploy-running-chip-bg: rgba(255, 152, 0, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(255, 152, 0, 0.5) !important;
+  --github-deploy-running-chip-text: #ffcc80 !important;
+  --github-deploy-queue-chip-bg: rgba(255, 152, 0, 0.22) !important;
+  --github-deploy-queue-chip-border: rgba(255, 152, 0, 0.55) !important;
+  --github-deploy-queue-chip-text: #ffe0b2 !important;
+  --github-deploy-inline-running-track: rgba(255, 152, 0, 0.2) !important;
+  --github-deploy-inline-queued-track: rgba(255, 152, 0, 0.22) !important;
+  --github-deploy-footer-ticker-bg: rgba(5, 0, 3, 0.9) !important;
+  --github-deploy-footer-ticker-border: rgba(255, 77, 184, 0.34) !important;
+  --github-deploy-footer-ticker-text: #ff4db8 !important;
+  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(255, 77, 184, 0.35) !important;
+  --content-text-size: 1.06rem !important;
+  --github-deploy-timeline-meta-color: #ff4db8 !important;
+  --data-quality-valid: rgba(76, 175, 80, 0.5) !important;
+  --data-quality-warning: rgba(255, 152, 0, 0.5) !important;
+  --data-quality-error: rgba(244, 67, 54, 0.55) !important;
+  --data-quality-empty: rgba(176, 0, 94, 0.3) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  // PrimeReact parity
+  --multiselect-chip-bg: #3a001e !important;
+  --multiselect-chip-fg: #fce4ec !important;
+  --multiselect-chip-icon-fg: #e87aba !important;
+  --multiselect-chip-border: 1px solid #5a0035 !important;
+  --toast-success-bg: rgba(76, 175, 80, 0.2) !important;
+  --toast-success-border: #4caf50 !important;
+  --toast-success-text: #a5d6a7 !important;
+  --toast-info-bg: rgba(41, 182, 246, 0.2) !important;
+  --toast-info-border: #29b6f6 !important;
+  --toast-info-text: #b3e5fc !important;
+  --toast-warn-bg: rgba(255, 152, 0, 0.2) !important;
+  --toast-warn-border: #ff9800 !important;
+  --toast-warn-text: #ffe0b2 !important;
+  --toast-error-bg: rgba(244, 67, 54, 0.22) !important;
+  --toast-error-border: #f44336 !important;
+  --toast-error-text: #ffcdd2 !important;
+  --cpt-skeleton-bg: #3a001e !important;
+  --cpt-skeleton-sheen: rgba(233, 30, 140, 0.28) !important;
+
+  @include badge.badge-theme-tokens(
+    #e91e8c,
+    #ffffff,
+    rgb(76, 175, 80),
+    #ffffff,
+    rgb(41, 182, 246),
+    #ffffff,
+    rgb(255, 152, 0),
+    #000000,
+    rgb(244, 67, 54),
+    #ffffff,
+    rgb(244, 67, 54)
+  );
+  @include badge.badge-theme-rules();
+}
+
+// Dialog – theme colors
+html[data-theme='dark-barbie'] .p-dialog,
+[data-theme='dark-barbie'] .p-dialog {
+  background: var(--window-surface-bg) !important;
+  border: var(--window-surface-border) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='dark-barbie'] .p-dialog .p-dialog-header,
+[data-theme='dark-barbie'] .p-dialog .p-dialog-header {
+  background: var(--header-bg) !important;
+  color: var(--header-fg) !important;
+  border-bottom: var(--header-border) !important;
+}
+html[data-theme='dark-barbie'] .p-dialog .p-dialog-title,
+[data-theme='dark-barbie'] .p-dialog .p-dialog-title {
+  color: var(--header-fg) !important;
+}
+html[data-theme='dark-barbie'] .p-dialog .p-dialog-content,
+[data-theme='dark-barbie'] .p-dialog .p-dialog-content {
+  background: var(--window-surface-bg) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='dark-barbie'] .p-dialog .p-dialog-footer,
+[data-theme='dark-barbie'] .p-dialog .p-dialog-footer {
+  background: var(--window-surface-bg) !important;
+  border-top: var(--window-surface-border) !important;
+}
+html[data-theme='dark-barbie'] .p-dialog .p-dialog-header-icon,
+[data-theme='dark-barbie'] .p-dialog .p-dialog-header-icon {
+  color: var(--header-fg) !important;
+}
+html[data-theme='dark-barbie'] .p-dialog .p-dialog-header-icon:hover,
+[data-theme='dark-barbie'] .p-dialog .p-dialog-header-icon:hover {
+  color: var(--text-color-secondary) !important;
+  background: var(--surface-hover) !important;
+}

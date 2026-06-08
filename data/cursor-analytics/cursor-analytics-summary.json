@@ -1,6 +1,6 @@
 {
   "schema": "teamDaily",
-  "generatedAt": "2026-06-05T08:07:02.332Z",
+  "generatedAt": "2026-06-05T23:55:16.315Z",
   "directory": "data/cursor-analytics/csv",
   "sources": [
     "data/cursor-analytics/csv/Analytics_Team_2025-08-27_2026-05-13.csv"

@@ -48,7 +48,7 @@ export default function RootLayout({
               (function() {
                 try {
                   /* Keep in sync with src/constants/appThemeCycle.ts (APP_THEME_CYCLE_ORDER). */
-                  var valid = ['dark', 'light', 'dark-synth', 'ms-access-2010', 'khaki', 'light-synth', 'flight-deck-hud', 'miami-vice'];
+                  var valid = ['dark', 'light', 'dark-synth', 'ms-access-2010', 'khaki', 'light-synth', 'night-vision', 'miami-vice', 'cpt-barbie', 'dark-barbie', 'floral', 'summer'];
                   var stored = localStorage.getItem('cpt-theme');
                   var theme = (stored && valid.indexOf(stored) >= 0) ? stored : 'dark-synth';
                   document.documentElement.setAttribute('data-theme', theme);

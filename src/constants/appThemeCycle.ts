@@ -2,18 +2,23 @@
  * Canonical order for cycling UI themes (`html[data-theme]` + `localStorage` `cpt-theme`).
  * Keep in sync with the `valid` array in `src/app/layout.tsx` theme-init inline script.
  *
- * Cycle: dark → light → dark-synth → ms-access-2010 → khaki → light-synth →
- *        flight-deck-hud → miami-vice → dark → …
+ * Cycle: light → dark → khaki → light-synth → dark-synth → ms-access-2010 →
+ *        miami-vice → cpt-barbie → dark-barbie → floral → night-vision →
+ *        summer → light → …
  */
 export const APP_THEME_CYCLE_ORDER = [
-  'dark',
   'light',
-  'dark-synth',
-  'ms-access-2010',
+  'dark',
   'khaki',
   'light-synth',
-  'flight-deck-hud',
+  'dark-synth',
+  'ms-access-2010',
   'miami-vice',
+  'cpt-barbie',
+  'dark-barbie',
+  'floral',
+  'night-vision',
+  'summer',
 ] as const;
 
 export type AppTheme = (typeof APP_THEME_CYCLE_ORDER)[number];

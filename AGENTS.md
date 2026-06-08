@@ -91,20 +91,15 @@ NOVA "landed on team" now mirrors CM/OPRD's transition-based approach (`NOVA_LAN
 
 Updated 2026-03-30 — previously used bare `created >= date` which inflated counts by ~23 Backlog template tickets per day. The `sprint in openSprints()` filter on the board query also prevents Backlog items from appearing in the "open" count.
 
-### Impediments (issue links)
+### Impediments (Jira Flagged field)
 
-Delivery blockers are modeled in Jira with **issue links**, not a separate TV alert layer. Only link type **`Blocks`** counts (`JIRA_BLOCKS_LINK_TYPE_NAMES` in `src/constants/JIRA_IMPEDIMENT.ts`). Other types (Relates, Associates, etc.) are ignored.
+Delivery blockers are modeled by Jira **Flagged** tickets (`customfield_10021`) where value = **Impediment**. This replaces the old issue-link/`Blocks` model for Dev Corner One visibility.
 
-| Perspective | API field | Meaning |
-|-------------|-----------|---------|
-| Blocker issue | `issuelinks[].outwardIssue` | This issue **blocks** the linked story |
-| Blocked story | `issuelinks[].inwardIssue` | This story **is blocked by** the linked issue |
+**Scope:** Dev Corner One impediments are pulled from **NOVA only** (`JIRA_IMPEDIMENT_LINK_CARRIERS_JQL`) where `Flagged = Impediment` and `statusCategory != Done`.
 
-**Blocked stories** must be in operational open scope ([`JIRA_OPERATIONAL_JQL_OPEN`](src/constants/JIRA_OPERATIONAL.ts) — CM/OPRD/NOVA board filter, NOVA in `openSprints()`, team-scoped). **Blocker** issues can live in NOVA, CM, OPRD, or IT if still open (`JIRA_IMPEDIMENT_LINK_CARRIERS_JQL`).
+**Teams alerting:** when flagged impediments are returned by `GET /api/jira/search`, the API posts best-effort messages to `JIRA_IMPEDIMENTS_TEAMS_WEBHOOK_URL` (if set). Message includes Jira link, summary, status, and flag value text.
 
-Discovery script: `node scripts/jira/discover-impediment-links.mjs` (sample keys e.g. `NOVA-2146` blocks `NOVA-2101`).
-
-**Dev Corner One:** middle-right panel is **`ImpedimentPanel`** (replaces Component Activity; old panel import commented out). Columns: impediment key/summary, status, blocked story keys, age. KPI strip adds **Impediments** count (warning when &gt; 0). Data: `operationalJiraStore.impedimentAnalytics` from `buildImpedimentAnalytics()` — same **60s** client poll and [`getJiraCacheTtl()`](src/constants/JIRA_SHARED.ts) as other operational Jira data. Scrollable DataTable keeps the column header frozen while rows auto-scroll. **Board accuracy checks:** `npm run test:operational-board-analytics` (fixtures: in-progress vs team activity attribution, impediments) and `npm run verify:operational-board` (live Jira + invariant reconcile — also flags assignee ≠ Tech Owner on in-progress tickets).
+**Dev Corner One:** middle-right panel is **`ImpedimentPanel`** (replaces Component Activity; old panel import commented out). Columns: impediment key/summary, status, flag, age. KPI strip adds **Impediments** count (warning when &gt; 0). Data: `operationalJiraStore.impedimentAnalytics` from `buildImpedimentAnalytics()` — same **60s** client poll and [`getJiraCacheTtl()`](src/constants/JIRA_SHARED.ts) as other operational Jira data. Scrollable DataTable keeps the column header frozen while rows auto-scroll. **Board accuracy checks:** `npm run test:operational-board-analytics` (fixtures: in-progress vs team activity attribution, impediments) and `npm run verify:operational-board` (live Jira + invariant reconcile — also flags assignee ≠ Tech Owner on in-progress tickets).
 
 ### Tech Owner vs Assignee
 
