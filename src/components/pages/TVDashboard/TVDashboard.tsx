@@ -3,10 +3,11 @@
 import dynamic from 'next/dynamic';
 import type { DashboardProps } from '@/types';
 import { usePageAutoRefresh } from '@/hooks';
-import { getPageReloadInterval } from '@/constants';
+import { getPageReloadInterval, CODE_FREEZE_ENABLED } from '@/constants';
 import { ConferenceRoomDashboard } from '@/components/pages/ConferenceRoomDashboard';
 import { JackiesOfficeDashboard } from '@/components/pages/JackiesOfficeDashboard';
 import { JuliesOfficeDashboard } from '@/components/pages/JuliesOfficeDashboard';
+import { CodeFreezeOverlay } from '@/components/ui/CodeFreezeOverlay';
 
 const TrevorDashboard = dynamic(
   () => import('@/components/pages/TrevorDashboard').then((m) => m.TrevorDashboard),
@@ -32,9 +33,23 @@ export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
   usePageAutoRefresh(getPageReloadInterval());
 
   if (roomName === 'dev-corner-one') {
+    if (CODE_FREEZE_ENABLED) {
+      return (
+        <CodeFreezeOverlay>
+          <DevCornerOneDashboard />
+        </CodeFreezeOverlay>
+      );
+    }
     return <DevCornerOneDashboard />;
   }
   if (roomName === 'dev-corner-two') {
+    if (CODE_FREEZE_ENABLED) {
+      return (
+        <CodeFreezeOverlay>
+          <DevCornerTwoDashboard />
+        </CodeFreezeOverlay>
+      );
+    }
     return <DevCornerTwoDashboard />;
   }
   if (roomName === 'conference-room') {

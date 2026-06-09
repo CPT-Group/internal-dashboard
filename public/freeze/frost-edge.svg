@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="frostCenter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="70%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#b8e4ff" stop-opacity="0.18"/>
+    </radialGradient>
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+  <!-- Frost vignette -->
+  <rect width="1920" height="1080" fill="url(#frostCenter)"/>
+  <!-- Top frost crystals -->
+  <g fill="rgba(220,240,255,0.12)" filter="url(#blur1)">
+    <polygon points="60,0 80,40 40,40"/>
+    <polygon points="120,0 145,50 95,50"/>
+    <polygon points="200,0 228,60 172,60"/>
+    <polygon points="310,0 335,45 285,45"/>
+    <polygon points="420,0 448,55 392,55"/>
+    <polygon points="550,0 572,38 528,38"/>
+    <polygon points="680,0 705,52 655,52"/>
+    <polygon points="820,0 845,48 795,48"/>
+    <polygon points="980,0 1005,55 955,55"/>
+    <polygon points="1140,0 1162,42 1118,42"/>
+    <polygon points="1300,0 1328,58 1272,58"/>
+    <polygon points="1460,0 1482,44 1438,44"/>
+    <polygon points="1620,0 1645,50 1595,50"/>
+    <polygon points="1760,0 1785,46 1735,46"/>
+    <polygon points="1880,0 1920,60 1840,60"/>
+  </g>
+  <!-- Bottom frost crystals -->
+  <g fill="rgba(220,240,255,0.10)" filter="url(#blur1)">
+    <polygon points="80,1080 60,1040 100,1040"/>
+    <polygon points="190,1080 168,1032 212,1032"/>
+    <polygon points="330,1080 305,1025 355,1025"/>
+    <polygon points="480,1080 458,1035 502,1035"/>
+    <polygon points="640,1080 615,1028 665,1028"/>
+    <polygon points="800,1080 778,1038 822,1038"/>
+    <polygon points="960,1080 938,1030 982,1030"/>
+    <polygon points="1120,1080 1098,1035 1142,1035"/>
+    <polygon points="1290,1080 1268,1028 1312,1028"/>
+    <polygon points="1440,1080 1418,1033 1462,1033"/>
+    <polygon points="1600,1080 1578,1038 1622,1038"/>
+    <polygon points="1760,1080 1738,1030 1782,1030"/>
+    <polygon points="1880,1080 1858,1035 1902,1035"/>
+  </g>
+  <!-- Left frost edge tendrils -->
+  <g fill="rgba(180,225,255,0.09)" filter="url(#blur1)">
+    <polygon points="0,100 45,88 45,112"/>
+    <polygon points="0,220 52,205 52,235"/>
+    <polygon points="0,360 48,345 48,375"/>
+    <polygon points="0,500 55,485 55,515"/>
+    <polygon points="0,640 50,625 50,655"/>
+    <polygon points="0,780 46,765 46,795"/>
+    <polygon points="0,920 54,905 54,935"/>
+  </g>
+  <!-- Right frost edge tendrils -->
+  <g fill="rgba(180,225,255,0.09)" filter="url(#blur1)">
+    <polygon points="1920,130 1875,118 1875,142"/>
+    <polygon points="1920,270 1868,255 1868,285"/>
+    <polygon points="1920,420 1872,405 1872,435"/>
+    <polygon points="1920,570 1865,555 1865,585"/>
+    <polygon points="1920,710 1870,695 1870,725"/>
+    <polygon points="1920,860 1874,845 1874,875"/>
+    <polygon points="1920,980 1868,965 1868,995"/>
+  </g>
+</svg>

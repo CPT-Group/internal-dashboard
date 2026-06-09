@@ -1,0 +1,268 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// Code Freeze Theme – winter/frost palette
+// Applied to html[data-theme='code-freeze'] when CODE_FREEZE_ENABLED is true.
+// Locked by CodeFreezeOverlay via MutationObserver — overrides any localStorage theme.
+// No color-mix(); all values are precomputed rgba() (Tizen-safe).
+
+html[data-theme='code-freeze'] {
+  background-color: #03101f !important;
+}
+html[data-theme='code-freeze'] body {
+  background-color: #03101f !important;
+  color: #d4eeff !important;
+}
+
+html[data-theme='code-freeze'],
+[data-theme='code-freeze'] {
+  --header-bg: #020c18 !important;
+  --header-fg: #d4eeff !important;
+  --header-border: 1px solid rgba(100, 180, 255, 0.2) !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  --window-bg: #03101f !important;
+  --window-fg: #d4eeff !important;
+  --window-border: 1px solid rgba(100, 180, 255, 0.2) !important;
+  --window-surface-bg: #071c3a !important;
+  --window-surface-fg: #d4eeff !important;
+  --window-surface-border: 1px solid rgba(100, 180, 255, 0.22) !important;
+  --input-bg: #020c18 !important;
+  --input-fg: #d4eeff !important;
+  --input-border: 1px solid rgba(100, 180, 255, 0.2) !important;
+  --button-bg: #071c3a !important;
+  --button-fg: #d4eeff !important;
+  --button-hover-bg: rgba(100, 180, 255, 0.12) !important;
+  --menu-item-hover-bg: rgba(100, 180, 255, 0.1) !important;
+  --status-icon-fill: #7dd6f5 !important;
+  --status-icon-stroke: #7dd6f5 !important;
+  --status-icon-stroke-offline: rgba(100, 160, 210, 0.35) !important;
+  --page-background: #03101f !important;
+  --text-primary: #d4eeff !important;
+  --button-primary-background: #7dd6f5 !important;
+  --button-primary-background-hover: #9ce3f8 !important;
+  --button-primary-text: #021220 !important;
+  --maskbg: rgba(2, 12, 30, 0.85) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(125, 214, 245, 0.35) !important;
+  --highlight-bg: rgba(125, 214, 245, 0.15) !important;
+  --highlight-text-color: #d4eeff !important;
+  --color-danger: rgba(239, 130, 180, 0.9) !important;
+
+  // Surface scale — deep navy blues
+  --surface-ground: #03101f !important;
+  --surface-section: #03101f !important;
+  --surface-card: #071c3a !important;
+  --surface-overlay: #071c3a !important;
+  --surface-border: rgba(100, 180, 255, 0.2) !important;
+  --surface-hover: rgba(100, 180, 255, 0.10) !important;
+  --surface-0: #020c18 !important;
+  --surface-50: #03101f !important;
+  --surface-100: #071c3a !important;
+  --surface-200: #0d2e56 !important;
+  --surface-300: #164070 !important;
+  --surface-400: #235289 !important;
+  --surface-500: #3a72a8 !important;
+  --surface-600: #5f9bc8 !important;
+  --surface-700: #8bbcd9 !important;
+  --surface-800: #b8d9ee !important;
+  --surface-900: #d4eeff !important;
+  --surface-a: #071c3a !important;
+  --surface-b: #03101f !important;
+  --surface-c: rgba(100, 180, 255, 0.07) !important;
+  --surface-d: #0d2e56 !important;
+  --surface-e: #071c3a !important;
+  --surface-f: #071c3a !important;
+  --gray-50: #d4eeff !important;
+  --gray-100: #b8d9ee !important;
+  --gray-200: #8bbcd9 !important;
+  --gray-300: #5f9bc8 !important;
+  --gray-400: #3a72a8 !important;
+  --gray-500: #235289 !important;
+  --gray-600: #164070 !important;
+  --gray-700: #0d2e56 !important;
+  --gray-800: #071c3a !important;
+  --gray-900: #03101f !important;
+
+  --text-color: #d4eeff !important;
+  --text-color-secondary: #8bbcd9 !important;
+  --primary-color: #7dd6f5 !important;
+  --primary-color-text: #021220 !important;
+
+  --scrollbar-track-bg: #071c3a !important;
+  --scrollbar-thumb-bg: #0d2e56 !important;
+  --scrollbar-thumb-hover-bg: #164070 !important;
+
+  --card-border: rgba(100, 180, 255, 0.22) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 14px rgba(100, 180, 255, 0.10) !important;
+
+  // Liquid Glass — icy raised panel off deep-navy page
+  @include glass.glass-tokens(
+    rgba(13, 46, 86, 0.58),
+    rgba(7, 28, 58, 0.92),
+    rgba(100, 180, 255, 0.38),
+    rgba(100, 180, 255, 0.07),
+    rgba(125, 214, 245, 0.28),
+    rgba(100, 180, 255, 0.14),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.08),
+    rgba(100, 180, 255, 0.12)
+  );
+
+  --corner-info-card-bg: rgba(7, 28, 58, 0.65) !important;
+  --corner-info-card-border: rgba(100, 180, 255, 0.35) !important;
+  --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.22) !important;
+  --corner-info-card-divider: rgba(100, 180, 255, 0.12) !important;
+  --corner-info-card-hover-bg: rgba(100, 180, 255, 0.1) !important;
+
+  --tag-today-bg: rgba(100, 180, 255, 0.22) !important;
+  --tag-today-text: #9ce3f8 !important;
+  --tag-today-border: rgba(100, 180, 255, 0.5) !important;
+
+  --p-primary-color: var(--primary-color) !important;
+
+  // Chart colors — icy cyan/blue family
+  --chart-bar-primary: rgba(100, 200, 245, 0.82) !important;
+  --chart-bar-primary-border: rgb(100, 200, 245) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(100, 200, 245, 0.78) !important;
+  --chart-info-border: rgb(100, 200, 245) !important;
+  --chart-orange: rgba(160, 210, 255, 0.72) !important;
+  --chart-orange-border: rgb(160, 210, 255) !important;
+  --chart-success: rgba(100, 200, 160, 0.75) !important;
+  --chart-success-border: rgb(100, 200, 160) !important;
+  --chart-danger: rgba(190, 140, 200, 0.75) !important;
+  --chart-danger-border: rgb(190, 140, 200) !important;
+  --chart-warning: rgba(140, 195, 235, 0.9) !important;
+  --chart-warning-border: rgb(140, 195, 235) !important;
+
+  // NOVA accent — glacier blue
+  --nova-accent: rgba(100, 200, 245, 0.7) !important;
+  --nova-accent-bg: rgba(30, 90, 145, 0.32) !important;
+  --nova-accent-border: rgb(100, 200, 245) !important;
+  --nova-accent-text: #d4eeff !important;
+
+  // Bug accent — muted lavender ice
+  --bug-accent-bg: rgba(160, 130, 220, 0.30) !important;
+  --bug-accent-text: #e8d8ff !important;
+
+  // GitHub deploy card tones — all in the ice/frost family
+  --github-repo-label-color: #d4eeff !important;
+  --github-repo-api-bg: rgba(100, 200, 245, 0.42) !important;
+  --github-repo-api-border: rgba(100, 200, 245, 0.82) !important;
+  --github-repo-tools-bg: rgba(80, 190, 190, 0.35) !important;
+  --github-repo-tools-border: rgba(80, 190, 190, 0.72) !important;
+  --github-repo-nuget-bg: rgba(140, 180, 255, 0.34) !important;
+  --github-repo-nuget-border: rgba(140, 180, 255, 0.72) !important;
+  --github-repo-migrations-bg: rgba(160, 210, 255, 0.34) !important;
+  --github-repo-migrations-border: rgba(160, 210, 255, 0.72) !important;
+  --github-repo-infra-bg: rgba(100, 180, 255, 0.32) !important;
+  --github-repo-infra-border: rgba(100, 180, 255, 0.68) !important;
+
+  // GitHub deploy status UI
+  --github-deploy-progressbar-track-bg: rgba(13, 46, 86, 0.52) !important;
+  --github-deploy-progressbar-fill: rgba(100, 200, 245, 0.8) !important;
+  --github-deploy-surface-muted-bg: rgba(7, 28, 58, 0.85) !important;
+  --github-deploy-surface-muted-border: rgba(100, 160, 210, 0.32) !important;
+  --github-deploy-branch-pill-bg: rgba(7, 28, 58, 0.85) !important;
+  --github-deploy-branch-pill-border: rgba(100, 160, 210, 0.32) !important;
+  --github-deploy-branch-pill-text: #d4eeff !important;
+  --github-deploy-running-chip-bg: rgba(100, 200, 245, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(100, 200, 245, 0.42) !important;
+  --github-deploy-running-chip-text: #cce8ff !important;
+  --github-deploy-queue-chip-bg: rgba(80, 160, 220, 0.22) !important;
+  --github-deploy-queue-chip-border: rgba(80, 160, 220, 0.52) !important;
+  --github-deploy-queue-chip-text: #d4eeff !important;
+  --github-deploy-inline-running-track: rgba(100, 200, 245, 0.2) !important;
+  --github-deploy-inline-queued-track: rgba(80, 160, 220, 0.22) !important;
+  --github-deploy-footer-ticker-bg: rgba(7, 28, 58, 0.9) !important;
+  --github-deploy-footer-ticker-border: rgba(100, 200, 255, 0.38) !important;
+  --github-deploy-footer-ticker-text: #7dd6f5 !important;
+  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(100, 200, 255, 0.32) !important;
+  --github-deploy-timeline-meta-color: #7dd6f5 !important;
+  --content-text-size: 1.06rem !important;
+
+  // Data quality indicators
+  --data-quality-valid: rgba(100, 200, 200, 0.5) !important;
+  --data-quality-warning: rgba(160, 200, 240, 0.5) !important;
+  --data-quality-error: rgba(190, 140, 210, 0.55) !important;
+  --data-quality-empty: rgba(80, 140, 200, 0.3) !important;
+
+  // Spinner
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  // PrimeReact component overrides
+  --multiselect-chip-bg: #0d2e56 !important;
+  --multiselect-chip-fg: #d4eeff !important;
+  --multiselect-chip-icon-fg: #8bbcd9 !important;
+  --multiselect-chip-border: 1px solid rgba(100, 180, 255, 0.22) !important;
+
+  --toast-success-bg: rgba(80, 190, 160, 0.22) !important;
+  --toast-success-border: rgb(80, 190, 160) !important;
+  --toast-success-text: #c0eedd !important;
+  --toast-info-bg: rgba(100, 200, 245, 0.22) !important;
+  --toast-info-border: #7dd6f5 !important;
+  --toast-info-text: #cce8ff !important;
+  --toast-warn-bg: rgba(140, 195, 235, 0.22) !important;
+  --toast-warn-border: rgb(140, 195, 235) !important;
+  --toast-warn-text: #d4eeff !important;
+  --toast-error-bg: rgba(190, 140, 220, 0.22) !important;
+  --toast-error-border: rgb(190, 140, 220) !important;
+  --toast-error-text: #e8d8ff !important;
+
+  --cpt-skeleton-bg: #0d2e56 !important;
+  --cpt-skeleton-sheen: rgba(100, 180, 255, 0.25) !important;
+
+  @include badge.badge-theme-tokens(
+    #7dd6f5,
+    #021220,
+    rgb(80, 190, 160),
+    #021220,
+    rgb(100, 200, 245),
+    #021220,
+    rgb(140, 195, 235),
+    #021220,
+    rgb(190, 140, 220),
+    #ffffff,
+    rgb(190, 140, 220)
+  );
+  @include badge.badge-theme-rules();
+}
+
+// Dialog
+html[data-theme='code-freeze'] .p-dialog,
+[data-theme='code-freeze'] .p-dialog {
+  background: var(--window-surface-bg) !important;
+  border: var(--window-surface-border) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='code-freeze'] .p-dialog .p-dialog-header,
+[data-theme='code-freeze'] .p-dialog .p-dialog-header {
+  background: var(--header-bg) !important;
+  color: var(--header-fg) !important;
+  border-bottom: var(--header-border) !important;
+}
+html[data-theme='code-freeze'] .p-dialog .p-dialog-title,
+[data-theme='code-freeze'] .p-dialog .p-dialog-title {
+  color: var(--header-fg) !important;
+}
+html[data-theme='code-freeze'] .p-dialog .p-dialog-content,
+[data-theme='code-freeze'] .p-dialog .p-dialog-content {
+  background: var(--window-surface-bg) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='code-freeze'] .p-dialog .p-dialog-footer,
+[data-theme='code-freeze'] .p-dialog .p-dialog-footer {
+  background: var(--window-surface-bg) !important;
+  border-top: var(--window-surface-border) !important;
+}
+html[data-theme='code-freeze'] .p-dialog .p-dialog-header-icon,
+[data-theme='code-freeze'] .p-dialog .p-dialog-header-icon {
+  color: var(--header-fg) !important;
+}
+html[data-theme='code-freeze'] .p-dialog .p-dialog-header-icon:hover,
+[data-theme='code-freeze'] .p-dialog .p-dialog-header-icon:hover {
+  color: var(--text-color-secondary) !important;
+  background: var(--surface-hover) !important;
+}
