@@ -68,10 +68,10 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   },
   {
     owner: 'CPT-Group',
-    repo: 'cpt-infra',
-    /** `CD - Deploy Infrastructure` */
-    workflowId: 285242645,
-    workflowIds: getMonitorWorkflowIds('cpt-infra') ?? undefined,
+    repo: 'cpt-group-p2p-go-service',
+    /** `CD - Build & Deploy to On-Prem` */
+    workflowId: 289926293,
+    workflowIds: getMonitorWorkflowIds('cpt-group-p2p-go-service') ?? undefined,
   },
   {
     owner: 'CPT-Group',

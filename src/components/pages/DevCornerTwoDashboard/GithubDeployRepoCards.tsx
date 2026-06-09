@@ -189,7 +189,7 @@ function repoToneClassName(tone: GitHubRepoTone): string {
   if (tone === 'tools') return styles.repoToneTools;
   if (tone === 'nuget') return styles.repoToneNuget;
   if (tone === 'migrations') return styles.repoToneMigrations;
-  if (tone === 'infra') return styles.repoToneInfra;
+  if (tone === 'p2p') return styles.repoToneP2p;
   return '';
 }
 

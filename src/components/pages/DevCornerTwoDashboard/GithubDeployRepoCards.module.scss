@@ -117,7 +117,8 @@
   background: linear-gradient(90deg, var(--github-repo-migrations-bg) 0%, var(--surface-card) 45%);
 }
 
-.repoToneInfra {
+.repoToneP2p {
+  // Reuses --github-repo-infra-* tokens (sky-blue) — no theme changes needed.
   background: linear-gradient(90deg, var(--github-repo-infra-bg) 0%, var(--surface-card) 45%);
 }
 

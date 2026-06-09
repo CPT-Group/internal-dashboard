@@ -36,7 +36,7 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
 
 const FALLBACK_MONITOR_WORKFLOW_IDS: Readonly<Record<string, readonly number[]>> = {
   'cpt-nuget-libraries': [235954510],
-  'cpt-infra': [285242645],
+  'cpt-group-p2p-go-service': [289926293],
 };
 
 function unique(values: readonly number[]): readonly number[] {

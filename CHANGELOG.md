@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner Two — GitHub deploy card: swap `cpt-infra` → P2P Go service**: Replaced the infra card (no active deploy workflows) with `cpt-group-p2p-go-service` using its `CD - Build & Deploy to On-Prem` workflow (ID 289926293). Updated `GITHUB_DEPLOY_MONITORS.ts`, `GITHUB_DEPLOY_LANE_WORKFLOWS.ts` fallback IDs, and `githubDeployDisplay.ts` tone mapping (`'infra'` → `'p2p'`; reuses existing `--github-repo-infra-*` CSS tokens so no theme files needed changing). SCSS class renamed `repoToneInfra` → `repoToneP2p`.
 - **Code Freeze default off after UAT** (NOVA-2681): Set `CODE_FREEZE_ENABLED = false` in `src/constants/CODE_FREEZE.ts` for production merge — flip to `true` manually when a freeze window is active.
 
-### Fixed Previously the frost palette loaded briefly but was then overridden by the stored theme because `ThemeProvider`'s `useEffect` writes `data-theme` on `<html>` with `!important` rules on mount. `CodeFreezeOverlay` now locks `data-theme="code-freeze"` directly on `document.documentElement` via a `MutationObserver` that immediately corrects any override attempt. The prior theme is restored on unmount. CSS variable overrides were moved from the wrapper class into a proper `src/styles/themes/code-freeze.scss` theme file (same pattern as all other themes), covering the full ice/frost palette including surface, text, chart, badge, glass, and GitHub deploy tokens.
+### Fixed
+
+- **Code Freeze theme now fully locks on activation** (NOVA-2681): Previously the frost palette loaded briefly but was then overridden by the stored theme because `ThemeProvider`'s `useEffect` writes `data-theme` on `<html>` with `!important` rules on mount. `CodeFreezeOverlay` now locks `data-theme="code-freeze"` directly on `document.documentElement` via a `MutationObserver` that immediately corrects any override attempt. The prior theme is restored on unmount. CSS variable overrides were moved from the wrapper class into a proper `src/styles/themes/code-freeze.scss` theme file (same pattern as all other themes), covering the full ice/frost palette including surface, text, chart, badge, glass, and GitHub deploy tokens.
 
 ### Added
 
