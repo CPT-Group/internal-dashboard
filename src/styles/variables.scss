@@ -475,4 +475,17 @@
   // Skeleton sheen tokens (opt-in — existing .p-skeleton rule is unchanged).
   --cpt-skeleton-bg: var(--surface-300, #3d2a5c);
   --cpt-skeleton-sheen: rgba(255, 255, 255, 0.35);
+
+  // Code Freeze mode — ice/frost visual tokens
+  --freeze-bg-tint: rgba(8, 28, 60, 0.72);
+  --freeze-border-color: rgba(140, 210, 255, 0.35);
+  --freeze-card-overlay: rgba(12, 38, 72, 0.55);
+  --freeze-text-color: #d4eeff;
+  --freeze-primary-color: #7dd6f5;
+  --freeze-notice-bg: rgba(4, 16, 40, 0.96);
+  --freeze-notice-border: rgba(120, 200, 255, 0.6);
+  --freeze-notice-text: #cce8ff;
+  --freeze-notice-glow: rgba(100, 180, 255, 0.4);
+  --freeze-snow-opacity: 1;
+  --freeze-edge-opacity: 1;
 }

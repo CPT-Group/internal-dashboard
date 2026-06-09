@@ -10,3 +10,4 @@ export * from './LimboTicketsTable';
 export * from './CopyToClipboardButton';
 export * from './MarqueeTicker';
 export * from './AssignedTicketsCornerCard';
+export * from './CodeFreezeOverlay';

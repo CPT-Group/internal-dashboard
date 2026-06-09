@@ -16,3 +16,4 @@ export * from './JACKIES_BACKGROUND';
 export * from './DEV1_CONFIG';
 export * from './GITHUB_WEBHOOK';
 export * from './GITHUB_DEPLOY_MONITORS';
+export * from './CODE_FREEZE';
