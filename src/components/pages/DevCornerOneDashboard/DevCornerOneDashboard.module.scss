@@ -186,7 +186,7 @@
   position: relative;
 }
 
-/* Component Activity table — scroll wrapper for useAutoScroll + CSS sticky header */
+/* Component Activity + Impediment tables — scroll wrapper for useAutoScroll + CSS sticky header */
 .compTableWrap {
   flex: 1;
   overflow-y: auto;
@@ -196,32 +196,6 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--surface-card);
-  }
-}
-
-/* Impediment panel — scrollable DataTable + frozen header while rows auto-scroll */
-.impedimentTableWrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-
-  :global(.p-datatable) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  :global(.p-datatable-wrapper) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  :global(.p-datatable-thead > tr > th) {
-    position: sticky;
-    top: 0;
-    z-index: 2;
     background: var(--surface-card);
   }
 }

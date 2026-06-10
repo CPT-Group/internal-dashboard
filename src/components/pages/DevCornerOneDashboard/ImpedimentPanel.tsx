@@ -46,13 +46,11 @@ export const ImpedimentPanel = ({ analytics }: ImpedimentPanelProps) => {
 
   return (
     <Card className={styles.panelCard}>
-      <div ref={scrollRef} className={styles.impedimentTableWrap}>
+      <div ref={scrollRef} className={styles.compTableWrap}>
         <DataTable
           value={rows}
           size="small"
           stripedRows
-          scrollable
-          scrollHeight="flex"
           className={styles.compTable}
         >
           <Column header="Impediment" body={impedimentBody} style={{ minWidth: '140px' }} />
