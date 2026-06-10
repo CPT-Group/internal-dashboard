@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dev Corner Two — NuGet deploy card idle after pipeline migration**: Re-pointed `cpt-nuget-libraries` from deleted workflow `CD - Publish NuGet Packages` (235954510) to standardized Dev Fast Deploy / TST Build Artifact / Deploy Version IDs (`288752702`, `288752705`, `288752700`) with Non-Prod + Prod lane rules in `GITHUB_DEPLOY_LANE_WORKFLOWS.ts`.
 - **Code Freeze theme now fully locks on activation** (NOVA-2681): Previously the frost palette loaded briefly but was then overridden by the stored theme because `ThemeProvider`'s `useEffect` writes `data-theme` on `<html>` with `!important` rules on mount. `CodeFreezeOverlay` now locks `data-theme="code-freeze"` directly on `document.documentElement` via a `MutationObserver` that immediately corrects any override attempt. The prior theme is restored on unmount. CSS variable overrides were moved from the wrapper class into a proper `src/styles/themes/code-freeze.scss` theme file (same pattern as all other themes), covering the full ice/frost palette including surface, text, chart, badge, glass, and GitHub deploy tokens.
 
 ### Added

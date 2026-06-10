@@ -44,7 +44,9 @@ const WORKFLOW_GH_NAMES: Readonly<Record<number, string>> = {
   285829490: 'Dev Fast Deploy',
   285829489: 'Deploy Version',
   285829491: 'TST Build Artifact',
-  235954510: 'CD - Publish NuGet Packages',
+  288752702: 'Dev Fast Deploy',
+  288752700: 'Deploy Version',
+  288752705: 'TST Build Artifact',
   285242645: 'CD - Deploy Infrastructure',
 };
 

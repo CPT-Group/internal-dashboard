@@ -32,10 +32,17 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
     stg: { primary: [285829489] },
     prod: { primary: [285829489] },
   },
+  /** Non-Prod + Prod swim lanes (not dev/tst/stg/prod). IDs verified 2026-06-10. */
+  'cpt-nuget-libraries': {
+    nonprod: {
+      primary: [288752702, 288752705],
+      active: [288752702, 288752705, 288752700],
+    },
+    prod: { primary: [288752700] },
+  },
 };
 
 const FALLBACK_MONITOR_WORKFLOW_IDS: Readonly<Record<string, readonly number[]>> = {
-  'cpt-nuget-libraries': [235954510],
   'cpt-group-p2p-go-service': [289926293],
 };
 
