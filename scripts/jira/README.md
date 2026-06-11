@@ -6,6 +6,8 @@ Jira UI when you want auditable, scriptable, reviewable changes.
 
 Full API reference: https://developer.atlassian.com/cloud/automation/rest/api-group-rule-management/
 
+> **Agents:** one-off migration/diagnostic scripts belong in **`kyleJira/`** (gitignored), not in tracked `scripts/jira/`. Snapshots and scan JSON go in **`kyleOutput/`**. Do not add new tracked files or README entries for local-only scripts unless promoting reusable tooling. See **AGENTS.md** → "Working tree hygiene (agents)".
+
 ---
 
 ## TL;DR

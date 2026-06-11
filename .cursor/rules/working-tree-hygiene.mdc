@@ -1,0 +1,14 @@
+---
+description: Keep the git working tree clean — one-offs and local output only in gitignored folders; no unrequested tracked edits.
+alwaysApply: true
+---
+
+# Working tree hygiene
+
+- **Only change tracked files for real app/tooling work the user requested.** Investigation or Jira-only tasks → chat answer only, no diff unless they ask to implement.
+- **One-off Jira scripts, ticket fixers, migration experiments** → **`kyleJira/`** (never new files under tracked `scripts/jira/` unless promoting reusable tooling).
+- **Snapshots, scan JSON, analyst exports, `.ps1` scratch** → **`kyleOutput/`** or **`cursorScripts/`** — never commit.
+- **Do not commit build/dev noise**: restore `data/cursor-analytics/cursor-analytics-summary.json` and `*.generated.ts` if changed only by local `npm run dev` / `npm run build` without an intentional source change.
+- **End every task with `git status`**. Leave a clean tree unless the user asked for commits.
+
+See **AGENTS.md** → "Working tree hygiene (agents)" for the full table.

@@ -184,6 +184,28 @@ Authoritative list is **`.gitignore`**; common entries include:
 
 You may have **additional** gitignored root folders on disk for local experiments; treat `.gitignore` + an explicit directory listing as the source of truth, not repo search alone.
 
+### Working tree hygiene (agents)
+
+**Do not leave the tracked repo dirty.** Only modify **versioned app/tooling code** when the user asked for a product change. Everything else stays **gitignored** or gets reverted before you finish.
+
+| Kind of work | Where it belongs | Tracked? |
+|--------------|------------------|----------|
+| Next.js app, dashboards, shared scripts in `scripts/` (reusable verifiers, helpers) | Repo paths as today | Yes — commit when user asks |
+| One-off Jira migrations, ticket fixers, automation experiments | **`kyleJira/`** (subfolders `one-off-migrations/`, `diagnostics/` ok) | **No** — never `scripts/jira/` unless promoting reusable tooling |
+| Jira rule snapshots, scan output, analyst CSV/JSON dumps | **`kyleOutput/`** | **No** |
+| Ad-hoc payloads, per-task Cursor helpers | **`cursorScripts/`** | **No** |
+| Local `.ps1` scratch, webhook test JSON, API response captures | **`kyleOutput/`** or **`cursorScripts/`** | **No** |
+
+**Hard rules:**
+
+1. **Never create or edit tracked files** for Jira-only ops, local diagnostics, or throwaway exports — use gitignored folders above.
+2. **Do not edit tracked files the user did not ask to change** (investigation-only turns → explain in chat, no diff).
+3. **`npm run dev` / `npm run build` side effects** — if prebuild regenerated `data/cursor-analytics/cursor-analytics-summary.json` or `*.generated.ts` without an intentional image/CSV change, **`git restore`** those paths before ending the session; do not commit noise.
+4. **Before finishing**, run **`git status`**. Working tree should be clean unless the user explicitly requested commits for real code/docs changes.
+5. **Promote to `scripts/jira/`** only when a script is generic/reusable (verifiers, shared helpers). One-offs stay in **`kyleJira/`** even if listed in README examples — document usage in chat or a local note under `kyleJira/`, not by adding paths under `scripts/jira/` in tracked README unless the script was promoted.
+
+See also **`.cursor/rules/working-tree-hygiene.mdc`**.
+
 ## Build-time scripts
 
 These run automatically before `dev` and `build`:
@@ -380,6 +402,7 @@ These dashboards display rotating background images with optional overlays. See 
 
 Before every commit and push:
 
+0. **Working tree** — `git status` must show only files you intentionally changed for the task. Restore prebuild noise (`cursor-analytics-summary.json`, `*.generated.ts`) if accidental. Move stray one-offs from `scripts/jira/` to **`kyleJira/`**; never commit local JSON/PS1 scratch.
 1. **Regenerate background slide lists** — run all three scripts (or just `npm run dev` / `npm run build` which runs them automatically). Images may have been added/removed since last generation.
    ```bash
    node scripts/generate-conference-slides.js
