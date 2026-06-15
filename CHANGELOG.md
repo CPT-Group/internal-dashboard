@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Theme parity with `cpt-internal-tools`** — Ported 32 missing palette themes (GitHub Dark/Light, frostbyte–tundra batch, colorblind suite, CPT Paperwork, etc.) plus `atlas-light` / `atlas-blue` aliases as static SCSS (Tizen-safe hex/rgba, no `color-mix()`). Wired into `main.scss`, `APP_THEME_CYCLE_ORDER`, layout theme-init `valid`, and `ThemeChangeToast`. Regenerator: `scripts/generate-dashboard-themes-from-ui.ts`.
+
 ### Changed
 
 - **Dev Corner Two — GitHub deploy card: swap `cpt-infra` → P2P Go service**: Replaced the infra card (no active deploy workflows) with `cpt-group-p2p-go-service` using its `CD - Build & Deploy to On-Prem` workflow (ID 289926293). Updated `GITHUB_DEPLOY_MONITORS.ts`, `GITHUB_DEPLOY_LANE_WORKFLOWS.ts` fallback IDs, and `githubDeployDisplay.ts` tone mapping (`'infra'` → `'p2p'`; reuses existing `--github-repo-infra-*` CSS tokens so no theme files needed changing). SCSS class renamed `repoToneInfra` → `repoToneP2p`.

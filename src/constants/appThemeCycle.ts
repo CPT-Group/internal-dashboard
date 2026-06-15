@@ -1,14 +1,13 @@
 /**
  * Canonical order for cycling UI themes (`html[data-theme]` + `localStorage` `cpt-theme`).
  * Keep in sync with the `valid` array in `src/app/layout.tsx` theme-init inline script.
- *
- * Cycle: light → dark → khaki → light-synth → dark-synth → ms-access-2010 →
- *        miami-vice → cpt-barbie → dark-barbie → floral → night-vision →
- *        summer → light → …
+ * Aligned with cpt-internal-tools theme-inventory.md (+ legacy light/dark slugs).
  */
 export const APP_THEME_CYCLE_ORDER = [
   'light',
   'dark',
+  'atlas-light',
+  'atlas-blue',
   'khaki',
   'light-synth',
   'dark-synth',
@@ -19,6 +18,38 @@ export const APP_THEME_CYCLE_ORDER = [
   'floral',
   'night-vision',
   'summer',
+  'github-dark',
+  'github-light',
+  'frostbyte',
+  'embercore',
+  'abyss',
+  'tempest',
+  'midas',
+  'aurora',
+  'evergreen',
+  'maple',
+  'bloom',
+  'espresso',
+  'moonstone',
+  'rosegold',
+  'cpt-cyberpunk',
+  'nightfang',
+  'neon-district',
+  'macaron',
+  'arcane',
+  'cpt-vault',
+  'biohack',
+  'hearth',
+  'tundra',
+  'cpt-paperwork',
+  'colorblind-red-light',
+  'colorblind-red-dark',
+  'colorblind-green-light',
+  'colorblind-green-dark',
+  'colorblind-blue-yellow-light',
+  'colorblind-blue-yellow-dark',
+  'colorblind-mono-light',
+  'colorblind-mono-dark',
 ] as const;
 
 export type AppTheme = (typeof APP_THEME_CYCLE_ORDER)[number];
