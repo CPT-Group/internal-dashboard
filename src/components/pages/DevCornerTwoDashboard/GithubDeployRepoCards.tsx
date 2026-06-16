@@ -105,6 +105,19 @@ function isQueuedLikeRunStatus(status: string): boolean {
   return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
 }
 
+function formatIdleLabel(updatedAt: string | null): string {
+  if (!updatedAt) return 'Idle';
+  const ms = Date.now() - Date.parse(updatedAt);
+  if (!Number.isFinite(ms) || ms < 0) return 'Idle';
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 60) return `Idle ${mins}m`;
+  const hours = Math.floor(ms / 3_600_000);
+  if (hours < 24) return `Idle ${hours}h`;
+  const days = Math.floor(ms / 86_400_000);
+  if (days < 14) return `Idle ${days}d`;
+  return `Idle ${Math.floor(days / 7)}w`;
+}
+
 function runStateFromSummary(run: GitHubDeployRunSummary): EnvironmentRunState {
   if (run.status !== 'completed') {
     return isQueuedLikeRunStatus(run.status) ? 'queued' : 'running';
@@ -136,7 +149,7 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
         branch: null,
         triggerText: null,
         createdAt: null,
-        updatedAt: null,
+        updatedAt: run?.updatedAt ?? null,
         deployVersionLabel: null,
       };
     }
@@ -157,7 +170,7 @@ function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'failed') return 'Fail';
   if (snapshot.state === 'running') return 'In Progress';
   if (snapshot.state === 'queued') return 'Queued';
-  return 'Idle';
+  return formatIdleLabel(snapshot.updatedAt);
 }
 
 function environmentRowClass(snapshot: EnvironmentSnapshot): string {
