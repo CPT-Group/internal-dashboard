@@ -1,0 +1,229 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// Evergreen — auto-ported from cpt-internal-tools customThemes.ts (evergreen).
+// Concrete hex/rgba only (no color-mix — Samsung Tizen TV constraint).
+
+html[data-theme='evergreen'] {
+  background-color: #06130d !important;
+  background-image: radial-gradient(125% 125% at 12% 8%, #125d39 0%, transparent 55%), radial-gradient(115% 115% at 88% 92%, #325c24 0%, transparent 52%), linear-gradient(140deg, #040d09 0%, #0c3a1f 48%, #040d09 100%) !important;
+}
+html[data-theme='evergreen'] body {
+  background-color: #06130d !important;
+  color: #ecfdf5 !important;
+}
+
+html[data-theme='evergreen'],
+[data-theme='evergreen'] {
+  --header-bg: #123524 !important;
+  --header-fg: #d9f99d !important;
+  --header-border: 1px solid #2f5d46 !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  --window-bg: #06130d !important;
+  --window-fg: #ecfdf5 !important;
+  --window-border: 1px solid #2f5d46 !important;
+  --window-surface-bg: #2f4439 !important;
+  --window-surface-fg: #ecfdf5 !important;
+  --window-surface-border: 1px solid #2f5d46 !important;
+  --input-bg: #05100b !important;
+  --input-fg: #ecfdf5 !important;
+  --input-border: 1px solid #2f5d46 !important;
+  --button-bg: #2f4439 !important;
+  --button-fg: #ecfdf5 !important;
+  --button-hover-bg: #14211b !important;
+  --menu-item-hover-bg: #06130d !important;
+  --status-icon-fill: #000000 !important;
+  --status-icon-stroke: #000000 !important;
+  --status-icon-stroke-offline: rgb(171, 171, 171) !important;
+  --page-background: #06130d !important;
+  --text-primary: #ecfdf5 !important;
+  --button-primary-background: #22c55e !important;
+  --button-primary-background-hover: #1da750 !important;
+  --button-primary-text: #06130d !important;
+  --maskbg: rgba(0, 0, 0, 0.5) !important;
+  --focus-ring: 0 0 0 0.2rem #287947 !important;
+  --highlight-bg: #1f380f !important;
+  --highlight-text-color: #ecfdf5 !important;
+  --color-danger: #f87171 !important;
+  --surface-ground: #06130d !important;
+  --surface-section: #06130d !important;
+  --surface-card: #10261a !important;
+  --surface-overlay: #2f4439 !important;
+  --surface-border: #2f5d46 !important;
+  --surface-hover: #0b331c !important;
+  --surface-0: #06130d !important;
+  --surface-50: #0d1a14 !important;
+  --surface-100: #16231d !important;
+  --surface-200: #222f29 !important;
+  --surface-300: #2f3d37 !important;
+  --surface-400: #425049 !important;
+  --surface-500: #596761 !important;
+  --surface-600: #74837c !important;
+  --surface-700: #95a49d !important;
+  --surface-800: #b9cac2 !important;
+  --surface-900: #daeae2 !important;
+  --surface-a: #10261a !important;
+  --surface-b: #06130d !important;
+  --surface-c: #0f1c16 !important;
+  --surface-d: #2f5d46 !important;
+  --surface-e: #10261a !important;
+  --surface-f: #10261a !important;
+  --gray-50: #06130d !important;
+  --gray-100: #06130d !important;
+  --gray-200: #06130d !important;
+  --gray-300: #06130d !important;
+  --gray-400: #06130d !important;
+  --gray-500: #06130d !important;
+  --gray-600: #06130d !important;
+  --gray-700: #06130d !important;
+  --gray-800: #06130d !important;
+  --gray-900: #06130d !important;
+  --text-color: #ecfdf5 !important;
+  --text-color-secondary: #86efac !important;
+  --primary-color: #22c55e !important;
+  --primary-color-text: #06130d !important;
+  --scrollbar-track-bg: #1d2a24 !important;
+  --scrollbar-thumb-bg: #425049 !important;
+  --scrollbar-thumb-hover-bg: #62716a !important;
+  --card-border: rgba(34, 197, 94, 0.18) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  --corner-info-card-bg: rgba(16, 38, 26, 0.74) !important;
+  --corner-info-card-border: #2f5d46 !important;
+  --corner-info-card-shadow: rgba(236, 253, 245, 0.28) !important;
+  --corner-info-card-divider: rgba(18, 53, 36, 0.32) !important;
+  --corner-info-card-hover-bg: #0b331c !important;
+  --tag-today-bg: rgba(18, 53, 36, 0.16) !important;
+  --tag-today-text: #ecfdf5 !important;
+  --tag-today-border: rgba(18, 53, 36, 0.4) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(34, 197, 94, 0.82) !important;
+  --chart-bar-primary-border: rgb(34, 197, 94) !important;
+  --chart-success: rgba(52, 211, 153, 0.78) !important;
+  --chart-success-border: rgb(52, 211, 153) !important;
+  --chart-danger: rgba(248, 113, 113, 0.78) !important;
+  --chart-danger-border: rgb(248, 113, 113) !important;
+  --chart-warning: rgba(251, 191, 36, 0.9) !important;
+  --chart-warning-border: rgb(251, 191, 36) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(96, 165, 250, 0.24) !important;
+  --chart-info-border: rgb(96, 165, 250) !important;
+  --chart-orange: rgba(251, 191, 36, 0.22) !important;
+  --chart-orange-border: rgb(251, 191, 36) !important;
+  --nova-accent: rgba(34, 197, 94, 0.7) !important;
+  --nova-accent-bg: rgba(34, 197, 94, 0.18) !important;
+  --nova-accent-border: rgb(34, 197, 94) !important;
+  --nova-accent-text: #ecfdf5 !important;
+  --bug-accent-bg: rgba(248, 113, 113, 0.2) !important;
+  --bug-accent-text: #ecfdf5 !important;
+  --activity-badge-info-text: #ecfdf5 !important;
+  --activity-badge-warning-text: #ecfdf5 !important;
+  --work-hours-badge-danger-text: #ecfdf5 !important;
+  --work-hours-badge-zero-bg: rgba(248, 113, 113, 0.22) !important;
+  --work-hours-badge-zero-text: #ecfdf5 !important;
+  --work-hours-badge-success-bg: rgba(52, 211, 153, 0.2) !important;
+  --work-hours-badge-success-text: #ecfdf5 !important;
+  --work-hours-badge-over-bg: rgba(251, 191, 36, 0.2) !important;
+  --work-hours-badge-over-text: #ecfdf5 !important;
+  --work-hours-badge-super-bg: rgba(34, 197, 94, 0.2) !important;
+  --work-hours-badge-super-text: #ecfdf5 !important;
+  --work-hours-danger-fill: rgba(248, 113, 113, 0.32) !important;
+  --work-hours-success-fill: rgba(52, 211, 153, 0.22) !important;
+  --work-hours-warning-fill: rgba(251, 191, 36, 0.24) !important;
+  --work-hours-orange-fill: rgba(251, 191, 36, 0.24) !important;
+  --work-hours-ahead-fill: rgba(34, 197, 94, 0.2) !important;
+  --work-hours-super-fill: rgba(96, 165, 250, 0.22) !important;
+  --work-hours-neutral-fill: rgba(34, 197, 94, 0.2) !important;
+  --work-hours-super-border: rgb(96, 165, 250) !important;
+  --github-repo-label-color: #ecfdf5 !important;
+  --github-repo-api-bg: rgba(96, 165, 250, 0.2) !important;
+  --github-repo-api-border: rgba(96, 165, 250, 0.5) !important;
+  --github-repo-tools-bg: rgba(52, 211, 153, 0.18) !important;
+  --github-repo-tools-border: rgba(52, 211, 153, 0.48) !important;
+  --github-repo-nuget-bg: rgba(34, 197, 94, 0.18) !important;
+  --github-repo-nuget-border: rgba(34, 197, 94, 0.48) !important;
+  --github-repo-migrations-bg: rgba(251, 191, 36, 0.2) !important;
+  --github-repo-migrations-border: rgba(251, 191, 36, 0.5) !important;
+  --github-repo-infra-bg: rgba(52, 211, 153, 0.18) !important;
+  --github-repo-infra-border: rgba(52, 211, 153, 0.48) !important;
+  --github-deploy-progressbar-track-bg: rgba(47, 93, 70, 0.5) !important;
+  --github-deploy-progressbar-fill: rgba(34, 197, 94, 0.85) !important;
+  --github-deploy-surface-muted-bg: rgba(16, 38, 26, 0.96) !important;
+  --github-deploy-surface-muted-border: rgba(47, 93, 70, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(16, 38, 26, 0.98) !important;
+  --github-deploy-branch-pill-border: rgba(47, 93, 70, 0.6) !important;
+  --github-deploy-branch-pill-text: #ecfdf5 !important;
+  --github-deploy-running-chip-bg: rgba(251, 191, 36, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(251, 191, 36, 0.5) !important;
+  --github-deploy-running-chip-text: #ecfdf5 !important;
+  --github-deploy-queue-chip-bg: rgba(251, 191, 36, 0.2) !important;
+  --github-deploy-queue-chip-border: rgba(251, 191, 36, 0.55) !important;
+  --github-deploy-queue-chip-text: #ecfdf5 !important;
+  --github-deploy-inline-running-track: rgba(251, 191, 36, 0.18) !important;
+  --github-deploy-inline-queued-track: rgba(251, 191, 36, 0.16) !important;
+  --github-deploy-footer-ticker-bg: rgba(16, 38, 26, 0.98) !important;
+  --github-deploy-footer-ticker-border: rgba(18, 53, 36, 0.34) !important;
+  --github-deploy-footer-ticker-text: #123524 !important;
+  --github-deploy-footer-ticker-shadow: none !important;
+  --content-text-size: 1.05rem !important;
+  --github-deploy-timeline-meta-color: #123524 !important;
+  --data-quality-valid: #186045 !important;
+  --data-quality-warning: #685816 !important;
+  --data-quality-error: #733d3a !important;
+  --data-quality-empty: #264a35 !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+  --card-border: rgba(34, 197, 94, 0.18) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  --button-primary-background: #22c55e !important;
+  --button-primary-background-hover: #1da750 !important;
+  --button-primary-text: #06130d !important;
+  --multiselect-chip-bg: #384d41 !important;
+  --multiselect-chip-fg: #ecfdf5 !important;
+  --multiselect-chip-icon-fg: #86efac !important;
+  --multiselect-chip-border: 1px solid #2f5d46 !important;
+  --toast-success-bg: #32c992 !important;
+  --toast-success-border: #34d399 !important;
+  --toast-success-text: #1f2937 !important;
+  --toast-info-bg: #5c9eee !important;
+  --toast-info-border: #60a5fa !important;
+  --toast-info-text: #1f2937 !important;
+  --toast-warn-bg: #efb623 !important;
+  --toast-warn-border: #fbbf24 !important;
+  --toast-warn-text: #1f2937 !important;
+  --toast-error-bg: #ec6c6c !important;
+  --toast-error-border: #f87171 !important;
+  --toast-error-text: #1f2937 !important;
+  --cpt-skeleton-bg: #24392e !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.12) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  @include glass.glass-tokens(
+    rgba(16, 38, 26, 0.42),
+    rgba(16, 38, 26, 0.9),
+    rgba(34, 197, 94, 0.32),
+    rgba(34, 197, 94, 0.08),
+    rgba(34, 197, 94, 0.22),
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.08),
+    rgba(0, 0, 0, 0.35),
+    rgba(255, 255, 255, 0.12)
+  );
+
+  @include badge.badge-theme-tokens(
+    #22c55e,
+    #06130d,
+    rgb(52, 211, 153),
+    #ffffff,
+    rgb(96, 165, 250),
+    #ffffff,
+    rgb(251, 191, 36),
+    #ffffff,
+    rgb(248, 113, 113),
+    #ffffff,
+    rgb(248, 113, 113)
+  );
+  @include badge.badge-theme-rules();
+}

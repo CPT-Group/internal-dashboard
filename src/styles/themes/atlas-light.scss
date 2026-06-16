@@ -1,0 +1,216 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// Atlas Light — alias of legacy `light` slug; matches cpt-internal-tools `atlas-light`.
+
+html[data-theme='atlas-light'],
+[data-theme='atlas-light'] {
+  --header-bg: #f8fafc !important;
+  --header-fg: #1a2d44 !important;
+  --header-border: 1px solid #cbd5e1 !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  --window-bg: #ffffff !important;
+  --window-fg: #0f1a28 !important;
+  --window-border: 1px solid #cbd5e1 !important;
+  --window-surface-bg: #f1f5f9 !important;
+  --window-surface-fg: #0f1a28 !important;
+  --window-surface-border: 1px solid #cbd5e1 !important;
+  --input-bg: #ffffff !important;
+  --input-fg: #0f1a28 !important;
+  --input-border: 1px solid #94a3b8 !important;
+  --button-bg: var(--window-surface-bg) !important;
+  --button-fg: #0f1a28 !important;
+  --button-hover-bg: var(--surface-hover) !important;
+  --menu-item-hover-bg: #e2e8f0 !important;
+  --status-icon-fill: #ffffff !important;
+  --status-icon-stroke: #ffffff !important;
+  --status-icon-stroke-offline: rgb(100, 100, 100) !important;
+  --page-background: #ffffff !important;
+  --text-primary: #0f1a28 !important;
+  --button-primary-background: #3b82f6 !important;
+  --button-primary-background-hover: #2563eb !important;
+  --button-primary-text: #ffffff !important;
+  --maskbg: rgba(0, 0, 0, 0.38) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(59, 130, 246, 0.35) !important;
+  --highlight-bg: rgba(59, 130, 246, 0.12) !important;
+  --highlight-text-color: #0f1a28 !important;
+  --color-danger: #dc2626 !important;
+  --surface-ground: #ffffff !important;
+  --surface-section: #ffffff !important;
+  --surface-card: #f8fafc !important;
+  --surface-overlay: #f1f5f9 !important;
+  --surface-border: #e2e8f0 !important;
+  --surface-hover: rgba(0, 0, 0, 0.04) !important;
+  --surface-0: #ffffff !important;
+  --surface-50: #f8fafc !important;
+  --surface-100: #f1f5f9 !important;
+  --surface-200: #e2e8f0 !important;
+  --surface-300: #cbd5e1 !important;
+  --surface-400: #94a3b8 !important;
+  --surface-500: #64748b !important;
+  --surface-600: #475569 !important;
+  --surface-700: #334155 !important;
+  --surface-800: #1e293b !important;
+  --surface-900: #0f172a !important;
+  --surface-a: #f8fafc !important;
+  --surface-b: #ffffff !important;
+  --surface-c: rgba(0, 0, 0, 0.02) !important;
+  --surface-d: #e2e8f0 !important;
+  --surface-e: #f8fafc !important;
+  --surface-f: #f8fafc !important;
+  --gray-50: #f8fafc !important;
+  --gray-100: #f1f5f9 !important;
+  --gray-200: #e2e8f0 !important;
+  --gray-300: #cbd5e1 !important;
+  --gray-400: #94a3b8 !important;
+  --gray-500: #64748b !important;
+  --gray-600: #475569 !important;
+  --gray-700: #334155 !important;
+  --gray-800: #1e293b !important;
+  --gray-900: #0f172a !important;
+  --text-color: #0f1a28 !important;
+  --text-color-secondary: #475569 !important;
+  --primary-color: #3b82f6 !important;
+  --primary-color-text: #ffffff !important;
+  --scrollbar-track-bg: #f1f5f9 !important;
+  --scrollbar-thumb-bg: #cbd5e1 !important;
+  --scrollbar-thumb-hover-bg: #94a3b8 !important;
+  --card-border: rgba(0, 0, 0, 0.08) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
+
+  // Liquid Glass — LIGHT theme over a white page: alpha alone is invisible, so
+  // the fill is a cool blue-gray (#e4ecf7) clearly OFF white, with a stronger
+  // blue rim + drop shadow + bright top sheen to define the pane.
+  @include glass.glass-tokens(
+    rgba(228, 236, 247, 0.55),
+    rgba(240, 245, 251, 0.9),
+    rgba(59, 130, 246, 0.38),
+    rgba(59, 130, 246, 0.07),
+    rgba(59, 130, 246, 0.26),
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.28),
+    rgba(15, 23, 42, 0.22),
+    rgba(255, 255, 255, 0.9)
+  );
+  --corner-info-card-bg: rgba(248, 250, 252, 0.74) !important;
+  --corner-info-card-border: #cbd5e1 !important;
+  --corner-info-card-shadow: 0 2px 8px rgba(15, 23, 42, 0.12) !important;
+  --corner-info-card-divider: rgba(148, 163, 184, 0.38) !important;
+  --corner-info-card-hover-bg: rgba(59, 130, 246, 0.08) !important;
+  --tag-today-bg: rgba(168, 85, 247, 0.15) !important;
+  --tag-today-text: #6d28d9 !important;
+  --tag-today-border: rgba(168, 85, 247, 0.4) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(59, 130, 246, 0.82) !important;
+  --chart-bar-primary-border: rgb(59, 130, 246) !important;
+  --chart-success: rgba(22, 163, 74, 0.78) !important;
+  --chart-success-border: rgb(22, 163, 74) !important;
+  --chart-danger: rgba(220, 38, 38, 0.78) !important;
+  --chart-danger-border: rgb(220, 38, 38) !important;
+  --chart-warning: rgba(202, 138, 4, 0.9) !important;
+  --chart-warning-border: rgb(202, 138, 4) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(37, 99, 235, 0.22) !important;
+  --chart-info-border: rgb(37, 99, 235) !important;
+  --chart-orange: rgba(234, 88, 12, 0.2) !important;
+  --chart-orange-border: rgb(234, 88, 12) !important;
+  --nova-accent: rgba(59, 130, 246, 0.7) !important;
+  --nova-accent-bg: rgba(59, 130, 246, 0.18) !important;
+  --nova-accent-border: rgb(59, 130, 246) !important;
+  --nova-accent-text: #1e3a8a !important;
+  --bug-accent-bg: rgba(220, 38, 38, 0.22) !important;
+  --bug-accent-text: #7f1d1d !important;
+  --activity-badge-info-text: #1e40af !important;
+  --activity-badge-warning-text: #7c2d12 !important;
+  --work-hours-badge-danger-text: #7f1d1d !important;
+  --work-hours-badge-zero-bg: rgba(220, 38, 38, 0.24) !important;
+  --work-hours-badge-zero-text: #7f1d1d !important;
+  --work-hours-badge-success-bg: rgba(22, 163, 74, 0.2) !important;
+  --work-hours-badge-success-text: #14532d !important;
+  --work-hours-badge-over-bg: rgba(234, 88, 12, 0.2) !important;
+  --work-hours-badge-over-text: #7c2d12 !important;
+  --work-hours-badge-super-bg: rgba(14, 116, 144, 0.2) !important;
+  --work-hours-badge-super-text: #0c4a6e !important;
+  --work-hours-danger-fill: rgba(220, 38, 38, 0.32) !important;
+  --work-hours-success-fill: rgba(22, 163, 74, 0.22) !important;
+  --work-hours-warning-fill: rgba(202, 138, 4, 0.24) !important;
+  --work-hours-orange-fill: rgba(234, 88, 12, 0.24) !important;
+  --work-hours-ahead-fill: rgba(14, 116, 144, 0.2) !important;
+  --work-hours-super-fill: rgba(13, 148, 136, 0.22) !important;
+  --work-hours-neutral-fill: rgba(59, 130, 246, 0.2) !important;
+  --work-hours-super-border: rgb(13, 148, 136) !important;
+  --github-repo-label-color: #0f1a28 !important;
+  --github-repo-api-bg: rgba(6, 182, 212, 0.18) !important;
+  --github-repo-api-border: rgba(6, 182, 212, 0.5) !important;
+  --github-repo-tools-bg: rgba(34, 197, 94, 0.16) !important;
+  --github-repo-tools-border: rgba(34, 197, 94, 0.46) !important;
+  --github-repo-nuget-bg: rgba(99, 102, 241, 0.16) !important;
+  --github-repo-nuget-border: rgba(99, 102, 241, 0.46) !important;
+  --github-repo-migrations-bg: rgba(245, 158, 11, 0.16) !important;
+  --github-repo-migrations-border: rgba(245, 158, 11, 0.46) !important;
+  --github-repo-infra-bg: rgba(14, 165, 233, 0.14) !important;
+  --github-repo-infra-border: rgba(14, 165, 233, 0.42) !important;
+  --github-deploy-progressbar-track-bg: rgba(209, 213, 219, 0.48) !important;
+  --github-deploy-progressbar-fill: rgba(79, 70, 229, 0.88) !important;
+  --github-deploy-surface-muted-bg: rgba(241, 245, 249, 0.96) !important;
+  --github-deploy-surface-muted-border: rgba(148, 163, 184, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(248, 250, 252, 1) !important;
+  --github-deploy-branch-pill-border: rgba(148, 163, 184, 0.55) !important;
+  --github-deploy-branch-pill-text: #0f172a !important;
+  --github-deploy-running-chip-bg: rgba(202, 138, 4, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(202, 138, 4, 0.5) !important;
+  --github-deploy-running-chip-text: #78350f !important;
+  --github-deploy-queue-chip-bg: rgba(234, 88, 12, 0.2) !important;
+  --github-deploy-queue-chip-border: rgba(234, 88, 12, 0.55) !important;
+  --github-deploy-queue-chip-text: #7c2d12 !important;
+  --github-deploy-inline-running-track: rgba(202, 138, 4, 0.18) !important;
+  --github-deploy-inline-queued-track: rgba(234, 88, 12, 0.16) !important;
+  --github-deploy-footer-ticker-bg: rgba(248, 250, 252, 0.98) !important;
+  --github-deploy-footer-ticker-border: rgba(192, 38, 211, 0.34) !important;
+  --github-deploy-footer-ticker-text: #a21caf !important;
+  --github-deploy-footer-ticker-shadow: none !important;
+  --content-text-size: 1.05rem !important;
+  --github-deploy-timeline-meta-color: #c026d3 !important;
+  --data-quality-valid: rgba(34, 197, 94, 0.4) !important;
+  --data-quality-warning: rgba(234, 179, 8, 0.4) !important;
+  --data-quality-error: rgba(239, 68, 68, 0.45) !important;
+  --data-quality-empty: rgba(156, 163, 175, 0.25) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  // Ported from cpt-internal-tools for PrimeReact parity (2026-04-20)
+  --multiselect-chip-bg: #e2e8f0 !important;
+  --multiselect-chip-fg: #0f1a28 !important;
+  --multiselect-chip-icon-fg: #64748b !important;
+  --multiselect-chip-border: 1px solid #cbd5e1 !important;
+  --toast-success-bg: #dcfce7 !important;
+  --toast-success-border: #22c55e !important;
+  --toast-success-text: #166534 !important;
+  --toast-info-bg: #dbeafe !important;
+  --toast-info-border: #3b82f6 !important;
+  --toast-info-text: #1e40af !important;
+  --toast-warn-bg: #fef9c3 !important;
+  --toast-warn-border: #eab308 !important;
+  --toast-warn-text: #854d0e !important;
+  --toast-error-bg: #fee2e2 !important;
+  --toast-error-border: #dc2626 !important;
+  --toast-error-text: #991b1b !important;
+  --cpt-skeleton-bg: #dbe4ef !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.8) !important;
+
+  @include badge.badge-theme-tokens(
+    #3b82f6,
+    #ffffff,
+    rgb(22, 163, 74),
+    #ffffff,
+    rgb(37, 99, 235),
+    #ffffff,
+    rgb(202, 138, 4),
+    #ffffff,
+    rgb(220, 38, 38),
+    #ffffff,
+    rgb(220, 38, 38)
+  );
+  @include badge.badge-theme-rules();
+}

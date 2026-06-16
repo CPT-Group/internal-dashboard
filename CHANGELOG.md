@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Theme parity with `cpt-internal-tools`** — Ported 32 missing palette themes (GitHub Dark/Light, frostbyte–tundra batch, colorblind suite, CPT Paperwork, etc.) plus `atlas-light` / `atlas-blue` aliases as static SCSS (Tizen-safe hex/rgba, no `color-mix()`). Wired into `main.scss`, `APP_THEME_CYCLE_ORDER`, layout theme-init `valid`, and `ThemeChangeToast`. Regenerator: `scripts/generate-dashboard-themes-from-ui.ts`.
+
 ### Changed
 
 - **Agent docs — working tree hygiene**: Documented rules for keeping the repo clean (one-offs in `kyleJira/`, output in `kyleOutput/` / `cursorScripts/`, restore prebuild noise, no unrequested tracked edits). Added `.cursor/rules/working-tree-hygiene.mdc` and a callout in `scripts/jira/README.md`.

@@ -48,7 +48,7 @@ export default function RootLayout({
               (function() {
                 try {
                   /* Keep in sync with src/constants/appThemeCycle.ts (APP_THEME_CYCLE_ORDER). */
-                  var valid = ['dark', 'light', 'dark-synth', 'ms-access-2010', 'khaki', 'light-synth', 'night-vision', 'miami-vice', 'cpt-barbie', 'dark-barbie', 'floral', 'summer'];
+                  var valid = ['light', 'dark', 'atlas-light', 'atlas-blue', 'khaki', 'light-synth', 'dark-synth', 'ms-access-2010', 'miami-vice', 'cpt-barbie', 'dark-barbie', 'floral', 'night-vision', 'summer', 'github-dark', 'github-light', 'frostbyte', 'embercore', 'abyss', 'tempest', 'midas', 'aurora', 'evergreen', 'maple', 'bloom', 'espresso', 'moonstone', 'rosegold', 'cpt-cyberpunk', 'nightfang', 'neon-district', 'macaron', 'arcane', 'cpt-vault', 'biohack', 'hearth', 'tundra', 'cpt-paperwork', 'colorblind-red-light', 'colorblind-red-dark', 'colorblind-green-light', 'colorblind-green-dark', 'colorblind-blue-yellow-light', 'colorblind-blue-yellow-dark', 'colorblind-mono-light', 'colorblind-mono-dark'];
                   var stored = localStorage.getItem('cpt-theme');
                   var theme = (stored && valid.indexOf(stored) >= 0) ? stored : 'dark-synth';
                   document.documentElement.setAttribute('data-theme', theme);

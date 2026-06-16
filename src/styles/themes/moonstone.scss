@@ -1,0 +1,220 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// Moonstone — auto-ported from cpt-internal-tools customThemes.ts (moonstone).
+// Concrete hex/rgba only (no color-mix — Samsung Tizen TV constraint).
+
+html[data-theme='moonstone'],
+[data-theme='moonstone'] {
+  --header-bg: #e2e8f0 !important;
+  --header-fg: #1e293b !important;
+  --header-border: 1px solid #cbd5e1 !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  --window-bg: #f8fafc !important;
+  --window-fg: #1e293b !important;
+  --window-border: 1px solid #cbd5e1 !important;
+  --window-surface-bg: #ffffff !important;
+  --window-surface-fg: #1e293b !important;
+  --window-surface-border: 1px solid #cbd5e1 !important;
+  --input-bg: #e4e6e8 !important;
+  --input-fg: #1e293b !important;
+  --input-border: 1px solid #cbd5e1 !important;
+  --button-bg: #ffffff !important;
+  --button-fg: #1e293b !important;
+  --button-hover-bg: #edf0f2 !important;
+  --menu-item-hover-bg: #f8fafc !important;
+  --status-icon-fill: #ffffff !important;
+  --status-icon-stroke: #ffffff !important;
+  --status-icon-stroke-offline: rgb(100, 100, 100) !important;
+  --page-background: #f8fafc !important;
+  --text-primary: #1e293b !important;
+  --button-primary-background: #64748b !important;
+  --button-primary-background-hover: #556376 !important;
+  --button-primary-text: #ffffff !important;
+  --maskbg: rgba(0, 0, 0, 0.4) !important;
+  --focus-ring: 0 0 0 0.2rem #d5e7fc !important;
+  --highlight-bg: #e1f3fc !important;
+  --highlight-text-color: #1e293b !important;
+  --color-danger: #dc3545 !important;
+  --surface-ground: #f8fafc !important;
+  --surface-section: #f8fafc !important;
+  --surface-card: #ffffff !important;
+  --surface-overlay: #ffffff !important;
+  --surface-border: #cbd5e1 !important;
+  --surface-hover: #eceff3 !important;
+  --surface-0: #f8fafc !important;
+  --surface-50: #f1f3f4 !important;
+  --surface-100: #e7e9ea !important;
+  --surface-200: #dadcde !important;
+  --surface-300: #cbcdcf !important;
+  --surface-400: #b8b9ba !important;
+  --surface-500: #9fa0a1 !important;
+  --surface-600: #818283 !important;
+  --surface-700: #5e5f60 !important;
+  --surface-800: #373737 !important;
+  --surface-900: #141414 !important;
+  --surface-a: #ffffff !important;
+  --surface-b: #f8fafc !important;
+  --surface-c: #ebedf0 !important;
+  --surface-d: #cbd5e1 !important;
+  --surface-e: #ffffff !important;
+  --surface-f: #ffffff !important;
+  --gray-50: #f8fafc !important;
+  --gray-100: #f8fafc !important;
+  --gray-200: #f8fafc !important;
+  --gray-300: #f8fafc !important;
+  --gray-400: #f8fafc !important;
+  --gray-500: #f8fafc !important;
+  --gray-600: #f8fafc !important;
+  --gray-700: #f8fafc !important;
+  --gray-800: #f8fafc !important;
+  --gray-900: #f8fafc !important;
+  --text-color: #1e293b !important;
+  --text-color-secondary: #64748b !important;
+  --primary-color: #64748b !important;
+  --primary-color-text: #ffffff !important;
+  --scrollbar-track-bg: #ebedf0 !important;
+  --scrollbar-thumb-bg: #c4c8ce !important;
+  --scrollbar-thumb-hover-bg: #a1a6af !important;
+  --card-border: rgba(100, 116, 139, 0.14) !important;
+  --card-shadow: 0 2px 8px rgba(30, 41, 59, 0.1), 0 1px 2px rgba(30, 41, 59, 0.06) !important;
+  --corner-info-card-bg: rgba(255, 255, 255, 0.74) !important;
+  --corner-info-card-border: #cbd5e1 !important;
+  --corner-info-card-shadow: rgba(30, 41, 59, 0.16) !important;
+  --corner-info-card-divider: rgba(226, 232, 240, 0.32) !important;
+  --corner-info-card-hover-bg: #eceff3 !important;
+  --tag-today-bg: rgba(226, 232, 240, 0.16) !important;
+  --tag-today-text: #1e293b !important;
+  --tag-today-border: rgba(226, 232, 240, 0.4) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(100, 116, 139, 0.82) !important;
+  --chart-bar-primary-border: rgb(100, 116, 139) !important;
+  --chart-success: rgba(40, 167, 69, 0.78) !important;
+  --chart-success-border: rgb(40, 167, 69) !important;
+  --chart-danger: rgba(220, 53, 69, 0.78) !important;
+  --chart-danger-border: rgb(220, 53, 69) !important;
+  --chart-warning: rgba(245, 158, 11, 0.9) !important;
+  --chart-warning-border: rgb(245, 158, 11) !important;
+  --chart-label-color: #1e293b !important;
+  --chart-info: rgba(167, 139, 250, 0.24) !important;
+  --chart-info-border: rgb(167, 139, 250) !important;
+  --chart-orange: rgba(245, 158, 11, 0.22) !important;
+  --chart-orange-border: rgb(245, 158, 11) !important;
+  --nova-accent: rgba(100, 116, 139, 0.7) !important;
+  --nova-accent-bg: rgba(100, 116, 139, 0.18) !important;
+  --nova-accent-border: rgb(100, 116, 139) !important;
+  --nova-accent-text: #1e293b !important;
+  --bug-accent-bg: rgba(220, 53, 69, 0.2) !important;
+  --bug-accent-text: #1e293b !important;
+  --activity-badge-info-text: #1e293b !important;
+  --activity-badge-warning-text: #1e293b !important;
+  --work-hours-badge-danger-text: #1e293b !important;
+  --work-hours-badge-zero-bg: rgba(220, 53, 69, 0.22) !important;
+  --work-hours-badge-zero-text: #1e293b !important;
+  --work-hours-badge-success-bg: rgba(40, 167, 69, 0.2) !important;
+  --work-hours-badge-success-text: #1e293b !important;
+  --work-hours-badge-over-bg: rgba(245, 158, 11, 0.2) !important;
+  --work-hours-badge-over-text: #1e293b !important;
+  --work-hours-badge-super-bg: rgba(100, 116, 139, 0.2) !important;
+  --work-hours-badge-super-text: #1e293b !important;
+  --work-hours-danger-fill: rgba(220, 53, 69, 0.32) !important;
+  --work-hours-success-fill: rgba(40, 167, 69, 0.22) !important;
+  --work-hours-warning-fill: rgba(245, 158, 11, 0.24) !important;
+  --work-hours-orange-fill: rgba(245, 158, 11, 0.24) !important;
+  --work-hours-ahead-fill: rgba(100, 116, 139, 0.2) !important;
+  --work-hours-super-fill: rgba(167, 139, 250, 0.22) !important;
+  --work-hours-neutral-fill: rgba(100, 116, 139, 0.2) !important;
+  --work-hours-super-border: rgb(167, 139, 250) !important;
+  --github-repo-label-color: #1e293b !important;
+  --github-repo-api-bg: rgba(167, 139, 250, 0.2) !important;
+  --github-repo-api-border: rgba(167, 139, 250, 0.5) !important;
+  --github-repo-tools-bg: rgba(40, 167, 69, 0.18) !important;
+  --github-repo-tools-border: rgba(40, 167, 69, 0.48) !important;
+  --github-repo-nuget-bg: rgba(100, 116, 139, 0.18) !important;
+  --github-repo-nuget-border: rgba(100, 116, 139, 0.48) !important;
+  --github-repo-migrations-bg: rgba(245, 158, 11, 0.2) !important;
+  --github-repo-migrations-border: rgba(245, 158, 11, 0.5) !important;
+  --github-repo-infra-bg: rgba(40, 167, 69, 0.18) !important;
+  --github-repo-infra-border: rgba(40, 167, 69, 0.48) !important;
+  --github-deploy-progressbar-track-bg: rgba(203, 213, 225, 0.5) !important;
+  --github-deploy-progressbar-fill: rgba(100, 116, 139, 0.85) !important;
+  --github-deploy-surface-muted-bg: rgba(255, 255, 255, 0.96) !important;
+  --github-deploy-surface-muted-border: rgba(203, 213, 225, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(255, 255, 255, 0.98) !important;
+  --github-deploy-branch-pill-border: rgba(203, 213, 225, 0.6) !important;
+  --github-deploy-branch-pill-text: #1e293b !important;
+  --github-deploy-running-chip-bg: rgba(245, 158, 11, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(245, 158, 11, 0.5) !important;
+  --github-deploy-running-chip-text: #1e293b !important;
+  --github-deploy-queue-chip-bg: rgba(245, 158, 11, 0.2) !important;
+  --github-deploy-queue-chip-border: rgba(245, 158, 11, 0.55) !important;
+  --github-deploy-queue-chip-text: #1e293b !important;
+  --github-deploy-inline-running-track: rgba(245, 158, 11, 0.18) !important;
+  --github-deploy-inline-queued-track: rgba(245, 158, 11, 0.16) !important;
+  --github-deploy-footer-ticker-bg: rgba(255, 255, 255, 0.98) !important;
+  --github-deploy-footer-ticker-border: rgba(226, 232, 240, 0.34) !important;
+  --github-deploy-footer-ticker-text: #e2e8f0 !important;
+  --github-deploy-footer-ticker-shadow: none !important;
+  --content-text-size: 1.05rem !important;
+  --github-deploy-timeline-meta-color: #e2e8f0 !important;
+  --data-quality-valid: #a5d9b3 !important;
+  --data-quality-warning: #f7d59c !important;
+  --data-quality-error: #eba1aa !important;
+  --data-quality-empty: #d3d9e0 !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+  --card-border: rgba(100, 116, 139, 0.14) !important;
+  --card-shadow: 0 2px 8px rgba(30, 41, 59, 0.1), 0 1px 2px rgba(30, 41, 59, 0.06) !important;
+  --button-primary-background: #64748b !important;
+  --button-primary-background-hover: #556376 !important;
+  --button-primary-text: #ffffff !important;
+  --multiselect-chip-bg: #e4e5e7 !important;
+  --multiselect-chip-fg: #1e293b !important;
+  --multiselect-chip-icon-fg: #64748b !important;
+  --multiselect-chip-border: 1px solid #cbd5e1 !important;
+  --toast-success-bg: #d8efde !important;
+  --toast-success-border: #28a745 !important;
+  --toast-success-text: #165c26 !important;
+  --toast-info-bg: #efeafe !important;
+  --toast-info-border: #a78bfa !important;
+  --toast-info-text: #5c4c8a !important;
+  --toast-warn-bg: #fdeed3 !important;
+  --toast-warn-border: #f59e0b !important;
+  --toast-warn-text: #875706 !important;
+  --toast-error-bg: #f9dbde !important;
+  --toast-error-border: #dc3545 !important;
+  --toast-error-text: #791d26 !important;
+  --cpt-skeleton-bg: #e4e5e7 !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.8) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  @include glass.glass-tokens(
+    rgba(255, 255, 255, 0.48),
+    rgba(255, 255, 255, 0.92),
+    rgba(100, 116, 139, 0.35),
+    rgba(100, 116, 139, 0.07),
+    rgba(100, 116, 139, 0.26),
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0.2),
+    rgba(30, 41, 59, 0.2),
+    rgba(255, 255, 255, 0.65)
+  );
+
+  @include badge.badge-theme-tokens(
+    #64748b,
+    #ffffff,
+    rgb(40, 167, 69),
+    #1e293b,
+    rgb(167, 139, 250),
+    #1e293b,
+    rgb(245, 158, 11),
+    #1e293b,
+    rgb(220, 53, 69),
+    #ffffff,
+    rgb(220, 53, 69)
+  );
+  @include badge.badge-theme-rules();
+}
