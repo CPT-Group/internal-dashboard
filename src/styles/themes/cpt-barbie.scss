@@ -216,3 +216,29 @@ html[data-theme='cpt-barbie'],
   );
   @include badge.badge-theme-rules();
 }
+
+// ── cpt-barbie ambient effects ───────────────────────────────────────────────
+// Heart wallpaper — diagonal scrolling tile above the UI as a subtle texture.
+// Matches the cpt-internal-tools ambient layer approach: position:fixed z-index:900
+// pointer-events:none so clicks pass through; opacity:0.09 keeps it barely-there.
+// Pure CSS, no JS, Tizen-safe (no color-mix, no backdrop-filter).
+html[data-theme='cpt-barbie']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M24,14 C24,9 21,6 17,6 C13,6 9,9 9,14 C9,23 24,34 24,34 C24,34 39,23 39,14 C39,9 35,6 31,6 C27,6 24,9 24,14 Z' fill='none' stroke='%23d4789a' stroke-width='1.8'/%3E%3C/svg%3E");
+  background-size: 48px 48px;
+  animation: cpt-barbie-hearts-drift 5s linear infinite;
+}
+
+@keyframes cpt-barbie-hearts-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 48px 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme='cpt-barbie']::before { animation: none !important; }
+}
