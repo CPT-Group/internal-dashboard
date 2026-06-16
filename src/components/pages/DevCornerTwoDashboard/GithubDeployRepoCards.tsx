@@ -108,7 +108,7 @@ function isQueuedLikeRunStatus(status: string): boolean {
 const IDLE_MIN_MS = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
 
 function formatIdleLabel(updatedAt: string | null): string {
-  if (!updatedAt) return 'Coming Soon';
+  if (!updatedAt) return 'N/A';
   const ms = Date.now() - Date.parse(updatedAt);
   if (!Number.isFinite(ms) || ms < IDLE_MIN_MS) return 'Idle';
   const days = Math.floor(ms / 86_400_000);

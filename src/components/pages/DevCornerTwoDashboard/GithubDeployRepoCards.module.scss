@@ -383,6 +383,7 @@
   :global(.p-tag) {
     min-width: 3rem;
     justify-content: center;
+    text-align: center;
     font-size: calc(var(--content-text-size, 1rem) * 0.62);
     padding: 0.11rem 0.35rem;
   }
