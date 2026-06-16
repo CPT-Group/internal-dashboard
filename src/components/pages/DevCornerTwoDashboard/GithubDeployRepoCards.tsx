@@ -105,14 +105,12 @@ function isQueuedLikeRunStatus(status: string): boolean {
   return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
 }
 
+const IDLE_MIN_MS = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
+
 function formatIdleLabel(updatedAt: string | null): string {
   if (!updatedAt) return 'Coming Soon';
   const ms = Date.now() - Date.parse(updatedAt);
-  if (!Number.isFinite(ms) || ms < 0) return 'Idle';
-  const mins = Math.floor(ms / 60_000);
-  if (mins < 60) return `Idle ${mins}m`;
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours < 24) return `Idle ${hours}h`;
+  if (!Number.isFinite(ms) || ms < IDLE_MIN_MS) return 'Idle';
   const days = Math.floor(ms / 86_400_000);
   if (days < 14) return `Idle ${days}d`;
   return `Idle ${Math.floor(days / 7)}w`;
