@@ -27,6 +27,8 @@ const NUGET_LANE_CONFIG: DeployLaneConfig = {
 export interface DeployRunEnvironmentInput {
   headBranch: string | null;
   title: string | null;
+  /** Deployments-API target env, when resolved. Takes precedence over branch. */
+  resolvedEnvironment?: DeployEnvironmentKey | null;
 }
 
 function normalizeBranchName(branch: string | null): string {
@@ -52,6 +54,19 @@ export const DEPLOY_ENV_BRANCHES: Readonly<Record<DeployEnvironmentKey, readonly
 };
 
 /**
+ * Normalize a GitHub Deployments-API environment name to a lane key.
+ * The deploy workflows use `environment: name: dev|tst|stg|prd`; we map `prd` → `prod`.
+ */
+export function normalizeDeployEnvironment(env: string | null | undefined): DeployEnvironmentKey | null {
+  const key = (env ?? '').trim().toLowerCase();
+  if (key === 'dev' || key === 'development') return 'dev';
+  if (key === 'tst' || key === 'test') return 'tst';
+  if (key === 'stg' || key === 'staging') return 'stg';
+  if (key === 'prd' || key === 'prod' || key === 'production') return 'prod';
+  return null;
+}
+
+/**
  * Resolve deployment environment from GitHub `head_branch` only — exact branch match.
  * Feature/PR branches are ignored (not in DEPLOY_ENV_BRANCHES).
  */
@@ -68,8 +83,13 @@ export function detectDeployEnvironmentFromBranch(branch: string | null): Deploy
   return null;
 }
 
-/** Branch-only — run titles are not used for lane assignment. */
+/**
+ * Prefer the Deployments-API resolved environment (Deploy Version runs all share
+ * `headBranch === 'development'`); fall back to exact branch match for legacy
+ * branch-triggered deploys. Run titles are not used.
+ */
 export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput): DeployEnvironmentKey | null {
+  if (input.resolvedEnvironment) return input.resolvedEnvironment;
   return detectDeployEnvironmentFromBranch(input.headBranch);
 }
 
@@ -104,6 +124,24 @@ export interface DeployRunLike {
   updatedAt: string;
   workflowId?: number;
   status?: string;
+  /** Deployments-API target env; when set, lane matching uses it instead of the branch. */
+  resolvedEnvironment?: DeployEnvironmentKey | null;
+}
+
+/**
+ * Does this run belong to `lane`? Prefer the Deployments-API resolved env (Deploy Version
+ * runs are all on `development`), else fall back to the lane's allowed branches.
+ */
+function runMatchesDeployLane(
+  run: DeployRunLike,
+  repo: string,
+  lane: DeployLaneKey,
+  allowedBranches: ReadonlySet<string>
+): boolean {
+  if (run.resolvedEnvironment) {
+    return mapEnvironmentToLane(repo, run.resolvedEnvironment) === lane;
+  }
+  return allowedBranches.has(normalizeBranchName(run.headBranch));
 }
 
 export interface DeployLaneRunSelection {
@@ -124,6 +162,8 @@ export function isWithinDeployIdleWindow(
 
 function latestRunByFilters<T extends DeployRunLike>(
   runs: readonly T[],
+  repo: string,
+  lane: DeployLaneKey,
   allowedBranches: ReadonlySet<string>,
   allowedWorkflows: ReadonlySet<number> | null,
   requireActiveStatus: boolean
@@ -132,8 +172,7 @@ function latestRunByFilters<T extends DeployRunLike>(
   let latestMs = Number.NEGATIVE_INFINITY;
 
   for (const run of runs) {
-    const branch = normalizeBranchName(run.headBranch);
-    if (!allowedBranches.has(branch)) continue;
+    if (!runMatchesDeployLane(run, repo, lane, allowedBranches)) continue;
     if (allowedWorkflows && (run.workflowId === undefined || !allowedWorkflows.has(run.workflowId))) continue;
     if (requireActiveStatus && run.status === 'completed') continue;
 
@@ -165,6 +204,8 @@ export function findLatestRunForDeployLane<T extends DeployRunLike>(
 
   const activeRun = latestRunByFilters(
     runs,
+    repo,
+    lane,
     allowedBranches,
     allowedActiveWorkflows,
     true
@@ -173,6 +214,8 @@ export function findLatestRunForDeployLane<T extends DeployRunLike>(
 
   return latestRunByFilters(
     runs,
+    repo,
+    lane,
     allowedBranches,
     allowedPrimaryWorkflows,
     false

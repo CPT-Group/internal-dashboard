@@ -5,6 +5,7 @@
  *   node scripts/jira/discover-missing-components.mjs
  *   node scripts/jira/discover-missing-components.mjs --project NOVA
  *   node scripts/jira/discover-missing-components.mjs --include-done
+ *   node scripts/jira/discover-missing-components.mjs --created-since 2026-01-01
  */
 import fs from 'node:fs';
 import { suggestComponent, meetsMinConfidence } from './componentMatchRules.mjs';
@@ -12,6 +13,7 @@ import { suggestComponent, meetsMinConfidence } from './componentMatchRules.mjs'
 const args = process.argv.slice(2);
 const projectFilter = args.includes('--project') ? args[args.indexOf('--project') + 1]?.toUpperCase() : null;
 const includeDone = args.includes('--include-done');
+const createdSince = args.includes('--created-since') ? args[args.indexOf('--created-since') + 1] : null;
 
 const envText = fs.readFileSync('.env.local', 'utf8');
 const get = (k) => {
@@ -25,8 +27,9 @@ const token = get('KYLE_JIRA_TOKEN') || get('JAMES_JIRA_TOKEN');
 const auth = Buffer.from(`${email}:${token}`).toString('base64');
 
 const statusClause = includeDone ? '' : ' AND statusCategory != Done';
+const createdClause = createdSince ? ` AND created >= "${createdSince}"` : '';
 const projectClause = projectFilter ? `project = ${projectFilter}` : 'project IN (NOVA, CM, OPRD)';
-const JQL = `${projectClause} AND component is EMPTY${statusClause} ORDER BY updated DESC`;
+const JQL = `${projectClause} AND component is EMPTY${statusClause}${createdClause} ORDER BY updated DESC`;
 
 const FIELDS = ['summary', 'status', 'project', 'components', 'issuetype', 'labels'].join(',');
 

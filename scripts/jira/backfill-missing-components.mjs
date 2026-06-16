@@ -6,6 +6,7 @@
  *   node scripts/jira/backfill-missing-components.mjs --apply --min-confidence high
  *   node scripts/jira/backfill-missing-components.mjs --apply --keys NOVA-1,NOVA-2 --component "Static Website"
  *   node scripts/jira/backfill-missing-components.mjs --apply --min-confidence medium
+ *   node scripts/jira/backfill-missing-components.mjs --created-since 2026-01-01 --min-confidence high
  */
 import fs from 'node:fs';
 import {
@@ -17,6 +18,7 @@ import {
 const args = process.argv.slice(2);
 const apply = args.includes('--apply');
 const includeDone = args.includes('--include-done');
+const createdSince = args.includes('--created-since') ? args[args.indexOf('--created-since') + 1] : null;
 const minConfidence = args.includes('--min-confidence')
   ? args[args.indexOf('--min-confidence') + 1]
   : 'high';
@@ -43,8 +45,9 @@ function buildJql() {
     return `key in (${keys.join(',')})`;
   }
   const statusClause = includeDone ? '' : ' AND statusCategory != Done';
+  const createdClause = createdSince ? ` AND created >= "${createdSince}"` : '';
   const projectClause = projectFilter ? `project = ${projectFilter}` : 'project IN (NOVA, CM, OPRD)';
-  return `${projectClause} AND component is EMPTY${statusClause} ORDER BY updated DESC`;
+  return `${projectClause} AND component is EMPTY${statusClause}${createdClause} ORDER BY updated DESC`;
 }
 
 async function searchAll(jql) {

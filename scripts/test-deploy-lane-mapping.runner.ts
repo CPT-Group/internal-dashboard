@@ -15,6 +15,8 @@ interface FixtureRun {
   status: string;
   conclusion: string | null;
   updatedAt: string;
+  /** Deployments-API target env (new --ref development promotion model). */
+  resolvedEnvironment?: 'dev' | 'tst' | 'stg' | 'prod';
 }
 
 function laneSelection(repo: string, lane: DeployLaneKey) {
@@ -127,6 +129,42 @@ function testEfTstFailureFromTstBuildArtifact() {
   assert.equal(picked.conclusion, 'failure');
 }
 
+function testInternalToolsDeployVersionResolvesByEnvNotBranch() {
+  // New setup: Deploy Version promotes every env from `--ref development`, so headBranch is always
+  // 'development'. The Deployments-API resolvedEnvironment must route each run to the correct lane,
+  // and development-branch Deploy Version runs must NOT be absorbed into the dev lane anymore.
+  const repo = 'cpt-internal-tools';
+  const runs: FixtureRun[] = [
+    {
+      workflowId: 285829489, // Deploy Version → stg (newer)
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(2),
+      resolvedEnvironment: 'stg',
+    },
+    {
+      workflowId: 285829489, // Deploy Version → tst (older)
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(8),
+      resolvedEnvironment: 'tst',
+    },
+  ];
+
+  const stg = findLatestRunForDeployLane(repo, 'stg', runs, laneSelection(repo, 'stg'));
+  assert.ok(stg, 'stg lane should pick the resolved-stg Deploy Version run');
+  assert.equal(stg.resolvedEnvironment, 'stg');
+
+  const tst = findLatestRunForDeployLane(repo, 'tst', runs, laneSelection(repo, 'tst'));
+  assert.ok(tst, 'tst lane should pick the resolved-tst Deploy Version run');
+  assert.equal(tst.resolvedEnvironment, 'tst');
+
+  const dev = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
+  assert.equal(dev, undefined, 'dev lane must NOT absorb development-branch runs that deployed to tst/stg');
+}
+
 function testIdleWindowHelper() {
   const nowMs = Date.now();
   const oneDayAgo = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
@@ -140,6 +178,7 @@ function main() {
   testAzfDevActiveDeployVersionWins();
   testAzfDevCompletedStillUsesDevFastPrimary();
   testInternalToolsDevFastInProgress();
+  testInternalToolsDeployVersionResolvesByEnvNotBranch();
   testEfTstFailureFromTstBuildArtifact();
   testIdleWindowHelper();
   console.log('test-deploy-lane-mapping: all assertions passed');

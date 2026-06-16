@@ -5,6 +5,7 @@ import {
   type GitHubDeployPlaceholderMonitor,
 } from '@/constants/GITHUB_DEPLOY_MONITORS';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
+import { normalizeDeployEnvironment, type DeployEnvironmentKey } from '@/utils/githubDeployEnvironment';
 
 interface GitHubWorkflowRunApi {
   actor?: {
@@ -43,7 +44,72 @@ function toHeadShaShort(headSha: string | null | undefined): string | null {
   return trimmed.slice(0, 7);
 }
 
-function toSummary(run: GitHubWorkflowRunApi, workflowId: number): GitHubDeployRunSummary {
+/** One row from GET /repos/{owner}/{repo}/deployments — carries the TARGET environment. */
+interface RepoDeployment {
+  environment: DeployEnvironmentKey;
+  sha: string;
+  createdAtMs: number;
+}
+
+/**
+ * Fetch the repo's recent GitHub Deployments. Each deployment records the env-gated job's
+ * `environment` (dev/tst/stg/prd) — the only API source of a Deploy Version run's TARGET env,
+ * since the workflow-run object never exposes it and the branch is always `development`.
+ */
+async function fetchRepoDeployments(token: string, owner: string, repo: string): Promise<RepoDeployment[]> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/deployments?per_page=100`;
+  try {
+    const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
+    if (!res.ok) return [];
+    const data = (await res.json()) as Array<{ environment?: string | null; sha?: string | null; created_at?: string | null }>;
+    if (!Array.isArray(data)) return [];
+    const out: RepoDeployment[] = [];
+    for (const d of data) {
+      const env = normalizeDeployEnvironment(d.environment);
+      const createdAtMs = Date.parse(d.created_at ?? '');
+      if (env && d.sha && Number.isFinite(createdAtMs)) {
+        out.push({ environment: env, sha: d.sha, createdAtMs });
+      }
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
+
+/**
+ * Resolve a run's TARGET environment by matching it to the deployment it created: same head SHA
+ * (every Deploy Version run shares `development`'s SHA), disambiguated by the deployment whose
+ * creation time is closest to the run's. Returns null when no confident match exists (the lane
+ * logic then falls back to the branch).
+ */
+function resolveRunEnvironment(run: GitHubWorkflowRunApi, deployments: readonly RepoDeployment[]): DeployEnvironmentKey | null {
+  const headSha = run.head_sha?.trim() ?? '';
+  const runMs = Date.parse(run.created_at);
+  if (!headSha || !Number.isFinite(runMs) || deployments.length === 0) return null;
+  const shaKey = headSha.slice(0, 12);
+
+  let best: RepoDeployment | null = null;
+  let bestDelta = Number.POSITIVE_INFINITY;
+  for (const d of deployments) {
+    if (d.sha.slice(0, 12) !== shaKey) continue;
+    const delta = Math.abs(d.createdAtMs - runMs);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      best = d;
+    }
+  }
+  if (!best || bestDelta > ENV_CORRELATION_WINDOW_MS) return null;
+  return best.environment;
+}
+
+function toSummary(
+  run: GitHubWorkflowRunApi,
+  workflowId: number,
+  resolvedEnvironment: DeployEnvironmentKey | null
+): GitHubDeployRunSummary {
   const title =
     (run.display_title && run.display_title.trim() !== '') ? run.display_title : (run.name ?? `#${run.id}`);
   return {
@@ -59,6 +125,7 @@ function toSummary(run: GitHubWorkflowRunApi, workflowId: number): GitHubDeployR
     createdAt: run.created_at,
     updatedAt: run.updated_at,
     workflowId,
+    resolvedEnvironment,
   };
 }
 
@@ -175,9 +242,10 @@ export async function fetchDeployWorkflowStatus(
   };
 
   const workflowIds = monitorWorkflowIds(monitor);
-  const workflowFetches = await Promise.all(
-    workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))
-  );
+  const [workflowFetches, deployments] = await Promise.all([
+    Promise.all(workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))),
+    fetchRepoDeployments(token, owner, repo),
+  ]);
   const successful = workflowFetches.filter((f) => !f.error);
 
   if (successful.length === 0) {
@@ -203,9 +271,15 @@ export async function fetchDeployWorkflowStatus(
     queuedCount,
     inProgressCount,
     activeCount: queuedCount + inProgressCount,
-    activeRun: activeEntry ? toSummary(activeEntry.run, activeEntry.workflowId) : undefined,
-    lastCompletedRun: lastDoneEntry ? toSummary(lastDoneEntry.run, lastDoneEntry.workflowId) : undefined,
-    recentRuns: runs.slice(0, 30).map(({ run, workflowId }) => toSummary(run, workflowId)),
+    activeRun: activeEntry
+      ? toSummary(activeEntry.run, activeEntry.workflowId, resolveRunEnvironment(activeEntry.run, deployments))
+      : undefined,
+    lastCompletedRun: lastDoneEntry
+      ? toSummary(lastDoneEntry.run, lastDoneEntry.workflowId, resolveRunEnvironment(lastDoneEntry.run, deployments))
+      : undefined,
+    recentRuns: runs
+      .slice(0, 30)
+      .map(({ run, workflowId }) => toSummary(run, workflowId, resolveRunEnvironment(run, deployments))),
   };
 }
 

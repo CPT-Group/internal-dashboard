@@ -39,4 +39,11 @@ export interface GitHubDeployRunSummary {
   updatedAt: string;
   /** Source workflow (for per-lane Dev Fast vs main CD filtering). */
   workflowId?: number;
+  /**
+   * Deploy TARGET environment resolved from the GitHub Deployments API, NOT the branch.
+   * Deploy Version promotes every env from `--ref development` (ci-cd-standards), so all
+   * tst/stg/prd runs share `headBranch === 'development'` — the branch alone can no longer
+   * tell the lanes apart. When set, lane assignment uses this instead of the branch.
+   */
+  resolvedEnvironment?: 'dev' | 'tst' | 'stg' | 'prod' | null;
 }
