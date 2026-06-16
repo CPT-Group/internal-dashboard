@@ -106,7 +106,7 @@ function isQueuedLikeRunStatus(status: string): boolean {
 }
 
 function formatIdleLabel(updatedAt: string | null): string {
-  if (!updatedAt) return 'Idle';
+  if (!updatedAt) return 'Coming Soon';
   const ms = Date.now() - Date.parse(updatedAt);
   if (!Number.isFinite(ms) || ms < 0) return 'Idle';
   const mins = Math.floor(ms / 60_000);
