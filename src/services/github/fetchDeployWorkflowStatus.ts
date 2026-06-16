@@ -6,6 +6,11 @@ import {
 } from '@/constants/GITHUB_DEPLOY_MONITORS';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import { normalizeDeployEnvironment, type DeployEnvironmentKey } from '@/utils/githubDeployEnvironment';
+import {
+  DEPLOY_VERSION_WORKFLOW_IDS,
+  resolveDeployRunEnvironment,
+  type RepoDeploymentRow,
+} from '@/utils/resolveDeployRunEnvironment';
 
 interface GitHubWorkflowRunApi {
   actor?: {
@@ -44,26 +49,19 @@ function toHeadShaShort(headSha: string | null | undefined): string | null {
   return trimmed.slice(0, 7);
 }
 
-/** One row from GET /repos/{owner}/{repo}/deployments — carries the TARGET environment. */
-interface RepoDeployment {
-  environment: DeployEnvironmentKey;
-  sha: string;
-  createdAtMs: number;
-}
-
 /**
  * Fetch the repo's recent GitHub Deployments. Each deployment records the env-gated job's
  * `environment` (dev/tst/stg/prd) — the only API source of a Deploy Version run's TARGET env,
  * since the workflow-run object never exposes it and the branch is always `development`.
  */
-async function fetchRepoDeployments(token: string, owner: string, repo: string): Promise<RepoDeployment[]> {
+async function fetchRepoDeployments(token: string, owner: string, repo: string): Promise<RepoDeploymentRow[]> {
   const url = `https://api.github.com/repos/${owner}/${repo}/deployments?per_page=100`;
   try {
     const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
     if (!res.ok) return [];
     const data = (await res.json()) as Array<{ environment?: string | null; sha?: string | null; created_at?: string | null }>;
     if (!Array.isArray(data)) return [];
-    const out: RepoDeployment[] = [];
+    const out: RepoDeploymentRow[] = [];
     for (const d of data) {
       const env = normalizeDeployEnvironment(d.environment);
       const createdAtMs = Date.parse(d.created_at ?? '');
@@ -77,32 +75,47 @@ async function fetchRepoDeployments(token: string, owner: string, repo: string):
   }
 }
 
-const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
-
-/**
- * Resolve a run's TARGET environment by matching it to the deployment it created: same head SHA
- * (every Deploy Version run shares `development`'s SHA), disambiguated by the deployment whose
- * creation time is closest to the run's. Returns null when no confident match exists (the lane
- * logic then falls back to the branch).
- */
-function resolveRunEnvironment(run: GitHubWorkflowRunApi, deployments: readonly RepoDeployment[]): DeployEnvironmentKey | null {
-  const headSha = run.head_sha?.trim() ?? '';
-  const runMs = Date.parse(run.created_at);
-  if (!headSha || !Number.isFinite(runMs) || deployments.length === 0) return null;
-  const shaKey = headSha.slice(0, 12);
-
-  let best: RepoDeployment | null = null;
-  let bestDelta = Number.POSITIVE_INFINITY;
-  for (const d of deployments) {
-    if (d.sha.slice(0, 12) !== shaKey) continue;
-    const delta = Math.abs(d.createdAtMs - runMs);
-    if (delta < bestDelta) {
-      bestDelta = delta;
-      best = d;
-    }
+async function fetchRunJobNames(
+  token: string,
+  owner: string,
+  repo: string,
+  runId: number
+): Promise<string[]> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}/jobs?per_page=100`;
+  try {
+    const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { jobs?: Array<{ name?: string | null }> };
+    if (!Array.isArray(data.jobs)) return [];
+    return data.jobs
+      .map((job) => job.name?.trim() ?? '')
+      .filter((name) => name.length > 0);
+  } catch {
+    return [];
   }
-  if (!best || bestDelta > ENV_CORRELATION_WINDOW_MS) return null;
-  return best.environment;
+}
+
+function isActiveRunStatus(status: string): boolean {
+  return status !== 'completed';
+}
+
+function resolveRunEnvironment(
+  run: GitHubWorkflowRunApi,
+  workflowId: number,
+  deployments: readonly RepoDeploymentRow[],
+  jobNames?: readonly string[]
+): DeployEnvironmentKey | null {
+  return resolveDeployRunEnvironment(
+    {
+      workflowId,
+      headBranch: run.head_branch,
+      headSha: run.head_sha ?? null,
+      createdAt: run.created_at,
+      status: run.status,
+      jobNames,
+    },
+    deployments
+  );
 }
 
 function toSummary(
@@ -215,6 +228,30 @@ async function fetchWorkflowRunsById(
   }
 }
 
+/** Job names for in-progress Deploy Version runs that lack a deployment record yet. */
+async function fetchJobNamesForUnresolvedActiveRuns(
+  token: string,
+  owner: string,
+  repo: string,
+  runs: readonly { run: GitHubWorkflowRunApi; workflowId: number }[],
+  deployments: readonly RepoDeploymentRow[]
+): Promise<Map<number, string[]>> {
+  const needsJobs = runs.filter(({ run, workflowId }) => {
+    if (!isActiveRunStatus(run.status)) return false;
+    if (!DEPLOY_VERSION_WORKFLOW_IDS.has(workflowId)) return false;
+    return resolveRunEnvironment(run, workflowId, deployments) === null;
+  });
+
+  const entries = await Promise.all(
+    needsJobs.map(async ({ run }) => {
+      const names = await fetchRunJobNames(token, owner, repo, run.id);
+      return [run.id, names] as const;
+    })
+  );
+
+  return new Map(entries);
+}
+
 export function buildPlaceholderDeployStatus(
   monitor: GitHubDeployPlaceholderMonitor
 ): GitHubDeployWorkflowStatus {
@@ -261,6 +298,14 @@ export async function fetchDeployWorkflowStatus(
     .flatMap((f) => f.runs.map((run) => ({ run, workflowId: f.workflowId })))
     .sort((a, b) => Date.parse(b.run.updated_at) - Date.parse(a.run.updated_at));
 
+  const jobNamesByRunId = await fetchJobNamesForUnresolvedActiveRuns(token, owner, repo, runs, deployments);
+
+  const summarize = (entry: { run: GitHubWorkflowRunApi; workflowId: number }): GitHubDeployRunSummary => {
+    const jobNames = jobNamesByRunId.get(entry.run.id);
+    const env = resolveRunEnvironment(entry.run, entry.workflowId, deployments, jobNames);
+    return toSummary(entry.run, entry.workflowId, env);
+  };
+
   const activeEntry = runs.find(({ run }) => run.status === 'in_progress')
     ?? runs.find(({ run }) => isQueuedLikeStatus(run.status))
     ?? runs.find(({ run }) => run.status !== 'completed');
@@ -271,15 +316,9 @@ export async function fetchDeployWorkflowStatus(
     queuedCount,
     inProgressCount,
     activeCount: queuedCount + inProgressCount,
-    activeRun: activeEntry
-      ? toSummary(activeEntry.run, activeEntry.workflowId, resolveRunEnvironment(activeEntry.run, deployments))
-      : undefined,
-    lastCompletedRun: lastDoneEntry
-      ? toSummary(lastDoneEntry.run, lastDoneEntry.workflowId, resolveRunEnvironment(lastDoneEntry.run, deployments))
-      : undefined,
-    recentRuns: runs
-      .slice(0, 30)
-      .map(({ run, workflowId }) => toSummary(run, workflowId, resolveRunEnvironment(run, deployments))),
+    activeRun: activeEntry ? summarize(activeEntry) : undefined,
+    lastCompletedRun: lastDoneEntry ? summarize(lastDoneEntry) : undefined,
+    recentRuns: runs.slice(0, 30).map((entry) => summarize(entry)),
   };
 }
 

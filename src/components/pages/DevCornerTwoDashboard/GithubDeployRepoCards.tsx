@@ -9,6 +9,7 @@ import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStat
 import type { GitHubDeployRunSummary } from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthForRow,
+  formatDeployContextLabel,
   formatDeployRunDuration,
   formatDeployStatusLabel,
   formatDeployVersionLabel,
@@ -60,7 +61,7 @@ function environmentSnapshotFromRun(
     key: env,
     label,
     state,
-    branch: run.headBranch,
+    branch: formatDeployContextLabel(run),
     triggerText: run.title,
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
@@ -111,6 +112,28 @@ function runStateFromSummary(run: GitHubDeployRunSummary): EnvironmentRunState {
   }
   if (run.conclusion === 'success') return 'ok';
   return 'failed';
+}
+
+function findDisplayRun(row: GitHubDeployWorkflowStatus): GitHubDeployRunSummary | undefined {
+  const runs = row.recentRuns ?? [];
+  const laneConfig = getDeployLaneConfig(row.repo);
+
+  for (const lane of [...laneConfig.order].reverse()) {
+    const run = findLatestRunForDeployLane(
+      row.repo,
+      lane,
+      runs,
+      {
+        primaryWorkflowIds: getPrimaryWorkflowIdsForDeployLane(row.repo, lane),
+        activeWorkflowIds: getActiveWorkflowIdsForDeployLane(row.repo, lane),
+      }
+    );
+    if (run && run.status !== 'completed') {
+      return run;
+    }
+  }
+
+  return row.activeRun ?? row.lastCompletedRun;
 }
 
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
@@ -206,7 +229,7 @@ interface DeployPipelineCardProps {
 /** One pipeline card — shared layout for live repos and placeholders. */
 function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps) {
   const isPlaceholder = Boolean(row.isPlaceholder);
-  const run = isPlaceholder ? undefined : row.activeRun ?? row.lastCompletedRun;
+  const run = isPlaceholder ? undefined : findDisplayRun(row);
   const err = isPlaceholder ? undefined : row.error;
   const queuedCount = isPlaceholder ? 0 : row.queuedCount ?? 0;
 
@@ -275,9 +298,12 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
           {!err && !run && !isPlaceholder ? (
             <p className={styles.meta}>No workflow runs returned.</p>
           ) : null}
-          {showBranchContext && run?.headBranch ? (
+          {showBranchContext && run ? (
             <div className={styles.branchRow}>
-              <span className={styles.branchPill}>{run.headBranch}</span>
+              <span className={styles.branchPill}>{formatDeployContextLabel(run)}</span>
+              {run.headShaShort ? (
+                <span className={styles.metaChip}>{run.headShaShort}</span>
+              ) : null}
             </div>
           ) : null}
           <div className={styles.environmentBoard}>

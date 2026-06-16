@@ -63,6 +63,21 @@ export function formatDeployVersionLabel(run: GitHubDeployRunSummary): string | 
   return null;
 }
 
+const DEPLOY_ENV_DISPLAY_LABELS: Readonly<Record<NonNullable<GitHubDeployRunSummary['resolvedEnvironment']>, string>> = {
+  dev: 'Dev',
+  tst: 'Tst',
+  stg: 'Stg',
+  prod: 'Prod',
+};
+
+/** Branch pill / lane context: target env when known, else Git branch. */
+export function formatDeployContextLabel(run: GitHubDeployRunSummary): string {
+  if (run.resolvedEnvironment) {
+    return DEPLOY_ENV_DISPLAY_LABELS[run.resolvedEnvironment];
+  }
+  return run.headBranch?.trim() !== '' ? run.headBranch! : '—';
+}
+
 export type DeploySummaryCounts = { ok: number; active: number; attention: number };
 
 /** Buckets all four monitored repos for MeterGroup (max total = number of repos). */

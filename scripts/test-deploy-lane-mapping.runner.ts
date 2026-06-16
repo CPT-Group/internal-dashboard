@@ -8,6 +8,7 @@ import {
   getActiveWorkflowIdsForDeployLane,
   getPrimaryWorkflowIdsForDeployLane,
 } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import { parseEnvironmentFromJobNames } from '@/utils/resolveDeployRunEnvironment';
 
 interface FixtureRun {
   workflowId: number;
@@ -30,7 +31,7 @@ function runIso(minutesAgo: number): string {
   return new Date(Date.now() - minutesAgo * 60 * 1000).toISOString();
 }
 
-function testAzfDevActiveDeployVersionWins() {
+function testAzfDeployVersionInProgressNotOnDevLane() {
   const repo = 'cpt-azure-functions-api';
   const runs: FixtureRun[] = [
     {
@@ -46,13 +47,18 @@ function testAzfDevActiveDeployVersionWins() {
       status: 'in_progress',
       conclusion: null,
       updatedAt: runIso(2),
+      resolvedEnvironment: 'stg',
     },
   ];
 
-  const picked = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
-  assert.ok(picked, 'AZF dev lane should pick a run');
-  assert.equal(picked.workflowId, 285805315);
-  assert.equal(picked.status, 'in_progress');
+  const dev = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
+  assert.equal(dev?.workflowId, 285805316, 'dev lane should keep Dev Fast, not Deploy Version');
+  assert.equal(dev?.status, 'completed');
+
+  const stg = findLatestRunForDeployLane(repo, 'stg', runs, laneSelection(repo, 'stg'));
+  assert.ok(stg, 'stg lane should pick in-progress Deploy Version');
+  assert.equal(stg.workflowId, 285805315);
+  assert.equal(stg.resolvedEnvironment, 'stg');
 }
 
 function testAzfDevCompletedStillUsesDevFastPrimary() {
@@ -71,6 +77,7 @@ function testAzfDevCompletedStillUsesDevFastPrimary() {
       status: 'completed',
       conclusion: 'success',
       updatedAt: runIso(1),
+      resolvedEnvironment: 'prod',
     },
   ];
 
@@ -88,6 +95,7 @@ function testInternalToolsDevFastInProgress() {
       status: 'in_progress',
       conclusion: null,
       updatedAt: runIso(3),
+      resolvedEnvironment: 'dev',
     },
     {
       workflowId: 236281791,
@@ -104,6 +112,27 @@ function testInternalToolsDevFastInProgress() {
   assert.equal(picked.status, 'in_progress');
 }
 
+function testInternalToolsTstBuildInProgressOnTstLane() {
+  const repo = 'cpt-internal-tools';
+  const runs: FixtureRun[] = [
+    {
+      workflowId: 285829491,
+      headBranch: 'development',
+      status: 'in_progress',
+      conclusion: null,
+      updatedAt: runIso(1),
+      resolvedEnvironment: 'tst',
+    },
+  ];
+
+  const tst = findLatestRunForDeployLane(repo, 'tst', runs, laneSelection(repo, 'tst'));
+  assert.ok(tst, 'tst lane should pick in-progress TST Build on development');
+  assert.equal(tst.workflowId, 285829491);
+
+  const dev = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
+  assert.equal(dev, undefined, 'dev lane must not absorb TST Build');
+}
+
 function testEfTstFailureFromTstBuildArtifact() {
   const repo = 'cpt-ef-postgres-migrations';
   const runs: FixtureRun[] = [
@@ -113,13 +142,15 @@ function testEfTstFailureFromTstBuildArtifact() {
       status: 'completed',
       conclusion: 'success',
       updatedAt: runIso(20),
+      resolvedEnvironment: 'tst',
     },
     {
       workflowId: 285810381,
-      headBranch: 'test',
+      headBranch: 'development',
       status: 'completed',
       conclusion: 'failure',
       updatedAt: runIso(1),
+      resolvedEnvironment: 'tst',
     },
   ];
 
@@ -130,13 +161,10 @@ function testEfTstFailureFromTstBuildArtifact() {
 }
 
 function testInternalToolsDeployVersionResolvesByEnvNotBranch() {
-  // New setup: Deploy Version promotes every env from `--ref development`, so headBranch is always
-  // 'development'. The Deployments-API resolvedEnvironment must route each run to the correct lane,
-  // and development-branch Deploy Version runs must NOT be absorbed into the dev lane anymore.
   const repo = 'cpt-internal-tools';
   const runs: FixtureRun[] = [
     {
-      workflowId: 285829489, // Deploy Version → stg (newer)
+      workflowId: 285829489,
       headBranch: 'development',
       status: 'completed',
       conclusion: 'success',
@@ -144,7 +172,7 @@ function testInternalToolsDeployVersionResolvesByEnvNotBranch() {
       resolvedEnvironment: 'stg',
     },
     {
-      workflowId: 285829489, // Deploy Version → tst (older)
+      workflowId: 285829489,
       headBranch: 'development',
       status: 'completed',
       conclusion: 'success',
@@ -165,6 +193,17 @@ function testInternalToolsDeployVersionResolvesByEnvNotBranch() {
   assert.equal(dev, undefined, 'dev lane must NOT absorb development-branch runs that deployed to tst/stg');
 }
 
+function testParseEnvironmentFromJobNames() {
+  assert.equal(
+    parseEnvironmentFromJobNames(['deploy', 'Post-Deploy Health Check (stg) / Resolve Environment']),
+    'stg'
+  );
+  assert.equal(
+    parseEnvironmentFromJobNames(['Post-Deploy Health Check (prd) / Verify Deployment Health']),
+    'prod'
+  );
+}
+
 function testIdleWindowHelper() {
   const nowMs = Date.now();
   const oneDayAgo = new Date(nowMs - 24 * 60 * 60 * 1000).toISOString();
@@ -175,11 +214,13 @@ function testIdleWindowHelper() {
 }
 
 function main() {
-  testAzfDevActiveDeployVersionWins();
+  testAzfDeployVersionInProgressNotOnDevLane();
   testAzfDevCompletedStillUsesDevFastPrimary();
   testInternalToolsDevFastInProgress();
+  testInternalToolsTstBuildInProgressOnTstLane();
   testInternalToolsDeployVersionResolvesByEnvNotBranch();
   testEfTstFailureFromTstBuildArtifact();
+  testParseEnvironmentFromJobNames();
   testIdleWindowHelper();
   console.log('test-deploy-lane-mapping: all assertions passed');
 }

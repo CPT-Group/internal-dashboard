@@ -1,5 +1,5 @@
 /**
- * CLI check: per-lane branch + workflow mapping vs GitHub Actions (same logic as TV cards).
+ * CLI check: per-lane mapping vs GitHub Actions (same resolution path as TV cards).
  * Usage: npx tsx scripts/verify-deploy-lane-mapping.runner.ts [repo-slug]
  */
 import { config } from 'dotenv';
@@ -9,6 +9,8 @@ import {
   findLatestRunForDeployLane,
   getDeployLaneConfig,
   isWithinDeployIdleWindow,
+  normalizeDeployEnvironment,
+  type DeployEnvironmentKey,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
 import {
@@ -16,6 +18,11 @@ import {
   getMonitorWorkflowIds,
   getPrimaryWorkflowIdsForDeployLane,
 } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import {
+  DEPLOY_VERSION_WORKFLOW_IDS,
+  resolveDeployRunEnvironment,
+  type RepoDeploymentRow,
+} from '@/utils/resolveDeployRunEnvironment';
 
 config({ path: resolve(process.cwd(), '.env.local') });
 
@@ -24,13 +31,18 @@ const OWNER = 'CPT-Group';
 const IDLE_AFTER_DAYS = 7;
 
 interface GitHubRunRow {
+  id: number;
   workflowId: number;
   headBranch: string | null;
+  headSha: string | null;
+  createdAt: string;
   status: string;
   conclusion: string | null;
   title: string;
   updatedAt: string;
   runNumber: number;
+  resolvedEnvironment?: DeployEnvironmentKey | null;
+  jobNames?: string[];
 }
 
 /** GitHub Actions workflow display names for picker workflow IDs (standardized + fallback repos). */
@@ -50,15 +62,6 @@ const WORKFLOW_GH_NAMES: Readonly<Record<number, string>> = {
   285242645: 'CD - Deploy Infrastructure',
 };
 
-interface GhBranchRun {
-  status: string;
-  conclusion: string | null;
-  workflowName: string;
-  number: number;
-  displayTitle: string;
-  updatedAt?: string;
-}
-
 function token(): string {
   return (
     process.env.GITHUB_TOKEN_3?.trim() ||
@@ -68,8 +71,33 @@ function token(): string {
   );
 }
 
-function normalizeBranch(branch: string | null): string {
-  return (branch ?? '').trim().toLowerCase().replace(/^refs\/heads\//, '');
+function mapApiRun(
+  workflowId: number,
+  run: {
+    id: number;
+    head_branch: string | null;
+    head_sha?: string | null;
+    created_at: string;
+    status: string;
+    conclusion: string | null;
+    display_title?: string;
+    name?: string;
+    updated_at: string;
+    run_number: number;
+  }
+): GitHubRunRow {
+  return {
+    id: run.id,
+    workflowId,
+    headBranch: run.head_branch,
+    headSha: run.head_sha ?? null,
+    createdAt: run.created_at,
+    status: run.status,
+    conclusion: run.conclusion,
+    title: run.display_title ?? run.name ?? '',
+    updatedAt: run.updated_at,
+    runNumber: run.run_number,
+  };
 }
 
 async function fetchRunsViaGhApi(workflowId: number): Promise<GitHubRunRow[]> {
@@ -87,24 +115,8 @@ async function fetchRunsViaGhApi(workflowId: number): Promise<GitHubRunRow[]> {
     throw new Error(`wf ${workflowId}: gh api failed — ${(result.stderr || result.stdout).trim().slice(0, 120)}`);
   }
   if (!result.stdout.trim()) return [];
-  const rows = JSON.parse(result.stdout) as Array<{
-    head_branch: string | null;
-    status: string;
-    conclusion: string | null;
-    display_title?: string;
-    name?: string;
-    updated_at: string;
-    run_number: number;
-  }>;
-  return rows.map((run) => ({
-    workflowId,
-    headBranch: run.head_branch,
-    status: run.status,
-    conclusion: run.conclusion,
-    title: run.display_title ?? run.name ?? '',
-    updatedAt: run.updated_at,
-    runNumber: run.run_number,
-  }));
+  const rows = JSON.parse(result.stdout) as Array<Parameters<typeof mapApiRun>[1]>;
+  return rows.map((run) => mapApiRun(workflowId, run));
 }
 
 async function fetchRunsViaRest(authToken: string, workflowId: number): Promise<GitHubRunRow[]> {
@@ -119,26 +131,8 @@ async function fetchRunsViaRest(authToken: string, workflowId: number): Promise<
   if (!res.ok) {
     throw new Error(`wf ${workflowId}: HTTP ${res.status}`);
   }
-  const data = (await res.json()) as {
-    workflow_runs?: Array<{
-      head_branch: string | null;
-      status: string;
-      conclusion: string | null;
-      display_title?: string;
-      name?: string;
-      updated_at: string;
-      run_number: number;
-    }>;
-  };
-  return (data.workflow_runs ?? []).map((run) => ({
-    workflowId,
-    headBranch: run.head_branch,
-    status: run.status,
-    conclusion: run.conclusion,
-    title: run.display_title ?? run.name ?? '',
-    updatedAt: run.updated_at,
-    runNumber: run.run_number,
-  }));
+  const data = (await res.json()) as { workflow_runs?: Array<Parameters<typeof mapApiRun>[1]> };
+  return (data.workflow_runs ?? []).map((run) => mapApiRun(workflowId, run));
 }
 
 async function fetchRuns(workflowId: number): Promise<GitHubRunRow[]> {
@@ -149,6 +143,45 @@ async function fetchRuns(workflowId: number): Promise<GitHubRunRow[]> {
     if (!authToken) throw ghError;
     return fetchRunsViaRest(authToken, workflowId);
   }
+}
+
+async function fetchDeploymentsViaGhApi(): Promise<RepoDeploymentRow[]> {
+  const result = spawnSync(
+    'gh',
+    ['api', `repos/${OWNER}/${REPO}/deployments?per_page=100`],
+    { encoding: 'utf8', shell: process.platform === 'win32' }
+  );
+  if (result.status !== 0 || !result.stdout.trim()) return [];
+  const rows = JSON.parse(result.stdout) as Array<{
+    environment?: string | null;
+    sha?: string | null;
+    created_at?: string | null;
+  }>;
+  const out: RepoDeploymentRow[] = [];
+  for (const d of rows) {
+    const env = normalizeDeployEnvironment(d.environment);
+    const createdAtMs = Date.parse(d.created_at ?? '');
+    if (env && d.sha && Number.isFinite(createdAtMs)) {
+      out.push({ environment: env, sha: d.sha, createdAtMs });
+    }
+  }
+  return out;
+}
+
+async function fetchRunJobNamesViaGhApi(runId: number): Promise<string[]> {
+  const result = spawnSync(
+    'gh',
+    [
+      'api',
+      `repos/${OWNER}/${REPO}/actions/runs/${runId}/jobs?per_page=100`,
+      '--jq',
+      '[.jobs[].name]',
+    ],
+    { encoding: 'utf8', shell: process.platform === 'win32' }
+  );
+  if (result.status !== 0 || !result.stdout.trim()) return [];
+  const names = JSON.parse(result.stdout) as string[];
+  return names.filter((name) => name.trim().length > 0);
 }
 
 function laneSelection(lane: DeployLaneKey) {
@@ -163,43 +196,43 @@ function stateLabel(run: GitHubRunRow): string {
   return run.conclusion ?? 'completed';
 }
 
-function ghLatestForWorkflow(branch: string, workflowName: string): GhBranchRun | null {
-  const result = spawnSync(
-    'gh',
-    [
-      'run',
-      'list',
-      '-R',
-      `${OWNER}/${REPO}`,
-      '--branch',
-      branch,
-      '--workflow',
-      workflowName,
-      '--limit',
-      '1',
-      '--json',
-      'status,conclusion,workflowName,number,displayTitle,updatedAt',
-    ],
-    { encoding: 'utf8', shell: process.platform === 'win32' }
-  );
-  if (result.status !== 0 || !result.stdout.trim()) return null;
-  const rows = JSON.parse(result.stdout) as GhBranchRun[];
-  return rows[0] ?? null;
+function envLabel(run: GitHubRunRow): string {
+  return run.resolvedEnvironment ?? run.headBranch ?? '—';
 }
 
-function ghRefForPickedRun(picked: GitHubRunRow): GhBranchRun | null {
-  const branch = normalizeBranch(picked.headBranch);
-  const workflowName = WORKFLOW_GH_NAMES[picked.workflowId];
-  if (!branch || !workflowName) return null;
-  return ghLatestForWorkflow(branch, workflowName);
-}
+async function enrichRunsWithTargetEnv(runs: GitHubRunRow[], deployments: RepoDeploymentRow[]): Promise<void> {
+  for (const run of runs) {
+    let jobNames: string[] | undefined;
+    if (
+      run.status !== 'completed' &&
+      DEPLOY_VERSION_WORKFLOW_IDS.has(run.workflowId) &&
+      resolveDeployRunEnvironment(
+        {
+          workflowId: run.workflowId,
+          headBranch: run.headBranch,
+          headSha: run.headSha,
+          createdAt: run.createdAt,
+          status: run.status,
+        },
+        deployments
+      ) === null
+    ) {
+      jobNames = await fetchRunJobNamesViaGhApi(run.id);
+      run.jobNames = jobNames;
+    }
 
-function matchesGhExpectation(picked: GitHubRunRow, ghRun: GhBranchRun | null): boolean {
-  if (!ghRun) return true;
-  if (picked.runNumber !== ghRun.number) return false;
-  if (picked.status !== ghRun.status) return false;
-  if (picked.status === 'completed' && picked.conclusion !== ghRun.conclusion) return false;
-  return true;
+    run.resolvedEnvironment = resolveDeployRunEnvironment(
+      {
+        workflowId: run.workflowId,
+        headBranch: run.headBranch,
+        headSha: run.headSha,
+        createdAt: run.createdAt,
+        status: run.status,
+        jobNames,
+      },
+      deployments
+    );
+  }
 }
 
 async function main() {
@@ -209,44 +242,33 @@ async function main() {
     process.exit(1);
   }
 
-  const runs = (await Promise.all(workflowIds.map((id) => fetchRuns(id)))).flat();
-  console.log(`\n${REPO} — ${runs.length} runs from ${workflowIds.length} workflow(s)\n`);
+  const [runs, deployments] = await Promise.all([
+    Promise.all(workflowIds.map((id) => fetchRuns(id))).then((groups) => groups.flat()),
+    fetchDeploymentsViaGhApi(),
+  ]);
+
+  await enrichRunsWithTargetEnv(runs, deployments);
+
+  console.log(`\n${REPO} — ${runs.length} runs from ${workflowIds.length} workflow(s)`);
+  console.log(`Deployments API: ${deployments.length} recent deployment(s)\n`);
 
   const laneConfig = getDeployLaneConfig(REPO);
-  let mismatches = 0;
 
   for (const lane of laneConfig.order) {
     const picked = findLatestRunForDeployLane(REPO, lane, runs, laneSelection(lane));
-    const ghRef = picked ? ghRefForPickedRun(picked) : null;
 
     if (!picked || !isWithinDeployIdleWindow(picked.updatedAt, Date.now(), IDLE_AFTER_DAYS)) {
-      console.log(`${lane.toUpperCase().padEnd(8)} — IDLE (picker)`);
-      if (ghRef) {
-        console.log(
-          `           gh deploy wf: ${ghRef.status}/${ghRef.conclusion ?? '-'} | ${ghRef.workflowName} #${ghRef.number}`
-        );
-      }
+      console.log(`${lane.toUpperCase().padEnd(8)} — IDLE`);
       continue;
     }
 
-    const ok = matchesGhExpectation(picked, ghRef);
-    if (!ok) mismatches += 1;
-    const flag = ok ? 'OK' : 'MISMATCH';
-
+    const wfName = WORKFLOW_GH_NAMES[picked.workflowId] ?? `wf ${picked.workflowId}`;
     console.log(
-      `${lane.toUpperCase().padEnd(8)} — ${stateLabel(picked)} | wf ${picked.workflowId} | ${picked.headBranch} | #${picked.runNumber} | ${picked.title.slice(0, 50)} [${flag}]`
+      `${lane.toUpperCase().padEnd(8)} — ${stateLabel(picked)} | ${wfName} | env ${envLabel(picked)} | #${picked.runNumber} | ${picked.title.slice(0, 50)}`
     );
-    if (ghRef) {
-      const ghLine = `${ghRef.status}/${ghRef.conclusion ?? '-'} | ${ghRef.workflowName} #${ghRef.number} | ${ghRef.displayTitle.slice(0, 50)}`;
-      console.log(`           gh deploy wf: ${ghLine}`);
-    }
   }
 
-  if (mismatches > 0) {
-    console.error(`\n${mismatches} lane(s) differ from gh deploy-workflow latest.`);
-    process.exit(1);
-  }
-  console.log('\nAll lanes match gh deploy-workflow latest run numbers.');
+  console.log('\nLane picker uses Deployments API + job-name hints (same as TV API).');
 }
 
 main().catch((error: Error) => {
