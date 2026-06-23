@@ -14,6 +14,7 @@ front matter of every canonical standard:
 | Area | Location |
 |---|---|
 | Global standards | https://github.com/CPT-Group/cpt-standards/tree/main/standards/global |
+| Database standards | https://github.com/CPT-Group/cpt-standards/tree/main/standards/database |
 | Platform standards | https://github.com/CPT-Group/cpt-standards/tree/main/standards/platforms |
 | Reference material | https://github.com/CPT-Group/cpt-standards/tree/main/reference |
 | Templates | https://github.com/CPT-Group/cpt-standards/tree/main/templates |
