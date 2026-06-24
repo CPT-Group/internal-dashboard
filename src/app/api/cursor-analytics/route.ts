@@ -11,6 +11,7 @@ import {
 import { fetchCursorBillingQuick, isoRangeToMs } from '@/lib/cursorAdminApi';
 import { getBillingStoreStatus, loadBillingForRange } from '@/lib/cursorBillingStore';
 import type { CursorAnalyticsApiResponseBody } from '@/types/cursorAnalytics';
+import { assertCursorAnalyticsApiAuthorized } from '@/lib/cursorAnalyticsApiAuth';
 import { parseCursorAnalyticsSummary } from '@/utils/cursorAnalyticsSummary';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,9 @@ function enterpriseCachePath(): string {
 }
 
 export async function GET(request: Request) {
+  const denied = await assertCursorAnalyticsApiAuthorized(request);
+  if (denied) return denied;
+
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   const filePath = resolveSummaryPath();
