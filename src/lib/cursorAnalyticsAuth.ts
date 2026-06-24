@@ -1,35 +1,34 @@
-/** When set (non-empty), `/cursor-analytics` and `/api/cursor-analytics/*` require login. */
-export const CURSOR_ANALYTICS_AUTH_COOKIE = 'cursor-analytics-auth';
+import {
+  DASHBOARD_CURSOR_ANALYTICS_VIEW,
+  hasDashboardPermission,
+} from '@/constants/rbac/dashboard-permissions';
+import { isEntraAuthConfigured } from '@/lib/entraConfig';
+import {
+  readCursorAnalyticsSessionFromCookieHeader,
+  type CursorAnalyticsSession,
+} from '@/lib/cursorAnalyticsSession';
 
-/** Cookie value set after successful password check (not the password itself). */
-export const CURSOR_ANALYTICS_AUTH_SESSION = 'nova';
+export { CURSOR_ANALYTICS_AUTH_COOKIE } from '@/lib/cursorAnalyticsSession';
 
-export function getCursorAnalyticsPassword(): string | null {
-  const raw = process.env.CURSOR_ANALYTICS_PASSWORD?.trim();
-  return raw && raw.length > 0 ? raw : null;
+/** When Entra env is complete, cursor analytics routes require a valid session. */
+export function isCursorAnalyticsAuthRequired(): boolean {
+  return isEntraAuthConfigured();
 }
 
-export function isCursorAnalyticsPasswordProtectionEnabled(): boolean {
-  return getCursorAnalyticsPassword() !== null;
+export async function getCursorAnalyticsSessionFromCookieHeader(
+  cookieHeader: string | null,
+): Promise<CursorAnalyticsSession | null> {
+  if (!isCursorAnalyticsAuthRequired()) return null;
+  return readCursorAnalyticsSessionFromCookieHeader(cookieHeader);
 }
 
-function readCookieValue(cookieHeader: string | null, name: string): string | null {
-  if (!cookieHeader) return null;
-  for (const part of cookieHeader.split(';')) {
-    const trimmed = part.trim();
-    const eq = trimmed.indexOf('=');
-    if (eq <= 0) continue;
-    if (trimmed.slice(0, eq) === name) {
-      return decodeURIComponent(trimmed.slice(eq + 1));
-    }
-  }
-  return null;
+export function sessionHasCursorAnalyticsPermission(session: CursorAnalyticsSession | null): boolean {
+  if (!session) return false;
+  return hasDashboardPermission(session.roles, DASHBOARD_CURSOR_ANALYTICS_VIEW);
 }
 
-export function isCursorAnalyticsAuthedFromCookieHeader(cookieHeader: string | null): boolean {
-  if (!isCursorAnalyticsPasswordProtectionEnabled()) {
-    return true;
-  }
-  const value = readCookieValue(cookieHeader, CURSOR_ANALYTICS_AUTH_COOKIE);
-  return value === CURSOR_ANALYTICS_AUTH_SESSION;
+export async function isCursorAnalyticsAuthedFromCookieHeader(cookieHeader: string | null): Promise<boolean> {
+  if (!isCursorAnalyticsAuthRequired()) return false;
+  const session = await getCursorAnalyticsSessionFromCookieHeader(cookieHeader);
+  return sessionHasCursorAnalyticsPermission(session);
 }

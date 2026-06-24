@@ -1,44 +1,72 @@
 import { NextResponse } from 'next/server';
 
 import {
-  CURSOR_ANALYTICS_AUTH_COOKIE,
-  CURSOR_ANALYTICS_AUTH_SESSION,
-  getCursorAnalyticsPassword,
-  isCursorAnalyticsAuthedFromCookieHeader,
-  isCursorAnalyticsPasswordProtectionEnabled,
+  DASHBOARD_CURSOR_ANALYTICS_VIEW,
+  hasDashboardPermission,
+} from '@/constants/rbac/dashboard-permissions';
+import { auditCursorAnalyticsAccess } from '@/lib/cursorAnalyticsAudit';
+import {
+  getCursorAnalyticsSessionFromCookieHeader,
+  isCursorAnalyticsAuthRequired,
+  sessionHasCursorAnalyticsPermission,
 } from '@/lib/cursorAnalyticsAuth';
-import { verifyCursorAnalyticsPassword } from '@/lib/cursorAnalyticsAuthServer';
+import {
+  authCookieOptions,
+  createCursorAnalyticsSessionToken,
+  CURSOR_ANALYTICS_AUTH_COOKIE,
+} from '@/lib/cursorAnalyticsSession';
+import { validateEntraAccessToken } from '@/lib/entraJwt';
 
 export const dynamic = 'force-dynamic';
 
-const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 30;
-
-function authCookieOptions(): { httpOnly: true; sameSite: 'lax'; path: string; maxAge: number; secure: boolean } {
-  return {
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: COOKIE_MAX_AGE_SEC,
-    secure: process.env.NODE_ENV === 'production',
-  };
-}
-
 export async function GET(request: Request): Promise<Response> {
-  const required = isCursorAnalyticsPasswordProtectionEnabled();
-  const authenticated = isCursorAnalyticsAuthedFromCookieHeader(request.headers.get('cookie'));
+  const url = new URL(request.url);
+  const required = isCursorAnalyticsAuthRequired();
+  const session = await getCursorAnalyticsSessionFromCookieHeader(request.headers.get('cookie'));
+  const authenticated = sessionHasCursorAnalyticsPermission(session);
+
+  if (required && session && !authenticated) {
+    auditCursorAnalyticsAccess({
+      outcome: 'deny',
+      session,
+      path: url.pathname,
+      method: 'GET',
+      reason: 'missing_permission',
+    });
+  }
+
   return NextResponse.json(
-    { required, authenticated },
+    {
+      required,
+      authenticated,
+      permission: DASHBOARD_CURSOR_ANALYTICS_VIEW,
+      user: authenticated && session
+        ? { oid: session.oid, name: session.name, email: session.email }
+        : null,
+    },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }
 
 interface AuthBody {
-  password?: string;
+  accessToken?: string;
 }
 
 export async function POST(request: Request): Promise<Response> {
-  if (!isCursorAnalyticsPasswordProtectionEnabled()) {
-    return NextResponse.json({ ok: true, required: false });
+  const url = new URL(request.url);
+
+  if (!isCursorAnalyticsAuthRequired()) {
+    auditCursorAnalyticsAccess({
+      outcome: 'misconfigured',
+      session: null,
+      path: url.pathname,
+      method: 'POST',
+      reason: 'entra_not_configured',
+    });
+    return NextResponse.json(
+      { ok: false, message: 'Entra auth is not configured. Access denied (fail closed).' },
+      { status: 503 },
+    );
   }
 
   let body: AuthBody = {};
@@ -48,20 +76,88 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ ok: false, message: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  const candidate = typeof body.password === 'string' ? body.password : '';
-  if (!verifyCursorAnalyticsPassword(candidate)) {
-    return NextResponse.json({ ok: false, message: 'Incorrect password.' }, { status: 401 });
+  const accessToken = typeof body.accessToken === 'string' ? body.accessToken.trim() : '';
+  if (!accessToken) {
+    return NextResponse.json({ ok: false, message: 'accessToken is required.' }, { status: 400 });
   }
 
-  const res = NextResponse.json({ ok: true, required: true });
-  res.cookies.set(CURSOR_ANALYTICS_AUTH_COOKIE, CURSOR_ANALYTICS_AUTH_SESSION, authCookieOptions());
+  const validated = await validateEntraAccessToken(accessToken);
+  if (!validated) {
+    auditCursorAnalyticsAccess({
+      outcome: 'deny',
+      session: null,
+      path: url.pathname,
+      method: 'POST',
+      reason: 'invalid_token',
+    });
+    return NextResponse.json({ ok: false, message: 'Invalid or expired Microsoft token.' }, { status: 401 });
+  }
+
+  if (!hasDashboardPermission(validated.roles, DASHBOARD_CURSOR_ANALYTICS_VIEW)) {
+    auditCursorAnalyticsAccess({
+      outcome: 'deny',
+      session: {
+        oid: validated.oid,
+        name: validated.name,
+        email: validated.email,
+        roles: validated.roles,
+      },
+      path: url.pathname,
+      method: 'POST',
+      reason: 'missing_permission',
+    });
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Missing required permission: ${DASHBOARD_CURSOR_ANALYTICS_VIEW}.`,
+      },
+      { status: 403 },
+    );
+  }
+
+  const sessionToken = await createCursorAnalyticsSessionToken({
+    oid: validated.oid,
+    name: validated.name,
+    email: validated.email,
+    roles: validated.roles,
+  });
+  if (!sessionToken) {
+    auditCursorAnalyticsAccess({
+      outcome: 'misconfigured',
+      session: null,
+      path: url.pathname,
+      method: 'POST',
+      reason: 'session_sign_failed',
+    });
+    return NextResponse.json({ ok: false, message: 'Session could not be created.' }, { status: 503 });
+  }
+
+  const session = {
+    oid: validated.oid,
+    name: validated.name,
+    email: validated.email,
+    roles: validated.roles,
+  };
+
+  auditCursorAnalyticsAccess({
+    outcome: 'allow',
+    session,
+    path: url.pathname,
+    method: 'POST',
+    reason: 'login_success',
+  });
+
+  const res = NextResponse.json({
+    ok: true,
+    required: true,
+    user: { oid: session.oid, name: session.name, email: session.email },
+  });
+  res.cookies.set(CURSOR_ANALYTICS_AUTH_COOKIE, sessionToken, authCookieOptions());
   return res;
 }
 
 export async function DELETE(): Promise<Response> {
   const res = NextResponse.json({ ok: true });
-  if (getCursorAnalyticsPassword()) {
-    res.cookies.set(CURSOR_ANALYTICS_AUTH_COOKIE, '', { ...authCookieOptions(), maxAge: 0 });
-  }
+  res.cookies.set(CURSOR_ANALYTICS_AUTH_COOKIE, '', { ...authCookieOptions(), maxAge: 0 });
   return res;
 }

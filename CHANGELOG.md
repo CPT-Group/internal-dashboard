@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **NOVA-3131 — Cursor analytics Entra auth (AP-016)**: Replaced the shared-password gate (`CURSOR_ANALYTICS_PASSWORD` / static `nova` cookie) with Microsoft Entra sign-in, `dashboard.cursorAnalytics.view` permission checks (Developer, Manager, ScrumMaster, SysAdmin, Executive), signed httpOnly session cookies, structured per-user audit logs, and **fail-closed** behavior when Entra env is missing. Login at `/cursor-analytics/login` uses MSAL redirect; `npm run test:cursor-analytics-auth` covers permission resolution.
+
 ### Added
 
 - **`scripts/jira/adjust-worklogs-today.mjs`**: Scales today’s Pacific worklogs for Kyle + James to a target (default **7h**) proportionally per ticket and per entry within each ticket; supports `--apply` and `--target-hours=N`.
