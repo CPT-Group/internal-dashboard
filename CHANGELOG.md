@@ -9,18 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Continual learning — AGENTS.md memory sections**: First incremental transcript index at `.cursor/hooks/state/continual-learning-index.json` (67 transcripts). Added `## Learned User Preferences` and `## Learned Workspace Facts` to `AGENTS.md` (Jira automation investigation patterns, NOVA boards 153 vs 516, audit-log limits, key rule UUIDs, orphan remediation scope).
 - **Theme parity with `cpt-internal-tools`** — Ported 32 missing palette themes (GitHub Dark/Light, frostbyte–tundra batch, colorblind suite, CPT Paperwork, etc.) plus `atlas-light` / `atlas-blue` aliases as static SCSS (Tizen-safe hex/rgba, no `color-mix()`). Wired into `main.scss`, `APP_THEME_CYCLE_ORDER`, layout theme-init `valid`, and `ThemeChangeToast`. Regenerator: `scripts/generate-dashboard-themes-from-ui.ts`.
 
 ### Changed
 
 - **Agent docs — working tree hygiene**: Documented rules for keeping the repo clean (one-offs in `kyleJira/`, output in `kyleOutput/` / `cursorScripts/`, restore prebuild noise, no unrequested tracked edits). Added `.cursor/rules/working-tree-hygiene.mdc` and a callout in `scripts/jira/README.md`.
+- **Dev Corner Two — P2P Go deploy card swim lanes**: Added Dev Fast (`301145195`) + Promote (`289926293`) lane rules and promotion-order env resolution (`tst` → `stg` → `prod` per SHA on `development`) so TST/STG successes no longer collapse into the Dev lane.
 - **Dev Corner Two — GitHub deploy card: swap `cpt-infra` → P2P Go service**: Replaced the infra card (no active deploy workflows) with `cpt-group-p2p-go-service` using its `CD - Build & Deploy to On-Prem` workflow (ID 289926293). Updated `GITHUB_DEPLOY_MONITORS.ts`, `GITHUB_DEPLOY_LANE_WORKFLOWS.ts` fallback IDs, and `githubDeployDisplay.ts` tone mapping (`'infra'` → `'p2p'`; reuses existing `--github-repo-infra-*` CSS tokens so no theme files needed changing). SCSS class renamed `repoToneInfra` → `repoToneP2p`.
 - **Code Freeze default off after UAT** (NOVA-2681): Set `CODE_FREEZE_ENABLED = false` in `src/constants/CODE_FREEZE.ts` for production merge — flip to `true` manually when a freeze window is active.
 
 ### Fixed
 
+- **Stale UAT warning (NOVA)**: Posted warning-panel comment on **NOVA-2848** (UAT, due before today, assignee Brandon Fay) via `stale-uat-ticket-warning.mjs --apply`.
 - **Dev Corner One — Impediment panel scroll**: Column header stays frozen while rows auto-scroll by using the same outer `compTableWrap` + `useAutoScroll` pattern as Component Activity (removed PrimeReact internal `scrollable` scroll that bypassed auto-scroll).
 - **Dev Corner Two — NuGet deploy card idle after pipeline migration**: Re-pointed `cpt-nuget-libraries` from deleted workflow `CD - Publish NuGet Packages` (235954510) to standardized Dev Fast Deploy / TST Build Artifact / Deploy Version IDs (`288752702`, `288752705`, `288752700`) with Non-Prod + Prod lane rules in `GITHUB_DEPLOY_LANE_WORKFLOWS.ts`.
+- **Dev Corner Two — P2P Go deploy card showed only Dev lane**: Monitored only the promote workflow and matched lanes by Git branch (`development`), so TST/STG promote runs were mis-attributed to Dev. Now fetches Dev Fast + Promote workflows and resolves tst/stg/prod from promotion order per commit SHA (matches on-prem predecessor guard).
 - **Code Freeze theme now fully locks on activation** (NOVA-2681): Previously the frost palette loaded briefly but was then overridden by the stored theme because `ThemeProvider`'s `useEffect` writes `data-theme` on `<html>` with `!important` rules on mount. `CodeFreezeOverlay` now locks `data-theme="code-freeze"` directly on `document.documentElement` via a `MutationObserver` that immediately corrects any override attempt. The prior theme is restored on unmount. CSS variable overrides were moved from the wrapper class into a proper `src/styles/themes/code-freeze.scss` theme file (same pattern as all other themes), covering the full ice/frost palette including surface, text, chart, badge, glass, and GitHub deploy tokens.
 
 ### Added

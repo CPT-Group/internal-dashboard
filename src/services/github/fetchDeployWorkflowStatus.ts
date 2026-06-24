@@ -6,6 +6,11 @@ import {
 } from '@/constants/GITHUB_DEPLOY_MONITORS';
 import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import { normalizeDeployEnvironment, type DeployEnvironmentKey } from '@/utils/githubDeployEnvironment';
+import {
+  isP2pGoServiceRepo,
+  resolveP2pRunEnvironment,
+  type P2pRunEnvironmentInput,
+} from '@/utils/p2pDeployEnvironment';
 
 interface GitHubWorkflowRunApi {
   actor?: {
@@ -103,6 +108,33 @@ function resolveRunEnvironment(run: GitHubWorkflowRunApi, deployments: readonly 
   }
   if (!best || bestDelta > ENV_CORRELATION_WINDOW_MS) return null;
   return best.environment;
+}
+
+function resolveEnvironmentForWorkflowRun(
+  repo: string,
+  run: GitHubWorkflowRunApi,
+  workflowId: number,
+  allRuns: readonly { run: GitHubWorkflowRunApi; workflowId: number }[],
+  deployments: readonly RepoDeployment[]
+): DeployEnvironmentKey | null {
+  if (isP2pGoServiceRepo(repo)) {
+    const p2pRuns: P2pRunEnvironmentInput[] = allRuns.map(({ run: candidate, workflowId: candidateWorkflowId }) => ({
+      workflowId: candidateWorkflowId,
+      headSha: candidate.head_sha,
+      createdAt: candidate.created_at,
+      status: candidate.status,
+      conclusion: candidate.conclusion,
+    }));
+    const current: P2pRunEnvironmentInput = {
+      workflowId,
+      headSha: run.head_sha,
+      createdAt: run.created_at,
+      status: run.status,
+      conclusion: run.conclusion,
+    };
+    return resolveP2pRunEnvironment(current, p2pRuns);
+  }
+  return resolveRunEnvironment(run, deployments);
 }
 
 function toSummary(
@@ -261,6 +293,8 @@ export async function fetchDeployWorkflowStatus(
     .flatMap((f) => f.runs.map((run) => ({ run, workflowId: f.workflowId })))
     .sort((a, b) => Date.parse(b.run.updated_at) - Date.parse(a.run.updated_at));
 
+  const allRunEntries = runs;
+
   const activeEntry = runs.find(({ run }) => run.status === 'in_progress')
     ?? runs.find(({ run }) => isQueuedLikeStatus(run.status))
     ?? runs.find(({ run }) => run.status !== 'completed');
@@ -272,14 +306,24 @@ export async function fetchDeployWorkflowStatus(
     inProgressCount,
     activeCount: queuedCount + inProgressCount,
     activeRun: activeEntry
-      ? toSummary(activeEntry.run, activeEntry.workflowId, resolveRunEnvironment(activeEntry.run, deployments))
+      ? toSummary(
+          activeEntry.run,
+          activeEntry.workflowId,
+          resolveEnvironmentForWorkflowRun(repo, activeEntry.run, activeEntry.workflowId, allRunEntries, deployments)
+        )
       : undefined,
     lastCompletedRun: lastDoneEntry
-      ? toSummary(lastDoneEntry.run, lastDoneEntry.workflowId, resolveRunEnvironment(lastDoneEntry.run, deployments))
+      ? toSummary(
+          lastDoneEntry.run,
+          lastDoneEntry.workflowId,
+          resolveEnvironmentForWorkflowRun(repo, lastDoneEntry.run, lastDoneEntry.workflowId, allRunEntries, deployments)
+        )
       : undefined,
     recentRuns: runs
       .slice(0, 30)
-      .map(({ run, workflowId }) => toSummary(run, workflowId, resolveRunEnvironment(run, deployments))),
+      .map(({ run, workflowId }) =>
+        toSummary(run, workflowId, resolveEnvironmentForWorkflowRun(repo, run, workflowId, allRunEntries, deployments))
+      ),
   };
 }
 

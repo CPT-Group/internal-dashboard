@@ -8,6 +8,11 @@ import {
   getActiveWorkflowIdsForDeployLane,
   getPrimaryWorkflowIdsForDeployLane,
 } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import {
+  P2P_DEV_FAST_WORKFLOW_ID,
+  P2P_PROMOTE_WORKFLOW_ID,
+  resolveP2pRunEnvironment,
+} from '@/utils/p2pDeployEnvironment';
 
 interface FixtureRun {
   workflowId: number;
@@ -174,12 +179,104 @@ function testIdleWindowHelper() {
   assert.equal(isWithinDeployIdleWindow(eightDaysAgo, nowMs, 7), false);
 }
 
+function testP2pPromoteLanesByPredecessorOrder() {
+  const repo = 'cpt-group-p2p-go-service';
+  const sha = '89bd9d23ee76da8117b4510c56afea0ff3974dcf';
+  const runs: FixtureRun[] = [
+    {
+      workflowId: P2P_DEV_FAST_WORKFLOW_ID,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(30),
+      resolvedEnvironment: 'dev',
+    },
+    {
+      workflowId: P2P_PROMOTE_WORKFLOW_ID,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(10),
+      resolvedEnvironment: 'tst',
+    },
+    {
+      workflowId: P2P_PROMOTE_WORKFLOW_ID,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(5),
+      resolvedEnvironment: 'stg',
+    },
+    {
+      workflowId: P2P_PROMOTE_WORKFLOW_ID,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'failure',
+      updatedAt: runIso(1),
+      resolvedEnvironment: 'prod',
+    },
+  ];
+
+  const dev = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
+  assert.ok(dev);
+  assert.equal(dev.workflowId, P2P_DEV_FAST_WORKFLOW_ID);
+
+  const tst = findLatestRunForDeployLane(repo, 'tst', runs, laneSelection(repo, 'tst'));
+  assert.ok(tst);
+  assert.equal(tst.resolvedEnvironment, 'tst');
+
+  const stg = findLatestRunForDeployLane(repo, 'stg', runs, laneSelection(repo, 'stg'));
+  assert.ok(stg);
+  assert.equal(stg.resolvedEnvironment, 'stg');
+
+  const prod = findLatestRunForDeployLane(repo, 'prod', runs, laneSelection(repo, 'prod'));
+  assert.ok(prod);
+  assert.equal(prod.resolvedEnvironment, 'prod');
+  assert.equal(prod.conclusion, 'failure');
+}
+
+function testP2pResolvePromoteOrderHelper() {
+  const sha = '89bd9d23ee76da8117b4510c56afea0ff3974dcf';
+  const base = {
+    workflowId: P2P_PROMOTE_WORKFLOW_ID,
+    headSha: sha,
+    status: 'completed',
+    conclusion: 'success' as const,
+  };
+  const all = [
+    { ...base, createdAt: runIso(20) },
+    { ...base, createdAt: runIso(10) },
+    {
+      workflowId: P2P_PROMOTE_WORKFLOW_ID,
+      headSha: sha,
+      createdAt: runIso(5),
+      status: 'completed',
+      conclusion: 'failure',
+    },
+  ];
+
+  assert.equal(
+    resolveP2pRunEnvironment({ ...all[0], createdAt: all[0].createdAt }, all),
+    'tst'
+  );
+  assert.equal(
+    resolveP2pRunEnvironment({ ...all[1], createdAt: all[1].createdAt }, all),
+    'stg'
+  );
+  assert.equal(
+    resolveP2pRunEnvironment({ ...all[2], createdAt: all[2].createdAt }, all),
+    'prod'
+  );
+}
+
 function main() {
   testAzfDevActiveDeployVersionWins();
   testAzfDevCompletedStillUsesDevFastPrimary();
   testInternalToolsDevFastInProgress();
   testInternalToolsDeployVersionResolvesByEnvNotBranch();
   testEfTstFailureFromTstBuildArtifact();
+  testP2pPromoteLanesByPredecessorOrder();
+  testP2pResolvePromoteOrderHelper();
   testIdleWindowHelper();
   console.log('test-deploy-lane-mapping: all assertions passed');
 }

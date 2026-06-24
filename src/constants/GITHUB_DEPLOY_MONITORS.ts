@@ -70,8 +70,8 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-group-p2p-go-service',
-    /** `CD - Build & Deploy to On-Prem` */
-    workflowId: 289926293,
+    /** Dev Fast Deploy + CD Promote (tst/stg/prd). */
+    workflowId: 301145195,
     workflowIds: getMonitorWorkflowIds('cpt-group-p2p-go-service') ?? undefined,
   },
   {

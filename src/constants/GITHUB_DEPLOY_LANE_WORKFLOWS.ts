@@ -40,10 +40,13 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
     },
     prod: { primary: [288752700] },
   },
-};
-
-const FALLBACK_MONITOR_WORKFLOW_IDS: Readonly<Record<string, readonly number[]>> = {
-  'cpt-group-p2p-go-service': [289926293],
+  /** Dev Fast + per-env promote workflow_dispatch (all on `development`). IDs verified 2026-06-24. */
+  'cpt-group-p2p-go-service': {
+    dev: { primary: [301145195], active: [301145195] },
+    tst: { primary: [289926293], active: [289926293] },
+    stg: { primary: [289926293], active: [289926293] },
+    prod: { primary: [289926293], active: [289926293] },
+  },
 };
 
 function unique(values: readonly number[]): readonly number[] {
@@ -81,5 +84,5 @@ export function getMonitorWorkflowIds(repo: string): readonly number[] | null {
     }
     return unique(ids);
   }
-  return FALLBACK_MONITOR_WORKFLOW_IDS[repo] ?? null;
+  return null;
 }

@@ -16,6 +16,7 @@ import {
   getMonitorWorkflowIds,
   getPrimaryWorkflowIdsForDeployLane,
 } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import { isP2pGoServiceRepo, resolveP2pRunEnvironment } from '@/utils/p2pDeployEnvironment';
 
 config({ path: resolve(process.cwd(), '.env.local') });
 
@@ -26,11 +27,14 @@ const IDLE_AFTER_DAYS = 7;
 interface GitHubRunRow {
   workflowId: number;
   headBranch: string | null;
+  headSha?: string | null;
   status: string;
   conclusion: string | null;
   title: string;
   updatedAt: string;
+  createdAt: string;
   runNumber: number;
+  resolvedEnvironment?: 'dev' | 'tst' | 'stg' | 'prod';
 }
 
 /** GitHub Actions workflow display names for picker workflow IDs (standardized + fallback repos). */
@@ -47,6 +51,8 @@ const WORKFLOW_GH_NAMES: Readonly<Record<number, string>> = {
   288752702: 'Dev Fast Deploy',
   288752700: 'Deploy Version',
   288752705: 'TST Build Artifact',
+  301145195: 'Dev Fast Deploy',
+  289926293: 'CD - Promote to On-Prem (tst / stg / prd)',
   285242645: 'CD - Deploy Infrastructure',
 };
 
@@ -89,20 +95,24 @@ async function fetchRunsViaGhApi(workflowId: number): Promise<GitHubRunRow[]> {
   if (!result.stdout.trim()) return [];
   const rows = JSON.parse(result.stdout) as Array<{
     head_branch: string | null;
+    head_sha?: string | null;
     status: string;
     conclusion: string | null;
     display_title?: string;
     name?: string;
     updated_at: string;
+    created_at: string;
     run_number: number;
   }>;
   return rows.map((run) => ({
     workflowId,
     headBranch: run.head_branch,
+    headSha: run.head_sha,
     status: run.status,
     conclusion: run.conclusion,
     title: run.display_title ?? run.name ?? '',
     updatedAt: run.updated_at,
+    createdAt: run.created_at,
     runNumber: run.run_number,
   }));
 }
@@ -122,21 +132,25 @@ async function fetchRunsViaRest(authToken: string, workflowId: number): Promise<
   const data = (await res.json()) as {
     workflow_runs?: Array<{
       head_branch: string | null;
+      head_sha?: string | null;
       status: string;
       conclusion: string | null;
       display_title?: string;
       name?: string;
       updated_at: string;
+      created_at: string;
       run_number: number;
     }>;
   };
   return (data.workflow_runs ?? []).map((run) => ({
     workflowId,
     headBranch: run.head_branch,
+    headSha: run.head_sha,
     status: run.status,
     conclusion: run.conclusion,
     title: run.display_title ?? run.name ?? '',
     updatedAt: run.updated_at,
+    createdAt: run.created_at,
     runNumber: run.run_number,
   }));
 }
@@ -188,10 +202,39 @@ function ghLatestForWorkflow(branch: string, workflowName: string): GhBranchRun 
 }
 
 function ghRefForPickedRun(picked: GitHubRunRow): GhBranchRun | null {
+  if (isP2pGoServiceRepo(REPO)) {
+    return null;
+  }
   const branch = normalizeBranch(picked.headBranch);
   const workflowName = WORKFLOW_GH_NAMES[picked.workflowId];
   if (!branch || !workflowName) return null;
   return ghLatestForWorkflow(branch, workflowName);
+}
+
+function enrichRunsWithResolvedEnvironment(runs: GitHubRunRow[]): GitHubRunRow[] {
+  if (!isP2pGoServiceRepo(REPO)) {
+    return runs;
+  }
+  const p2pInputs = runs.map((run) => ({
+    workflowId: run.workflowId,
+    headSha: run.headSha,
+    createdAt: run.createdAt,
+    status: run.status,
+    conclusion: run.conclusion,
+  }));
+  return runs.map((run) => {
+    const resolved = resolveP2pRunEnvironment(
+      {
+        workflowId: run.workflowId,
+        headSha: run.headSha,
+        createdAt: run.createdAt,
+        status: run.status,
+        conclusion: run.conclusion,
+      },
+      p2pInputs
+    );
+    return resolved ? { ...run, resolvedEnvironment: resolved } : run;
+  });
 }
 
 function matchesGhExpectation(picked: GitHubRunRow, ghRun: GhBranchRun | null): boolean {
@@ -209,7 +252,9 @@ async function main() {
     process.exit(1);
   }
 
-  const runs = (await Promise.all(workflowIds.map((id) => fetchRuns(id)))).flat();
+  const runs = enrichRunsWithResolvedEnvironment(
+    (await Promise.all(workflowIds.map((id) => fetchRuns(id)))).flat()
+  );
   console.log(`\n${REPO} — ${runs.length} runs from ${workflowIds.length} workflow(s)\n`);
 
   const laneConfig = getDeployLaneConfig(REPO);

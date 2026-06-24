@@ -63,6 +63,7 @@ export function normalizeDeployEnvironment(env: string | null | undefined): Depl
   if (key === 'tst' || key === 'test') return 'tst';
   if (key === 'stg' || key === 'staging') return 'stg';
   if (key === 'prd' || key === 'prod' || key === 'production') return 'prod';
+  if (key === 'onprem-prd') return 'prod';
   return null;
 }
 
