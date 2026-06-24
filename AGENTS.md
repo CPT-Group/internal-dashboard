@@ -429,10 +429,16 @@ Before every commit and push:
 - For Jira automation investigations, use repo `scripts/jira/` helpers and `.env.local` credentials (Automation REST API); there is no Jira MCP in this workspace.
 - Run routine Jira hygiene via existing skills and promoted scripts (`cpt-jira-stale-ticket-warning`, `cpt-jira-add-component`, `enable-move-to-sprint-rule.mjs`, `remediate-move-sprint-orphans.mjs`) rather than ad-hoc tracked one-offs.
 - When automation rule state is suspect, verify live state with `verify-rule-scopes.mjs` / `list-rules.mjs` — do not trust `scripts/jira/README.md` alone (it can drift from Jira).
+- Dev Corner One Team Activity **To Do** chips: visible but secondary via `--team-activity-todo-*` theme tokens; **~0.68 opacity** (user corrected ~0.52 as too muted).
+- Dev Corner One Team Activity card header: labeled counts **`N IN DEV / M TO DO`** — not a combined open badge or `X / Y open`.
 
 ## Learned Workspace Facts
 
 - NOVA has two boards: **153** (Scrum — use Agile REST `/board/153/sprint` for active/open sprints) and **516** (kanban — no sprint API; automation transition rules reference this board).
+- Operational **NOVA JQL** matches Kanban **board 516 / saved filter 11655**: `(sprint in openSprints() OR issuetype in (board issue types))` — sprint-only scope hid assignee-queue tickets with no active sprint.
+- Dev Corner One **Team Activity**: assignee **To Do** chips render **after** in-progress chips, styled with `--team-activity-todo-*` tokens (theme-safe across palettes).
+- Dev Corner Two **P2P Go** deploy card: **Dev Fast Deploy** for dev; **CD - Promote** for tst/stg/prod — all on `development`; lane assignment uses **`p2pDeployEnvironment.ts`** promotion-order resolution (GitHub Deployments use `onprem-*`, not branch names).
+- Dev Corner Two **NuGet** deploy card: **Dev/Tst/Stg/Prod** four-lane model in `GITHUB_DEPLOY_LANE_WORKFLOWS.ts`; TST Build may show `head_branch: development` when dispatched after auto-merge from `development`.
 - Jira **platform** audit log (`/rest/api/3/auditing/record`) does not record automation rule enable/disable or config edits; the Automation REST API has no change-history with actor — use each rule's **Audit log** in Project settings → Automation (UI).
 - Key NOVA automation **Move Issues to Active Sprint on Transition** (`019d3183-076e-7e15-9fc7-d8bae4831e18`): on Backlog → To Do, move to active sprint; NCOA/ACS component → Jeremy Romero intake, else Roy + Tech Owner.
 - Case Update/Bugs intake rule (`019d356a-…`) and the three **[Data team] Assignee changed → set Tech Owner** rules (NOVA/OPRD/CM) were (re)enabled or created **2026-06-04**; Case Update/Bugs covers direct-to-sprint Bug/Case Update create path.
