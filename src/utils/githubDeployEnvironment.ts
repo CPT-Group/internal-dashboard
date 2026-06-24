@@ -36,13 +36,12 @@ function normalizeBranchName(branch: string | null): string {
   return branch.trim().toLowerCase().replace(/^refs\/heads\//, '');
 }
 
-function isNugetRepo(repo: string): boolean {
-  return repo.toLowerCase().includes('nuget-libraries');
+function isNugetLibrariesRepo(repo: string): boolean {
+  return repo.toLowerCase() === 'cpt-nuget-libraries';
 }
 
 function isNonProdProdLaneRepo(repo: string): boolean {
-  const key = repo.toLowerCase();
-  return isNugetRepo(repo) || key === 'npm-libs';
+  return repo.toLowerCase() === 'npm-libs';
 }
 
 /** Exact Git branch names per TV swim lane (CPT CD repos). */
@@ -111,6 +110,15 @@ export function getBranchesForDeployLane(repo: string, lane: DeployLaneKey): rea
     if (lane === 'nonprod') {
       return [...DEPLOY_ENV_BRANCHES.dev, ...DEPLOY_ENV_BRANCHES.tst, ...DEPLOY_ENV_BRANCHES.stg];
     }
+    return [];
+  }
+  if (isNugetLibrariesRepo(repo)) {
+    if (lane === 'dev') return DEPLOY_ENV_BRANCHES.dev;
+    // NOVA-3118: TST Build is dispatched from `development` after auto-merge (head_branch is not `test`).
+    if (lane === 'tst') return [...DEPLOY_ENV_BRANCHES.tst, ...DEPLOY_ENV_BRANCHES.dev];
+    if (lane === 'stg') return DEPLOY_ENV_BRANCHES.stg;
+    // Deploy Version is workflow_dispatch on `development` (report-only today).
+    if (lane === 'prod') return [...DEPLOY_ENV_BRANCHES.prod, ...DEPLOY_ENV_BRANCHES.dev];
     return [];
   }
   if (lane === 'dev') return DEPLOY_ENV_BRANCHES.dev;

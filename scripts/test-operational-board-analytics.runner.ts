@@ -82,6 +82,9 @@ function assertInProgressInvariants(analytics: ReturnType<typeof buildOperationa
     assert.equal(member.inProgressKeys.length, member.inProgressCount);
     assert.equal(member.inProgressSummaries.length, member.inProgressCount);
     assert.equal(member.inProgressIsBug.length, member.inProgressCount);
+    assert.equal(member.todoKeys.length, member.todoCount);
+    assert.equal(member.todoSummaries.length, member.todoCount);
+    assert.equal(member.todoIsBug.length, member.todoCount);
   }
 }
 
@@ -122,6 +125,21 @@ function assertImpedimentInvariants(analytics: ReturnType<typeof buildImpediment
   assert.ok(kyle);
   assert.deepEqual(roy.inProgressKeys, ['NOVA-201']);
   assert.deepEqual(kyle.inProgressKeys, ['NOVA-200']);
+  assertInProgressInvariants(analytics);
+}
+
+// Team activity: To Do tickets listed after in-progress, assignee-based
+{
+  const open = [
+    issue('NOVA-210', { assigneeId: ROY_ID, assigneeName: 'Roy', statusName: 'In Dev' }),
+    issue('NOVA-211', { assigneeId: ROY_ID, assigneeName: 'Roy', statusName: 'To Do', statusKey: 'new' }),
+    issue('NOVA-212', { assigneeId: ROY_ID, assigneeName: 'Roy', statusName: 'To Do', statusKey: 'new' }),
+  ];
+  const analytics = buildFromOpen(open);
+  const roy = analytics.teamActivity.find((m) => m.accountId === ROY_ID);
+  assert.ok(roy);
+  assert.deepEqual(roy.inProgressKeys, ['NOVA-210']);
+  assert.deepEqual(roy.todoKeys, ['NOVA-211', 'NOVA-212']);
   assertInProgressInvariants(analytics);
 }
 

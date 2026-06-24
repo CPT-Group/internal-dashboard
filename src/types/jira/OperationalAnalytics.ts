@@ -88,6 +88,11 @@ export interface TeamMemberActivity {
   inProgressSummaries: string[];
   /** Per-ticket: true when the issue type is Bug or Bug Sub-Task. */
   inProgressIsBug: boolean[];
+  /** To Do / not-yet-started tickets (rendered after in-progress chips). */
+  todoCount: number;
+  todoKeys: string[];
+  todoSummaries: string[];
+  todoIsBug: boolean[];
 }
 
 /** In-progress ticket for company-facing card display. */

@@ -36,17 +36,44 @@ const CM_OPRD_BASE = `component IN (${CM_OPRD_COMPONENTS}) AND issuetype != Epic
 const NOVA_ASSIGNEES = NOVA_TEAM_ACCOUNT_IDS_ARRAY.map((id) => `"${id}"`).join(', ');
 
 /**
- * NOVA base: team members in open sprints only (matches actual board filter).
- * The board uses: project = "Software Development" AND assignee IN (...) AND sprint in openSprints()
+ * Issue types on NOVA Kanban board 516 (saved filter 11655) that appear without an
+ * active sprint. IDs + "Salesforce Request" name — keep in sync with Jira filter 11655.
  */
-const NOVA_BASE = `project = NOVA AND assignee IN (${NOVA_ASSIGNEES}) AND sprint in openSprints()`;
+const NOVA_BOARD_ISSUE_TYPES = [
+  '10472',
+  '10004',
+  '10470',
+  '10444',
+  '10438',
+  '10437',
+  '10436',
+  '10443',
+  '10445',
+  '10469',
+  '10440',
+  '10446',
+  '10439',
+  '10471',
+  '10441',
+  '10442',
+  '"Salesforce Request"',
+].join(', ');
+
+/**
+ * NOVA board scope: active sprint OR board issue types (matches Kanban 516 / filter 11655).
+ * Sprint-only JQL hid assignee-owned To Do / Dev Review tickets with no sprint (e.g. Roy's queue).
+ */
+const NOVA_BOARD_SCOPE = `(sprint in openSprints() OR issuetype in (${NOVA_BOARD_ISSUE_TYPES}))`;
+
+/** NOVA base: team assignees within board 516 scope. */
+const NOVA_BASE = `project = NOVA AND assignee IN (${NOVA_ASSIGNEES}) AND ${NOVA_BOARD_SCOPE}`;
 
 /**
  * Open/active items — mirrors the Case Management Data Team Board filter (V.3).
  *
  * CM:   not "New", not Done, dev components, no Epics
  * OPRD: (labels linked-to-CM, no Epics) OR (not New, not Done, dev components, no Epics)
- * NOVA: team assignees in open sprints
+ * NOVA: team assignees in board 516 scope (open sprint OR board issue types)
  */
 const BOARD_FILTER = [
   `( project = CM AND status != New AND statusCategory != Done AND ${CM_OPRD_BASE} )`,

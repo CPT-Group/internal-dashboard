@@ -32,12 +32,10 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
     stg: { primary: [285829489] },
     prod: { primary: [285829489] },
   },
-  /** Non-Prod + Prod swim lanes (not dev/tst/stg/prod). IDs verified 2026-06-10. */
+  /** Dev / Tst / report-only Prod — NOVA-3118 auto-merge + TST dispatch model. IDs verified 2026-06-24. */
   'cpt-nuget-libraries': {
-    nonprod: {
-      primary: [288752702, 288752705],
-      active: [288752702, 288752705, 288752700],
-    },
+    dev: { primary: [288752702], active: [288752702] },
+    tst: { primary: [288752705], active: [288752705, 301162091] },
     prod: { primary: [288752700] },
   },
   /** Dev Fast + per-env promote workflow_dispatch (all on `development`). IDs verified 2026-06-24. */

@@ -167,6 +167,11 @@
   --activity-badge-warning-bg: var(--chart-orange) !important;
   --activity-badge-warning-border: var(--chart-orange-border) !important;
   --activity-badge-warning-text: var(--chart-label-color) !important;
+  /** Dev Corner One Team Activity — To Do chips (muted; opacity works across all themes) */
+  --team-activity-todo-opacity: 0.68 !important;
+  --team-activity-todo-chip-bg: var(--surface-100) !important;
+  --team-activity-todo-chip-border: var(--surface-border) !important;
+  --team-activity-todo-text: var(--text-color-secondary) !important;
   --work-hours-badge-danger-bg: rgba(239, 68, 68, 0.28) !important;
   --work-hours-badge-danger-text: #ffffff !important;
   --work-hours-badge-zero-bg: rgba(239, 68, 68, 0.4) !important;

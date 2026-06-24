@@ -299,19 +299,33 @@
 .teamCounts {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: var(--dev1-panel-text);
+  gap: 0.3rem;
+  font-size: calc(var(--dev1-panel-text) * 0.88);
   font-weight: 700;
-  color: var(--text-color);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 
-  :global(.p-badge) {
-    font-weight: 800;
-    min-width: 1.5rem;
-    text-align: center;
-    background: var(--activity-badge-info-bg) !important;
-    border: 1px solid var(--activity-badge-info-border) !important;
-    color: var(--activity-badge-info-text) !important;
-  }
+.teamCountInDev {
+  color: var(--activity-badge-info-text);
+  background: var(--activity-badge-info-bg);
+  border: 1px solid var(--activity-badge-info-border);
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
+}
+
+.teamCountSeparator {
+  color: var(--text-color-secondary);
+  font-weight: 600;
+}
+
+.teamCountTodo {
+  color: var(--team-activity-todo-text);
+  opacity: var(--team-activity-todo-opacity);
+  background: var(--team-activity-todo-chip-bg);
+  border: 1px solid var(--team-activity-todo-chip-border);
+  border-radius: 999px;
+  padding: 0.12rem 0.45rem;
 }
 
 .teamTickets {
@@ -458,6 +472,30 @@
     background: rgba(127, 29, 29, 0.6) !important;
     color: var(--bug-accent-text) !important;
     border-color: rgba(239, 68, 68, 0.75) !important;
+  }
+}
+
+/* To Do / not-yet-started — muted so in-progress chips stand out (theme-token driven) */
+.ticketChipTodo {
+  opacity: var(--team-activity-todo-opacity);
+  background: var(--team-activity-todo-chip-bg) !important;
+  color: var(--team-activity-todo-text) !important;
+  border: 1px solid var(--team-activity-todo-chip-border) !important;
+
+  :global(.p-chip-text) {
+    color: var(--team-activity-todo-text);
+  }
+
+  .ticketChipKey {
+    border-color: var(--team-activity-todo-chip-border);
+    background: var(--team-activity-todo-chip-bg);
+    color: var(--team-activity-todo-text);
+  }
+
+  .ticketHoursTag {
+    background: var(--team-activity-todo-chip-bg) !important;
+    color: var(--team-activity-todo-text) !important;
+    border-color: var(--team-activity-todo-chip-border) !important;
   }
 }
 

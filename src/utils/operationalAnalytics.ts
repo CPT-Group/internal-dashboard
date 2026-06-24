@@ -754,6 +754,7 @@ function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
     const myAll = open.filter((i) => i.fields?.assignee?.accountId === accountId);
     const myDevOpen = myAll.filter(isDevResponsible);
     const myInProgress = myAll.filter(isInProgress);
+    const myTodo = myAll.filter(isRequestedNotStarted);
     return {
       accountId,
       displayName,
@@ -762,6 +763,10 @@ function buildTeamActivity(open: JiraIssue[]): TeamMemberActivity[] {
       inProgressKeys: myInProgress.map((i) => i.key),
       inProgressSummaries: myInProgress.map((i) => (i.fields?.summary ?? '').trim()),
       inProgressIsBug: myInProgress.map(isIssueBug),
+      todoCount: myTodo.length,
+      todoKeys: myTodo.map((i) => i.key),
+      todoSummaries: myTodo.map((i) => (i.fields?.summary ?? '').trim()),
+      todoIsBug: myTodo.map(isIssueBug),
     };
   });
 }

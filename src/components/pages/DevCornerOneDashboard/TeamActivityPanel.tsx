@@ -1,7 +1,6 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { Badge } from 'primereact/badge';
 import { Chip } from 'primereact/chip';
 import { Tag } from 'primereact/tag';
 import { MarqueeTicker } from '@/components/ui';
@@ -30,6 +29,62 @@ const buildTicketNumberLabel = (key: string): string => {
   return match[2];
 };
 
+type TicketChipRow = {
+  key: string;
+  summary: string;
+  isBug: boolean;
+  muted: boolean;
+};
+
+const TicketChip = ({
+  row,
+  accountId,
+  hoursByIssue,
+}: {
+  row: TicketChipRow;
+  accountId: string;
+  hoursByIssue: Map<string, Map<string, number>>;
+}) => {
+  const { key, summary, isBug, muted } = row;
+  const chipClass = [
+    styles.ticketChip,
+    muted
+      ? styles.ticketChipTodo
+      : isBug
+        ? styles.ticketChipBug
+        : key.startsWith('NOVA-')
+          ? styles.ticketChipNova
+          : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <Chip
+      key={key}
+      template={
+        <div className={styles.ticketChipContent}>
+          <span className={styles.ticketChipKey}>{buildTicketNumberLabel(key)}</span>
+          <span className={styles.ticketChipSummary}>
+            <MarqueeTicker
+              text={buildTicketSummary(key, summary)}
+              className={styles.ticketChipSummaryTicker}
+              durationSeconds={20}
+              gapRem={1.5}
+            />
+          </span>
+          <Tag
+            value={formatTicketHours(hoursByIssue.get(key)?.get(accountId) ?? 0)}
+            rounded
+            className={styles.ticketHoursTag}
+          />
+        </div>
+      }
+      className={chipClass}
+    />
+  );
+};
+
 const MemberCard = ({
   m,
   hoursByIssue,
@@ -39,47 +94,44 @@ const MemberCard = ({
 }) => {
   const scrollRef = useAutoScroll<HTMLDivElement>({ pixelsPerSecond: 10, pauseMs: 4000 });
 
+  const inProgressRows: TicketChipRow[] = m.inProgressKeys.map((key, i) => ({
+    key,
+    summary: m.inProgressSummaries[i] ?? '',
+    isBug: m.inProgressIsBug[i] ?? false,
+    muted: false,
+  }));
+  const todoRows: TicketChipRow[] = m.todoKeys.map((key, i) => ({
+    key,
+    summary: m.todoSummaries[i] ?? '',
+    isBug: m.todoIsBug[i] ?? false,
+    muted: true,
+  }));
+  const ticketRows = [...inProgressRows, ...todoRows];
+
   return (
     <div className={styles.teamCard}>
       <div className={styles.teamCardHeader}>
         <span className={styles.teamName}>{firstName(m.displayName)}</span>
         <span className={styles.teamCounts}>
-          <Badge value={m.inProgressCount} severity="info" />
-          <span>/ {m.openCount} open</span>
+          <span className={styles.teamCountInDev}>
+            {m.inProgressCount} IN DEV
+          </span>
+          <span className={styles.teamCountSeparator}>/</span>
+          <span className={styles.teamCountTodo}>
+            {m.todoCount} TO DO
+          </span>
         </span>
       </div>
       <div ref={scrollRef} className={styles.teamTickets}>
-        {m.inProgressKeys.length === 0 && (
+        {ticketRows.length === 0 && (
           <span className={styles.noTickets}>No active tickets</span>
         )}
-        {m.inProgressKeys.map((key, i) => (
-          <Chip
-            key={key}
-            template={
-              <div className={styles.ticketChipContent}>
-                <span className={styles.ticketChipKey}>{buildTicketNumberLabel(key)}</span>
-                <span className={styles.ticketChipSummary}>
-                  <MarqueeTicker
-                    text={buildTicketSummary(key, m.inProgressSummaries[i] ?? '')}
-                    className={styles.ticketChipSummaryTicker}
-                    durationSeconds={20}
-                    gapRem={1.5}
-                  />
-                </span>
-                <Tag
-                  value={formatTicketHours(hoursByIssue.get(key)?.get(m.accountId) ?? 0)}
-                  rounded
-                  className={styles.ticketHoursTag}
-                />
-              </div>
-            }
-            className={`${styles.ticketChip} ${
-              m.inProgressIsBug[i]
-                ? styles.ticketChipBug
-                : key.startsWith('NOVA-')
-                  ? styles.ticketChipNova
-                  : ''
-            }`}
+        {ticketRows.map((row) => (
+          <TicketChip
+            key={row.key}
+            row={row}
+            accountId={m.accountId}
+            hoursByIssue={hoursByIssue}
           />
         ))}
       </div>

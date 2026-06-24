@@ -269,12 +269,88 @@ function testP2pResolvePromoteOrderHelper() {
   );
 }
 
+function testNugetTstBuildOnDevelopmentMapsToTstLane() {
+  const repo = 'cpt-nuget-libraries';
+  const runs: FixtureRun[] = [
+    {
+      workflowId: 288752702,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(20),
+    },
+    {
+      workflowId: 288752705,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(5),
+    },
+  ];
+
+  const dev = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
+  assert.ok(dev);
+  assert.equal(dev.workflowId, 288752702);
+
+  const tst = findLatestRunForDeployLane(repo, 'tst', runs, laneSelection(repo, 'tst'));
+  assert.ok(tst, 'TST Build dispatched from development should appear on Tst lane');
+  assert.equal(tst.workflowId, 288752705);
+}
+
+function testNugetDevFastInProgressDoesNotStealTstLane() {
+  const repo = 'cpt-nuget-libraries';
+  const runs: FixtureRun[] = [
+    {
+      workflowId: 288752702,
+      headBranch: 'development',
+      status: 'in_progress',
+      conclusion: null,
+      updatedAt: runIso(1),
+    },
+    {
+      workflowId: 288752705,
+      headBranch: 'development',
+      status: 'completed',
+      conclusion: 'success',
+      updatedAt: runIso(10),
+    },
+  ];
+
+  const dev = findLatestRunForDeployLane(repo, 'dev', runs, laneSelection(repo, 'dev'));
+  assert.ok(dev);
+  assert.equal(dev.status, 'in_progress');
+
+  const tst = findLatestRunForDeployLane(repo, 'tst', runs, laneSelection(repo, 'tst'));
+  assert.ok(tst);
+  assert.equal(tst.workflowId, 288752705);
+}
+
+function testNugetTstAutoMergeShowsAsActiveOnTstLane() {
+  const repo = 'cpt-nuget-libraries';
+  const runs: FixtureRun[] = [
+    {
+      workflowId: 301162091,
+      headBranch: 'development',
+      status: 'in_progress',
+      conclusion: null,
+      updatedAt: runIso(1),
+    },
+  ];
+
+  const tst = findLatestRunForDeployLane(repo, 'tst', runs, laneSelection(repo, 'tst'));
+  assert.ok(tst, 'TST Auto-Merge in progress should surface on Tst lane');
+  assert.equal(tst.workflowId, 301162091);
+}
+
 function main() {
   testAzfDevActiveDeployVersionWins();
   testAzfDevCompletedStillUsesDevFastPrimary();
   testInternalToolsDevFastInProgress();
   testInternalToolsDeployVersionResolvesByEnvNotBranch();
   testEfTstFailureFromTstBuildArtifact();
+  testNugetTstBuildOnDevelopmentMapsToTstLane();
+  testNugetDevFastInProgressDoesNotStealTstLane();
+  testNugetTstAutoMergeShowsAsActiveOnTstLane();
   testP2pPromoteLanesByPredecessorOrder();
   testP2pResolvePromoteOrderHelper();
   testIdleWindowHelper();

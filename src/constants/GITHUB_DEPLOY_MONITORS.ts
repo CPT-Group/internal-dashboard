@@ -56,7 +56,7 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-nuget-libraries',
-    /** Standardized lanes: Dev Fast, TST Build, Deploy Version (replaced deleted `CD - Publish NuGet Packages`). */
+    /** Dev Fast + TST Build + TST Auto-Merge (NOVA-3118); Deploy Version is report-only. */
     workflowId: 288752702,
     workflowIds: getMonitorWorkflowIds('cpt-nuget-libraries') ?? undefined,
   },
