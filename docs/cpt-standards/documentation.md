@@ -16,6 +16,7 @@ This file is **synced from [cpt-standards](https://github.com/CPT-Group/cpt-stan
 | `docs/cpt-standards/AGENTS.md` | **Repo-specific** agent guide (not overwritten) |
 | `docs/cpt-standards/documentation.md` | This file (synced) |
 | `docs/cpt-standards/azure.md` | Azure stub (synced) |
+| `docs/cpt-standards/database.md` | Database private-access hard rule (synced) |
 | `docs/repo-specific/` | All local architecture, deployment, runbooks, features |
 
 ## Scripts

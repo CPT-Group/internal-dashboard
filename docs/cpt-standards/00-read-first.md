@@ -18,7 +18,7 @@ This repository follows the organization-wide standards maintained in **cpt-stan
 ## In this repo
 
 - `docs/cpt-standards/AGENTS.md` -- this repo's own agent guide (repo-specific; **not** synced).
-- `docs/cpt-standards/azure.md`, `documentation.md`, `dependabot.md` -- shared stubs synced from the hub.
+- `docs/cpt-standards/azure.md`, `database.md`, `documentation.md`, `dependabot.md` -- shared routing stubs synced from the hub.
 - `docs/cpt-standards/standards-index.md` -- pointer to the hub's generated standards index.
 
 Follow the hub standards; open the relevant canonical document above before making changes.
