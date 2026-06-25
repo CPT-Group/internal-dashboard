@@ -13,6 +13,11 @@ import {
   P2P_PROMOTE_WORKFLOW_ID,
   resolveP2pRunEnvironment,
 } from '@/utils/p2pDeployEnvironment';
+import {
+  cardHealthFromLaneStates,
+  tagSeverityFromLaneStates,
+  tagValueFromLaneStates,
+} from '@/utils/githubDeployDisplay';
 
 interface FixtureRun {
   workflowId: number;
@@ -244,12 +249,12 @@ function testP2pResolvePromoteOrderHelper() {
     conclusion: 'success' as const,
   };
   const all = [
-    { ...base, createdAt: runIso(20) },
-    { ...base, createdAt: runIso(10) },
+    { ...base, createdAt: runIso(9) },
+    { ...base, createdAt: runIso(6) },
     {
       workflowId: P2P_PROMOTE_WORKFLOW_ID,
       headSha: sha,
-      createdAt: runIso(5),
+      createdAt: runIso(3),
       status: 'completed',
       conclusion: 'failure',
     },
@@ -342,6 +347,57 @@ function testNugetTstAutoMergeShowsAsActiveOnTstLane() {
   assert.equal(tst.workflowId, 301162091);
 }
 
+function testP2pPromoteWaveIgnoresStaleSameShaRuns() {
+  const sha = 'b68a19a08205bf4801c45f37a3b08b85ba946b64';
+  const stalePromotes = Array.from({ length: 5 }, (_, i) => ({
+    workflowId: P2P_PROMOTE_WORKFLOW_ID,
+    headSha: sha,
+    createdAt: runIso(120 + i),
+    status: 'completed',
+    conclusion: 'success' as const,
+  }));
+  const freshTst = {
+    workflowId: P2P_PROMOTE_WORKFLOW_ID,
+    headSha: sha,
+    createdAt: runIso(1),
+    status: 'completed',
+    conclusion: 'success' as const,
+  };
+  const all = [...stalePromotes, freshTst];
+  assert.equal(resolveP2pRunEnvironment(freshTst, all), 'tst');
+}
+
+function testCardHealthWhenProdFailsButDevSucceeded() {
+  const laneStates = ['ok', 'ok', 'ok', 'failed'] as const;
+  assert.equal(cardHealthFromLaneStates(laneStates), 'error');
+  assert.equal(tagSeverityFromLaneStates(laneStates), 'danger');
+  assert.equal(tagValueFromLaneStates(laneStates), 'failure');
+
+  const devOnlyOk = ['ok', 'idle', 'idle', 'idle'] as const;
+  assert.equal(cardHealthFromLaneStates(devOnlyOk), 'ok');
+  assert.equal(tagSeverityFromLaneStates(devOnlyOk), 'success');
+  assert.equal(tagValueFromLaneStates(devOnlyOk), 'success');
+}
+
+function testP2pPromoteProdFromOnpremPrdDeployment() {
+  const sha = 'b68a19a08205bf4801c45f37a3b08b85ba946b64';
+  const run = {
+    workflowId: P2P_PROMOTE_WORKFLOW_ID,
+    headSha: sha,
+    createdAt: runIso(1),
+    status: 'completed',
+    conclusion: 'success' as const,
+  };
+  const deployments = [
+    {
+      environment: 'prod' as const,
+      sha: sha,
+      createdAtMs: Date.parse(run.createdAt),
+    },
+  ];
+  assert.equal(resolveP2pRunEnvironment(run, [run], deployments), 'prod');
+}
+
 function main() {
   testAzfDevActiveDeployVersionWins();
   testAzfDevCompletedStillUsesDevFastPrimary();
@@ -353,6 +409,9 @@ function main() {
   testNugetTstAutoMergeShowsAsActiveOnTstLane();
   testP2pPromoteLanesByPredecessorOrder();
   testP2pResolvePromoteOrderHelper();
+  testP2pPromoteWaveIgnoresStaleSameShaRuns();
+  testP2pPromoteProdFromOnpremPrdDeployment();
+  testCardHealthWhenProdFailsButDevSucceeded();
   testIdleWindowHelper();
   console.log('test-deploy-lane-mapping: all assertions passed');
 }

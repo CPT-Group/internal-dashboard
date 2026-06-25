@@ -9,6 +9,7 @@ import { normalizeDeployEnvironment, type DeployEnvironmentKey } from '@/utils/g
 import {
   isP2pGoServiceRepo,
   resolveP2pRunEnvironment,
+  type P2pDeploymentHint,
   type P2pRunEnvironmentInput,
 } from '@/utils/p2pDeployEnvironment';
 
@@ -110,6 +111,14 @@ function resolveRunEnvironment(run: GitHubWorkflowRunApi, deployments: readonly 
   return best.environment;
 }
 
+function toP2pDeploymentHints(deployments: readonly RepoDeployment[]): P2pDeploymentHint[] {
+  return deployments.map((d) => ({
+    environment: d.environment,
+    sha: d.sha,
+    createdAtMs: d.createdAtMs,
+  }));
+}
+
 function resolveEnvironmentForWorkflowRun(
   repo: string,
   run: GitHubWorkflowRunApi,
@@ -132,7 +141,7 @@ function resolveEnvironmentForWorkflowRun(
       status: run.status,
       conclusion: run.conclusion,
     };
-    return resolveP2pRunEnvironment(current, p2pRuns);
+    return resolveP2pRunEnvironment(current, p2pRuns, toP2pDeploymentHints(deployments));
   }
   return resolveRunEnvironment(run, deployments);
 }

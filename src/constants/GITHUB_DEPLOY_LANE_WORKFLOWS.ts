@@ -38,12 +38,12 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
     tst: { primary: [288752705], active: [288752705, 301162091] },
     prod: { primary: [288752700] },
   },
-  /** Dev Fast + per-env promote workflow_dispatch (all on `development`). IDs verified 2026-06-24. */
+  /** Dev Fast + TST Build + Deploy Version (NOVA-3126). IDs verified 2026-06-25. */
   'cpt-group-p2p-go-service': {
     dev: { primary: [301145195], active: [301145195] },
-    tst: { primary: [289926293], active: [289926293] },
-    stg: { primary: [289926293], active: [289926293] },
-    prod: { primary: [289926293], active: [289926293] },
+    tst: { primary: [301718895, 301718891], active: [301718895, 301718891] },
+    stg: { primary: [301718891], active: [301718891] },
+    prod: { primary: [301718891], active: [301718891] },
   },
 };
 

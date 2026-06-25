@@ -128,6 +128,42 @@ export function tagSeverityForRow(
 
 export type DeployCardHealth = 'ok' | 'warning' | 'error';
 
+/** Per-lane swim-lane state used for card header health (matches GithubDeployRepoCards). */
+export type DeployLaneSnapshotState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
+
+function nonIdleLaneStates(states: readonly DeployLaneSnapshotState[]): DeployLaneSnapshotState[] {
+  return states.filter((state) => state !== 'idle');
+}
+
+/** Worst-lane card health: any failed lane → error; any active lane → warning; all ok → ok. */
+export function cardHealthFromLaneStates(states: readonly DeployLaneSnapshotState[]): DeployCardHealth {
+  const relevant = nonIdleLaneStates(states);
+  if (relevant.some((state) => state === 'failed')) return 'error';
+  if (relevant.some((state) => state === 'running' || state === 'queued')) return 'warning';
+  if (relevant.length > 0 && relevant.every((state) => state === 'ok')) return 'ok';
+  return 'warning';
+}
+
+export function tagSeverityFromLaneStates(
+  states: readonly DeployLaneSnapshotState[]
+): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
+  const relevant = nonIdleLaneStates(states);
+  if (relevant.some((state) => state === 'failed')) return 'danger';
+  if (relevant.some((state) => state === 'running')) return 'warning';
+  if (relevant.some((state) => state === 'queued')) return 'info';
+  if (relevant.length > 0 && relevant.every((state) => state === 'ok')) return 'success';
+  return 'secondary';
+}
+
+export function tagValueFromLaneStates(states: readonly DeployLaneSnapshotState[]): string {
+  const relevant = nonIdleLaneStates(states);
+  if (relevant.some((state) => state === 'failed')) return 'failure';
+  if (relevant.some((state) => state === 'running')) return 'In Progress';
+  if (relevant.some((state) => state === 'queued')) return 'Queued';
+  if (relevant.length > 0 && relevant.every((state) => state === 'ok')) return 'success';
+  return 'No recent runs';
+}
+
 export function cardHealthForRow(
   row: GitHubDeployWorkflowStatus,
   run: GitHubDeployRunSummary | undefined

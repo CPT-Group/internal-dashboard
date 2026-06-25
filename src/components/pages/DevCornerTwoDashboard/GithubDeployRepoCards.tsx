@@ -8,13 +8,14 @@ import { MarqueeTicker } from '@/components/ui';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import type { GitHubDeployRunSummary } from '@/types/github/GitHubDeployStatus';
 import {
-  cardHealthForRow,
+  cardHealthFromLaneStates,
   formatDeployRunDuration,
-  formatDeployStatusLabel,
   formatDeployVersionLabel,
   repoToneForRepo,
+  tagSeverityFromLaneStates,
+  tagValueFromLaneStates,
+  type DeployLaneSnapshotState,
   type GitHubRepoTone,
-  tagSeverityForRow,
 } from '@/utils/githubDeployDisplay';
 import {
   findLatestRunForDeployLane,
@@ -35,7 +36,7 @@ export interface GithubDeployRepoCardsProps {
   showBranchContext?: boolean;
 }
 
-type EnvironmentRunState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
+type EnvironmentRunState = DeployLaneSnapshotState;
 const IDLE_AFTER_DAYS = 7;
 
 interface EnvironmentSnapshot {
@@ -69,7 +70,7 @@ function environmentSnapshotFromRun(
 }
 
 function statusTagWrapClass(
-  severity: ReturnType<typeof tagSeverityForRow>
+  severity: ReturnType<typeof tagSeverityFromLaneStates>
 ): string {
   switch (severity) {
     case 'success':
@@ -227,19 +228,24 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
     : deriveEnvironmentSnapshots(row);
   const envTickerText = buildEnvTickerText(envSnapshots);
 
+  const laneStates = envSnapshots.map((env) => env.state);
   const tagValue = isPlaceholder
     ? 'Not configured'
     : err
       ? 'API error'
-      : (row.inProgressCount ?? 0) > 0
-        ? 'In Progress'
-        : queuedCount > 0
-          ? `Queued (${queuedCount})`
-          : run
-            ? formatDeployStatusLabel(run.status, run.conclusion)
-            : 'No runs';
-  const severity = isPlaceholder ? 'secondary' : tagSeverityForRow(row, run);
-  const health = isPlaceholder ? 'warning' : cardHealthForRow(row, run);
+      : queuedCount > 0 && (row.inProgressCount ?? 0) === 0
+        ? `Queued (${queuedCount})`
+        : tagValueFromLaneStates(laneStates);
+  const severity = isPlaceholder
+    ? 'secondary'
+    : err
+      ? 'danger'
+      : tagSeverityFromLaneStates(laneStates);
+  const health = isPlaceholder
+    ? 'warning'
+    : err
+      ? 'error'
+      : cardHealthFromLaneStates(laneStates);
   const deployerLabel = isPlaceholder ? '—' : run?.actorLogin ?? 'unknown';
 
   const cardClassName = [

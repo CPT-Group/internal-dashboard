@@ -53,7 +53,8 @@ const WORKFLOW_GH_NAMES: Readonly<Record<number, string>> = {
   288752700: 'Deploy Version',
   301162091: 'TST Auto-Merge (development -> test)',
   301145195: 'Dev Fast Deploy',
-  289926293: 'CD - Promote to On-Prem (tst / stg / prd)',
+  301718891: 'Deploy Version',
+  301718895: 'TST Build Artifact',
   285242645: 'CD - Deploy Infrastructure',
 };
 
