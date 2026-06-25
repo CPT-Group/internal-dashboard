@@ -70,7 +70,7 @@ export const GITHUB_DEPLOY_WORKFLOW_MONITORS: readonly GitHubDeployWorkflowMonit
   {
     owner: 'CPT-Group',
     repo: 'cpt-group-p2p-go-service',
-    /** Dev Fast Deploy + CD Promote (tst/stg/prd). */
+    /** Dev Fast Deploy + TST Build + Deploy Version (NOVA-3126). */
     workflowId: 301145195,
     workflowIds: getMonitorWorkflowIds('cpt-group-p2p-go-service') ?? undefined,
   },

@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Agent docs — working tree hygiene**: Documented rules for keeping the repo clean (one-offs in `kyleJira/`, output in `kyleOutput/` / `cursorScripts/`, restore prebuild noise, no unrequested tracked edits). Added `.cursor/rules/working-tree-hygiene.mdc` and a callout in `scripts/jira/README.md`.
-- **Dev Corner Two — P2P Go deploy card swim lanes**: Added Dev Fast (`301145195`) + Promote (`289926293`) lane rules and promotion-order env resolution (`tst` → `stg` → `prod` per SHA on `development`) so TST/STG successes no longer collapse into the Dev lane.
+- **Dev Corner Two — P2P Go deploy card swim lanes**: Build-once-deploy-many lane rules for Dev Fast + TST Build + Deploy Version (see NOVA-3126 fix in Fixed).
 - **Dev Corner Two — NuGet deploy card (NOVA-3118)**: Switched from collapsed **Non-Prod / Prod** to **Dev / Tst / Stg / Prod** swim lanes; monitor **TST Auto-Merge** (`301162091`); Tst lane accepts TST Build dispatches on `development` (not only `test` push).
 - **Dev Corner One — NOVA JQL aligned with Kanban board 516**: Operational NOVA scope now includes assignee-owned board issue types without an active sprint (`sprint in openSprints() OR issuetype in (...)`), matching saved filter 11655 so queue tickets like Roy's NOVA-3036 appear in analytics.
 - **Dev Corner One — Team Activity To Do chips**: Shows assignee **To Do** tickets after in-progress chips with theme-token muted styling (`--team-activity-todo-*`) so active work pops on all palettes. Header counts now read **`N IN DEV / M TO DO`** instead of badge + total open.
@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Stale UAT warning (NOVA)**: Posted warning-panel comment on **NOVA-2848** (UAT, due before today, assignee Brandon Fay) via `stale-uat-ticket-warning.mjs --apply`.
+- **Dev Corner Two — P2P Go deploy card (NOVA-3126)**: Re-pointed lane workflows to Dev Fast (`301145195`), TST Build Artifact (`301718895`), and Deploy Version (`301718891`); removed legacy promote workflow `289926293`. P2P env resolution uses onprem-prd deployment hints for prod and 10-minute promote-wave ordering for tst/stg. Card header health/tag now reflect worst swim-lane state (prod failure no longer shows green success from dev fast deploy).
 - **Dev Corner One — Impediment panel scroll**: Column header stays frozen while rows auto-scroll by using the same outer `compTableWrap` + `useAutoScroll` pattern as Component Activity (removed PrimeReact internal `scrollable` scroll that bypassed auto-scroll).
 - **Dev Corner Two — NuGet deploy card idle after pipeline migration**: Re-pointed `cpt-nuget-libraries` from deleted workflow `CD - Publish NuGet Packages` (235954510) to standardized Dev Fast Deploy / TST Build Artifact / Deploy Version IDs (`288752702`, `288752705`, `288752700`) with Non-Prod + Prod lane rules in `GITHUB_DEPLOY_LANE_WORKFLOWS.ts`.
 - **Dev Corner Two — P2P Go deploy card showed only Dev lane**: Monitored only the promote workflow and matched lanes by Git branch (`development`), so TST/STG promote runs were mis-attributed to Dev. Now fetches Dev Fast + Promote workflows and resolves tst/stg/prod from promotion order per commit SHA (matches on-prem predecessor guard).
