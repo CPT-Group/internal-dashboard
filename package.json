@@ -28,6 +28,9 @@
   "dependencies": {
     "@azure/msal-browser": "^5.15.0",
     "@azure/msal-react": "^5.5.0",
+    "@tsparticles/engine": "^4.2.1",
+    "@tsparticles/react": "^4.2.1",
+    "@tsparticles/slim": "^4.2.1",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-datalabels": "^2.2.0",
