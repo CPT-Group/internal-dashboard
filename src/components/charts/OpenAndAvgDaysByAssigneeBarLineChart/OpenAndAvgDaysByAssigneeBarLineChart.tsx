@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chart } from 'primereact/chart';
+import { useTheme } from '@/providers/ThemeProvider';
 import type { OpenAndAvgDaysByAssigneeChartData } from '@/types/charts';
 import styles from './OpenAndAvgDaysByAssigneeBarLineChart.module.scss';
 
@@ -26,6 +27,7 @@ interface ChartTheme {
 export const OpenAndAvgDaysByAssigneeBarLineChart = ({
   data,
 }: OpenAndAvgDaysByAssigneeBarLineChartProps) => {
+  const { theme: activeTheme } = useTheme();
   const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export const OpenAndAvgDaysByAssigneeBarLineChart = ({
       warning: s.getPropertyValue('--chart-warning').trim() || 'rgba(234,179,8,0.9)',
       warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
     });
-  }, []);
+  }, [activeTheme]);
 
   const chartData = useMemo(
     () => ({

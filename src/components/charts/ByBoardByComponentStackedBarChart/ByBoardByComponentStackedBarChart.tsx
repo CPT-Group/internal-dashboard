@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chart } from 'primereact/chart';
+import { useTheme } from '@/providers/ThemeProvider';
 import type { ByBoardByComponentChartData } from '@/types/charts';
 import styles from './ByBoardByComponentStackedBarChart.module.scss';
 
@@ -33,6 +34,7 @@ interface ChartTheme {
 export const ByBoardByComponentStackedBarChart = ({
   data,
 }: ByBoardByComponentStackedBarChartProps) => {
+  const { theme: activeTheme } = useTheme();
   const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export const ByBoardByComponentStackedBarChart = ({
       (v, i) => s.getPropertyValue(v).trim() || CAT_FALLBACKS[i]
     );
     setTheme({ text, textSecondary, catColors });
-  }, []);
+  }, [activeTheme]);
 
   const chartData = useMemo(() => {
     if (!theme) return { labels: [] as string[], datasets: [] };

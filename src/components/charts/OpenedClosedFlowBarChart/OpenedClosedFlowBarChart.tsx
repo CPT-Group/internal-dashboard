@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chart } from 'primereact/chart';
+import { useTheme } from '@/providers/ThemeProvider';
 import type { OpenedClosedFlowChartData } from '@/types/charts';
 import styles from './OpenedClosedFlowBarChart.module.scss';
 
@@ -25,6 +26,7 @@ interface ChartTheme {
 export const OpenedClosedFlowBarChart = ({
   data,
 }: OpenedClosedFlowBarChartProps) => {
+  const { theme: activeTheme } = useTheme();
   const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export const OpenedClosedFlowBarChart = ({
       danger: s.getPropertyValue('--chart-danger').trim() || 'rgba(239,68,68,0.75)',
       dangerBorder: s.getPropertyValue('--chart-danger-border').trim() || 'rgb(239,68,68)',
     });
-  }, []);
+  }, [activeTheme]);
 
   const chartData = useMemo(
     () => ({

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chart } from 'primereact/chart';
+import { useTheme } from '@/providers/ThemeProvider';
 import type { OpenClosedAvgHoursByAssigneeRadarChartData } from '@/types/charts';
 import styles from './OpenClosedAvgHoursByAssigneeRadarChart.module.scss';
 
@@ -28,6 +29,7 @@ interface ChartTheme {
 export const OpenClosedAvgHoursByAssigneeRadarChart = ({
   data,
 }: OpenClosedAvgHoursByAssigneeRadarChartProps) => {
+  const { theme: activeTheme } = useTheme();
   const [theme, setTheme] = useState<ChartTheme | null>(null);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export const OpenClosedAvgHoursByAssigneeRadarChart = ({
       warning: s.getPropertyValue('--chart-warning').trim() || 'rgba(234,179,8,0.9)',
       warningBorder: s.getPropertyValue('--chart-warning-border').trim() || 'rgb(234,179,8)',
     });
-  }, []);
+  }, [activeTheme]);
 
   const toFill = (solid: string) => solid.replace(/0\.\d+\)/, '0.2)');
 
