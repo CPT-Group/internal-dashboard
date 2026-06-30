@@ -52,10 +52,22 @@ function toHeadShaShort(headSha: string | null | undefined): string | null {
 
 /** One row from GET /repos/{owner}/{repo}/deployments — carries the TARGET environment. */
 interface RepoDeployment {
+  /** GitHub Deployment id — used to fetch its statuses for the authoritative run link. */
+  id: number;
   environment: DeployEnvironmentKey;
   sha: string;
   createdAtMs: number;
 }
+
+/**
+ * Authoritative `runId → environment` linkage built from GitHub Deployment statuses.
+ * Every Deploy Version run shares `headBranch === 'development'` and (for a promotion wave)
+ * the same head SHA, so neither the branch nor the SHA can separate tst/stg/prd. The
+ * deployment that the run created, however, carries the exact TARGET `environment`, and its
+ * status rows carry a `log_url` that contains `/actions/runs/<runId>` — a deterministic
+ * deployment→run link that survives the same-SHA multi-deployment collision (EF's pattern).
+ */
+type DeploymentRunEnvironmentIndex = ReadonlyMap<number, DeployEnvironmentKey>;
 
 /**
  * Fetch the repo's recent GitHub Deployments. Each deployment records the env-gated job's
@@ -67,14 +79,19 @@ async function fetchRepoDeployments(token: string, owner: string, repo: string):
   try {
     const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
     if (!res.ok) return [];
-    const data = (await res.json()) as Array<{ environment?: string | null; sha?: string | null; created_at?: string | null }>;
+    const data = (await res.json()) as Array<{
+      id?: number | null;
+      environment?: string | null;
+      sha?: string | null;
+      created_at?: string | null;
+    }>;
     if (!Array.isArray(data)) return [];
     const out: RepoDeployment[] = [];
     for (const d of data) {
       const env = normalizeDeployEnvironment(d.environment);
       const createdAtMs = Date.parse(d.created_at ?? '');
-      if (env && d.sha && Number.isFinite(createdAtMs)) {
-        out.push({ environment: env, sha: d.sha, createdAtMs });
+      if (typeof d.id === 'number' && env && d.sha && Number.isFinite(createdAtMs)) {
+        out.push({ id: d.id, environment: env, sha: d.sha, createdAtMs });
       }
     }
     return out;
@@ -83,15 +100,106 @@ async function fetchRepoDeployments(token: string, owner: string, repo: string):
   }
 }
 
+/**
+ * Cap on how many recent deployments we probe for their originating run. The dashboard only
+ * renders the most recent ~30 runs per repo, so probing the newest N deployments (one cheap
+ * `per_page=1` status call each, run concurrently) covers everything on-screen while bounding
+ * API cost. Older runs without a link fall back to the legacy SHA+time heuristic.
+ */
+const DEPLOYMENT_STATUS_PROBE_LIMIT = 40;
+
+const ACTIONS_RUN_ID_PATTERN = /\/actions\/runs\/(\d+)/;
+
+/** Extract the originating Actions run id from a deployment-status `log_url` / `target_url`. */
+function runIdFromStatusUrl(url: string | null | undefined): number | null {
+  if (!url) return null;
+  const match = url.match(ACTIONS_RUN_ID_PATTERN);
+  if (!match?.[1]) return null;
+  const parsed = Number.parseInt(match[1], 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+interface DeploymentStatusApi {
+  log_url?: string | null;
+  target_url?: string | null;
+}
+
+/**
+ * For a single deployment, read its most recent status and return the originating run id.
+ * `per_page=1` is enough: every status row for a deployment points at the same run, and the
+ * link is present from the first (`waiting`/`queued`) status onward — so this resolves even
+ * a still-queued upper-env run onto its env row.
+ */
+async function fetchDeploymentRunId(
+  token: string,
+  owner: string,
+  repo: string,
+  deploymentId: number
+): Promise<number | null> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/deployments/${deploymentId}/statuses?per_page=1`;
+  try {
+    const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as DeploymentStatusApi[];
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const status = data[0];
+    return runIdFromStatusUrl(status.log_url) ?? runIdFromStatusUrl(status.target_url);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Build the authoritative `runId → environment` index from deployment statuses. Probes the
+ * newest `DEPLOYMENT_STATUS_PROBE_LIMIT` deployments concurrently. If two deployments in the
+ * same env map to the same run (re-deploys), the env is identical so order is irrelevant; a
+ * run is only ever recorded against the env its own deployment targeted.
+ */
+async function buildDeploymentRunEnvironmentIndex(
+  token: string,
+  owner: string,
+  repo: string,
+  deployments: readonly RepoDeployment[]
+): Promise<DeploymentRunEnvironmentIndex> {
+  const recent = [...deployments]
+    .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    .slice(0, DEPLOYMENT_STATUS_PROBE_LIMIT);
+  const index = new Map<number, DeployEnvironmentKey>();
+  const links = await Promise.all(
+    recent.map(async (d) => ({ env: d.environment, runId: await fetchDeploymentRunId(token, owner, repo, d.id) }))
+  );
+  for (const { env, runId } of links) {
+    if (runId !== null && !index.has(runId)) {
+      index.set(runId, env);
+    }
+  }
+  return index;
+}
+
 const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
 
 /**
- * Resolve a run's TARGET environment by matching it to the deployment it created: same head SHA
- * (every Deploy Version run shares `development`'s SHA), disambiguated by the deployment whose
- * creation time is closest to the run's. Returns null when no confident match exists (the lane
- * logic then falls back to the branch).
+ * Resolve a run's TARGET environment.
+ *
+ * PRIMARY (deterministic): consult the deployment-status `runId → environment` index. This is
+ * the authoritative deployment→run link (from each deployment's status `log_url`) and is
+ * immune to the same-SHA multi-deployment collision that the heuristic below mis-correlates
+ * or silently drops (EF promotes dev/tst/stg from one SHA in minutes).
+ *
+ * FALLBACK (legacy heuristic): if no deployment-status link exists for this run (e.g. an old
+ * run outside the probe window, or a status with no `log_url`), match by head SHA — every
+ * Deploy Version run shares `development`'s SHA — disambiguated by the deployment whose
+ * creation time is closest. Returns null when no confident match exists (the lane logic then
+ * falls back to the branch). Nothing regresses: pre-index behavior is preserved when unlinked.
  */
-function resolveRunEnvironment(run: GitHubWorkflowRunApi, deployments: readonly RepoDeployment[]): DeployEnvironmentKey | null {
+function resolveRunEnvironment(
+  run: GitHubWorkflowRunApi,
+  deployments: readonly RepoDeployment[],
+  runEnvIndex: DeploymentRunEnvironmentIndex
+): DeployEnvironmentKey | null {
+  const linked = runEnvIndex.get(run.id);
+  if (linked) return linked;
+
   const headSha = run.head_sha?.trim() ?? '';
   const runMs = Date.parse(run.created_at);
   if (!headSha || !Number.isFinite(runMs) || deployments.length === 0) return null;
@@ -124,9 +232,13 @@ function resolveEnvironmentForWorkflowRun(
   run: GitHubWorkflowRunApi,
   workflowId: number,
   allRuns: readonly { run: GitHubWorkflowRunApi; workflowId: number }[],
-  deployments: readonly RepoDeployment[]
+  deployments: readonly RepoDeployment[],
+  runEnvIndex: DeploymentRunEnvironmentIndex
 ): DeployEnvironmentKey | null {
   if (isP2pGoServiceRepo(repo)) {
+    // P2P deployments use `onprem-nonprod` / `onprem-prd`: the nonprod env can't separate
+    // tst vs stg, so the deployment→run index can only confirm prod. Keep P2P on its
+    // dedicated promote-wave resolver (which already derives prod from onprem-prd hints).
     const p2pRuns: P2pRunEnvironmentInput[] = allRuns.map(({ run: candidate, workflowId: candidateWorkflowId }) => ({
       workflowId: candidateWorkflowId,
       headSha: candidate.head_sha,
@@ -143,7 +255,7 @@ function resolveEnvironmentForWorkflowRun(
     };
     return resolveP2pRunEnvironment(current, p2pRuns, toP2pDeploymentHints(deployments));
   }
-  return resolveRunEnvironment(run, deployments);
+  return resolveRunEnvironment(run, deployments, runEnvIndex);
 }
 
 function toSummary(
@@ -287,6 +399,13 @@ export async function fetchDeployWorkflowStatus(
     Promise.all(workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))),
     fetchRepoDeployments(token, owner, repo),
   ]);
+
+  // Build the authoritative deployment→run env index (skip P2P: its on-prem deployment envs
+  // cannot separate tst/stg, so its dedicated resolver owns env assignment instead).
+  const runEnvIndex: DeploymentRunEnvironmentIndex = isP2pGoServiceRepo(repo)
+    ? new Map()
+    : await buildDeploymentRunEnvironmentIndex(token, owner, repo, deployments);
+
   const successful = workflowFetches.filter((f) => !f.error);
 
   if (successful.length === 0) {
@@ -304,6 +423,14 @@ export async function fetchDeployWorkflowStatus(
 
   const allRunEntries = runs;
 
+  // Active-run env visibility (#2): a queued/in_progress Deploy Version run lands on its
+  // correct env row as soon as its deployment exists — the deployment's first status
+  // (`waiting`/`queued`) already carries the `log_url`, so `runEnvIndex` resolves it. There is
+  // a brief race before the deployment is created (e.g. a run still `queued` for a runner with
+  // no deployment yet): such a run resolves to null and falls back to the branch, which is
+  // always `development`, so it cannot be pinned to tst/stg/prd. Fully closing that window
+  // requires the run NAME to carry the target env (e.g. "Deploy Version — stg"), which is an
+  // app-repo workflow change (out of scope here); flagged in the PR report.
   const activeEntry = runs.find(({ run }) => run.status === 'in_progress')
     ?? runs.find(({ run }) => isQueuedLikeStatus(run.status))
     ?? runs.find(({ run }) => run.status !== 'completed');
@@ -318,20 +445,20 @@ export async function fetchDeployWorkflowStatus(
       ? toSummary(
           activeEntry.run,
           activeEntry.workflowId,
-          resolveEnvironmentForWorkflowRun(repo, activeEntry.run, activeEntry.workflowId, allRunEntries, deployments)
+          resolveEnvironmentForWorkflowRun(repo, activeEntry.run, activeEntry.workflowId, allRunEntries, deployments, runEnvIndex)
         )
       : undefined,
     lastCompletedRun: lastDoneEntry
       ? toSummary(
           lastDoneEntry.run,
           lastDoneEntry.workflowId,
-          resolveEnvironmentForWorkflowRun(repo, lastDoneEntry.run, lastDoneEntry.workflowId, allRunEntries, deployments)
+          resolveEnvironmentForWorkflowRun(repo, lastDoneEntry.run, lastDoneEntry.workflowId, allRunEntries, deployments, runEnvIndex)
         )
       : undefined,
     recentRuns: runs
       .slice(0, 30)
       .map(({ run, workflowId }) =>
-        toSummary(run, workflowId, resolveEnvironmentForWorkflowRun(repo, run, workflowId, allRunEntries, deployments))
+        toSummary(run, workflowId, resolveEnvironmentForWorkflowRun(repo, run, workflowId, allRunEntries, deployments, runEnvIndex))
       ),
   };
 }

@@ -481,6 +481,12 @@
   border-color: rgba(120, 120, 140, 0.22);
 }
 
+.environmentNa {
+  border-color: rgba(120, 120, 140, 0.18);
+  opacity: 0.62;
+  border-style: dashed;
+}
+
 .environmentRunning {
   border-color: rgba(234, 179, 8, 0.45);
   animation: deployEnvRunningPulse 1.8s ease-in-out infinite;

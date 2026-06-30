@@ -128,11 +128,15 @@ export function tagSeverityForRow(
 
 export type DeployCardHealth = 'ok' | 'warning' | 'error';
 
-/** Per-lane swim-lane state used for card header health (matches GithubDeployRepoCards). */
-export type DeployLaneSnapshotState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
+/**
+ * Per-lane swim-lane state used for card header health (matches GithubDeployRepoCards).
+ * `na` = lane does not exist for this repo (package repo Stg/Prod); excluded from health like
+ * `idle`, but rendered as a static "N/A" row rather than an empty idle row.
+ */
+export type DeployLaneSnapshotState = 'ok' | 'running' | 'failed' | 'queued' | 'idle' | 'na';
 
 function nonIdleLaneStates(states: readonly DeployLaneSnapshotState[]): DeployLaneSnapshotState[] {
-  return states.filter((state) => state !== 'idle');
+  return states.filter((state) => state !== 'idle' && state !== 'na');
 }
 
 /** Worst-lane card health: any failed lane → error; any active lane → warning; all ok → ok. */

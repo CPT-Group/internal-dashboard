@@ -20,6 +20,7 @@ import {
 import {
   findLatestRunForDeployLane,
   getDeployLaneConfig,
+  getNaLaneLabel,
   isWithinDeployIdleWindow,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
@@ -131,6 +132,21 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
 
   return laneConfig.order.map((lane) => {
     const label = laneConfig.labels[lane] ?? lane.toUpperCase();
+    // Package-repo lanes (e.g. nuget Stg/Prod) have no deploy target — render a static N/A row
+    // and never match a run to them.
+    const naLabel = getNaLaneLabel(row.repo, lane);
+    if (naLabel) {
+      return {
+        key: lane,
+        label,
+        state: 'na',
+        branch: null,
+        triggerText: naLabel,
+        createdAt: null,
+        updatedAt: null,
+        deployVersionLabel: null,
+      };
+    }
     const run = findLatestRunForDeployLane(
       row.repo,
       lane,
@@ -169,6 +185,7 @@ function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'failed') return 'Fail';
   if (snapshot.state === 'running') return 'In Progress';
   if (snapshot.state === 'queued') return 'Queued';
+  if (snapshot.state === 'na') return 'N/A';
   return formatIdleLabel(snapshot.updatedAt);
 }
 
@@ -177,6 +194,7 @@ function environmentRowClass(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'failed') return styles.environmentFailed;
   if (snapshot.state === 'running') return styles.environmentRunning;
   if (snapshot.state === 'queued') return styles.environmentQueued;
+  if (snapshot.state === 'na') return styles.environmentNa;
   return styles.environmentIdle;
 }
 

@@ -4,6 +4,12 @@ export type DeployLaneKey = DeployEnvironmentKey | 'nonprod';
 interface DeployLaneConfig {
   order: readonly DeployLaneKey[];
   labels: Partial<Record<DeployLaneKey, string>>;
+  /**
+   * Lanes that do not exist for this repo as deploy targets (e.g. a package/library repo has
+   * no Stg/Prod *deploy* — it publishes). Rendered as a static "N/A" row, not idle, and never
+   * matched to a run. Distinct from `idle` (a real lane with no recent run).
+   */
+  naLanes?: Partial<Record<DeployLaneKey, string>>;
 }
 
 const DEFAULT_LANE_CONFIG: DeployLaneConfig = {
@@ -21,6 +27,25 @@ const NUGET_LANE_CONFIG: DeployLaneConfig = {
   labels: {
     nonprod: 'Non-Prod',
     prod: 'Prod',
+  },
+};
+
+/**
+ * cpt-nuget-libraries is a PACKAGE repo: it builds/tests on Dev and Tst then publishes — it has
+ * no Stg or Prod *deploy* lane. Show Stg/Prod as "N/A — package repo" instead of mapping Prod to
+ * a report-only stub workflow or rendering an empty idle row for a non-existent Stg lane.
+ */
+const NUGET_LIBRARIES_LANE_CONFIG: DeployLaneConfig = {
+  order: ['dev', 'tst', 'stg', 'prod'],
+  labels: {
+    dev: 'Dev',
+    tst: 'Tst',
+    stg: 'Stg',
+    prod: 'Prod',
+  },
+  naLanes: {
+    stg: 'N/A — package repo',
+    prod: 'N/A — package repo',
   },
 };
 
@@ -95,7 +120,13 @@ export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput)
 
 export function getDeployLaneConfig(repo: string): DeployLaneConfig {
   if (isNonProdProdLaneRepo(repo)) return NUGET_LANE_CONFIG;
+  if (isNugetLibrariesRepo(repo)) return NUGET_LIBRARIES_LANE_CONFIG;
   return DEFAULT_LANE_CONFIG;
+}
+
+/** Label for a package-repo N/A lane, or null when the lane is a real deploy target. */
+export function getNaLaneLabel(repo: string, lane: DeployLaneKey): string | null {
+  return getDeployLaneConfig(repo).naLanes?.[lane] ?? null;
 }
 
 export function mapEnvironmentToLane(repo: string, env: DeployEnvironmentKey): DeployLaneKey {
