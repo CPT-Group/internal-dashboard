@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {
   findLatestRunForDeployLane,
+  getDeployLaneConfig,
+  getNaLaneLabel,
   isWithinDeployIdleWindow,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
@@ -379,6 +381,28 @@ function testCardHealthWhenProdFailsButDevSucceeded() {
   assert.equal(tagValueFromLaneStates(devOnlyOk), 'success');
 }
 
+function testNugetStgProdRenderAsNaPackageLanes() {
+  const repo = 'cpt-nuget-libraries';
+  const config = getDeployLaneConfig(repo);
+  // Package repo keeps a 4-lane layout but Stg/Prod are N/A (publish steps, not deploys).
+  assert.deepEqual([...config.order], ['dev', 'tst', 'stg', 'prod']);
+  assert.equal(getNaLaneLabel(repo, 'dev'), null, 'Dev is a real lane');
+  assert.equal(getNaLaneLabel(repo, 'tst'), null, 'Tst is a real lane');
+  assert.equal(getNaLaneLabel(repo, 'stg'), 'N/A — package repo');
+  assert.equal(getNaLaneLabel(repo, 'prod'), 'N/A — package repo');
+
+  // The former report-only Prod stub is gone: no workflow rule can match a Prod deploy lane.
+  assert.equal(getPrimaryWorkflowIdsForDeployLane(repo, 'prod'), null);
+  assert.equal(getPrimaryWorkflowIdsForDeployLane(repo, 'stg'), null);
+}
+
+function testStandardRepoHasNoNaLanes() {
+  const repo = 'cpt-azure-functions-api';
+  for (const lane of ['dev', 'tst', 'stg', 'prod'] as const) {
+    assert.equal(getNaLaneLabel(repo, lane), null, `${lane} should be a real deploy lane`);
+  }
+}
+
 function testP2pPromoteProdFromOnpremPrdDeployment() {
   const sha = 'b68a19a08205bf4801c45f37a3b08b85ba946b64';
   const run = {
@@ -411,6 +435,8 @@ function main() {
   testP2pResolvePromoteOrderHelper();
   testP2pPromoteWaveIgnoresStaleSameShaRuns();
   testP2pPromoteProdFromOnpremPrdDeployment();
+  testNugetStgProdRenderAsNaPackageLanes();
+  testStandardRepoHasNoNaLanes();
   testCardHealthWhenProdFailsButDevSucceeded();
   testIdleWindowHelper();
   console.log('test-deploy-lane-mapping: all assertions passed');

@@ -32,11 +32,15 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
     stg: { primary: [285829489] },
     prod: { primary: [285829489] },
   },
-  /** Dev / Tst / report-only Prod — NOVA-3118 auto-merge + TST dispatch model. IDs verified 2026-06-24. */
+  /**
+   * Package repo: Dev + Tst lanes only — NOVA-3118 auto-merge + TST dispatch model.
+   * Stg/Prod are publish steps, not deploy lanes, and render as "N/A — package repo"
+   * (see NUGET_LIBRARIES_LANE_CONFIG). The former report-only Prod stub (288752700) is
+   * removed so no run is mis-matched onto a non-existent Prod deploy lane. IDs verified 2026-06-24.
+   */
   'cpt-nuget-libraries': {
     dev: { primary: [288752702], active: [288752702] },
     tst: { primary: [288752705], active: [288752705, 301162091] },
-    prod: { primary: [288752700] },
   },
   /** Dev Fast + TST Build + Deploy Version (NOVA-3126). IDs verified 2026-06-25. */
   'cpt-group-p2p-go-service': {
