@@ -88,22 +88,47 @@ interface RepoDeployment {
 type DeploymentRunEnvironmentIndex = ReadonlyMap<number, DeployEnvironmentKey>;
 
 /**
+ * Last GitHub Deployments API fetch outcome per `owner/repo`. Deployments feed the stg/prod lane
+ * snapshots; when the read token cannot see a repo's Deployments API the fetch returns a non-2xx
+ * and we previously swallowed it (`return []`) — silently emptying stg/prod. Record the outcome so
+ * the API can surface it (a 403/404 here means "grant the token Deployments: read").
+ */
+interface DeploymentsFetchDiag {
+  ok: boolean;
+  status: number;
+  count: number;
+}
+const lastDeploymentsFetchDiag = new Map<string, DeploymentsFetchDiag>();
+function getDeploymentsFetchDiag(owner: string, repo: string): DeploymentsFetchDiag | undefined {
+  return lastDeploymentsFetchDiag.get(`${owner}/${repo}`);
+}
+
+/**
  * Fetch the repo's recent GitHub Deployments. Each deployment records the env-gated job's
  * `environment` (dev/tst/stg/prd) — the only API source of a Deploy Version run's TARGET env,
  * since the workflow-run object never exposes it and the branch is always `development`.
  */
 async function fetchRepoDeployments(token: string, owner: string, repo: string): Promise<RepoDeployment[]> {
   const url = `https://api.github.com/repos/${owner}/${repo}/deployments?per_page=100`;
+  const diagKey = `${owner}/${repo}`;
   try {
     const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      // Do NOT swallow silently: a 403/404 here (token lacks Deployments: read) would empty every
+      // stg/prod lane snapshot with no visible error. Record it so /api/github/deploy-status surfaces it.
+      lastDeploymentsFetchDiag.set(diagKey, { ok: false, status: res.status, count: 0 });
+      return [];
+    }
     const data = (await res.json()) as Array<{
       id?: number | null;
       environment?: string | null;
       sha?: string | null;
       created_at?: string | null;
     }>;
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      lastDeploymentsFetchDiag.set(diagKey, { ok: false, status: res.status, count: 0 });
+      return [];
+    }
     const out: RepoDeployment[] = [];
     for (const d of data) {
       const env = normalizeDeployEnvironment(d.environment);
@@ -112,8 +137,10 @@ async function fetchRepoDeployments(token: string, owner: string, repo: string):
         out.push({ id: d.id, environment: env, sha: d.sha, createdAtMs });
       }
     }
+    lastDeploymentsFetchDiag.set(diagKey, { ok: true, status: res.status, count: out.length });
     return out;
   } catch {
+    lastDeploymentsFetchDiag.set(diagKey, { ok: false, status: -1, count: 0 });
     return [];
   }
 }
@@ -629,6 +656,7 @@ export async function fetchDeployWorkflowStatus(
   return {
     ...base,
     laneSnapshots: Object.keys(laneSnapshots).length > 0 ? laneSnapshots : undefined,
+    deploymentsDiag: getDeploymentsFetchDiag(owner, repo),
     queuedCount,
     inProgressCount,
     activeCount: queuedCount + inProgressCount,

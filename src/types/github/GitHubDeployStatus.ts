@@ -31,6 +31,12 @@ export interface GitHubDeployWorkflowStatus {
    * the card renders "idle"/"N/A" instead of a false "N/A" for a real prior deploy.
    */
   laneSnapshots?: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>;
+  /**
+   * Diagnostic for the GitHub Deployments API fetch (stg/prod lane source). Surfaces a silent
+   * 403/404/429 that would otherwise empty stg/prod snapshots invisibly. `ok:false` with a 403/404
+   * means the read token cannot see this repo's Deployments API.
+   */
+  deploymentsDiag?: { ok: boolean; status: number; count: number };
 }
 
 /**
