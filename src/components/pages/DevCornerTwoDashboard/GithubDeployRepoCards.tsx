@@ -5,8 +5,11 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { MarqueeTicker } from '@/components/ui';
-import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
-import type { GitHubDeployRunSummary } from '@/types/github/GitHubDeployStatus';
+import type {
+  GitHubDeployLaneSnapshot,
+  GitHubDeployRunSummary,
+  GitHubDeployWorkflowStatus,
+} from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthFromLaneStates,
   formatDeployRunDuration,
@@ -126,9 +129,48 @@ function runStateFromSummary(run: GitHubDeployRunSummary): EnvironmentRunState {
   return 'failed';
 }
 
+/**
+ * Build a lane row from the server-computed lane snapshot (the authoritative, full-history
+ * source — Deployments API for stg/prod, dedicated workflow run for dev/tst). Anything older
+ * than the idle window ages to "idle"; a real prior deploy NEVER renders as N/A.
+ */
+function snapshotToEnvironmentSnapshot(
+  lane: DeployLaneKey,
+  label: string,
+  snapshot: GitHubDeployLaneSnapshot
+): EnvironmentSnapshot {
+  const updatedAt = snapshot.updatedAt ?? snapshot.createdAt;
+  const isActive = snapshot.state === 'running' || snapshot.state === 'queued';
+  // Active deploys are never aged out; completed ones age to idle past the window.
+  if (!isActive && (!updatedAt || !isWithinDeployIdleWindow(updatedAt, Date.now(), IDLE_AFTER_DAYS))) {
+    return {
+      key: lane,
+      label,
+      state: 'idle',
+      branch: null,
+      triggerText: null,
+      createdAt: null,
+      updatedAt,
+      deployVersionLabel: null,
+    };
+  }
+  return {
+    key: lane,
+    label,
+    // GitHubDeployLaneState (ok|running|failed|queued|idle) is a subset of the lane row state.
+    state: snapshot.state,
+    branch: snapshot.branch,
+    triggerText: snapshot.triggerText,
+    createdAt: snapshot.createdAt,
+    updatedAt,
+    deployVersionLabel: snapshot.deployVersionLabel,
+  };
+}
+
 function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
   const laneConfig = getDeployLaneConfig(row.repo);
   const runs = row.recentRuns ?? [];
+  const laneSnapshots = row.laneSnapshots ?? {};
 
   return laneConfig.order.map((lane) => {
     const label = laneConfig.labels[lane] ?? lane.toUpperCase();
@@ -147,6 +189,14 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
         deployVersionLabel: null,
       };
     }
+    // Primary source: the server-computed lane snapshot (full deploy history — fixes the N/A
+    // regression where a real stg/prod/tst deploy fell out of the recent-runs(30) window).
+    const snapshot = laneSnapshots[lane];
+    if (snapshot) {
+      return snapshotToEnvironmentSnapshot(lane, label, snapshot);
+    }
+    // Fallback: recent-runs scan. Covers P2P stg (no deployment env — promote-wave resolved)
+    // and any lane the snapshot source did not populate. Preserves prior behavior exactly.
     const run = findLatestRunForDeployLane(
       row.repo,
       lane,

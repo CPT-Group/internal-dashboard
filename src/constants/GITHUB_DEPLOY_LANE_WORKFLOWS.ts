@@ -51,6 +51,31 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
   },
 };
 
+/**
+ * DEDICATED dev/tst workflows per repo — used as the authoritative lane-snapshot source for the
+ * Dev and Tst rows (regression fix). Unlike `DEPLOY_LANE_WORKFLOW_RULES`, this map EXCLUDES the
+ * `Deploy Version` promoter: Deploy Version runs on `development` and may target stg/prd, so it
+ * must NOT be attributed to the Tst lane just because it is the newest run. The Tst lane is the
+ * `TST Build Artifact` workflow's latest run; the Dev lane is `Dev Fast Deploy` (+ the Dev Fast
+ * active variant, where one exists). For nuget, the TST Auto-Merge workflow is a genuine Tst-lane
+ * actor and is kept; P2P's TST Build is its dedicated tst workflow.
+ */
+export const DEDICATED_DEV_TST_WORKFLOW_IDS: Readonly<Record<string, { dev: readonly number[]; tst: readonly number[] }>> = {
+  'cpt-azure-functions-api': { dev: [285805316], tst: [285805319] },
+  'cpt-ef-postgres-migrations': { dev: [285810378], tst: [285810381] },
+  'cpt-internal-tools': { dev: [285829490], tst: [285829491] },
+  'cpt-nuget-libraries': { dev: [288752702], tst: [288752705, 301162091] },
+  'cpt-group-p2p-go-service': { dev: [301145195], tst: [301718895] },
+};
+
+/** Dedicated workflow ids for a repo's Dev/Tst lane (lane-snapshot source). Empty when unknown. */
+export function getDedicatedWorkflowIdsForDevTstLane(
+  repo: string,
+  lane: 'dev' | 'tst'
+): readonly number[] {
+  return DEDICATED_DEV_TST_WORKFLOW_IDS[repo]?.[lane] ?? [];
+}
+
 function unique(values: readonly number[]): readonly number[] {
   return [...new Set(values)];
 }

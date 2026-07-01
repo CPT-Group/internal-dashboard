@@ -4,8 +4,26 @@ import {
   type GitHubDeployLiveWorkflowMonitor,
   type GitHubDeployPlaceholderMonitor,
 } from '@/constants/GITHUB_DEPLOY_MONITORS';
-import type { GitHubDeployRunSummary, GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
-import { normalizeDeployEnvironment, type DeployEnvironmentKey } from '@/utils/githubDeployEnvironment';
+import { getDedicatedWorkflowIdsForDevTstLane } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import type {
+  GitHubDeployLaneSnapshot,
+  GitHubDeployRunSummary,
+  GitHubDeployWorkflowStatus,
+} from '@/types/github/GitHubDeployStatus';
+import {
+  getDeployLaneConfig,
+  getNaLaneLabel,
+  mapEnvironmentToLane,
+  normalizeDeployEnvironment,
+  type DeployEnvironmentKey,
+  type DeployLaneKey,
+} from '@/utils/githubDeployEnvironment';
+import {
+  buildDeploymentLaneSnapshot,
+  buildRunLaneSnapshot,
+  laneStateFromDeploymentState,
+  laneStateFromRunStatus,
+} from '@/utils/githubDeployLaneSnapshots';
 import {
   isP2pGoServiceRepo,
   resolveP2pRunEnvironment,
@@ -120,22 +138,32 @@ function runIdFromStatusUrl(url: string | null | undefined): number | null {
 }
 
 interface DeploymentStatusApi {
+  state?: string | null;
   log_url?: string | null;
   target_url?: string | null;
+  created_at?: string | null;
+}
+
+/** The latest deployment status: its `state`, originating run id, run link, and timestamp. */
+interface DeploymentLatestStatus {
+  state: string | null;
+  runId: number | null;
+  logUrl: string | null;
+  createdAt: string | null;
 }
 
 /**
- * For a single deployment, read its most recent status and return the originating run id.
- * `per_page=1` is enough: every status row for a deployment points at the same run, and the
- * link is present from the first (`waiting`/`queued`) status onward — so this resolves even
- * a still-queued upper-env run onto its env row.
+ * For a single deployment, read its most recent status. `per_page=1` is enough: every status row
+ * for a deployment points at the same run, and the `log_url` link is present from the first
+ * (`waiting`/`queued`) status onward — so this resolves even a still-queued upper-env run onto
+ * its env row AND captures the live `state` for the lane pill.
  */
-async function fetchDeploymentRunId(
+async function fetchDeploymentLatestStatus(
   token: string,
   owner: string,
   repo: string,
   deploymentId: number
-): Promise<number | null> {
+): Promise<DeploymentLatestStatus | null> {
   const url = `https://api.github.com/repos/${owner}/${repo}/deployments/${deploymentId}/statuses?per_page=1`;
   try {
     const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
@@ -143,7 +171,13 @@ async function fetchDeploymentRunId(
     const data = (await res.json()) as DeploymentStatusApi[];
     if (!Array.isArray(data) || data.length === 0) return null;
     const status = data[0];
-    return runIdFromStatusUrl(status.log_url) ?? runIdFromStatusUrl(status.target_url);
+    const logUrl = status.log_url ?? status.target_url ?? null;
+    return {
+      state: status.state ?? null,
+      runId: runIdFromStatusUrl(status.log_url) ?? runIdFromStatusUrl(status.target_url),
+      logUrl,
+      createdAt: status.created_at ?? null,
+    };
   } catch {
     return null;
   }
@@ -166,14 +200,75 @@ async function buildDeploymentRunEnvironmentIndex(
     .slice(0, DEPLOYMENT_STATUS_PROBE_LIMIT);
   const index = new Map<number, DeployEnvironmentKey>();
   const links = await Promise.all(
-    recent.map(async (d) => ({ env: d.environment, runId: await fetchDeploymentRunId(token, owner, repo, d.id) }))
+    recent.map(async (d) => ({
+      env: d.environment,
+      status: await fetchDeploymentLatestStatus(token, owner, repo, d.id),
+    }))
   );
-  for (const { env, runId } of links) {
+  for (const { env, status } of links) {
+    const runId = status?.runId ?? null;
     if (runId !== null && !index.has(runId)) {
       index.set(runId, env);
     }
   }
   return index;
+}
+
+/**
+ * Latest deployment per env (newest by `created_at`). Used to anchor stg/prod lane snapshots on
+ * the FULL deploy history rather than the truncated recent-runs window — the regression fix.
+ */
+function latestDeploymentPerEnvironment(
+  deployments: readonly RepoDeployment[]
+): Map<DeployEnvironmentKey, RepoDeployment> {
+  const latest = new Map<DeployEnvironmentKey, RepoDeployment>();
+  for (const d of deployments) {
+    const current = latest.get(d.environment);
+    if (!current || d.createdAtMs > current.createdAtMs) {
+      latest.set(d.environment, d);
+    }
+  }
+  return latest;
+}
+
+/**
+ * Build stg/prod lane snapshots from the GitHub Deployments API: for each env's LATEST
+ * deployment, read its latest status (`state`) and map it to the lane pill. This is the
+ * authoritative env-row source — it covers full deploy history and gives live
+ * queued→in_progress→done, immune to the recent-runs(30) truncation that caused the N/A
+ * regression. P2P is intentionally excluded (its on-prem `onprem-nonprod`/`onprem-prd` envs
+ * can't separate tst/stg, and stg has no deployment at all — it keeps its dedicated resolver).
+ */
+async function buildDeploymentLaneSnapshots(
+  token: string,
+  owner: string,
+  repo: string,
+  deployments: readonly RepoDeployment[],
+  envLanes: readonly DeployEnvironmentKey[]
+): Promise<Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>> {
+  const latestByEnv = latestDeploymentPerEnvironment(deployments);
+  const out: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = {};
+  const probes = await Promise.all(
+    envLanes.map(async (env) => {
+      const deployment = latestByEnv.get(env);
+      if (!deployment) return { env, deployment: null, status: null };
+      const status = await fetchDeploymentLatestStatus(token, owner, repo, deployment.id);
+      return { env, deployment, status };
+    })
+  );
+  for (const { env, deployment, status } of probes) {
+    if (!deployment) continue;
+    const lane = mapEnvironmentToLane(repo, env);
+    out[lane] = buildDeploymentLaneSnapshot({
+      lane,
+      env,
+      state: laneStateFromDeploymentState(status?.state ?? null),
+      statusCreatedAt: status?.createdAt ?? null,
+      deploymentCreatedAt: new Date(deployment.createdAtMs).toISOString(),
+      logUrl: status?.logUrl ?? null,
+    });
+  }
+  return out;
 }
 
 const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
@@ -382,6 +477,86 @@ export function buildPlaceholderDeployStatus(
   };
 }
 
+interface FetchedRunEntry {
+  run: GitHubWorkflowRunApi;
+  workflowId: number;
+}
+
+/** Newest fetched run (by `updated_at`) whose workflow id is in `allowedWorkflowIds`. */
+function latestRunForWorkflowIds(
+  runs: readonly FetchedRunEntry[],
+  allowedWorkflowIds: readonly number[]
+): FetchedRunEntry | undefined {
+  const allowed = new Set(allowedWorkflowIds);
+  let latest: FetchedRunEntry | undefined;
+  let latestMs = Number.NEGATIVE_INFINITY;
+  for (const entry of runs) {
+    if (!allowed.has(entry.workflowId)) continue;
+    const ms = Date.parse(entry.run.updated_at);
+    if (!Number.isFinite(ms) || ms < latestMs) continue;
+    latestMs = ms;
+    latest = entry;
+  }
+  return latest;
+}
+
+const DEV_TST_SNAPSHOT_LANES: readonly ('dev' | 'tst')[] = ['dev', 'tst'];
+
+/**
+ * Build dev/tst lane snapshots from each lane's DEDICATED workflow's latest run (Dev Fast / TST
+ * Build), matched by workflow id — never by branch (Deploy Version & TST Build both run on
+ * `development`) and never by env-resolution (TST Build creates no env-gated deployment), and
+ * deliberately EXCLUDING the Deploy Version promoter (which targets stg/prd, not the Tst lane).
+ * This is why EF's TST lane now shows the real TST Build FAIL instead of N/A.
+ */
+function buildRunBasedLaneSnapshots(
+  repo: string,
+  runs: readonly FetchedRunEntry[]
+): Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> {
+  const out: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = {};
+  const laneConfig = getDeployLaneConfig(repo);
+  for (const lane of DEV_TST_SNAPSHOT_LANES) {
+    if (!laneConfig.order.includes(lane)) continue;
+    if (getNaLaneLabel(repo, lane)) continue;
+    const workflowIds = getDedicatedWorkflowIdsForDevTstLane(repo, lane);
+    if (workflowIds.length === 0) continue;
+    const entry = latestRunForWorkflowIds(runs, workflowIds);
+    if (!entry) continue;
+    out[lane] = buildRunLaneSnapshot({
+      lane,
+      state: laneStateFromRunStatus(entry.run.status, entry.run.conclusion),
+      createdAt: entry.run.created_at,
+      updatedAt: entry.run.updated_at,
+      title:
+        entry.run.display_title && entry.run.display_title.trim() !== ''
+          ? entry.run.display_title
+          : entry.run.name,
+      branch: entry.run.head_branch,
+      htmlUrl: entry.run.html_url,
+    });
+  }
+  return out;
+}
+
+/**
+ * Env keys whose stg/prod lane snapshots come from the Deployments API.
+ * P2P is special: its only stg/prod-class deployment env is `onprem-prd` (→ prod). It has NO stg
+ * deployment, so only `prod` is deployment-sourced for P2P; stg keeps the promote-wave fallback.
+ */
+function deploymentLaneEnvsForRepo(repo: string): DeployEnvironmentKey[] {
+  if (isP2pGoServiceRepo(repo)) return ['prod'];
+  const laneConfig = getDeployLaneConfig(repo);
+  const envs: DeployEnvironmentKey[] = [];
+  for (const env of ['stg', 'prod'] as const) {
+    const lane = mapEnvironmentToLane(repo, env);
+    if (!laneConfig.order.includes(lane)) continue;
+    // Package-repo stg/prod ("N/A — package repo") have no deploy target — never probe them.
+    if (getNaLaneLabel(repo, lane)) continue;
+    envs.push(env);
+  }
+  return envs;
+}
+
 export async function fetchDeployWorkflowStatus(
   token: string,
   monitor: GitHubDeployLiveWorkflowMonitor
@@ -401,10 +576,18 @@ export async function fetchDeployWorkflowStatus(
   ]);
 
   // Build the authoritative deployment→run env index (skip P2P: its on-prem deployment envs
-  // cannot separate tst/stg, so its dedicated resolver owns env assignment instead).
-  const runEnvIndex: DeploymentRunEnvironmentIndex = isP2pGoServiceRepo(repo)
-    ? new Map()
-    : await buildDeploymentRunEnvironmentIndex(token, owner, repo, deployments);
+  // cannot separate tst/stg, so its dedicated resolver owns env assignment for recent-runs).
+  // In parallel, build the stg/prod lane snapshots from the Deployments API — the full-history
+  // source that fixes the recent-runs(30) truncation N/A regression. For P2P, only `prod` is
+  // deployment-sourced (from `onprem-prd`); P2P stg has no deployment env and stays on the
+  // promote-wave fallback in the card.
+  const isP2p = isP2pGoServiceRepo(repo);
+  const [runEnvIndex, deploymentLaneSnapshots] = await Promise.all([
+    isP2p
+      ? Promise.resolve<DeploymentRunEnvironmentIndex>(new Map())
+      : buildDeploymentRunEnvironmentIndex(token, owner, repo, deployments),
+    buildDeploymentLaneSnapshots(token, owner, repo, deployments, deploymentLaneEnvsForRepo(repo)),
+  ]);
 
   const successful = workflowFetches.filter((f) => !f.error);
 
@@ -436,8 +619,16 @@ export async function fetchDeployWorkflowStatus(
     ?? runs.find(({ run }) => run.status !== 'completed');
   const lastDoneEntry = runs.find(({ run }) => run.status === 'completed');
 
+  // dev/tst lanes ← dedicated-workflow latest run; stg/prod lanes ← Deployments API (above).
+  // Deployment-based snapshots win on conflict, but dev/tst and stg/prod never collide.
+  const laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = {
+    ...buildRunBasedLaneSnapshots(repo, runs),
+    ...deploymentLaneSnapshots,
+  };
+
   return {
     ...base,
+    laneSnapshots: Object.keys(laneSnapshots).length > 0 ? laneSnapshots : undefined,
     queuedCount,
     inProgressCount,
     activeCount: queuedCount + inProgressCount,
