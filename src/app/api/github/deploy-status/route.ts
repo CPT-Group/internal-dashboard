@@ -34,6 +34,10 @@ function shouldAdvanceTokenInChain(repos: GitHubDeployWorkflowStatus[]): boolean
   const live = liveDeployRows(repos);
   if (live.length === 0) return false;
   if (live.some((row) => hasHardTokenFailure(row))) return true;
+  // A rate-limited Deployments API (403 → empty stg/prod) is swallowed by fetchRepoDeployments and
+  // never sets row.error, so it wouldn't trip the checks below. Surface it via deploymentsDiag so a
+  // token whose Deployments budget is exhausted fails over to the next token in the chain.
+  if (hasDeploymentsFetchDegraded(repos)) return true;
   return live.every((row) => {
     if (!row.error) return false;
     const m = errorText(row);
