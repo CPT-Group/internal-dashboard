@@ -88,6 +88,11 @@ export function normalizeDeployEnvironment(env: string | null | undefined): Depl
   if (key === 'stg' || key === 'staging') return 'stg';
   if (key === 'prd' || key === 'prod' || key === 'production') return 'prod';
   if (key === 'onprem-prd') return 'prod';
+  // P2P (on-prem Go service) has no distinct stg env — `onprem-nonprod` IS its pre-prod deploy
+  // target. Map it to the stg lane so the board shows p2p's real nonprod deploy instead of N/A.
+  // Safe for the p2p run resolver: it only acts on `prod` hints; a prod run still matches its own
+  // onprem-prd deployment as closest, and non-prod hints fall through to the promote-wave logic.
+  if (key === 'onprem-nonprod') return 'stg';
   return null;
 }
 

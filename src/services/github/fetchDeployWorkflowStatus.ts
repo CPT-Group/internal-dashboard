@@ -528,11 +528,12 @@ function buildRunBasedLaneSnapshots(
 
 /**
  * Env keys whose stg/prod lane snapshots come from the Deployments API.
- * P2P is special: its only stg/prod-class deployment env is `onprem-prd` (→ prod). It has NO stg
- * deployment, so only `prod` is deployment-sourced for P2P; stg keeps the promote-wave fallback.
+ * P2P (on-prem Go service) deploys to `onprem-nonprod` (→ stg lane, its pre-prod target) and
+ * `onprem-prd` (→ prod). Both are deployment-sourced so p2p's stg shows its real nonprod deploy
+ * instead of N/A (dev/tst still come from the dedicated workflow runs).
  */
 function deploymentLaneEnvsForRepo(repo: string): DeployEnvironmentKey[] {
-  if (isP2pGoServiceRepo(repo)) return ['prod'];
+  if (isP2pGoServiceRepo(repo)) return ['stg', 'prod'];
   const laneConfig = getDeployLaneConfig(repo);
   const envs: DeployEnvironmentKey[] = [];
   for (const env of ['stg', 'prod'] as const) {
