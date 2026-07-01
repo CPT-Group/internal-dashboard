@@ -20,6 +20,12 @@ import {
   tagSeverityFromLaneStates,
   tagValueFromLaneStates,
 } from '@/utils/githubDeployDisplay';
+import {
+  buildDeploymentLaneSnapshot,
+  buildRunLaneSnapshot,
+  laneStateFromDeploymentState,
+  laneStateFromRunStatus,
+} from '@/utils/githubDeployLaneSnapshots';
 
 interface FixtureRun {
   workflowId: number;
@@ -422,7 +428,86 @@ function testP2pPromoteProdFromOnpremPrdDeployment() {
   assert.equal(resolveP2pRunEnvironment(run, [run], deployments), 'prod');
 }
 
+// ---------------------------------------------------------------------------
+// Lane-snapshot source tests (N/A regression fix): stg/prod ← Deployments API,
+// dev/tst ← dedicated workflow run. These prove a real prior deploy never N/As.
+// ---------------------------------------------------------------------------
+
+function testDeploymentStateMapsToLanePill() {
+  assert.equal(laneStateFromDeploymentState('success'), 'ok');
+  assert.equal(laneStateFromDeploymentState('failure'), 'failed');
+  assert.equal(laneStateFromDeploymentState('error'), 'failed');
+  assert.equal(laneStateFromDeploymentState('in_progress'), 'running');
+  assert.equal(laneStateFromDeploymentState('queued'), 'queued');
+  assert.equal(laneStateFromDeploymentState('pending'), 'queued');
+  assert.equal(laneStateFromDeploymentState('waiting'), 'queued');
+  // Unknown / superseded → idle (never a misleading OK/Fail).
+  assert.equal(laneStateFromDeploymentState('inactive'), 'idle');
+  assert.equal(laneStateFromDeploymentState(null), 'idle');
+}
+
+function testRunStatusMapsToLanePill() {
+  assert.equal(laneStateFromRunStatus('completed', 'success'), 'ok');
+  assert.equal(laneStateFromRunStatus('completed', 'failure'), 'failed');
+  assert.equal(laneStateFromRunStatus('completed', 'cancelled'), 'failed');
+  assert.equal(laneStateFromRunStatus('in_progress', null), 'running');
+  assert.equal(laneStateFromRunStatus('queued', null), 'queued');
+  assert.equal(laneStateFromRunStatus('waiting', null), 'queued');
+}
+
+function testEfStgDeploymentSnapshotIsOkNotNa() {
+  // EF stg's latest deployment (06-30T16:18) succeeded — must surface as OK, not N/A, even
+  // though the run is dozens of dev/tst runs ago (outside the recent-runs(30) window).
+  const snapshot = buildDeploymentLaneSnapshot({
+    lane: 'stg',
+    env: 'stg',
+    state: laneStateFromDeploymentState('success'),
+    statusCreatedAt: '2026-06-30T16:27:04Z',
+    deploymentCreatedAt: '2026-06-30T16:18:15Z',
+    logUrl: 'https://github.com/CPT-Group/cpt-ef-postgres-migrations/actions/runs/28459252716/job/1',
+  });
+  assert.equal(snapshot.lane, 'stg');
+  assert.equal(snapshot.state, 'ok');
+  assert.equal(snapshot.createdAt, '2026-06-30T16:18:15Z');
+  assert.equal(snapshot.updatedAt, '2026-06-30T16:27:04Z');
+  assert.ok(snapshot.htmlUrl?.includes('/actions/runs/28459252716'));
+}
+
+function testEfTstBuildSnapshotShowsRealFailure() {
+  // EF tst's dedicated TST Build Artifact latest run FAILED — must surface as failed, not N/A.
+  const snapshot = buildRunLaneSnapshot({
+    lane: 'tst',
+    state: laneStateFromRunStatus('completed', 'failure'),
+    createdAt: '2026-06-30T22:36:54Z',
+    updatedAt: '2026-06-30T22:40:00Z',
+    title: 'TST Build Artifact',
+    branch: 'development',
+    htmlUrl: 'https://github.com/CPT-Group/cpt-ef-postgres-migrations/actions/runs/28480357407',
+  });
+  assert.equal(snapshot.lane, 'tst');
+  assert.equal(snapshot.state, 'failed');
+  assert.equal(snapshot.branch, 'development');
+}
+
+function testDeployVersionLabelExtractedFromMergeTitle() {
+  const snapshot = buildRunLaneSnapshot({
+    lane: 'dev',
+    state: 'ok',
+    createdAt: '2026-06-30T23:00:00Z',
+    updatedAt: '2026-06-30T23:05:00Z',
+    title: 'Merge pull request #155 from CPT-Group/feature',
+    branch: 'development',
+    htmlUrl: 'https://example/actions/runs/1',
+  });
+  assert.equal(snapshot.deployVersionLabel, '#155');
+}
+
 function main() {
+  testDeploymentStateMapsToLanePill();
+  testRunStatusMapsToLanePill();
+  testEfStgDeploymentSnapshotIsOkNotNa();
+  testEfTstBuildSnapshotShowsRealFailure();
+  testDeployVersionLabelExtractedFromMergeTitle();
   testAzfDevActiveDeployVersionWins();
   testAzfDevCompletedStillUsesDevFastPrimary();
   testInternalToolsDevFastInProgress();

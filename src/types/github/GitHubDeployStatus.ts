@@ -1,3 +1,5 @@
+import type { DeployLaneKey } from '@/utils/githubDeployEnvironment';
+
 /** One row per monitored deploy workflow (from GET /api/github/deploy-status). */
 export interface GitHubDeployWorkflowStatus {
   owner: string;
@@ -21,7 +23,42 @@ export interface GitHubDeployWorkflowStatus {
   lastCompletedRun?: GitHubDeployRunSummary;
   /** Recent runs for timeline/history widgets (newest first). */
   recentRuns?: GitHubDeployRunSummary[];
+  /**
+   * Authoritative last-known status PER LANE, sourced from full deploy history rather than the
+   * truncated `recentRuns` window. STG/PROD come from the GitHub Deployments API (latest
+   * deployment per env + its latest status); DEV/TST come from the lane's dedicated workflow's
+   * latest run. A lane is omitted only when that env/workflow has truly never deployed/run, so
+   * the card renders "idle"/"N/A" instead of a false "N/A" for a real prior deploy.
+   */
+  laneSnapshots?: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>;
 }
+
+/**
+ * Snapshot of a single deploy lane's last-known state, computed server-side from the
+ * authoritative source for that lane (Deployments API for stg/prod, dedicated workflow run for
+ * dev/tst). Carries everything the card needs to render the lane pill without re-deriving it
+ * from `recentRuns`.
+ */
+export interface GitHubDeployLaneSnapshot {
+  lane: DeployLaneKey;
+  /** Lane pill state. `idle` = a real prior deploy older than the idle window. */
+  state: GitHubDeployLaneState;
+  /** ISO start time of the deploy/run (for elapsed display). */
+  createdAt: string | null;
+  /** ISO last-update time (drives idle aging). */
+  updatedAt: string | null;
+  /** Ticker / context text (run title, env label, or branch). */
+  triggerText: string | null;
+  /** Head branch of the originating run, when known. */
+  branch: string | null;
+  /** PR number label (e.g. "#155") when derivable from the run title. */
+  deployVersionLabel: string | null;
+  /** Link to the originating Actions run, when known. */
+  htmlUrl: string | null;
+}
+
+/** Lane pill states. Mirrors the deployment-status `state` and workflow run/conclusion model. */
+export type GitHubDeployLaneState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
 
 export interface GitHubDeployRunSummary {
   id: number;
