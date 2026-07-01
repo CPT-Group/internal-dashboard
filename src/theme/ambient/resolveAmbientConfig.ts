@@ -16,6 +16,8 @@ import type { ThemeAmbientConfig } from './types'
 const AMBIENT_CONFIGS: Partial<Record<AppTheme, ThemeAmbientConfig>> = {
   'cpt-barbie':  { overlay: 'barbie-bubbles' },
   'dark-barbie': { overlay: 'barbie-bubbles' },
+  'all-american':       { overlay: 'americana' },
+  'all-american-night': { overlay: 'americana' },
   'frostbyte':   { preset: 'frostbyte-snow',    overlay: 'frost-noise' },
   'embercore':   { preset: 'embercore-embers',   overlay: 'lava-cracks' },
   'abyss':       { preset: 'abyss-biolume' },

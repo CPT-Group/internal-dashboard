@@ -3,6 +3,7 @@
 import { Suspense, lazy, useMemo, type CSSProperties, type JSX } from 'react';
 import { useTheme } from '@/providers/ThemeProvider';
 import { buildAmbientOptions, getAmbientConfig } from '@/theme/ambient';
+import { ThemeAmbientAmericana } from './ThemeAmbientAmericana';
 import { ThemeAmbientBarbieBubbles } from './ThemeAmbientBarbieBubbles';
 import { ThemeAmbientLavaCracks } from './ThemeAmbientLavaCracks';
 
@@ -42,6 +43,7 @@ export function ThemeAmbientLayer(): JSX.Element | null {
   const showAurora = ambient.overlay === 'aurora-glow'
   const showLavaCracks = ambient.overlay === 'lava-cracks'
   const showBarbieBubbles = ambient.overlay === 'barbie-bubbles'
+  const showAmericana = ambient.overlay === 'americana'
 
   return (
     <div className="app-ambient-overlay" aria-hidden="true">
@@ -49,6 +51,7 @@ export function ThemeAmbientLayer(): JSX.Element | null {
       {showAurora && <AuroraOverlay />}
       {showLavaCracks && <ThemeAmbientLavaCracks />}
       {showBarbieBubbles && <ThemeAmbientBarbieBubbles />}
+      {showAmericana && <ThemeAmbientAmericana />}
       {showParticles && (
         <Suspense fallback={null}>
           <ThemeAmbientParticles themeId={theme} options={particleOptions} />

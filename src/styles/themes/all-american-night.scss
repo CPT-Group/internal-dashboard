@@ -1,0 +1,250 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// All American — DARK (Night). Mirror of cpt-internal-tools customThemes.ts
+// (all-american-night): electric flag-blue primary (#5b8cff) + deep-crimson chrome
+// (#a01e2e) over a twilight-navy sky. Concrete hex/rgba only (no color-mix — Samsung
+// Tizen TV constraint). Drifting red/white/blue stars + fireworks come from the shared
+// `americana` ambient overlay (ThemeAmbientAmericana + theme-ambient.scss).
+
+html[data-theme='all-american-night'] {
+  background-color: #0a1226 !important;
+}
+html[data-theme='all-american-night'] body {
+  background-color: #0a1226 !important;
+  background-image: linear-gradient(
+    160deg,
+    rgba(91, 140, 255, 0.1) 0%,
+    rgba(10, 18, 38, 0) 45%,
+    rgba(255, 90, 95, 0.08) 100%
+  ) !important;
+  color: #e8ecf7 !important;
+}
+
+html[data-theme='all-american-night'],
+[data-theme='all-american-night'] {
+  --header-bg: #a01e2e !important;
+  --header-fg: #ffe1e5 !important;
+  --header-border: 1px solid #7a1622 !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+  --window-bg: #0a1226 !important;
+  --window-fg: #e8ecf7 !important;
+  --window-border: 1px solid #26314f !important;
+  --window-surface-bg: #111a33 !important;
+  --window-surface-fg: #e8ecf7 !important;
+  --window-surface-border: 1px solid #2c3a5c !important;
+  --input-bg: #0d1730 !important;
+  --input-fg: #e8ecf7 !important;
+  --input-border: 1px solid #26314f !important;
+  --button-bg: var(--window-surface-bg) !important;
+  --button-fg: #e8ecf7 !important;
+  --button-hover-bg: var(--surface-hover) !important;
+  --menu-item-hover-bg: #1a2542 !important;
+  --status-icon-fill: #8fb0ff !important;
+  --status-icon-stroke: #8fb0ff !important;
+  --status-icon-stroke-offline: #38456a !important;
+  --page-background: #0a1226 !important;
+  --text-primary: #e8ecf7 !important;
+  --button-primary-background: #5b8cff !important;
+  --button-primary-background-hover: #7aa2ff !important;
+  --button-primary-text: #0a1230 !important;
+  --maskbg: rgba(2, 6, 18, 0.78) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(91, 140, 255, 0.45) !important;
+  --highlight-bg: rgba(91, 140, 255, 0.26) !important;
+  --highlight-text-color: #e8ecf7 !important;
+  --color-danger: #ff5a5f !important;
+  --surface-ground: #0a1226 !important;
+  --surface-section: #0a1226 !important;
+  --surface-card: #111a33 !important;
+  --surface-overlay: #111a33 !important;
+  --surface-border: #26314f !important;
+  --surface-hover: rgba(91, 140, 255, 0.14) !important;
+  --surface-0: #050a17 !important;
+  --surface-50: #0a1226 !important;
+  --surface-100: #111a33 !important;
+  --surface-200: #1a2542 !important;
+  --surface-300: #26314f !important;
+  --surface-400: #38456a !important;
+  --surface-500: #566288 !important;
+  --surface-600: #7b87ab !important;
+  --surface-700: #a6b0cc !important;
+  --surface-800: #ccd3e6 !important;
+  --surface-900: #e8ecf7 !important;
+  --surface-a: #111a33 !important;
+  --surface-b: #0a1226 !important;
+  --surface-c: rgba(91, 140, 255, 0.08) !important;
+  --surface-d: #26314f !important;
+  --surface-e: #111a33 !important;
+  --surface-f: #111a33 !important;
+  --gray-50: #e8ecf7 !important;
+  --gray-100: #ccd3e6 !important;
+  --gray-200: #a6b0cc !important;
+  --gray-300: #7b87ab !important;
+  --gray-400: #566288 !important;
+  --gray-500: #38456a !important;
+  --gray-600: #26314f !important;
+  --gray-700: #1a2542 !important;
+  --gray-800: #111a33 !important;
+  --gray-900: #0a1226 !important;
+  --text-color: #e8ecf7 !important;
+  --text-color-secondary: #9aa6c4 !important;
+  --primary-color: #5b8cff !important;
+  --primary-color-text: #0a1230 !important;
+  --scrollbar-track-bg: #111a33 !important;
+  --scrollbar-thumb-bg: #26314f !important;
+  --scrollbar-thumb-hover-bg: #38456a !important;
+  --card-border: rgba(91, 140, 255, 0.2) !important;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 12px rgba(91, 140, 255, 0.1) !important;
+
+  @include glass.glass-tokens(
+    rgba(17, 26, 51, 0.55),
+    rgba(17, 26, 51, 0.9),
+    rgba(91, 140, 255, 0.42),
+    rgba(91, 140, 255, 0.08),
+    rgba(122, 162, 255, 0.3),
+    rgba(143, 176, 255, 0.16),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 0, 0, 0.5),
+    rgba(255, 255, 255, 0.08),
+    rgba(91, 140, 255, 0.16)
+  );
+
+  --corner-info-card-bg: rgba(17, 26, 51, 0.65) !important;
+  --corner-info-card-border: #26314f !important;
+  --corner-info-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  --corner-info-card-divider: rgba(91, 140, 255, 0.2) !important;
+  --corner-info-card-hover-bg: rgba(91, 140, 255, 0.14) !important;
+  --tag-today-bg: rgba(91, 140, 255, 0.25) !important;
+  --tag-today-text: #8fb0ff !important;
+  --tag-today-border: rgba(91, 140, 255, 0.5) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(91, 140, 255, 0.82) !important;
+  --chart-bar-primary-border: rgb(91, 140, 255) !important;
+  --chart-success: rgba(61, 220, 132, 0.78) !important;
+  --chart-success-border: rgb(61, 220, 132) !important;
+  --chart-danger: rgba(255, 90, 95, 0.78) !important;
+  --chart-danger-border: rgb(255, 90, 95) !important;
+  --chart-warning: rgba(255, 183, 3, 0.9) !important;
+  --chart-warning-border: rgb(255, 183, 3) !important;
+  --chart-label-color: #ffffff !important;
+  --chart-info: rgba(91, 140, 255, 0.78) !important;
+  --chart-info-border: rgb(91, 140, 255) !important;
+  --chart-orange: rgba(255, 90, 95, 0.72) !important;
+  --chart-orange-border: rgb(255, 90, 95) !important;
+  --nova-accent: rgba(255, 90, 95, 0.7) !important;
+  --nova-accent-bg: rgba(255, 90, 95, 0.35) !important;
+  --nova-accent-border: rgb(255, 90, 95) !important;
+  --nova-accent-text: #ffffff !important;
+  --bug-accent-bg: rgba(255, 90, 95, 0.35) !important;
+  --bug-accent-text: #ffffff !important;
+  --github-repo-label-color: #e8ecf7 !important;
+  --github-repo-api-bg: rgba(91, 140, 255, 0.5) !important;
+  --github-repo-api-border: rgba(91, 140, 255, 0.85) !important;
+  --github-repo-tools-bg: rgba(61, 220, 132, 0.35) !important;
+  --github-repo-tools-border: rgba(61, 220, 132, 0.75) !important;
+  --github-repo-nuget-bg: rgba(255, 90, 95, 0.34) !important;
+  --github-repo-nuget-border: rgba(255, 90, 95, 0.75) !important;
+  --github-repo-migrations-bg: rgba(255, 183, 3, 0.34) !important;
+  --github-repo-migrations-border: rgba(255, 183, 3, 0.74) !important;
+  --github-repo-infra-bg: rgba(91, 140, 255, 0.32) !important;
+  --github-repo-infra-border: rgba(91, 140, 255, 0.72) !important;
+  --github-deploy-progressbar-track-bg: rgba(38, 49, 79, 0.52) !important;
+  --github-deploy-progressbar-fill: rgba(91, 140, 255, 0.8) !important;
+  --github-deploy-surface-muted-bg: rgba(17, 26, 51, 0.88) !important;
+  --github-deploy-surface-muted-border: rgba(38, 49, 79, 0.5) !important;
+  --github-deploy-branch-pill-bg: rgba(5, 10, 23, 0.9) !important;
+  --github-deploy-branch-pill-border: rgba(38, 49, 79, 0.55) !important;
+  --github-deploy-branch-pill-text: #e8ecf7 !important;
+  --github-deploy-running-chip-bg: rgba(255, 183, 3, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(255, 183, 3, 0.5) !important;
+  --github-deploy-running-chip-text: #ffd98a !important;
+  --github-deploy-queue-chip-bg: rgba(255, 183, 3, 0.22) !important;
+  --github-deploy-queue-chip-border: rgba(255, 183, 3, 0.55) !important;
+  --github-deploy-queue-chip-text: #ffe4ad !important;
+  --github-deploy-inline-running-track: rgba(255, 183, 3, 0.2) !important;
+  --github-deploy-inline-queued-track: rgba(255, 183, 3, 0.22) !important;
+  --github-deploy-footer-ticker-bg: rgba(5, 10, 23, 0.9) !important;
+  --github-deploy-footer-ticker-border: rgba(255, 90, 95, 0.34) !important;
+  --github-deploy-footer-ticker-text: #ff8a8d !important;
+  --github-deploy-footer-ticker-shadow: 0 0 8px rgba(255, 90, 95, 0.35) !important;
+  --content-text-size: 1.06rem !important;
+  --github-deploy-timeline-meta-color: #ff8a8d !important;
+  --data-quality-valid: rgba(61, 220, 132, 0.5) !important;
+  --data-quality-warning: rgba(255, 183, 3, 0.5) !important;
+  --data-quality-error: rgba(255, 90, 95, 0.55) !important;
+  --data-quality-empty: rgba(56, 69, 106, 0.3) !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+
+  --multiselect-chip-bg: #1a2542 !important;
+  --multiselect-chip-fg: #e8ecf7 !important;
+  --multiselect-chip-icon-fg: #9aa6c4 !important;
+  --multiselect-chip-border: 1px solid #38456a !important;
+  --toast-success-bg: rgba(61, 220, 132, 0.2) !important;
+  --toast-success-border: #3ddc84 !important;
+  --toast-success-text: #b7f2d0 !important;
+  --toast-info-bg: rgba(91, 140, 255, 0.2) !important;
+  --toast-info-border: #5b8cff !important;
+  --toast-info-text: #cfdcff !important;
+  --toast-warn-bg: rgba(255, 183, 3, 0.2) !important;
+  --toast-warn-border: #ffb703 !important;
+  --toast-warn-text: #ffe4ad !important;
+  --toast-error-bg: rgba(255, 90, 95, 0.22) !important;
+  --toast-error-border: #ff5a5f !important;
+  --toast-error-text: #ffd0d2 !important;
+  --cpt-skeleton-bg: #1a2542 !important;
+  --cpt-skeleton-sheen: rgba(91, 140, 255, 0.28) !important;
+
+  @include badge.badge-theme-tokens(
+    #5b8cff,
+    #0a1230,
+    rgb(61, 220, 132),
+    #0a1230,
+    rgb(91, 140, 255),
+    #0a1230,
+    rgb(255, 183, 3),
+    #0a1230,
+    rgb(255, 90, 95),
+    #ffffff,
+    rgb(255, 90, 95)
+  );
+  @include badge.badge-theme-rules();
+}
+
+// Dialog — theme colors
+html[data-theme='all-american-night'] .p-dialog,
+[data-theme='all-american-night'] .p-dialog {
+  background: var(--window-surface-bg) !important;
+  border: var(--window-surface-border) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='all-american-night'] .p-dialog .p-dialog-header,
+[data-theme='all-american-night'] .p-dialog .p-dialog-header {
+  background: var(--header-bg) !important;
+  color: var(--header-fg) !important;
+  border-bottom: var(--header-border) !important;
+}
+html[data-theme='all-american-night'] .p-dialog .p-dialog-title,
+[data-theme='all-american-night'] .p-dialog .p-dialog-title {
+  color: var(--header-fg) !important;
+}
+html[data-theme='all-american-night'] .p-dialog .p-dialog-content,
+[data-theme='all-american-night'] .p-dialog .p-dialog-content {
+  background: var(--window-surface-bg) !important;
+  color: var(--window-surface-fg) !important;
+}
+html[data-theme='all-american-night'] .p-dialog .p-dialog-footer,
+[data-theme='all-american-night'] .p-dialog .p-dialog-footer {
+  background: var(--window-surface-bg) !important;
+  border-top: var(--window-surface-border) !important;
+}
+html[data-theme='all-american-night'] .p-dialog .p-dialog-header-icon,
+[data-theme='all-american-night'] .p-dialog .p-dialog-header-icon {
+  color: var(--header-fg) !important;
+}
+html[data-theme='all-american-night'] .p-dialog .p-dialog-header-icon:hover,
+[data-theme='all-american-night'] .p-dialog .p-dialog-header-icon:hover {
+  color: var(--text-color-secondary) !important;
+  background: var(--surface-hover) !important;
+}

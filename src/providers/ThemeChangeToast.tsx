@@ -56,6 +56,8 @@ const TITLE_BY_THEME: Record<string, string> = {
   'colorblind-blue-yellow-dark': 'Colorblind Blue-Yellow Dark',
   'colorblind-mono-light': 'Colorblind Mono Light',
   'colorblind-mono-dark': 'Colorblind Mono Dark',
+  'all-american': 'All American Light',
+  'all-american-night': 'All American Dark',
 };
 
 function readThemeFromEvent(event: Event): string | null {
