@@ -68,7 +68,10 @@ interface DeployStatusCacheEntry {
   fetchedAtMs: number;
 }
 
-const DEPLOY_STATUS_CACHE_TTL_MS = 20_000;
+// 45s (was 20s): with the 40-probe env index removed, a refresh is ~30-40 GitHub calls; at 45s the
+// board stays well under the token's hourly budget so the Deployments API stops 403-rate-limiting
+// (the cause of the stg/prod false-N/A). Still fresh enough for a wall-mounted deploy board.
+const DEPLOY_STATUS_CACHE_TTL_MS = 45_000;
 const DEPLOY_STATUS_STALE_MAX_MS = 5 * 60_000;
 const DEPLOY_STATUS_RATE_LIMIT_COOLDOWN_MS = 60_000;
 

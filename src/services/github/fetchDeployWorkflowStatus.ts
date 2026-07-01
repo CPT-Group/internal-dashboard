@@ -145,14 +145,6 @@ async function fetchRepoDeployments(token: string, owner: string, repo: string):
   }
 }
 
-/**
- * Cap on how many recent deployments we probe for their originating run. The dashboard only
- * renders the most recent ~30 runs per repo, so probing the newest N deployments (one cheap
- * `per_page=1` status call each, run concurrently) covers everything on-screen while bounding
- * API cost. Older runs without a link fall back to the legacy SHA+time heuristic.
- */
-const DEPLOYMENT_STATUS_PROBE_LIMIT = 40;
-
 const ACTIONS_RUN_ID_PATTERN = /\/actions\/runs\/(\d+)/;
 
 /** Extract the originating Actions run id from a deployment-status `log_url` / `target_url`. */
@@ -208,37 +200,6 @@ async function fetchDeploymentLatestStatus(
   } catch {
     return null;
   }
-}
-
-/**
- * Build the authoritative `runId → environment` index from deployment statuses. Probes the
- * newest `DEPLOYMENT_STATUS_PROBE_LIMIT` deployments concurrently. If two deployments in the
- * same env map to the same run (re-deploys), the env is identical so order is irrelevant; a
- * run is only ever recorded against the env its own deployment targeted.
- */
-async function buildDeploymentRunEnvironmentIndex(
-  token: string,
-  owner: string,
-  repo: string,
-  deployments: readonly RepoDeployment[]
-): Promise<DeploymentRunEnvironmentIndex> {
-  const recent = [...deployments]
-    .sort((a, b) => b.createdAtMs - a.createdAtMs)
-    .slice(0, DEPLOYMENT_STATUS_PROBE_LIMIT);
-  const index = new Map<number, DeployEnvironmentKey>();
-  const links = await Promise.all(
-    recent.map(async (d) => ({
-      env: d.environment,
-      status: await fetchDeploymentLatestStatus(token, owner, repo, d.id),
-    }))
-  );
-  for (const { env, status } of links) {
-    const runId = status?.runId ?? null;
-    if (runId !== null && !index.has(runId)) {
-      index.set(runId, env);
-    }
-  }
-  return index;
 }
 
 /**
@@ -602,19 +563,22 @@ export async function fetchDeployWorkflowStatus(
     fetchRepoDeployments(token, owner, repo),
   ]);
 
-  // Build the authoritative deployment→run env index (skip P2P: its on-prem deployment envs
-  // cannot separate tst/stg, so its dedicated resolver owns env assignment for recent-runs).
-  // In parallel, build the stg/prod lane snapshots from the Deployments API — the full-history
-  // source that fixes the recent-runs(30) truncation N/A regression. For P2P, only `prod` is
-  // deployment-sourced (from `onprem-prd`); P2P stg has no deployment env and stays on the
-  // promote-wave fallback in the card.
-  const isP2p = isP2pGoServiceRepo(repo);
-  const [runEnvIndex, deploymentLaneSnapshots] = await Promise.all([
-    isP2p
-      ? Promise.resolve<DeploymentRunEnvironmentIndex>(new Map())
-      : buildDeploymentRunEnvironmentIndex(token, owner, repo, deployments),
-    buildDeploymentLaneSnapshots(token, owner, repo, deployments, deploymentLaneEnvsForRepo(repo)),
-  ]);
+  // Stg/prod lane pills come from buildDeploymentLaneSnapshots — the latest deployment per env plus
+  // its status (2 probes/repo). We deliberately DO NOT build the 40-per-repo deployment→run env
+  // index anymore: at ~240 GitHub calls/refresh (40 × 6 repos) it exhausted the token's hourly
+  // budget within minutes, then 403-rate-limited the Deployments API — and fetchRepoDeployments
+  // silently returned [] on the 403, emptying every stg/prod snapshot into a false "N/A" (the
+  // 2026-06-30 regression). The index only labeled recentRuns; those now fall back to the SHA+time
+  // heuristic over the already-fetched deployments list (no extra calls). Accurate lane state comes
+  // from the snapshots, not the index.
+  const runEnvIndex: DeploymentRunEnvironmentIndex = new Map();
+  const deploymentLaneSnapshots = await buildDeploymentLaneSnapshots(
+    token,
+    owner,
+    repo,
+    deployments,
+    deploymentLaneEnvsForRepo(repo)
+  );
 
   const successful = workflowFetches.filter((f) => !f.error);
 
