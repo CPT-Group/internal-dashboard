@@ -72,7 +72,6 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
       tst: 'noData',
       stg: 'noData',
       prod: 'noData',
-      nonprod: 'noData',
     });
 
     const runs = repo.recentRuns ?? [];

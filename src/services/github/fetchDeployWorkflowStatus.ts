@@ -262,18 +262,16 @@ async function buildDeploymentLaneSnapshots(
 const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
 
 /**
- * Resolve a run's TARGET environment.
+ * Resolve a run's TARGET environment — used ONLY to label the recentRuns timeline. The accurate
+ * per-lane pills come from the Deployments-API lane snapshots (buildDeploymentLaneSnapshots), NOT
+ * from this.
  *
- * PRIMARY (deterministic): consult the deployment-status `runId → environment` index. This is
- * the authoritative deployment→run link (from each deployment's status `log_url`) and is
- * immune to the same-SHA multi-deployment collision that the heuristic below mis-correlates
- * or silently drops (EF promotes dev/tst/stg from one SHA in minutes).
- *
- * FALLBACK (legacy heuristic): if no deployment-status link exists for this run (e.g. an old
- * run outside the probe window, or a status with no `log_url`), match by head SHA — every
- * Deploy Version run shares `development`'s SHA — disambiguated by the deployment whose
- * creation time is closest. Returns null when no confident match exists (the lane logic then
- * falls back to the branch). Nothing regresses: pre-index behavior is preserved when unlinked.
+ * The deployment-status `runId → environment` index is no longer built (it cost ~240 GitHub
+ * calls/refresh and 403-rate-limited the whole board), so `runEnvIndex` is always empty and this
+ * always takes the heuristic path: match by head SHA — every Deploy Version run shares
+ * `development`'s SHA — disambiguated by the deployment whose creation time is closest. Returns null
+ * when no confident match exists (the caller then falls back to the branch). The `runEnvIndex` param
+ * is retained so a future deterministic source can repopulate it without touching callers.
  */
 function resolveRunEnvironment(
   run: GitHubWorkflowRunApi,

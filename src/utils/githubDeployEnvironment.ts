@@ -1,5 +1,5 @@
 export type DeployEnvironmentKey = 'dev' | 'tst' | 'stg' | 'prod';
-export type DeployLaneKey = DeployEnvironmentKey | 'nonprod';
+export type DeployLaneKey = DeployEnvironmentKey;
 
 interface DeployLaneConfig {
   order: readonly DeployLaneKey[];
@@ -22,27 +22,17 @@ const DEFAULT_LANE_CONFIG: DeployLaneConfig = {
   },
 };
 
-const NUGET_LANE_CONFIG: DeployLaneConfig = {
-  order: ['nonprod', 'prod'],
-  labels: {
-    nonprod: 'Non-Prod',
-    prod: 'Prod',
-  },
-};
-
 /**
- * cpt-nuget-libraries is a PACKAGE repo (GitHub Packages, not per-env deploy). It publishes on
- * exactly TWO branches — `development` → PRERELEASE packages, `test` → the OFFICIAL/stable release
- * that prod apps consume. `staging`/`production` branches exist for parity but NEVER publish
- * (`deploy-version` is report-only). So the honest board is a 2-lane card of the branches that
- * actually publish — no dead Stg/Prod rows. Verified functionally (not just by branch name):
- * `development` publishes a SemVer2 PRERELEASE (`<base>-development.<run>.<sha>`), `test`
- * publishes the STABLE/official version consumed by prod apps — so the lanes are labelled by what
- * they ARE (Prerelease / Release), which self-documents that Tst = the stable feed. No stg/prod
- * package deploy exists BY DESIGN: the immutable .nupkg is consumed identically by every consumer
- * env, and the real gate is each consuming app's own dev→tst→stg→prd pipeline.
+ * PACKAGE-LIBRARY repos (cpt-nuget-libraries; and npm package libraries when a real repo exists)
+ * publish to ONE registry with SemVer version discipline — `development` → a PRERELEASE version
+ * (`<base>-development.<run>.<sha>`), `test` → the STABLE/official RELEASE version that
+ * staging/production app builds consume. `staging`/`production` branches exist for parity but NEVER
+ * publish (deploy-version is report-only). There is NO per-env package deploy BY DESIGN: the one
+ * immutable package is consumed identically by every consumer env, and the real gate is each
+ * consuming app's own dev→tst→stg→prd pipeline. So the honest board is a 2-lane card labelled by
+ * what the lanes ARE — Prerelease / Release — the same for every package library (nuget and npm).
  */
-const NUGET_LIBRARIES_LANE_CONFIG: DeployLaneConfig = {
+const PACKAGE_LIB_LANE_CONFIG: DeployLaneConfig = {
   order: ['dev', 'tst'],
   labels: {
     dev: 'Prerelease',
@@ -62,12 +52,11 @@ function normalizeBranchName(branch: string | null): string {
   return branch.trim().toLowerCase().replace(/^refs\/heads\//, '');
 }
 
-function isNugetLibrariesRepo(repo: string): boolean {
-  return repo.toLowerCase() === 'cpt-nuget-libraries';
-}
-
-function isNonProdProdLaneRepo(repo: string): boolean {
-  return repo.toLowerCase() === 'npm-libs';
+/** Package-library repos — cpt-nuget-libraries (NuGet) + npm-libs (npm). Both publish a prerelease
+ * on `development` and the official release on `test`; neither has a per-env stg/prod deploy. */
+function isPackageLibraryRepo(repo: string): boolean {
+  const key = repo.toLowerCase();
+  return key === 'cpt-nuget-libraries' || key === 'npm-libs';
 }
 
 /** Exact Git branch names per TV swim lane (CPT CD repos). */
@@ -125,8 +114,7 @@ export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput)
 }
 
 export function getDeployLaneConfig(repo: string): DeployLaneConfig {
-  if (isNonProdProdLaneRepo(repo)) return NUGET_LANE_CONFIG;
-  if (isNugetLibrariesRepo(repo)) return NUGET_LIBRARIES_LANE_CONFIG;
+  if (isPackageLibraryRepo(repo)) return PACKAGE_LIB_LANE_CONFIG;
   return DEFAULT_LANE_CONFIG;
 }
 
@@ -135,27 +123,19 @@ export function getNaLaneLabel(repo: string, lane: DeployLaneKey): string | null
   return getDeployLaneConfig(repo).naLanes?.[lane] ?? null;
 }
 
-export function mapEnvironmentToLane(repo: string, env: DeployEnvironmentKey): DeployLaneKey {
-  if (isNonProdProdLaneRepo(repo) && env !== 'prod') return 'nonprod';
+export function mapEnvironmentToLane(_repo: string, env: DeployEnvironmentKey): DeployLaneKey {
+  // Env maps 1:1 to its lane for every repo (package libs only surface dev/tst; the config's
+  // `order` decides which lanes render).
   return env;
 }
 
 /** Branches that belong to a swim lane for the given repo. */
 export function getBranchesForDeployLane(repo: string, lane: DeployLaneKey): readonly string[] {
-  if (isNonProdProdLaneRepo(repo)) {
-    if (lane === 'prod') return DEPLOY_ENV_BRANCHES.prod;
-    if (lane === 'nonprod') {
-      return [...DEPLOY_ENV_BRANCHES.dev, ...DEPLOY_ENV_BRANCHES.tst, ...DEPLOY_ENV_BRANCHES.stg];
-    }
-    return [];
-  }
-  if (isNugetLibrariesRepo(repo)) {
+  if (isPackageLibraryRepo(repo)) {
+    // 2-lane (Prerelease/Release). NOVA-3118: TST Build is dispatched from `development` after
+    // auto-merge, so head_branch is `development`, not `test`.
     if (lane === 'dev') return DEPLOY_ENV_BRANCHES.dev;
-    // NOVA-3118: TST Build is dispatched from `development` after auto-merge (head_branch is not `test`).
     if (lane === 'tst') return [...DEPLOY_ENV_BRANCHES.tst, ...DEPLOY_ENV_BRANCHES.dev];
-    if (lane === 'stg') return DEPLOY_ENV_BRANCHES.stg;
-    // Deploy Version is workflow_dispatch on `development` (report-only today).
-    if (lane === 'prod') return [...DEPLOY_ENV_BRANCHES.prod, ...DEPLOY_ENV_BRANCHES.dev];
     return [];
   }
   if (lane === 'dev') return DEPLOY_ENV_BRANCHES.dev;
