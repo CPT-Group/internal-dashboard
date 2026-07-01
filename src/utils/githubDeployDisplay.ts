@@ -133,10 +133,12 @@ export type DeployCardHealth = 'ok' | 'warning' | 'error';
  * `na` = lane does not exist for this repo (package repo Stg/Prod); excluded from health like
  * `idle`, but rendered as a static "N/A" row rather than an empty idle row.
  */
-export type DeployLaneSnapshotState = 'ok' | 'running' | 'failed' | 'queued' | 'idle' | 'na';
+export type DeployLaneSnapshotState = 'ok' | 'running' | 'failed' | 'queued' | 'idle' | 'na' | 'cancelled';
 
 function nonIdleLaneStates(states: readonly DeployLaneSnapshotState[]): DeployLaneSnapshotState[] {
-  return states.filter((state) => state !== 'idle' && state !== 'na');
+  // `cancelled` is excluded like `idle`/`na`: a deliberately-cancelled deploy left the env
+  // unchanged, so it must not drag card health to error/warning.
+  return states.filter((state) => state !== 'idle' && state !== 'na' && state !== 'cancelled');
 }
 
 /** Worst-lane card health: any failed lane → error; any active lane → warning; all ok → ok. */

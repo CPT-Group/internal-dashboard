@@ -63,8 +63,12 @@ export interface GitHubDeployLaneSnapshot {
   htmlUrl: string | null;
 }
 
-/** Lane pill states. Mirrors the deployment-status `state` and workflow run/conclusion model. */
-export type GitHubDeployLaneState = 'ok' | 'running' | 'failed' | 'queued' | 'idle';
+/**
+ * Lane pill states. Mirrors the deployment-status `state` and workflow run/conclusion model.
+ * `cancelled` = the deploy run was deliberately cancelled (e.g. deploy-ordering hold) — NOT a real
+ * failure; the env is unchanged. Rendered neutral (not danger red) and excluded from card health.
+ */
+export type GitHubDeployLaneState = 'ok' | 'running' | 'failed' | 'queued' | 'idle' | 'cancelled';
 
 export interface GitHubDeployRunSummary {
   id: number;

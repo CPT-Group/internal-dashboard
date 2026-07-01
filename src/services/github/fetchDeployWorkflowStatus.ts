@@ -546,6 +546,31 @@ function deploymentLaneEnvsForRepo(repo: string): DeployEnvironmentKey[] {
   return envs;
 }
 
+/**
+ * Reclassify a `failed` lane snapshot to `cancelled` when its originating run was deliberately
+ * cancelled. GitHub reports a cancelled deploy run's Deployment status as `error` (→ `failed`),
+ * but a cancelled deploy is NOT a failure — the env is unchanged (e.g. an agent cancels a stg
+ * deploy to hold deploy ordering). The run is looked up in the ALREADY-fetched runs by the id
+ * embedded in the snapshot's htmlUrl (`/actions/runs/<id>`), so this costs no extra API call.
+ */
+function reclassifyCancelledLaneSnapshots(
+  laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>,
+  runs: readonly FetchedRunEntry[]
+): Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> {
+  const out: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = { ...laneSnapshots };
+  for (const key of Object.keys(out) as DeployLaneKey[]) {
+    const snap = out[key];
+    if (!snap || snap.state !== 'failed' || !snap.htmlUrl) continue;
+    const runId = runIdFromStatusUrl(snap.htmlUrl);
+    if (runId === null) continue;
+    const entry = runs.find((r) => r.run.id === runId);
+    if (entry && entry.run.status === 'completed' && entry.run.conclusion === 'cancelled') {
+      out[key] = { ...snap, state: 'cancelled' };
+    }
+  }
+  return out;
+}
+
 export async function fetchDeployWorkflowStatus(
   token: string,
   monitor: GitHubDeployLiveWorkflowMonitor
@@ -613,10 +638,13 @@ export async function fetchDeployWorkflowStatus(
 
   // dev/tst lanes ← dedicated-workflow latest run; stg/prod lanes ← Deployments API (above).
   // Deployment-based snapshots win on conflict, but dev/tst and stg/prod never collide.
-  const laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = {
-    ...buildRunBasedLaneSnapshots(repo, runs),
-    ...deploymentLaneSnapshots,
-  };
+  const laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = reclassifyCancelledLaneSnapshots(
+    {
+      ...buildRunBasedLaneSnapshots(repo, runs),
+      ...deploymentLaneSnapshots,
+    },
+    runs
+  );
 
   return {
     ...base,

@@ -126,6 +126,7 @@ function runStateFromSummary(run: GitHubDeployRunSummary): EnvironmentRunState {
     return isQueuedLikeRunStatus(run.status) ? 'queued' : 'running';
   }
   if (run.conclusion === 'success') return 'ok';
+  if (run.conclusion === 'cancelled') return 'cancelled';
   return 'failed';
 }
 
@@ -224,6 +225,8 @@ function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): Environmen
 
 function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger' | 'warning' | 'secondary' | 'info' {
   if (snapshot.state === 'ok') return 'success';
+  // Cancelled = deliberately aborted deploy (not a failure) → neutral, never danger red.
+  if (snapshot.state === 'cancelled') return 'secondary';
   if (snapshot.state === 'failed') return 'danger';
   if (snapshot.state === 'running') return 'warning';
   if (snapshot.state === 'queued') return 'info';
@@ -232,6 +235,7 @@ function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger
 
 function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'ok') return 'OK';
+  if (snapshot.state === 'cancelled') return 'Cancelled';
   if (snapshot.state === 'failed') return 'Fail';
   if (snapshot.state === 'running') return 'In Progress';
   if (snapshot.state === 'queued') return 'Queued';
@@ -241,6 +245,8 @@ function environmentStatusText(snapshot: EnvironmentSnapshot): string {
 
 function environmentRowClass(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'ok') return styles.environmentOk;
+  // Neutral row styling (like idle) — a cancelled deploy left the env unchanged, not failed.
+  if (snapshot.state === 'cancelled') return styles.environmentIdle;
   if (snapshot.state === 'failed') return styles.environmentFailed;
   if (snapshot.state === 'running') return styles.environmentRunning;
   if (snapshot.state === 'queued') return styles.environmentQueued;

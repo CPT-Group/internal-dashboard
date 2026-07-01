@@ -72,7 +72,10 @@ export function laneStateFromRunStatus(
     }
     return 'running';
   }
-  return conclusion === 'success' ? 'ok' : 'failed';
+  if (conclusion === 'success') return 'ok';
+  // A deliberately-cancelled run is not a failure — render it neutral, not danger red.
+  if (conclusion === 'cancelled') return 'cancelled';
+  return 'failed';
 }
 
 const PULL_REQUEST_NUMBER_PATTERN = /pull request\s+#(\d+)/i;

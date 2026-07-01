@@ -449,7 +449,9 @@ function testDeploymentStateMapsToLanePill() {
 function testRunStatusMapsToLanePill() {
   assert.equal(laneStateFromRunStatus('completed', 'success'), 'ok');
   assert.equal(laneStateFromRunStatus('completed', 'failure'), 'failed');
-  assert.equal(laneStateFromRunStatus('completed', 'cancelled'), 'failed');
+  // A deliberately-cancelled run is NOT a failure — it maps to the neutral `cancelled` pill.
+  assert.equal(laneStateFromRunStatus('completed', 'cancelled'), 'cancelled');
+  assert.equal(laneStateFromRunStatus('completed', 'timed_out'), 'failed');
   assert.equal(laneStateFromRunStatus('in_progress', null), 'running');
   assert.equal(laneStateFromRunStatus('queued', null), 'queued');
   assert.equal(laneStateFromRunStatus('waiting', null), 'queued');
