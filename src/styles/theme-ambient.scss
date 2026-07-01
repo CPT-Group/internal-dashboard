@@ -253,7 +253,20 @@
 // theme brightens them + composites fireworks with mix-blend-mode: screen (the
 // only post-2022 feature — degrades to normal compositing on old Tizen).
 
-.app-ambient-overlay__americana-stars,
+// Dense tiled star wallpaper — a repeating red/white/blue star tile that drifts
+// diagonally in a seamless loop (exactly one tile per cycle), the same mechanism
+// as the Barbie hearts. Per-variant tile: navy/red/silver on the light grey field,
+// bright white/red/blue on the dark twilight sky. Data-URI SVG (no color-mix).
+.app-ambient-overlay__americana-stars {
+  position: absolute;
+  inset: 0;
+  // Light-variant star tile (navy / red / silver).
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(22 26) scale(6)' fill='%2320409a' fill-opacity='.8'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(70 20) scale(4.5)' fill='%23c1121f' fill-opacity='.8'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(46 56) scale(7)' fill='%237a8296' fill-opacity='.7'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(88 80) scale(3.8)' fill='%23c1121f' fill-opacity='.7'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(12 82) scale(4.2)' fill='%2320409a' fill-opacity='.75'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(78 50) scale(3)' fill='%237a8296' fill-opacity='.6'/%3E%3C/svg%3E");
+  background-size: 96px 96px;
+  opacity: 0.5;
+  animation: aa-stars-drift 16s linear infinite;
+}
+
 .app-ambient-overlay__americana-fw {
   position: absolute;
   inset: 0;
@@ -261,48 +274,24 @@
   height: 100%;
   overflow: visible;
 
-  // Light variant (all-american) defaults — silver-grey "white" so stars stay
-  // visible on the light-grey field (pure white would vanish there).
+  // Firework colors — light-variant defaults (saturated so they read on grey).
   --aa-blue: #20409a;
   --aa-red: #c1121f;
-  --aa-white: #6b7488;
+  --aa-white: #7a8296;
 }
 
-// Dark twilight variant — bright stars + additive fireworks over the night sky.
+// Dark twilight variant — bright star tile + additive fireworks over the sky.
 html[data-theme='all-american-night'] {
-  .app-ambient-overlay__americana-stars,
+  .app-ambient-overlay__americana-stars {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(22 26) scale(6)' fill='%237aa2ff' fill-opacity='.9'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(70 20) scale(4.5)' fill='%23ff5a5f' fill-opacity='.9'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(46 56) scale(7)' fill='%23ffffff' fill-opacity='.85'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(88 80) scale(3.8)' fill='%23ff5a5f' fill-opacity='.8'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(12 82) scale(4.2)' fill='%237aa2ff' fill-opacity='.85'/%3E%3Cpath d='M0,-1L.225,-.309L.951,-.309L.363,.118L.588,.809L0,.382L-.588,.809L-.363,.118L-.951,-.309L-.225,-.309Z' transform='translate(78 50) scale(3)' fill='%23ffffff' fill-opacity='.8'/%3E%3C/svg%3E");
+    opacity: 0.72;
+  }
   .app-ambient-overlay__americana-fw {
     --aa-blue: #7aa2ff;
     --aa-red: #ff5a5f;
     --aa-white: #ffffff;
-  }
-  .app-ambient-overlay__americana-fw {
     mix-blend-mode: screen;
   }
-}
-
-.aa-star--red { fill: var(--aa-red); }
-.aa-star--white { fill: var(--aa-white); }
-.aa-star--blue { fill: var(--aa-blue); }
-
-// Field stars twinkle — opacity only (per-star attribute transform holds position).
-.aa-star {
-  animation-name: aa-twinkle;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-// Whole field drifts slowly on one cheap group transform.
-.aa-starfield {
-  animation: aa-star-drift 46s ease-in-out infinite alternate;
-}
-
-// Rising stars — outer group translates up and loops; opacity fades at the ends.
-.aa-riser {
-  opacity: 0;
-  animation-name: aa-rise;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
 }
 
 // Fireworks — outer group opacity is the firing window; inner burst expands.
@@ -322,9 +311,9 @@ html[data-theme='all-american-night'] {
 .aa-fw__core { fill: var(--aa-white); }
 .aa-fw__trail {
   stroke: var(--aa-red);
-  stroke-width: 1.4;
+  stroke-width: 1.8;
   stroke-linecap: round;
-  opacity: 0.7;
+  opacity: 0.78;
 }
 
 .aa-fw--red {
@@ -341,50 +330,28 @@ html[data-theme='all-american-night'] {
   .aa-fw__core { fill: var(--aa-blue); }
 }
 
-@keyframes aa-twinkle {
-  0%, 100% { opacity: 0.28; }
-  50% { opacity: 0.9; }
-}
-
-@keyframes aa-star-drift {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-26px, -18px, 0); }
-}
-
-@keyframes aa-rise {
-  0% {
-    transform: translateY(0);
-    opacity: 0;
-  }
-  8% { opacity: 0.85; }
-  90% { opacity: 0.85; }
-  100% {
-    transform: translateY(-1120px);
-    opacity: 0;
-  }
+// Seamless diagonal drift — shift exactly one tile (96px) so the loop is invisible.
+@keyframes aa-stars-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 96px 96px; }
 }
 
 @keyframes aa-fw-show {
-  0%, 96% { opacity: 0; }
-  97% { opacity: 1; }
-  98.5% { opacity: 0.9; }
+  0%, 95% { opacity: 0; }
+  96.5% { opacity: 1; }
+  98% { opacity: 0.9; }
   100% { opacity: 0; }
 }
 
 @keyframes aa-fw-expand {
-  0%, 96% { transform: scale(0.01) translateY(0); }
-  98% { transform: scale(0.72) translateY(2px); }
-  100% { transform: scale(1) translateY(20px); }
+  0%, 95% { transform: scale(0.01) translateY(0); }
+  97.5% { transform: scale(0.72) translateY(3px); }
+  100% { transform: scale(1) translateY(24px); }
 }
 
-// Freeze the All American layer under prefers-reduced-motion; hide fireworks so
-// they don't sit frozen mid-burst, keep only the calm star field.
+// Freeze the drift and hide the fireworks under prefers-reduced-motion; the
+// static star field remains.
 @media (prefers-reduced-motion: reduce) {
-  .app-ambient-overlay__americana-stars *,
-  .app-ambient-overlay__americana-fw * {
-    animation: none !important;
-  }
+  .app-ambient-overlay__americana-stars { animation: none !important; }
   .app-ambient-overlay__americana-fw { display: none; }
-  .aa-star { opacity: 0.55; }
-  .aa-riser { opacity: 0; }
 }
