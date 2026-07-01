@@ -245,3 +245,146 @@
     animation: none !important;
   }
 }
+
+// ── All American ambient layer ────────────────────────────────────────────────
+// Pure CSS/SVG red/white/blue stars + fireworks. Concrete hex/rgba only (NO
+// color-mix — Tizen TV). Colors via `--aa-*` vars tuned per variant. The LIGHT
+// theme uses saturated tones that read on the pale grey field; the DARK twilight
+// theme brightens them + composites fireworks with mix-blend-mode: screen (the
+// only post-2022 feature — degrades to normal compositing on old Tizen).
+
+.app-ambient-overlay__americana-stars,
+.app-ambient-overlay__americana-fw {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+
+  // Light variant (all-american) defaults — silver-grey "white" so stars stay
+  // visible on the light-grey field (pure white would vanish there).
+  --aa-blue: #20409a;
+  --aa-red: #c1121f;
+  --aa-white: #6b7488;
+}
+
+// Dark twilight variant — bright stars + additive fireworks over the night sky.
+html[data-theme='all-american-night'] {
+  .app-ambient-overlay__americana-stars,
+  .app-ambient-overlay__americana-fw {
+    --aa-blue: #7aa2ff;
+    --aa-red: #ff5a5f;
+    --aa-white: #ffffff;
+  }
+  .app-ambient-overlay__americana-fw {
+    mix-blend-mode: screen;
+  }
+}
+
+.aa-star--red { fill: var(--aa-red); }
+.aa-star--white { fill: var(--aa-white); }
+.aa-star--blue { fill: var(--aa-blue); }
+
+// Field stars twinkle — opacity only (per-star attribute transform holds position).
+.aa-star {
+  animation-name: aa-twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+// Whole field drifts slowly on one cheap group transform.
+.aa-starfield {
+  animation: aa-star-drift 46s ease-in-out infinite alternate;
+}
+
+// Rising stars — outer group translates up and loops; opacity fades at the ends.
+.aa-riser {
+  opacity: 0;
+  animation-name: aa-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+// Fireworks — outer group opacity is the firing window; inner burst expands.
+// Both share the per-firework `--aa-dur` / `--aa-delay` so flash + expand sync.
+.aa-fw {
+  opacity: 0;
+  animation: aa-fw-show var(--aa-dur) ease-out var(--aa-delay) infinite;
+}
+
+.aa-fw__burst {
+  transform: scale(0.01);
+  transform-origin: center;
+  animation: aa-fw-expand var(--aa-dur) cubic-bezier(0.12, 0.72, 0.24, 1) var(--aa-delay) infinite;
+}
+
+.aa-fw__spark { fill: var(--aa-red); }
+.aa-fw__core { fill: var(--aa-white); }
+.aa-fw__trail {
+  stroke: var(--aa-red);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+.aa-fw--red {
+  .aa-fw__spark { fill: var(--aa-red); }
+  .aa-fw__trail { stroke: var(--aa-red); }
+}
+.aa-fw--blue {
+  .aa-fw__spark { fill: var(--aa-blue); }
+  .aa-fw__trail { stroke: var(--aa-blue); }
+}
+.aa-fw--white {
+  .aa-fw__spark { fill: var(--aa-white); }
+  .aa-fw__trail { stroke: var(--aa-white); }
+  .aa-fw__core { fill: var(--aa-blue); }
+}
+
+@keyframes aa-twinkle {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes aa-star-drift {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-26px, -18px, 0); }
+}
+
+@keyframes aa-rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  8% { opacity: 0.85; }
+  90% { opacity: 0.85; }
+  100% {
+    transform: translateY(-1120px);
+    opacity: 0;
+  }
+}
+
+@keyframes aa-fw-show {
+  0%, 96% { opacity: 0; }
+  97% { opacity: 1; }
+  98.5% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes aa-fw-expand {
+  0%, 96% { transform: scale(0.01) translateY(0); }
+  98% { transform: scale(0.72) translateY(2px); }
+  100% { transform: scale(1) translateY(20px); }
+}
+
+// Freeze the All American layer under prefers-reduced-motion; hide fireworks so
+// they don't sit frozen mid-burst, keep only the calm star field.
+@media (prefers-reduced-motion: reduce) {
+  .app-ambient-overlay__americana-stars *,
+  .app-ambient-overlay__americana-fw * {
+    animation: none !important;
+  }
+  .app-ambient-overlay__americana-fw { display: none; }
+  .aa-star { opacity: 0.55; }
+  .aa-riser { opacity: 0; }
+}

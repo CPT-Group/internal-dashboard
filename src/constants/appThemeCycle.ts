@@ -50,6 +50,8 @@ export const APP_THEME_CYCLE_ORDER = [
   'colorblind-blue-yellow-dark',
   'colorblind-mono-light',
   'colorblind-mono-dark',
+  'all-american',
+  'all-american-night',
 ] as const;
 
 export type AppTheme = (typeof APP_THEME_CYCLE_ORDER)[number];

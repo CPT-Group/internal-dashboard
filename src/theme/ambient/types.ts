@@ -12,7 +12,12 @@ export type ThemeAmbientPreset =
   | 'midas-dust'
 
 /** Decorative static overlays rendered behind the particles. */
-export type ThemeAmbientOverlay = 'frost-noise' | 'aurora-glow' | 'lava-cracks' | 'barbie-bubbles'
+export type ThemeAmbientOverlay =
+  | 'frost-noise'
+  | 'aurora-glow'
+  | 'lava-cracks'
+  | 'barbie-bubbles'
+  | 'americana'
 
 export interface ThemeAmbientConfig {
   readonly preset?: ThemeAmbientPreset

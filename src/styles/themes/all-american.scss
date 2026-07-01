@@ -1,0 +1,215 @@
+@use '../mixins/badge-theme' as badge;
+@use '../mixins/glass' as glass;
+
+// All American — LIGHT. Mirror of cpt-internal-tools customThemes.ts (all-american):
+// Old Glory navy primary (#20409a), flag-red chrome (#b22234) over a soft cool-grey
+// field. Concrete hex/rgba only (no color-mix — Samsung Tizen TV constraint). The
+// drifting red/white/blue stars + fireworks come from the shared `americana` ambient
+// overlay (ThemeAmbientAmericana + theme-ambient.scss), gated by data-theme.
+
+html[data-theme='all-american'],
+[data-theme='all-american'] {
+  --header-bg: #b22234 !important;
+  --header-fg: #ffffff !important;
+  --header-border: 1px solid #8f1b2a !important;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.14) !important;
+  --window-bg: #e8eaef !important;
+  --window-fg: #182142 !important;
+  --window-border: 1px solid #c7cbd6 !important;
+  --window-surface-bg: #ffffff !important;
+  --window-surface-fg: #182142 !important;
+  --window-surface-border: 1px solid #c7cbd6 !important;
+  --input-bg: #f2f4f8 !important;
+  --input-fg: #182142 !important;
+  --input-border: 1px solid #c7cbd6 !important;
+  --button-bg: #ffffff !important;
+  --button-fg: #182142 !important;
+  --button-hover-bg: #e6e9f0 !important;
+  --menu-item-hover-bg: #eceff5 !important;
+  --status-icon-fill: #ffffff !important;
+  --status-icon-stroke: #ffffff !important;
+  --status-icon-stroke-offline: rgb(120, 128, 145) !important;
+  --page-background: #e8eaef !important;
+  --text-primary: #182142 !important;
+  --button-primary-background: #20409a !important;
+  --button-primary-background-hover: #1a3580 !important;
+  --button-primary-text: #ffffff !important;
+  --maskbg: rgba(10, 16, 35, 0.42) !important;
+  --focus-ring: 0 0 0 0.2rem rgba(32, 64, 154, 0.35) !important;
+  --highlight-bg: rgba(32, 64, 154, 0.12) !important;
+  --highlight-text-color: #182142 !important;
+  --color-danger: #c1121f !important;
+  --surface-ground: #e8eaef !important;
+  --surface-section: #e8eaef !important;
+  --surface-card: #ffffff !important;
+  --surface-overlay: #ffffff !important;
+  --surface-border: #c7cbd6 !important;
+  --surface-hover: #e0e3ec !important;
+  --surface-0: #ffffff !important;
+  --surface-50: #f6f7fa !important;
+  --surface-100: #eceff3 !important;
+  --surface-200: #e1e4ec !important;
+  --surface-300: #cfd3de !important;
+  --surface-400: #b3b9c8 !important;
+  --surface-500: #8b93a7 !important;
+  --surface-600: #667089 !important;
+  --surface-700: #444e6c !important;
+  --surface-800: #28304f !important;
+  --surface-900: #182142 !important;
+  --surface-a: #ffffff !important;
+  --surface-b: #e8eaef !important;
+  --surface-c: #eceff3 !important;
+  --surface-d: #c7cbd6 !important;
+  --surface-e: #ffffff !important;
+  --surface-f: #ffffff !important;
+  --gray-50: #e8eaef !important;
+  --gray-100: #e8eaef !important;
+  --gray-200: #e8eaef !important;
+  --gray-300: #e8eaef !important;
+  --gray-400: #e8eaef !important;
+  --gray-500: #e8eaef !important;
+  --gray-600: #e8eaef !important;
+  --gray-700: #e8eaef !important;
+  --gray-800: #e8eaef !important;
+  --gray-900: #e8eaef !important;
+  --text-color: #182142 !important;
+  --text-color-secondary: #54607d !important;
+  --primary-color: #20409a !important;
+  --primary-color-text: #ffffff !important;
+  --scrollbar-track-bg: #eceff3 !important;
+  --scrollbar-thumb-bg: #c7cbd6 !important;
+  --scrollbar-thumb-hover-bg: #aab2c6 !important;
+  --card-border: rgba(32, 64, 154, 0.14) !important;
+  --card-shadow: 0 2px 8px rgba(24, 33, 66, 0.1), 0 1px 2px rgba(24, 33, 66, 0.06) !important;
+  --corner-info-card-bg: rgba(255, 255, 255, 0.74) !important;
+  --corner-info-card-border: #c7cbd6 !important;
+  --corner-info-card-shadow: rgba(24, 33, 66, 0.16) !important;
+  --corner-info-card-divider: rgba(199, 203, 214, 0.5) !important;
+  --corner-info-card-hover-bg: #e0e3ec !important;
+  --tag-today-bg: rgba(32, 64, 154, 0.14) !important;
+  --tag-today-text: #182142 !important;
+  --tag-today-border: rgba(32, 64, 154, 0.4) !important;
+  --p-primary-color: var(--primary-color) !important;
+  --chart-bar-primary: rgba(32, 64, 154, 0.82) !important;
+  --chart-bar-primary-border: rgb(32, 64, 154) !important;
+  --chart-success: rgba(46, 125, 50, 0.78) !important;
+  --chart-success-border: rgb(46, 125, 50) !important;
+  --chart-danger: rgba(193, 18, 31, 0.78) !important;
+  --chart-danger-border: rgb(193, 18, 31) !important;
+  --chart-warning: rgba(245, 158, 11, 0.9) !important;
+  --chart-warning-border: rgb(245, 158, 11) !important;
+  --chart-label-color: #182142 !important;
+  --chart-info: rgba(32, 64, 154, 0.24) !important;
+  --chart-info-border: rgb(32, 64, 154) !important;
+  --chart-orange: rgba(193, 18, 31, 0.22) !important;
+  --chart-orange-border: rgb(193, 18, 31) !important;
+  --nova-accent: rgba(32, 64, 154, 0.7) !important;
+  --nova-accent-bg: rgba(32, 64, 154, 0.18) !important;
+  --nova-accent-border: rgb(32, 64, 154) !important;
+  --nova-accent-text: #182142 !important;
+  --bug-accent-bg: rgba(193, 18, 31, 0.2) !important;
+  --bug-accent-text: #182142 !important;
+  --activity-badge-info-text: #182142 !important;
+  --activity-badge-warning-text: #182142 !important;
+  --work-hours-badge-danger-text: #182142 !important;
+  --work-hours-badge-zero-bg: rgba(193, 18, 31, 0.22) !important;
+  --work-hours-badge-zero-text: #182142 !important;
+  --work-hours-badge-success-bg: rgba(46, 125, 50, 0.2) !important;
+  --work-hours-badge-success-text: #182142 !important;
+  --work-hours-badge-over-bg: rgba(245, 158, 11, 0.2) !important;
+  --work-hours-badge-over-text: #182142 !important;
+  --work-hours-badge-super-bg: rgba(32, 64, 154, 0.2) !important;
+  --work-hours-badge-super-text: #182142 !important;
+  --work-hours-danger-fill: rgba(193, 18, 31, 0.32) !important;
+  --work-hours-success-fill: rgba(46, 125, 50, 0.22) !important;
+  --work-hours-warning-fill: rgba(245, 158, 11, 0.24) !important;
+  --work-hours-orange-fill: rgba(193, 18, 31, 0.24) !important;
+  --work-hours-ahead-fill: rgba(32, 64, 154, 0.2) !important;
+  --work-hours-super-fill: rgba(122, 162, 255, 0.22) !important;
+  --work-hours-neutral-fill: rgba(32, 64, 154, 0.2) !important;
+  --work-hours-super-border: rgb(122, 162, 255) !important;
+  --github-repo-label-color: #182142 !important;
+  --github-repo-api-bg: rgba(32, 64, 154, 0.2) !important;
+  --github-repo-api-border: rgba(32, 64, 154, 0.5) !important;
+  --github-repo-tools-bg: rgba(46, 125, 50, 0.18) !important;
+  --github-repo-tools-border: rgba(46, 125, 50, 0.48) !important;
+  --github-repo-nuget-bg: rgba(193, 18, 31, 0.18) !important;
+  --github-repo-nuget-border: rgba(193, 18, 31, 0.48) !important;
+  --github-repo-migrations-bg: rgba(245, 158, 11, 0.2) !important;
+  --github-repo-migrations-border: rgba(245, 158, 11, 0.5) !important;
+  --github-repo-infra-bg: rgba(46, 125, 50, 0.18) !important;
+  --github-repo-infra-border: rgba(46, 125, 50, 0.48) !important;
+  --github-deploy-progressbar-track-bg: rgba(199, 203, 214, 0.5) !important;
+  --github-deploy-progressbar-fill: rgba(32, 64, 154, 0.85) !important;
+  --github-deploy-surface-muted-bg: rgba(255, 255, 255, 0.96) !important;
+  --github-deploy-surface-muted-border: rgba(199, 203, 214, 0.55) !important;
+  --github-deploy-branch-pill-bg: rgba(255, 255, 255, 0.98) !important;
+  --github-deploy-branch-pill-border: rgba(199, 203, 214, 0.6) !important;
+  --github-deploy-branch-pill-text: #182142 !important;
+  --github-deploy-running-chip-bg: rgba(245, 158, 11, 0.14) !important;
+  --github-deploy-running-chip-border: rgba(245, 158, 11, 0.5) !important;
+  --github-deploy-running-chip-text: #182142 !important;
+  --github-deploy-queue-chip-bg: rgba(245, 158, 11, 0.2) !important;
+  --github-deploy-queue-chip-border: rgba(245, 158, 11, 0.55) !important;
+  --github-deploy-queue-chip-text: #182142 !important;
+  --github-deploy-inline-running-track: rgba(245, 158, 11, 0.18) !important;
+  --github-deploy-inline-queued-track: rgba(245, 158, 11, 0.16) !important;
+  --github-deploy-footer-ticker-bg: rgba(255, 255, 255, 0.98) !important;
+  --github-deploy-footer-ticker-border: rgba(178, 34, 52, 0.34) !important;
+  --github-deploy-footer-ticker-text: #b22234 !important;
+  --github-deploy-footer-ticker-shadow: none !important;
+  --content-text-size: 1.05rem !important;
+  --github-deploy-timeline-meta-color: #b22234 !important;
+  --data-quality-valid: #a7d5ab !important;
+  --data-quality-warning: #f3cf9a !important;
+  --data-quality-error: #eaa0a5 !important;
+  --data-quality-empty: #cfd3de !important;
+  --progress-spinner-size-sm: 14px !important;
+  --progress-spinner-size-md: 18px !important;
+  --progress-spinner-color: var(--primary-color) !important;
+  --multiselect-chip-bg: #e6e9f0 !important;
+  --multiselect-chip-fg: #182142 !important;
+  --multiselect-chip-icon-fg: #54607d !important;
+  --multiselect-chip-border: 1px solid #c7cbd6 !important;
+  --toast-success-bg: #dcefdd !important;
+  --toast-success-border: #2e7d32 !important;
+  --toast-success-text: #17431a !important;
+  --toast-info-bg: #e4e9f7 !important;
+  --toast-info-border: #20409a !important;
+  --toast-info-text: #172a63 !important;
+  --toast-warn-bg: #fdefd0 !important;
+  --toast-warn-border: #f59e0b !important;
+  --toast-warn-text: #7a4c07 !important;
+  --toast-error-bg: #fadcde !important;
+  --toast-error-border: #c1121f !important;
+  --toast-error-text: #6e0a13 !important;
+  --cpt-skeleton-bg: #e6e9f0 !important;
+  --cpt-skeleton-sheen: rgba(255, 255, 255, 0.8) !important;
+
+  @include glass.glass-tokens(
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.92),
+    rgba(32, 64, 154, 0.32),
+    rgba(32, 64, 154, 0.07),
+    rgba(32, 64, 154, 0.26),
+    rgba(255, 255, 255, 0.65),
+    rgba(255, 255, 255, 0.22),
+    rgba(24, 33, 66, 0.18),
+    rgba(255, 255, 255, 0.7)
+  );
+
+  @include badge.badge-theme-tokens(
+    #20409a,
+    #ffffff,
+    rgb(46, 125, 50),
+    #ffffff,
+    rgb(32, 64, 154),
+    #ffffff,
+    rgb(245, 158, 11),
+    #182142,
+    rgb(193, 18, 31),
+    #ffffff,
+    rgb(193, 18, 31)
+  );
+  @include badge.badge-theme-rules();
+}
