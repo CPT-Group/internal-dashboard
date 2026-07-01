@@ -88,6 +88,16 @@ function hasRateLimitOrAuthError(repos: GitHubDeployWorkflowStatus[]): boolean {
   });
 }
 
+/**
+ * A repo's GitHub Deployments API fetch degraded (403/404/timeout → empty), which silently empties
+ * its stg/prod lane snapshots even though the run fetch (dev/tst) succeeded. Treat this like a
+ * rate-limit: prefer the last-good cache over publishing a false "N/A" for a real prior deploy.
+ * This is the guard for the transient stale-N/A that surfaced on 2026-06-30.
+ */
+function hasDeploymentsFetchDegraded(repos: GitHubDeployWorkflowStatus[]): boolean {
+  return liveDeployRows(repos).some((row) => row.deploymentsDiag?.ok === false);
+}
+
 function toSuccessResponse(
   entry: DeployStatusCacheEntry,
   source: DeployStatusSource,
@@ -144,11 +154,14 @@ async function getFreshDeployStatus(nowMs: number): Promise<DeployStatusCacheEnt
     const fresh = await fetchDeployStatusFromTokenChain();
     const freshHasErrors = hasAnyRepoError(fresh.repos);
     const freshHasRateLimit = hasRateLimitOrAuthError(fresh.repos);
+    const freshHasDeploymentsDegraded = hasDeploymentsFetchDegraded(fresh.repos);
     const hasUsableStaleCache =
       deployStatusCache != null &&
       nowMs - deployStatusCache.fetchedAtMs <= DEPLOY_STATUS_STALE_MAX_MS;
 
-    if (freshHasErrors && freshHasRateLimit && hasUsableStaleCache) {
+    // Prefer the last-good cache when the fresh fetch is degraded — a hard rate-limit/auth error OR
+    // a silently-empty Deployments API fetch (which would false-"N/A" real stg/prod deploys).
+    if ((freshHasDeploymentsDegraded || (freshHasErrors && freshHasRateLimit)) && hasUsableStaleCache) {
       rateLimitCooldownUntilMs = nowMs + DEPLOY_STATUS_RATE_LIMIT_COOLDOWN_MS;
       return deployStatusCache as DeployStatusCacheEntry;
     }
