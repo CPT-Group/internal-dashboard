@@ -387,17 +387,16 @@ function testCardHealthWhenProdFailsButDevSucceeded() {
   assert.equal(tagValueFromLaneStates(devOnlyOk), 'success');
 }
 
-function testNugetStgProdRenderAsNaPackageLanes() {
+function testNugetIsTwoLanePublishRepo() {
   const repo = 'cpt-nuget-libraries';
   const config = getDeployLaneConfig(repo);
-  // Package repo keeps a 4-lane layout but Stg/Prod are N/A (publish steps, not deploys).
-  assert.deepEqual([...config.order], ['dev', 'tst', 'stg', 'prod']);
+  // Package repo publishes on exactly two branches: development (prerelease) + test (release).
+  // staging/production never publish, so the honest card is 2-lane — no dead Stg/Prod rows.
+  assert.deepEqual([...config.order], ['dev', 'tst']);
   assert.equal(getNaLaneLabel(repo, 'dev'), null, 'Dev is a real lane');
   assert.equal(getNaLaneLabel(repo, 'tst'), null, 'Tst is a real lane');
-  assert.equal(getNaLaneLabel(repo, 'stg'), 'N/A — package repo');
-  assert.equal(getNaLaneLabel(repo, 'prod'), 'N/A — package repo');
 
-  // The former report-only Prod stub is gone: no workflow rule can match a Prod deploy lane.
+  // No Stg/Prod deploy lane exists at all now (no config entry, no workflow rule).
   assert.equal(getPrimaryWorkflowIdsForDeployLane(repo, 'prod'), null);
   assert.equal(getPrimaryWorkflowIdsForDeployLane(repo, 'stg'), null);
 }
@@ -522,7 +521,7 @@ function main() {
   testP2pResolvePromoteOrderHelper();
   testP2pPromoteWaveIgnoresStaleSameShaRuns();
   testP2pPromoteProdFromOnpremPrdDeployment();
-  testNugetStgProdRenderAsNaPackageLanes();
+  testNugetIsTwoLanePublishRepo();
   testStandardRepoHasNoNaLanes();
   testCardHealthWhenProdFailsButDevSucceeded();
   testIdleWindowHelper();

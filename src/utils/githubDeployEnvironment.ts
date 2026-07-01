@@ -31,21 +31,18 @@ const NUGET_LANE_CONFIG: DeployLaneConfig = {
 };
 
 /**
- * cpt-nuget-libraries is a PACKAGE repo: it builds/tests on Dev and Tst then publishes — it has
- * no Stg or Prod *deploy* lane. Show Stg/Prod as "N/A — package repo" instead of mapping Prod to
- * a report-only stub workflow or rendering an empty idle row for a non-existent Stg lane.
+ * cpt-nuget-libraries is a PACKAGE repo (GitHub Packages, not per-env deploy). It publishes on
+ * exactly TWO branches — `development` → PRERELEASE packages, `test` → the OFFICIAL/stable release
+ * that prod apps consume. `staging`/`production` branches exist for parity but NEVER publish
+ * (`deploy-version` is report-only). So the honest board is a 2-lane card of the branches that
+ * actually publish — no dead Stg/Prod rows. (Labels stay Dev/Tst to match the real branch names;
+ * Dev = prerelease, Tst = official release.)
  */
 const NUGET_LIBRARIES_LANE_CONFIG: DeployLaneConfig = {
-  order: ['dev', 'tst', 'stg', 'prod'],
+  order: ['dev', 'tst'],
   labels: {
     dev: 'Dev',
     tst: 'Tst',
-    stg: 'Stg',
-    prod: 'Prod',
-  },
-  naLanes: {
-    stg: 'N/A — package repo',
-    prod: 'N/A — package repo',
   },
 };
 
