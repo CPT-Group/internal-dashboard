@@ -35,14 +35,18 @@ const NUGET_LANE_CONFIG: DeployLaneConfig = {
  * exactly TWO branches — `development` → PRERELEASE packages, `test` → the OFFICIAL/stable release
  * that prod apps consume. `staging`/`production` branches exist for parity but NEVER publish
  * (`deploy-version` is report-only). So the honest board is a 2-lane card of the branches that
- * actually publish — no dead Stg/Prod rows. (Labels stay Dev/Tst to match the real branch names;
- * Dev = prerelease, Tst = official release.)
+ * actually publish — no dead Stg/Prod rows. Verified functionally (not just by branch name):
+ * `development` publishes a SemVer2 PRERELEASE (`<base>-development.<run>.<sha>`), `test`
+ * publishes the STABLE/official version consumed by prod apps — so the lanes are labelled by what
+ * they ARE (Prerelease / Release), which self-documents that Tst = the stable feed. No stg/prod
+ * package deploy exists BY DESIGN: the immutable .nupkg is consumed identically by every consumer
+ * env, and the real gate is each consuming app's own dev→tst→stg→prd pipeline.
  */
 const NUGET_LIBRARIES_LANE_CONFIG: DeployLaneConfig = {
   order: ['dev', 'tst'],
   labels: {
-    dev: 'Dev',
-    tst: 'Tst',
+    dev: 'Prerelease',
+    tst: 'Release',
   },
 };
 
