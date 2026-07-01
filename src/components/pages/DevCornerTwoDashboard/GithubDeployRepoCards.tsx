@@ -40,10 +40,10 @@ export interface GithubDeployRepoCardsProps {
   showBranchContext?: boolean;
 }
 
-type EnvironmentRunState = DeployLaneSnapshotState;
+export type EnvironmentRunState = DeployLaneSnapshotState;
 const IDLE_AFTER_DAYS = 7;
 
-interface EnvironmentSnapshot {
+export interface EnvironmentSnapshot {
   key: DeployLaneKey;
   label: string;
   state: EnvironmentRunState;
@@ -168,7 +168,7 @@ function snapshotToEnvironmentSnapshot(
   };
 }
 
-function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
+export function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
   const laneConfig = getDeployLaneConfig(row.repo);
   const runs = row.recentRuns ?? [];
   const laneSnapshots = row.laneSnapshots ?? {};

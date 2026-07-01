@@ -8,23 +8,13 @@ import { MeterGroup } from 'primereact/metergroup';
 import { Skeleton } from 'primereact/skeleton';
 import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
-import {
-  findLatestRunForDeployLane,
-  getDeployLaneConfig,
-  isWithinDeployIdleWindow,
-  type DeployLaneKey,
-} from '@/utils/githubDeployEnvironment';
-import {
-  getActiveWorkflowIdsForDeployLane,
-  getPrimaryWorkflowIdsForDeployLane,
-} from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
-import { GithubDeployRepoCards } from './GithubDeployRepoCards';
+import type { DeployLaneSnapshotState } from '@/utils/githubDeployDisplay';
+import { GithubDeployRepoCards, deriveEnvironmentSnapshots } from './GithubDeployRepoCards';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
 
 type DeployEnvironmentState = 'success' | 'inProgress' | 'queued' | 'failed' | 'noData';
-const IDLE_AFTER_DAYS = 7;
 
 interface DeployLegendValue {
   label: string;
@@ -50,6 +40,23 @@ interface MeterLabelListProps {
   }>;
 }
 
+/** Map a card lane state (the SAME source the cards render) to a KPI/meter bucket. */
+function environmentStateFromLaneState(state: DeployLaneSnapshotState): DeployEnvironmentState {
+  switch (state) {
+    case 'ok':
+      return 'success';
+    case 'running':
+      return 'inProgress';
+    case 'queued':
+      return 'queued';
+    case 'failed':
+      return 'failed';
+    // cancelled / idle / na are neutral — never counted as a failure.
+    default:
+      return 'noData';
+  }
+}
+
 function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record<DeployEnvironmentState, number> {
   const totals: Record<DeployEnvironmentState, number> = {
     success: 0,
@@ -63,61 +70,12 @@ function summarizeEnvironmentStates(repos: GitHubDeployWorkflowStatus[]): Record
     if (repo.isPlaceholder) {
       continue;
     }
-    const laneConfig = getDeployLaneConfig(repo.repo);
-    const byEnv = laneConfig.order.reduce<Record<DeployLaneKey, DeployEnvironmentState>>((acc, key) => {
-      acc[key] = 'noData';
-      return acc;
-    }, {
-      dev: 'noData',
-      tst: 'noData',
-      stg: 'noData',
-      prod: 'noData',
-    });
-
-    const runs = repo.recentRuns ?? [];
-
-    for (const lane of laneConfig.order) {
-      const run = findLatestRunForDeployLane(
-        repo.repo,
-        lane,
-        runs,
-        {
-          primaryWorkflowIds: getPrimaryWorkflowIdsForDeployLane(repo.repo, lane),
-          activeWorkflowIds: getActiveWorkflowIdsForDeployLane(repo.repo, lane),
-        }
-      );
-      if (!run || !isWithinDeployIdleWindow(run.updatedAt, Date.now(), IDLE_AFTER_DAYS)) {
-        continue;
-      }
-
-      if (run.status !== 'completed') {
-        byEnv[lane] =
-          run.status === 'queued' ||
-          run.status === 'waiting' ||
-          run.status === 'pending' ||
-          run.status === 'requested'
-            ? 'queued'
-            : 'inProgress';
-        continue;
-      }
-
-      if (run.conclusion === 'success') {
-        byEnv[lane] = 'success';
-        continue;
-      }
-
-      if (run.conclusion === 'failure' || run.conclusion === 'timed_out') {
-        byEnv[lane] = 'failed';
-      }
-    }
-
-    for (const lane of laneConfig.order) {
-      const state = byEnv[lane];
-      if (state === 'success') totals.success += 1;
-      if (state === 'inProgress') totals.inProgress += 1;
-      if (state === 'queued') totals.queued += 1;
-      if (state === 'failed') totals.failed += 1;
-      if (state === 'noData') totals.noData += 1;
+    // Count the EXACT per-lane states the CARDS render (deriveEnvironmentSnapshots → laneSnapshots),
+    // so the KPI/meter can never disagree with the cards. Previously this re-derived lane state from
+    // `recentRuns` (findLatestRunForDeployLane), which surfaced a stale failed run as a phantom KPI
+    // "failure" even when every card lane was green (the source of the "Failed 1/18, zero red cards").
+    for (const env of deriveEnvironmentSnapshots(repo)) {
+      totals[environmentStateFromLaneState(env.state)] += 1;
     }
   }
 
