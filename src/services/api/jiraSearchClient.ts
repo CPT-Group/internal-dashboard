@@ -16,20 +16,44 @@ export interface WorkHoursTodayData {
   byIssueByAuthorSeconds: Map<string, Map<string, number>>;
 }
 
+/** The /api/jira/transitions route caps each request at 200 issue keys. */
+const JIRA_TRANSITIONS_MAX_KEYS_PER_REQUEST = 200;
+
 /**
- * Fetch transition dates (FROM "New") for a batch of issue keys.
+ * Fetch transition dates (FROM "New") for a set of issue keys.
  * Returns a map of issueKey → ISO date string.
+ *
+ * The endpoint caps each request at 200 keys, so we chunk (the tracked-ticket count can exceed
+ * 200) and fetch batches concurrently, then merge. This is data-identical to a single request:
+ * each key's transition date is independent, and merging the per-batch maps yields exactly the
+ * same key→date set.
  */
 export async function jiraTransitionDates(
   keys: string[]
 ): Promise<Map<string, string>> {
   if (keys.length === 0) return new Map();
-  const q = new URLSearchParams();
-  q.set('keys', keys.join(','));
-  const res = await fetch(`/api/jira/transitions?${q.toString()}`);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.message ?? `HTTP ${res.status}`);
-  return new Map(Object.entries(json.transitions ?? {}));
+
+  const batches: string[][] = [];
+  for (let i = 0; i < keys.length; i += JIRA_TRANSITIONS_MAX_KEYS_PER_REQUEST) {
+    batches.push(keys.slice(i, i + JIRA_TRANSITIONS_MAX_KEYS_PER_REQUEST));
+  }
+
+  const perBatch = await Promise.all(
+    batches.map(async (batch): Promise<Array<[string, string]>> => {
+      const q = new URLSearchParams();
+      q.set('keys', batch.join(','));
+      const res = await fetch(`/api/jira/transitions?${q.toString()}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message ?? `HTTP ${res.status}`);
+      return Object.entries(json.transitions ?? {}) as Array<[string, string]>;
+    })
+  );
+
+  const merged = new Map<string, string>();
+  for (const entries of perBatch) {
+    for (const [key, date] of entries) merged.set(key, date);
+  }
+  return merged;
 }
 
 /**

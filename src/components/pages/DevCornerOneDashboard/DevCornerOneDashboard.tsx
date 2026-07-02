@@ -8,6 +8,7 @@ import { useOperationalJiraStore } from '@/stores';
 import { useWorkHoursToday } from '@/hooks';
 import { KpiStrip } from '@/components/ui';
 import type { KpiItem } from '@/components/ui';
+import { SlideErrorBoundary } from '@/components/ui/SlideErrorBoundary';
 import { useTheme } from '@/providers/ThemeProvider';
 import { WorkHoursTodayPanel } from './WorkHoursTodayPanel';
 // import { ComponentActivityPanel } from './ComponentActivityPanel';
@@ -89,30 +90,34 @@ export const DevCornerOneDashboard = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className={styles.dashboard}>
-        <Message severity="error" text={error} className="w-full" />
-      </div>
-    );
-  }
-
+  // No blanking error gate: a Jira-store error is shown as a scoped banner, and each panel is
+  // isolated in its own boundary — so the independent Work Hours panel (its own data source) and a
+  // render error in any one panel can't take down the whole dashboard.
   return (
     <div className={styles.dashboard}>
+      {error && <Message severity="error" text={error} className="w-full m-2" />}
       <div className={styles.kpiRow}>
-        <KpiStrip items={kpiItems} />
+        <SlideErrorBoundary label="KPIs">
+          <KpiStrip items={kpiItems} />
+        </SlideErrorBoundary>
       </div>
       <div className={styles.middleRow}>
         <div className={styles.leftCol}>
-          <WorkHoursTodayPanel hours={hours} loading={workHoursLoading} />
+          <SlideErrorBoundary label="Work Hours Today">
+            <WorkHoursTodayPanel hours={hours} loading={workHoursLoading} />
+          </SlideErrorBoundary>
         </div>
         <div className={styles.rightCol}>
-          <ImpedimentPanel analytics={impedimentAnalytics} />
+          <SlideErrorBoundary label="Impediments">
+            <ImpedimentPanel analytics={impedimentAnalytics} />
+          </SlideErrorBoundary>
           {/* <ComponentActivityPanel components={componentActivity} /> */}
         </div>
       </div>
       <div className={styles.bottomRow}>
-        <TeamActivityPanel members={teamActivity} hoursByIssue={hoursByIssue} />
+        <SlideErrorBoundary label="Team Activity">
+          <TeamActivityPanel members={teamActivity} hoursByIssue={hoursByIssue} />
+        </SlideErrorBoundary>
       </div>
     </div>
   );

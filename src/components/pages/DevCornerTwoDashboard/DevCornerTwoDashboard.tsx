@@ -13,6 +13,7 @@ import { RequestedTicketsSlide } from './RequestedTicketsSlide';
 // import { TodayComponentVelocitySlide } from './TodayComponentVelocitySlide';
 import { CompletedByDevSlide } from './CompletedByDevSlide';
 import { GithubDeployStatusSlide } from './GithubDeployStatusSlide';
+import { SlideErrorBoundary } from '@/components/ui/SlideErrorBoundary';
 import { DEV_CORNER_TWO_SLIDE_TOGGLES } from './devCornerTwoSlides.config';
 import type { DevCornerTwoSlideId } from './devCornerTwoSlides.config';
 import styles from './DevCornerTwoDashboard.module.scss';
@@ -87,6 +88,26 @@ export const DevCornerTwoDashboard = () => {
     `${styles.slide} ${slideId === 'github' ? styles.slideGithubDeploy : ''} ${visibleSlide === idx ? styles.active : ''} ${!IS_CAROUSEL_LOCKED && leavingSlide === idx ? styles.leaving : ''}`;
 
   const renderSlide = (id: DevCornerTwoSlideId) => {
+    // The GitHub slide fetches its OWN data and never touches the Jira store — render it
+    // independently so a Jira load/error state can't blank it. (This is why the "all-GitHub"
+    // board previously went dark on a Jira failure: a single top-level `if (error)` blanked
+    // the whole carousel. Now the Jira store's state only affects the Jira-backed slides.)
+    if (id === 'github') {
+      return <GithubDeployStatusSlide />;
+    }
+
+    if (loading && kpis.openCount === 0) {
+      return (
+        <div className={styles.loadingWrap} role="status" aria-live="polite" aria-busy="true">
+          <ProgressSpinner aria-hidden />
+          <span>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
+        </div>
+      );
+    }
+    if (error) {
+      return <Message severity="error" text={error} className="w-full m-2" />;
+    }
+
     switch (id) {
       case 'inProgress':
         return <InProgressCardsSlide tickets={inProgressTickets} />;
@@ -100,36 +121,14 @@ export const DevCornerTwoDashboard = () => {
             <CompletedByDevSlide columns={completedByDeveloper} />
           </div>
         );
-      case 'github':
-        return <GithubDeployStatusSlide />;
       default:
         return null;
     }
   };
 
-  if (loading && kpis.openCount === 0) {
-    return (
-      <div className={styles.dashboard}>
-        <div
-          className={`${styles.loadingWrap} ${styles.loadingOverlay}`}
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <ProgressSpinner aria-hidden />
-          <span>{LOADING_NOVA_DATA_PLEASE_WAIT}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={styles.dashboard}>
-        <Message severity="error" text={error} className="w-full m-2" />
-      </div>
-    );
-  }
+  // NOTE: no top-level loading/error gate — those blanked the entire carousel (including the
+  // self-contained GitHub slide) whenever the shared Jira store hiccuped. Loading/error is now
+  // scoped per-slide in renderSlide, and each slide is wrapped in a SlideErrorBoundary below.
 
   if (numSlides === 0) {
     return (
@@ -148,7 +147,9 @@ export const DevCornerTwoDashboard = () => {
       <div className={styles.carousel}>
         {enabledSlides.map((slide, idx) => (
           <div key={slide.id} className={slideClass(idx, slide.id)}>
-            {renderSlide(slide.id)}
+            <SlideErrorBoundary label={slide.id}>
+              {renderSlide(slide.id)}
+            </SlideErrorBoundary>
           </div>
         ))}
         {!IS_CAROUSEL_LOCKED && (
