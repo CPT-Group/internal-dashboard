@@ -31,7 +31,7 @@ import {
   type P2pRunEnvironmentInput,
 } from '@/utils/p2pDeployEnvironment';
 
-interface GitHubWorkflowRunApi {
+export interface GitHubWorkflowRunApi {
   actor?: {
     login?: string | null;
   } | null;
@@ -463,7 +463,7 @@ export function buildPlaceholderDeployStatus(
   };
 }
 
-interface FetchedRunEntry {
+export interface FetchedRunEntry {
   run: GitHubWorkflowRunApi;
   workflowId: number;
 }
@@ -486,6 +486,50 @@ function latestRunForWorkflowIds(
   return latest;
 }
 
+/**
+ * Select a lane's representative run treating `orderedWorkflowIds` as a PRIORITY list, not a set of
+ * equals. The FIRST id is the lane's AUTHORITATIVE/terminal workflow (e.g. TST Build Artifact — the
+ * workflow that actually publishes the release); any later id is a promoter/orchestrator (e.g. TST
+ * Auto-Merge — the dev→test merge that *dispatches* the build).
+ *
+ * Rule: use the authoritative workflow's latest run, EXCEPT when a lower-priority (promoter) workflow
+ * has a run that is BOTH newer AND still active (in_progress/queued) — an in-flight promotion the
+ * build hasn't produced yet — in which case surface that active run so the lane reflects the
+ * promotion. A COMPLETED promoter run (success OR failure) NEVER overrides the authoritative run: a
+ * promoter that merely times out on its required-checks poll — or is a zombie left behind after the
+ * PR was merged by another actor — must not paint the lane as a failed RELEASE when the build itself
+ * succeeded (NOVA-3208: a failed TST Auto-Merge at 22:20 was outranking a successful TST Build at
+ * 22:04, reddening the nuget Release lane for a promotion that in fact shipped to test/stg/prod).
+ * Only when the authoritative workflow has NO run at all do we fall back to the promoter's latest run.
+ *
+ * For a single-id list this is exactly `latestRunForWorkflowIds`, so behavior is UNCHANGED for every
+ * lane except a multi-id one (today only nuget's Release/tst lane [TST Build, TST Auto-Merge]).
+ */
+function latestRunByLanePriority(
+  runs: readonly FetchedRunEntry[],
+  orderedWorkflowIds: readonly number[]
+): FetchedRunEntry | undefined {
+  if (orderedWorkflowIds.length <= 1) {
+    return latestRunForWorkflowIds(runs, orderedWorkflowIds);
+  }
+  const [authoritativeId, ...promoterIds] = orderedWorkflowIds;
+  const authoritative = latestRunForWorkflowIds(runs, [authoritativeId]);
+  const promoter = latestRunForWorkflowIds(runs, promoterIds);
+
+  // In-flight promotion: a newer, still-active promoter run the build hasn't caught up to yet.
+  if (promoter && promoter.run.status !== 'completed') {
+    const promoterMs = Date.parse(promoter.run.updated_at);
+    const authoritativeMs = authoritative
+      ? Date.parse(authoritative.run.updated_at)
+      : Number.NEGATIVE_INFINITY;
+    if (Number.isFinite(promoterMs) && promoterMs > authoritativeMs) {
+      return promoter;
+    }
+  }
+
+  return authoritative ?? promoter;
+}
+
 const DEV_TST_SNAPSHOT_LANES: readonly ('dev' | 'tst')[] = ['dev', 'tst'];
 
 /**
@@ -495,7 +539,7 @@ const DEV_TST_SNAPSHOT_LANES: readonly ('dev' | 'tst')[] = ['dev', 'tst'];
  * deliberately EXCLUDING the Deploy Version promoter (which targets stg/prd, not the Tst lane).
  * This is why EF's TST lane now shows the real TST Build FAIL instead of N/A.
  */
-function buildRunBasedLaneSnapshots(
+export function buildRunBasedLaneSnapshots(
   repo: string,
   runs: readonly FetchedRunEntry[]
 ): Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> {
@@ -506,7 +550,9 @@ function buildRunBasedLaneSnapshots(
     if (getNaLaneLabel(repo, lane)) continue;
     const workflowIds = getDedicatedWorkflowIdsForDevTstLane(repo, lane);
     if (workflowIds.length === 0) continue;
-    const entry = latestRunForWorkflowIds(runs, workflowIds);
+    // Priority-ordered: the dedicated id list is [authoritative build, …promoter]; a completed
+    // promoter (e.g. a timed-out TST Auto-Merge) must not outrank the build that actually shipped.
+    const entry = latestRunByLanePriority(runs, workflowIds);
     if (!entry) continue;
     out[lane] = buildRunLaneSnapshot({
       lane,

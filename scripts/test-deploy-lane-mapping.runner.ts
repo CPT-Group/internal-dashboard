@@ -26,6 +26,10 @@ import {
   laneStateFromDeploymentState,
   laneStateFromRunStatus,
 } from '@/utils/githubDeployLaneSnapshots';
+import {
+  buildRunBasedLaneSnapshots,
+  type FetchedRunEntry,
+} from '@/services/github/fetchDeployWorkflowStatus';
 
 interface FixtureRun {
   workflowId: number;
@@ -503,6 +507,96 @@ function testDeployVersionLabelExtractedFromMergeTitle() {
   assert.equal(snapshot.deployVersionLabel, '#155');
 }
 
+// ---------------------------------------------------------------------------
+// Release-lane priority tests (NOVA-3208 false-red fix): the RENDERED lane
+// source is buildRunBasedLaneSnapshots → latestRunByLanePriority. For nuget's
+// Tst/Release lane [TST Build Artifact, TST Auto-Merge], a completed/zombie
+// auto-merge must NOT outrank the successful build; only an in-flight auto-merge
+// surfaces. These guard the path the card + KPI actually read (findLatestRun…
+// above is only the absent-snapshot fallback).
+// ---------------------------------------------------------------------------
+
+const NUGET_TST_BUILD_ARTIFACT_ID = 288752705;
+const NUGET_TST_AUTO_MERGE_ID = 301162091;
+const EF_TST_BUILD_ARTIFACT_ID = 285810381;
+
+function fetchedRun(
+  workflowId: number,
+  status: string,
+  conclusion: string | null,
+  minutesAgo: number,
+  headBranch = 'development'
+): FetchedRunEntry {
+  const iso = runIso(minutesAgo);
+  return {
+    workflowId,
+    run: {
+      id: workflowId * 100000 + minutesAgo,
+      run_number: 1,
+      name: `wf-${workflowId}`,
+      status,
+      conclusion,
+      head_branch: headBranch,
+      html_url: `https://github.com/CPT-Group/repo/actions/runs/${workflowId}${minutesAgo}`,
+      created_at: iso,
+      updated_at: iso,
+    },
+  };
+}
+
+function testNugetReleaseLaneBuildWinsOverFailedAutoMerge() {
+  // The NOVA-3208 scenario: successful TST Build (older) + failed/zombie TST Auto-Merge (NEWER).
+  // The rendered Release lane must be OK — the build is what publishes; the auto-merge merely
+  // timed out on its required-checks poll after the PR had already merged.
+  const runs: FetchedRunEntry[] = [
+    fetchedRun(NUGET_TST_BUILD_ARTIFACT_ID, 'completed', 'success', 20),
+    fetchedRun(NUGET_TST_AUTO_MERGE_ID, 'completed', 'failure', 5),
+  ];
+  const snapshots = buildRunBasedLaneSnapshots('cpt-nuget-libraries', runs);
+  assert.ok(snapshots.tst, 'Release lane snapshot should exist');
+  assert.equal(
+    snapshots.tst.state,
+    'ok',
+    'A newer failed/zombie TST Auto-Merge must NOT override the successful TST Build (NOVA-3208 false-red)'
+  );
+}
+
+function testNugetReleaseLaneSurfacesInFlightAutoMerge() {
+  // A promotion actively in flight (auto-merge running, newer than the last build) SHOULD light
+  // up the Release lane so the board shows the promotion — the reason the id is kept in the list.
+  const runs: FetchedRunEntry[] = [
+    fetchedRun(NUGET_TST_BUILD_ARTIFACT_ID, 'completed', 'success', 30),
+    fetchedRun(NUGET_TST_AUTO_MERGE_ID, 'in_progress', null, 2),
+  ];
+  const snapshots = buildRunBasedLaneSnapshots('cpt-nuget-libraries', runs);
+  assert.ok(snapshots.tst);
+  assert.equal(
+    snapshots.tst.state,
+    'running',
+    'A newer, in-flight TST Auto-Merge should surface on the Release lane'
+  );
+}
+
+function testNugetReleaseLaneFallsBackToAutoMergeWhenNoBuild() {
+  // Edge: no TST Build run at all — the promoter is the only signal, so use it.
+  const runs: FetchedRunEntry[] = [
+    fetchedRun(NUGET_TST_AUTO_MERGE_ID, 'completed', 'failure', 3),
+  ];
+  const snapshots = buildRunBasedLaneSnapshots('cpt-nuget-libraries', runs);
+  assert.ok(snapshots.tst, 'With no build run, the promoter is the only Release signal');
+  assert.equal(snapshots.tst.state, 'failed');
+}
+
+function testSingleWorkflowTstLaneUnchangedByPriority() {
+  // Control: a single-id Tst lane (EF) is unaffected — priority selection is a no-op there.
+  const runs: FetchedRunEntry[] = [
+    fetchedRun(EF_TST_BUILD_ARTIFACT_ID, 'completed', 'failure', 1, 'test'),
+  ];
+  const snapshots = buildRunBasedLaneSnapshots('cpt-ef-postgres-migrations', runs);
+  assert.ok(snapshots.tst);
+  assert.equal(snapshots.tst.state, 'failed', 'Single-id lanes keep exact prior behavior');
+}
+
 function main() {
   testDeploymentStateMapsToLanePill();
   testRunStatusMapsToLanePill();
@@ -517,6 +611,10 @@ function main() {
   testNugetTstBuildOnDevelopmentMapsToTstLane();
   testNugetDevFastInProgressDoesNotStealTstLane();
   testNugetTstAutoMergeShowsAsActiveOnTstLane();
+  testNugetReleaseLaneBuildWinsOverFailedAutoMerge();
+  testNugetReleaseLaneSurfacesInFlightAutoMerge();
+  testNugetReleaseLaneFallsBackToAutoMergeWhenNoBuild();
+  testSingleWorkflowTstLaneUnchangedByPriority();
   testP2pPromoteLanesByPredecessorOrder();
   testP2pResolvePromoteOrderHelper();
   testP2pPromoteWaveIgnoresStaleSameShaRuns();

@@ -57,8 +57,17 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
  * `Deploy Version` promoter: Deploy Version runs on `development` and may target stg/prd, so it
  * must NOT be attributed to the Tst lane just because it is the newest run. The Tst lane is the
  * `TST Build Artifact` workflow's latest run; the Dev lane is `Dev Fast Deploy` (+ the Dev Fast
- * active variant, where one exists). For nuget, the TST Auto-Merge workflow is a genuine Tst-lane
- * actor and is kept; P2P's TST Build is its dedicated tst workflow.
+ * active variant, where one exists).
+ *
+ * ORDER IS SIGNIFICANT: each lane's id list is a PRIORITY list consumed by `latestRunByLanePriority`
+ * (fetchDeployWorkflowStatus.ts) — the FIRST id is the lane's authoritative/terminal workflow; any
+ * later id is a promoter/orchestrator surfaced ONLY as an in-flight (active) fallback. For nuget the
+ * Tst/Release lane is `[TST Build Artifact, TST Auto-Merge]`: TST Build Artifact (the actual release
+ * publish) is authoritative, and TST Auto-Merge (the dev→test merge that dispatches it) shows only
+ * while a promotion is actively in flight. A COMPLETED auto-merge — success OR a required-checks-poll
+ * timeout — never overrides the build's outcome (NOVA-3208: a failed/zombie TST Auto-Merge was
+ * reddening the Release lane for a promotion that in fact shipped). P2P's TST Build is its single
+ * dedicated tst workflow.
  */
 export const DEDICATED_DEV_TST_WORKFLOW_IDS: Readonly<Record<string, { dev: readonly number[]; tst: readonly number[] }>> = {
   'cpt-azure-functions-api': { dev: [285805316], tst: [285805319] },
