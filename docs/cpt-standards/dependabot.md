@@ -2,6 +2,9 @@
 
 Synced from [cpt-standards](https://github.com/CPT-Group/cpt-standards). Update on **cpt-standards** `main`, then **`/cpt-standards-sync`**.
 
+> **Canonical policy source:** [`std-github-actions` § Dependency-update policy](https://github.com/CPT-Group/cpt-standards/blob/main/standards/global/github-actions.md#dependency-update-policy-must--canonical).
+> The Scope rules below are a synced mirror — if they ever disagree, the standard wins.
+
 ## Scope
 
 - **Target branch:** `development` only. Never auto-merge to `test`, `staging`, or `production`.
