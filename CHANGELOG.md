@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dev Corner Two — Deploy Version in-flight + false N/A**: Swim lanes again light **In Progress** as soon as a monitored **Deploy Version** run starts (parse `run-name` / display title e.g. `Deploy Version — stg`), covering the `verify-promotion-order` window before GitHub creates an env Deployment. Deployments API failures render **API ERR** on Stg/Prod — never **N/A** (N/A remains package/npm libs only). Card header also shows In Progress when `inProgressCount > 0` even if no lane target is resolved yet. App-repo `deploy-version.yml` adds `run-name: Deploy Version — ${{ inputs.environment }}` (internal-tools, AZF, EF, nuget) so new runs carry the target env.
+- **Dev Corner Two — deploy-status token chain**: Tries **`GH_MASTER_PAT_KYLE`** first (then `GITHUB_TOKEN_3` → `GITHUB_TOKEN_2` → `GITHUB_DEPLOY_READ_TOKEN`). Does not fix a GitHub-side Deployments **503** (all PATs fail that endpoint the same way); helps when a weaker fine-grained token lacks Actions/Deployments access.
+- **Dev Corner Two — Prod N/A from Deployments window**: Stg/Prod lane data now fetches Deployments **per environment** (`?environment=stg|prd`, `per_page=8`) in parallel instead of an unfiltered top-100 list. Busy dev/tst traffic no longer pushes a recent `prd` deploy out of the window (internal-tools / AZF Prod was blank despite a ~2.5d-old successful prod deploy).
+
 ### Security
 
 - **NOVA-3131 — Cursor analytics Entra auth (AP-016)**: Replaced the shared-password gate (`CURSOR_ANALYTICS_PASSWORD` / static `nova` cookie) with Microsoft Entra sign-in, `dashboard.cursorAnalytics.view` permission checks (Developer, Manager, ScrumMaster, SysAdmin, Executive), signed httpOnly session cookies, structured per-user audit logs, and **fail-closed** behavior when Entra env is missing. Login at `/cursor-analytics/login` uses MSAL redirect; `npm run test:cursor-analytics-auth` covers permission resolution.
@@ -29,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Dev Corner Two — deploy board lag / missing TST promote activity**: TV only monitored Dev Fast / TST Build / Deploy Version, so in-flight **TST Auto-Merge** (and similar promote runs) left Tst looking idle while GitHub Actions was busy. Added Auto-Merge workflow IDs for AZF, internal-tools, EF migrations, and P2P (NuGet already had them). Tightened deploy-status **client poll to 25s** and **server cache TTL to 20s** (was 60s / 45s). Note: CI / PR auto-merge workflows are still out of scope — cards are CD swim lanes only.
+- **Dev Corner Two — deploy card footer ticker contrast**: Auto-ported themes set `--github-deploy-footer-ticker-text` to the same dark tone as the ticker background (GitHub Dark was **1:1** invisible). Footer ticker now falls back to `--text-color`; `scripts/fix-github-deploy-ticker-contrast.mjs` repaired **31** themes; theme generator uses `--text-color` / `--primary-color` instead of `headerBg`.
 - **Dev Corner Two — P2P Go deploy card (NOVA-3126)**: Re-pointed lane workflows to Dev Fast (`301145195`), TST Build Artifact (`301718895`), and Deploy Version (`301718891`); removed legacy promote workflow `289926293`. P2P env resolution uses onprem-prd deployment hints for prod and 10-minute promote-wave ordering for tst/stg. Card header health/tag now reflect worst swim-lane state (prod failure no longer shows green success from dev fast deploy).
 - **Dev Corner One — Impediment panel scroll**: Column header stays frozen while rows auto-scroll by using the same outer `compTableWrap` + `useAutoScroll` pattern as Component Activity (removed PrimeReact internal `scrollable` scroll that bypassed auto-scroll).
 - **Dev Corner Two — NuGet deploy card idle after pipeline migration**: Re-pointed `cpt-nuget-libraries` from deleted workflow `CD - Publish NuGet Packages` (235954510) to standardized Dev Fast Deploy / TST Build Artifact / Deploy Version IDs (`288752702`, `288752705`, `288752700`) with Non-Prod + Prod lane rules in `GITHUB_DEPLOY_LANE_WORKFLOWS.ts`.

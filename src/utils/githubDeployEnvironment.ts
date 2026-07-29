@@ -104,12 +104,39 @@ export function detectDeployEnvironmentFromBranch(branch: string | null): Deploy
 }
 
 /**
+ * Parse target env from a Deploy Version `run-name` / display title
+ * (e.g. `Deploy Version — stg`, `Deploy Version - prd`). Used so in-flight promotes
+ * light the correct lane before GitHub creates the env-gated Deployment
+ * (`verify-promotion-order` runs first and has no `environment:`).
+ */
+export function parseDeployEnvironmentFromRunName(title: string | null | undefined): DeployEnvironmentKey | null {
+  if (!title) return null;
+  const trimmed = title.trim();
+  if (!trimmed) return null;
+  // Prefer explicit "Deploy Version — <env>" (em dash / hyphen / en dash / colon).
+  const deployVersionMatch = trimmed.match(
+    /deploy\s*version\s*[—–\-|:]\s*(dev|development|tst|test|stg|staging|prd|prod|production)\b/i
+  );
+  if (deployVersionMatch?.[1]) {
+    return normalizeDeployEnvironment(deployVersionMatch[1]);
+  }
+  // Fallback: trailing "— stg" / "- prd" on other CD run names.
+  const trailingMatch = trimmed.match(/[—–\-|:]\s*(dev|development|tst|test|stg|staging|prd|prod|production)\s*$/i);
+  if (trailingMatch?.[1]) {
+    return normalizeDeployEnvironment(trailingMatch[1]);
+  }
+  return null;
+}
+
+/**
  * Prefer the Deployments-API resolved environment (Deploy Version runs all share
- * `headBranch === 'development'`); fall back to exact branch match for legacy
- * branch-triggered deploys. Run titles are not used.
+ * `headBranch === 'development'`); then run-name / display title; then exact branch
+ * match for legacy branch-triggered deploys.
  */
 export function detectDeployEnvironmentFromRun(input: DeployRunEnvironmentInput): DeployEnvironmentKey | null {
   if (input.resolvedEnvironment) return input.resolvedEnvironment;
+  const fromTitle = parseDeployEnvironmentFromRunName(input.title);
+  if (fromTitle) return fromTitle;
   return detectDeployEnvironmentFromBranch(input.headBranch);
 }
 
