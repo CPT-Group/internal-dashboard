@@ -5,33 +5,24 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { MarqueeTicker } from '@/components/ui';
-import type {
-  GitHubDeployLaneSnapshot,
-  GitHubDeployRunSummary,
-  GitHubDeployWorkflowStatus,
-} from '@/types/github/GitHubDeployStatus';
+import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthFromLaneStates,
   formatDeployRunDuration,
-  formatDeployVersionLabel,
   repoToneForRepo,
   tagSeverityFromLaneStates,
   tagValueFromLaneStates,
-  type DeployLaneSnapshotState,
   type GitHubRepoTone,
 } from '@/utils/githubDeployDisplay';
+import { getDeployLaneConfig, type DeployLaneKey } from '@/utils/githubDeployEnvironment';
 import {
-  findLatestRunForDeployLane,
-  getDeployLaneConfig,
-  getNaLaneLabel,
-  isWithinDeployIdleWindow,
-  type DeployLaneKey,
-} from '@/utils/githubDeployEnvironment';
-import {
-  getActiveWorkflowIdsForDeployLane,
-  getPrimaryWorkflowIdsForDeployLane,
-} from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+  deriveEnvironmentSnapshots,
+  type EnvironmentSnapshot,
+} from '@/utils/deriveDeployEnvironmentSnapshots';
 import styles from './GithubDeployRepoCards.module.scss';
+
+export type { EnvironmentRunState, EnvironmentSnapshot } from '@/utils/deriveDeployEnvironmentSnapshots';
+export { deriveEnvironmentSnapshots } from '@/utils/deriveDeployEnvironmentSnapshots';
 
 export interface GithubDeployRepoCardsProps {
   /** Workflow rows from GET /api/github/deploy-status. */
@@ -40,38 +31,8 @@ export interface GithubDeployRepoCardsProps {
   showBranchContext?: boolean;
 }
 
-export type EnvironmentRunState = DeployLaneSnapshotState;
 const IDLE_AFTER_DAYS = 7;
-
-export interface EnvironmentSnapshot {
-  key: DeployLaneKey;
-  label: string;
-  state: EnvironmentRunState;
-  branch: string | null;
-  triggerText: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-  /** PR # from merge title when present. */
-  deployVersionLabel: string | null;
-}
-
-function environmentSnapshotFromRun(
-  env: DeployLaneKey,
-  label: string,
-  state: EnvironmentRunState,
-  run: GitHubDeployRunSummary
-): EnvironmentSnapshot {
-  return {
-    key: env,
-    label,
-    state,
-    branch: run.headBranch,
-    triggerText: run.title,
-    createdAt: run.createdAt,
-    updatedAt: run.updatedAt,
-    deployVersionLabel: formatDeployVersionLabel(run),
-  };
-}
+const IDLE_MIN_MS = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
 
 function statusTagWrapClass(
   severity: ReturnType<typeof tagSeverityFromLaneStates>
@@ -106,14 +67,9 @@ function idleEnvironmentSnapshots(
   }));
 }
 
-function isQueuedLikeRunStatus(status: string): boolean {
-  return status === 'queued' || status === 'waiting' || status === 'pending' || status === 'requested';
-}
-
-const IDLE_MIN_MS = IDLE_AFTER_DAYS * 24 * 60 * 60 * 1000;
-
 function formatIdleLabel(updatedAt: string | null): string {
-  if (!updatedAt) return 'N/A';
+  // Real deploy lanes never render "N/A" — that label is reserved for package-lib na lanes only.
+  if (!updatedAt) return 'Idle';
   const ms = Date.now() - Date.parse(updatedAt);
   if (!Number.isFinite(ms) || ms < IDLE_MIN_MS) return 'Idle';
   const days = Math.floor(ms / 86_400_000);
@@ -121,113 +77,11 @@ function formatIdleLabel(updatedAt: string | null): string {
   return `Idle ${Math.floor(days / 7)}w`;
 }
 
-function runStateFromSummary(run: GitHubDeployRunSummary): EnvironmentRunState {
-  if (run.status !== 'completed') {
-    return isQueuedLikeRunStatus(run.status) ? 'queued' : 'running';
-  }
-  if (run.conclusion === 'success') return 'ok';
-  if (run.conclusion === 'cancelled') return 'cancelled';
-  return 'failed';
-}
-
-/**
- * Build a lane row from the server-computed lane snapshot (the authoritative, full-history
- * source — Deployments API for stg/prod, dedicated workflow run for dev/tst). Anything older
- * than the idle window ages to "idle"; a real prior deploy NEVER renders as N/A.
- */
-function snapshotToEnvironmentSnapshot(
-  lane: DeployLaneKey,
-  label: string,
-  snapshot: GitHubDeployLaneSnapshot
-): EnvironmentSnapshot {
-  const updatedAt = snapshot.updatedAt ?? snapshot.createdAt;
-  const isActive = snapshot.state === 'running' || snapshot.state === 'queued';
-  // Active deploys are never aged out; completed ones age to idle past the window.
-  if (!isActive && (!updatedAt || !isWithinDeployIdleWindow(updatedAt, Date.now(), IDLE_AFTER_DAYS))) {
-    return {
-      key: lane,
-      label,
-      state: 'idle',
-      branch: null,
-      triggerText: null,
-      createdAt: null,
-      updatedAt,
-      deployVersionLabel: null,
-    };
-  }
-  return {
-    key: lane,
-    label,
-    // GitHubDeployLaneState (ok|running|failed|queued|idle) is a subset of the lane row state.
-    state: snapshot.state,
-    branch: snapshot.branch,
-    triggerText: snapshot.triggerText,
-    createdAt: snapshot.createdAt,
-    updatedAt,
-    deployVersionLabel: snapshot.deployVersionLabel,
-  };
-}
-
-export function deriveEnvironmentSnapshots(row: GitHubDeployWorkflowStatus): EnvironmentSnapshot[] {
-  const laneConfig = getDeployLaneConfig(row.repo);
-  const runs = row.recentRuns ?? [];
-  const laneSnapshots = row.laneSnapshots ?? {};
-
-  return laneConfig.order.map((lane) => {
-    const label = laneConfig.labels[lane] ?? lane.toUpperCase();
-    // Package-repo lanes (e.g. nuget Stg/Prod) have no deploy target — render a static N/A row
-    // and never match a run to them.
-    const naLabel = getNaLaneLabel(row.repo, lane);
-    if (naLabel) {
-      return {
-        key: lane,
-        label,
-        state: 'na',
-        branch: null,
-        triggerText: naLabel,
-        createdAt: null,
-        updatedAt: null,
-        deployVersionLabel: null,
-      };
-    }
-    // Primary source: the server-computed lane snapshot (full deploy history — fixes the N/A
-    // regression where a real stg/prod/tst deploy fell out of the recent-runs(30) window).
-    const snapshot = laneSnapshots[lane];
-    if (snapshot) {
-      return snapshotToEnvironmentSnapshot(lane, label, snapshot);
-    }
-    // Fallback: recent-runs scan. Covers P2P stg (no deployment env — promote-wave resolved)
-    // and any lane the snapshot source did not populate. Preserves prior behavior exactly.
-    const run = findLatestRunForDeployLane(
-      row.repo,
-      lane,
-      runs,
-      {
-        primaryWorkflowIds: getPrimaryWorkflowIdsForDeployLane(row.repo, lane),
-        activeWorkflowIds: getActiveWorkflowIdsForDeployLane(row.repo, lane),
-      }
-    );
-    if (!run || !isWithinDeployIdleWindow(run.updatedAt, Date.now(), IDLE_AFTER_DAYS)) {
-      return {
-        key: lane,
-        label,
-        state: 'idle',
-        branch: null,
-        triggerText: null,
-        createdAt: null,
-        updatedAt: run?.updatedAt ?? null,
-        deployVersionLabel: null,
-      };
-    }
-    return environmentSnapshotFromRun(lane, label, runStateFromSummary(run), run);
-  });
-}
-
 function environmentSeverity(snapshot: EnvironmentSnapshot): 'success' | 'danger' | 'warning' | 'secondary' | 'info' {
   if (snapshot.state === 'ok') return 'success';
   // Cancelled = deliberately aborted deploy (not a failure) → neutral, never danger red.
   if (snapshot.state === 'cancelled') return 'secondary';
-  if (snapshot.state === 'failed') return 'danger';
+  if (snapshot.state === 'failed' || snapshot.state === 'api_error') return 'danger';
   if (snapshot.state === 'running') return 'warning';
   if (snapshot.state === 'queued') return 'info';
   return 'secondary';
@@ -239,6 +93,7 @@ function environmentStatusText(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'failed') return 'Fail';
   if (snapshot.state === 'running') return 'In Progress';
   if (snapshot.state === 'queued') return 'Queued';
+  if (snapshot.state === 'api_error') return 'API ERR';
   if (snapshot.state === 'na') return 'N/A';
   return formatIdleLabel(snapshot.updatedAt);
 }
@@ -247,7 +102,7 @@ function environmentRowClass(snapshot: EnvironmentSnapshot): string {
   if (snapshot.state === 'ok') return styles.environmentOk;
   // Neutral row styling (like idle) — a cancelled deploy left the env unchanged, not failed.
   if (snapshot.state === 'cancelled') return styles.environmentIdle;
-  if (snapshot.state === 'failed') return styles.environmentFailed;
+  if (snapshot.state === 'failed' || snapshot.state === 'api_error') return styles.environmentFailed;
   if (snapshot.state === 'running') return styles.environmentRunning;
   if (snapshot.state === 'queued') return styles.environmentQueued;
   if (snapshot.state === 'na') return styles.environmentNa;
@@ -303,23 +158,32 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
   const envTickerText = buildEnvTickerText(envSnapshots);
 
   const laneStates = envSnapshots.map((env) => env.state);
+  const inProgressCount = isPlaceholder ? 0 : row.inProgressCount ?? 0;
+  // If monitored CD is in flight but no lane has a target yet (pre-run-name / pre-Deployment),
+  // still show In Progress on the card header — do not look idle while Actions is busy.
   const tagValue = isPlaceholder
     ? 'Not configured'
     : err
       ? 'API error'
-      : queuedCount > 0 && (row.inProgressCount ?? 0) === 0
+      : queuedCount > 0 && inProgressCount === 0
         ? `Queued (${queuedCount})`
-        : tagValueFromLaneStates(laneStates);
+        : inProgressCount > 0 && !laneStates.some((s) => s === 'running' || s === 'queued')
+          ? 'In Progress'
+          : tagValueFromLaneStates(laneStates);
   const severity = isPlaceholder
     ? 'secondary'
     : err
       ? 'danger'
-      : tagSeverityFromLaneStates(laneStates);
+      : inProgressCount > 0 && !laneStates.some((s) => s === 'running' || s === 'failed' || s === 'api_error')
+        ? 'warning'
+        : tagSeverityFromLaneStates(laneStates);
   const health = isPlaceholder
     ? 'warning'
     : err
       ? 'error'
-      : cardHealthFromLaneStates(laneStates);
+      : inProgressCount > 0 && !laneStates.some((s) => s === 'failed' || s === 'api_error')
+        ? 'warning'
+        : cardHealthFromLaneStates(laneStates);
   const deployerLabel = isPlaceholder ? '—' : run?.actorLogin ?? 'unknown';
 
   const cardClassName = [

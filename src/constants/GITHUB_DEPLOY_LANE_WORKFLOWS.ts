@@ -16,19 +16,20 @@ type RepoLaneWorkflowRules = Partial<Record<DeployLaneKey, LaneWorkflowRule>>;
 export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflowRules>> = {
   'cpt-azure-functions-api': {
     dev: { primary: [285805316], active: [285805316, 285805315] },
-    tst: { primary: [285805319, 285805315] },
+    /** TST Build + in-flight TST Auto-Merge (301140620); Deploy Version still fetched for stg/prod. */
+    tst: { primary: [285805319, 285805315], active: [285805319, 301140620, 285805315] },
     stg: { primary: [285805315] },
     prod: { primary: [285805315] },
   },
   'cpt-ef-postgres-migrations': {
     dev: { primary: [285810378], active: [285810378, 285810377] },
-    tst: { primary: [285810381, 285810377] },
+    tst: { primary: [285810381, 285810377], active: [285810381, 301143101, 285810377] },
     stg: { primary: [285810377] },
     prod: { primary: [285810377] },
   },
   'cpt-internal-tools': {
     dev: { primary: [285829490], active: [285829490, 285829489] },
-    tst: { primary: [285829491, 285829489] },
+    tst: { primary: [285829491, 285829489], active: [285829491, 301118082, 285829489] },
     stg: { primary: [285829489] },
     prod: { primary: [285829489] },
   },
@@ -45,7 +46,7 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
   /** Dev Fast + TST Build + Deploy Version (NOVA-3126). IDs verified 2026-06-25. */
   'cpt-group-p2p-go-service': {
     dev: { primary: [301145195], active: [301145195] },
-    tst: { primary: [301718895, 301718891], active: [301718895, 301718891] },
+    tst: { primary: [301718895, 301718891], active: [301718895, 301718893, 301718891] },
     stg: { primary: [301718891], active: [301718891] },
     prod: { primary: [301718891], active: [301718891] },
   },
@@ -70,11 +71,12 @@ export const DEPLOY_LANE_WORKFLOW_RULES: Readonly<Record<string, RepoLaneWorkflo
  * dedicated tst workflow.
  */
 export const DEDICATED_DEV_TST_WORKFLOW_IDS: Readonly<Record<string, { dev: readonly number[]; tst: readonly number[] }>> = {
-  'cpt-azure-functions-api': { dev: [285805316], tst: [285805319] },
-  'cpt-ef-postgres-migrations': { dev: [285810378], tst: [285810381] },
-  'cpt-internal-tools': { dev: [285829490], tst: [285829491] },
+  /** Priority: [TST Build Artifact, TST Auto-Merge] — Auto-Merge only while in-flight (see latestRunByLanePriority). */
+  'cpt-azure-functions-api': { dev: [285805316], tst: [285805319, 301140620] },
+  'cpt-ef-postgres-migrations': { dev: [285810378], tst: [285810381, 301143101] },
+  'cpt-internal-tools': { dev: [285829490], tst: [285829491, 301118082] },
   'cpt-nuget-libraries': { dev: [288752702], tst: [288752705, 301162091] },
-  'cpt-group-p2p-go-service': { dev: [301145195], tst: [301718895] },
+  'cpt-group-p2p-go-service': { dev: [301145195], tst: [301718895, 301718893] },
 };
 
 /** Dedicated workflow ids for a repo's Dev/Tst lane (lane-snapshot source). Empty when unknown. */
@@ -105,6 +107,18 @@ export function getActiveWorkflowIdsForDeployLane(
   const rule = DEPLOY_LANE_WORKFLOW_RULES[repo]?.[lane];
   if (!rule) return null;
   return rule.active ?? rule.primary;
+}
+
+/**
+ * Deploy Version (promoter) workflow IDs for a repo — the stg/prod primary lists.
+ * Used to overlay in-flight promotes onto the correct lane before Deployments exist.
+ * Empty for package libs (no stg/prod deploy lane).
+ */
+export function getDeployVersionWorkflowIds(repo: string): readonly number[] {
+  return unique([
+    ...(getPrimaryWorkflowIdsForDeployLane(repo, 'stg') ?? []),
+    ...(getPrimaryWorkflowIdsForDeployLane(repo, 'prod') ?? []),
+  ]);
 }
 
 /** Union of all workflow IDs this repo should fetch for lane assignment. */

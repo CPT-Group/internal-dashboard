@@ -4,6 +4,7 @@ import {
   getDeployLaneConfig,
   getNaLaneLabel,
   isWithinDeployIdleWindow,
+  parseDeployEnvironmentFromRunName,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
 import {
@@ -28,8 +29,12 @@ import {
 } from '@/utils/githubDeployLaneSnapshots';
 import {
   buildRunBasedLaneSnapshots,
+  githubDeploymentEnvironmentNames,
+  overlayActiveDeployVersionLaneSnapshots,
   type FetchedRunEntry,
 } from '@/services/github/fetchDeployWorkflowStatus';
+import { deriveEnvironmentSnapshots } from '@/utils/deriveDeployEnvironmentSnapshots';
+import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 
 interface FixtureRun {
   workflowId: number;
@@ -525,7 +530,8 @@ function fetchedRun(
   status: string,
   conclusion: string | null,
   minutesAgo: number,
-  headBranch = 'development'
+  headBranch = 'development',
+  displayTitle?: string
 ): FetchedRunEntry {
   const iso = runIso(minutesAgo);
   return {
@@ -533,7 +539,8 @@ function fetchedRun(
     run: {
       id: workflowId * 100000 + minutesAgo,
       run_number: 1,
-      name: `wf-${workflowId}`,
+      name: displayTitle ?? `wf-${workflowId}`,
+      display_title: displayTitle,
       status,
       conclusion,
       head_branch: headBranch,
@@ -542,6 +549,84 @@ function fetchedRun(
       updated_at: iso,
     },
   };
+}
+
+const INTERNAL_TOOLS_DEPLOY_VERSION_ID = 285829489;
+const INTERNAL_TOOLS_DEV_FAST_ID = 285829490;
+const INTERNAL_TOOLS_TST_BUILD_ID = 285829491;
+
+function testParseDeployEnvironmentFromRunName() {
+  assert.equal(parseDeployEnvironmentFromRunName('Deploy Version — stg'), 'stg');
+  assert.equal(parseDeployEnvironmentFromRunName('Deploy Version - prd'), 'prod');
+  assert.equal(parseDeployEnvironmentFromRunName('Deploy Version — tst'), 'tst');
+  assert.equal(parseDeployEnvironmentFromRunName('Deploy Version'), null);
+  assert.equal(parseDeployEnvironmentFromRunName('CI - Build & Lint'), null);
+}
+
+function testGithubDeploymentEnvironmentNamesPerLane() {
+  // Standardized CD: workflows use `prd`, not `prod` — filter must match GitHub env name.
+  assert.deepEqual(githubDeploymentEnvironmentNames('cpt-internal-tools', 'prod'), ['prd']);
+  assert.deepEqual(githubDeploymentEnvironmentNames('cpt-azure-functions-api', 'stg'), ['stg']);
+  assert.deepEqual(githubDeploymentEnvironmentNames('cpt-group-p2p-go-service', 'prod'), [
+    'onprem-prd',
+  ]);
+  assert.deepEqual(githubDeploymentEnvironmentNames('cpt-group-p2p-go-service', 'stg'), [
+    'onprem-nonprod',
+  ]);
+}
+
+function testOverlayInFlightDeployVersionLightsStgBeforeDeployment() {
+  // verify-promotion-order window: Deploy Version in progress, no Deployments yet.
+  // Dev/Tst stay on dedicated workflows; Stg lights from run-name.
+  const runs: FetchedRunEntry[] = [
+    fetchedRun(INTERNAL_TOOLS_DEV_FAST_ID, 'completed', 'success', 40),
+    fetchedRun(INTERNAL_TOOLS_TST_BUILD_ID, 'completed', 'success', 30),
+    fetchedRun(
+      INTERNAL_TOOLS_DEPLOY_VERSION_ID,
+      'in_progress',
+      null,
+      2,
+      'development',
+      'Deploy Version — stg'
+    ),
+  ];
+  const base = buildRunBasedLaneSnapshots('cpt-internal-tools', runs);
+  const overlaid = overlayActiveDeployVersionLaneSnapshots('cpt-internal-tools', runs, base);
+  assert.equal(overlaid.dev?.state, 'ok', 'Dev stays on Dev Fast');
+  assert.equal(overlaid.tst?.state, 'ok', 'Tst stays on TST Build');
+  assert.ok(overlaid.stg, 'Stg must light from in-flight Deploy Version run-name');
+  assert.equal(overlaid.stg.state, 'running');
+  assert.equal(overlaid.prod, undefined, 'Prod must not light for a stg promote');
+}
+
+function testDeploymentsApiFailureShowsApiErrNotNa() {
+  const row: GitHubDeployWorkflowStatus = {
+    owner: 'CPT-Group',
+    repo: 'cpt-internal-tools',
+    workflowId: INTERNAL_TOOLS_DEV_FAST_ID,
+    shortLabel: 'internal-tools',
+    laneSnapshots: {
+      dev: buildRunLaneSnapshot({
+        lane: 'dev',
+        state: 'ok',
+        createdAt: runIso(10),
+        updatedAt: runIso(10),
+        title: 'Dev Fast Deploy',
+        branch: 'development',
+        htmlUrl: 'https://example/actions/runs/1',
+      }),
+    },
+    deploymentsDiag: { ok: false, status: 503, count: 0 },
+    recentRuns: [],
+  };
+  const envs = deriveEnvironmentSnapshots(row);
+  const stg = envs.find((e) => e.key === 'stg');
+  const prod = envs.find((e) => e.key === 'prod');
+  assert.ok(stg && prod);
+  assert.equal(stg.state, 'api_error', 'Stg must show API ERR when Deployments fetch fails');
+  assert.equal(prod.state, 'api_error', 'Prod must show API ERR when Deployments fetch fails');
+  assert.notEqual(stg.state, 'na');
+  assert.equal(tagValueFromLaneStates(envs.map((e) => e.state)), 'API ERR');
 }
 
 function testNugetReleaseLaneBuildWinsOverFailedAutoMerge() {
@@ -603,6 +688,10 @@ function main() {
   testEfStgDeploymentSnapshotIsOkNotNa();
   testEfTstBuildSnapshotShowsRealFailure();
   testDeployVersionLabelExtractedFromMergeTitle();
+  testParseDeployEnvironmentFromRunName();
+  testGithubDeploymentEnvironmentNamesPerLane();
+  testOverlayInFlightDeployVersionLightsStgBeforeDeployment();
+  testDeploymentsApiFailureShowsApiErrNotNa();
   testAzfDevActiveDeployVersionWins();
   testAzfDevCompletedStillUsesDevFastPrimary();
   testInternalToolsDevFastInProgress();

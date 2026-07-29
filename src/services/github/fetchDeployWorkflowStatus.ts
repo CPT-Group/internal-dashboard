@@ -4,7 +4,10 @@ import {
   type GitHubDeployLiveWorkflowMonitor,
   type GitHubDeployPlaceholderMonitor,
 } from '@/constants/GITHUB_DEPLOY_MONITORS';
-import { getDedicatedWorkflowIdsForDevTstLane } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
+import {
+  getDedicatedWorkflowIdsForDevTstLane,
+  getDeployVersionWorkflowIds,
+} from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 import type {
   GitHubDeployLaneSnapshot,
   GitHubDeployRunSummary,
@@ -15,6 +18,7 @@ import {
   getNaLaneLabel,
   mapEnvironmentToLane,
   normalizeDeployEnvironment,
+  parseDeployEnvironmentFromRunName,
   type DeployEnvironmentKey,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
@@ -104,45 +108,123 @@ function getDeploymentsFetchDiag(owner: string, repo: string): DeploymentsFetchD
 }
 
 /**
- * Fetch the repo's recent GitHub Deployments. Each deployment records the env-gated job's
- * `environment` (dev/tst/stg/prd) — the only API source of a Deploy Version run's TARGET env,
- * since the workflow-run object never exposes it and the branch is always `development`.
+ * How many deployments to pull per GitHub `environment` filter. Lane pills only need the newest
+ * row; a small window also feeds SHA→env timeline heuristics without drowning in dev/tst spam.
+ * (Unfiltered `per_page=100` was dropping multi-day-old `prd` behind a flood of lower envs.)
  */
-async function fetchRepoDeployments(token: string, owner: string, repo: string): Promise<RepoDeployment[]> {
-  const url = `https://api.github.com/repos/${owner}/${repo}/deployments?per_page=100`;
-  const diagKey = `${owner}/${repo}`;
+const DEPLOYMENTS_PER_ENV = 8;
+
+type DeploymentApiRow = {
+  id?: number | null;
+  environment?: string | null;
+  sha?: string | null;
+  created_at?: string | null;
+};
+
+/**
+ * GitHub Deployments API `environment` query names for a lane key.
+ * Standardized CD repos use `stg` / `prd` (not `prod`). P2P uses on-prem env names.
+ */
+export function githubDeploymentEnvironmentNames(
+  repo: string,
+  env: DeployEnvironmentKey
+): readonly string[] {
+  if (isP2pGoServiceRepo(repo)) {
+    if (env === 'stg') return ['onprem-nonprod'];
+    if (env === 'prod') return ['onprem-prd'];
+    return [];
+  }
+  switch (env) {
+    case 'dev':
+      return ['dev'];
+    case 'tst':
+      return ['tst'];
+    case 'stg':
+      return ['stg'];
+    case 'prod':
+      return ['prd'];
+    default:
+      return [];
+  }
+}
+
+function parseDeploymentApiRows(data: DeploymentApiRow[]): RepoDeployment[] {
+  const out: RepoDeployment[] = [];
+  for (const d of data) {
+    const env = normalizeDeployEnvironment(d.environment);
+    const createdAtMs = Date.parse(d.created_at ?? '');
+    if (typeof d.id === 'number' && env && d.sha && Number.isFinite(createdAtMs)) {
+      out.push({ id: d.id, environment: env, sha: d.sha, createdAtMs });
+    }
+  }
+  return out;
+}
+
+async function fetchDeploymentsForGithubEnvironment(
+  token: string,
+  owner: string,
+  repo: string,
+  githubEnvironment: string
+): Promise<{ ok: boolean; status: number; deployments: RepoDeployment[] }> {
+  const url =
+    `https://api.github.com/repos/${owner}/${repo}/deployments` +
+    `?environment=${encodeURIComponent(githubEnvironment)}&per_page=${DEPLOYMENTS_PER_ENV}`;
   try {
     const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
     if (!res.ok) {
-      // Do NOT swallow silently: a 403/404 here (token lacks Deployments: read) would empty every
-      // stg/prod lane snapshot with no visible error. Record it so /api/github/deploy-status surfaces it.
-      lastDeploymentsFetchDiag.set(diagKey, { ok: false, status: res.status, count: 0 });
-      return [];
+      return { ok: false, status: res.status, deployments: [] };
     }
-    const data = (await res.json()) as Array<{
-      id?: number | null;
-      environment?: string | null;
-      sha?: string | null;
-      created_at?: string | null;
-    }>;
+    const data = (await res.json()) as DeploymentApiRow[];
     if (!Array.isArray(data)) {
-      lastDeploymentsFetchDiag.set(diagKey, { ok: false, status: res.status, count: 0 });
-      return [];
+      return { ok: false, status: res.status, deployments: [] };
     }
-    const out: RepoDeployment[] = [];
-    for (const d of data) {
-      const env = normalizeDeployEnvironment(d.environment);
-      const createdAtMs = Date.parse(d.created_at ?? '');
-      if (typeof d.id === 'number' && env && d.sha && Number.isFinite(createdAtMs)) {
-        out.push({ id: d.id, environment: env, sha: d.sha, createdAtMs });
-      }
-    }
-    lastDeploymentsFetchDiag.set(diagKey, { ok: true, status: res.status, count: out.length });
-    return out;
+    return { ok: true, status: res.status, deployments: parseDeploymentApiRows(data) };
   } catch {
-    lastDeploymentsFetchDiag.set(diagKey, { ok: false, status: -1, count: 0 });
+    return { ok: false, status: -1, deployments: [] };
+  }
+}
+
+/**
+ * Fetch recent Deployments **per environment** (parallel, small pages).
+ * Lane pills for stg/prod need the latest deploy for that env; an unfiltered top-100 list
+ * was missing `prd` when lower envs were busy. Empty env = never deployed (not an API error).
+ */
+async function fetchRepoDeploymentsForLanes(
+  token: string,
+  owner: string,
+  repo: string,
+  laneEnvs: readonly DeployEnvironmentKey[]
+): Promise<RepoDeployment[]> {
+  const diagKey = `${owner}/${repo}`;
+  const githubEnvs = [
+    ...new Set(laneEnvs.flatMap((env) => githubDeploymentEnvironmentNames(repo, env))),
+  ];
+  if (githubEnvs.length === 0) {
+    lastDeploymentsFetchDiag.set(diagKey, { ok: true, status: 200, count: 0 });
     return [];
   }
+
+  const results = await Promise.all(
+    githubEnvs.map((githubEnvironment) =>
+      fetchDeploymentsForGithubEnvironment(token, owner, repo, githubEnvironment)
+    )
+  );
+
+  const failed = results.find((r) => !r.ok);
+  const deployments = results.flatMap((r) => r.deployments);
+  if (failed) {
+    // Do NOT swallow: a 403/404/503 here would empty stg/prod with no visible error.
+    lastDeploymentsFetchDiag.set(diagKey, {
+      ok: false,
+      status: failed.status,
+      count: deployments.length,
+    });
+    // Still return any successful env slices so one bad filter does not blank every lane.
+    return deployments;
+  }
+
+  lastDeploymentsFetchDiag.set(diagKey, { ok: true, status: 200, count: deployments.length });
+  return deployments;
 }
 
 const ACTIONS_RUN_ID_PATTERN = /\/actions\/runs\/(\d+)/;
@@ -273,6 +355,11 @@ const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
  * when no confident match exists (the caller then falls back to the branch). The `runEnvIndex` param
  * is retained so a future deterministic source can repopulate it without touching callers.
  */
+function runDisplayTitle(run: GitHubWorkflowRunApi): string {
+  if (run.display_title && run.display_title.trim() !== '') return run.display_title.trim();
+  return (run.name ?? '').trim();
+}
+
 function resolveRunEnvironment(
   run: GitHubWorkflowRunApi,
   deployments: readonly RepoDeployment[],
@@ -280,6 +367,10 @@ function resolveRunEnvironment(
 ): DeployEnvironmentKey | null {
   const linked = runEnvIndex.get(run.id);
   if (linked) return linked;
+
+  // run-name / display title (e.g. "Deploy Version — stg") — available before Deployments exist.
+  const fromName = parseDeployEnvironmentFromRunName(runDisplayTitle(run));
+  if (fromName) return fromName;
 
   const headSha = run.head_sha?.trim() ?? '';
   const runMs = Date.parse(run.created_at);
@@ -615,6 +706,63 @@ function reclassifyCancelledLaneSnapshots(
   return out;
 }
 
+/**
+ * Overlay in-flight Deploy Version runs onto their TARGET lane as soon as the run exists.
+ *
+ * Dedicated Dev/Tst snapshots deliberately exclude Deploy Version (so promotes do not paint Dev/Tst
+ * via `development`). Stg/Prod wait on the Deployments API — but app CD now runs
+ * `verify-promotion-order` before the env-gated job, so Actions shows In Progress while no
+ * Deployment exists yet. Parse `run-name` / display title (`Deploy Version — stg`) and light that
+ * lane immediately. Only non-completed runs overlay; completed state stays on Deployments /
+ * dedicated workflows.
+ */
+export function overlayActiveDeployVersionLaneSnapshots(
+  repo: string,
+  runs: readonly FetchedRunEntry[],
+  laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>
+): Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> {
+  const deployVersionIds = new Set(getDeployVersionWorkflowIds(repo));
+  if (deployVersionIds.size === 0) return laneSnapshots;
+
+  const laneConfig = getDeployLaneConfig(repo);
+  const out: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = { ...laneSnapshots };
+
+  // Newest-first: if multiple in-flight Deploy Version runs target the same lane, keep the newest.
+  for (const entry of runs) {
+    if (!deployVersionIds.has(entry.workflowId)) continue;
+    if (entry.run.status === 'completed') continue;
+
+    const title = runDisplayTitle(entry.run);
+    const env = parseDeployEnvironmentFromRunName(title);
+    if (!env) continue;
+
+    const lane = mapEnvironmentToLane(repo, env);
+    if (!laneConfig.order.includes(lane)) continue;
+    if (getNaLaneLabel(repo, lane)) continue;
+
+    const existing = out[lane];
+    // Do not clobber a newer overlay already written for this lane.
+    if (existing && (existing.state === 'running' || existing.state === 'queued') && existing.updatedAt) {
+      const existingMs = Date.parse(existing.updatedAt);
+      const entryMs = Date.parse(entry.run.updated_at);
+      if (Number.isFinite(existingMs) && Number.isFinite(entryMs) && existingMs >= entryMs) {
+        continue;
+      }
+    }
+
+    out[lane] = buildRunLaneSnapshot({
+      lane,
+      state: laneStateFromRunStatus(entry.run.status, entry.run.conclusion),
+      createdAt: entry.run.created_at,
+      updatedAt: entry.run.updated_at,
+      title: title || entry.run.name,
+      branch: entry.run.head_branch,
+      htmlUrl: entry.run.html_url,
+    });
+  }
+  return out;
+}
+
 export async function fetchDeployWorkflowStatus(
   token: string,
   monitor: GitHubDeployLiveWorkflowMonitor
@@ -628,26 +776,24 @@ export async function fetchDeployWorkflowStatus(
   };
 
   const workflowIds = monitorWorkflowIds(monitor);
+  const deploymentLaneEnvs = deploymentLaneEnvsForRepo(repo);
   const [workflowFetches, deployments] = await Promise.all([
     Promise.all(workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))),
-    fetchRepoDeployments(token, owner, repo),
+    // Per-env Deployments (`?environment=stg|prd`, per_page=8) — not unfiltered top-100.
+    fetchRepoDeploymentsForLanes(token, owner, repo, deploymentLaneEnvs),
   ]);
 
   // Stg/prod lane pills come from buildDeploymentLaneSnapshots — the latest deployment per env plus
   // its status (2 probes/repo). We deliberately DO NOT build the 40-per-repo deployment→run env
-  // index anymore: at ~240 GitHub calls/refresh (40 × 6 repos) it exhausted the token's hourly
-  // budget within minutes, then 403-rate-limited the Deployments API — and fetchRepoDeployments
-  // silently returned [] on the 403, emptying every stg/prod snapshot into a false "N/A" (the
-  // 2026-06-30 regression). The index only labeled recentRuns; those now fall back to the SHA+time
-  // heuristic over the already-fetched deployments list (no extra calls). Accurate lane state comes
-  // from the snapshots, not the index.
+  // index anymore: at ~240 GitHub calls/refresh it rate-limited the Deployments API. Timeline
+  // env labels fall back to run-name + SHA/time over this small per-env list.
   const runEnvIndex: DeploymentRunEnvironmentIndex = new Map();
   const deploymentLaneSnapshots = await buildDeploymentLaneSnapshots(
     token,
     owner,
     repo,
     deployments,
-    deploymentLaneEnvsForRepo(repo)
+    deploymentLaneEnvs
   );
 
   const successful = workflowFetches.filter((f) => !f.error);
@@ -667,26 +813,18 @@ export async function fetchDeployWorkflowStatus(
 
   const allRunEntries = runs;
 
-  // Active-run env visibility (#2): a queued/in_progress Deploy Version run lands on its
-  // correct env row as soon as its deployment exists — the deployment's first status
-  // (`waiting`/`queued`) already carries the `log_url`, so `runEnvIndex` resolves it. There is
-  // a brief race before the deployment is created (e.g. a run still `queued` for a runner with
-  // no deployment yet): such a run resolves to null and falls back to the branch, which is
-  // always `development`, so it cannot be pinned to tst/stg/prd. Fully closing that window
-  // requires the run NAME to carry the target env (e.g. "Deploy Version — stg"), which is an
-  // app-repo workflow change (out of scope here); flagged in the PR report.
   const activeEntry = runs.find(({ run }) => run.status === 'in_progress')
     ?? runs.find(({ run }) => isQueuedLikeStatus(run.status))
     ?? runs.find(({ run }) => run.status !== 'completed');
   const lastDoneEntry = runs.find(({ run }) => run.status === 'completed');
 
-  // dev/tst lanes ← dedicated-workflow latest run; stg/prod lanes ← Deployments API (above).
-  // Deployment-based snapshots win on conflict, but dev/tst and stg/prod never collide.
+  // dev/tst ← dedicated workflow; stg/prod ← Deployments API; then overlay in-flight Deploy Version
+  // (run-name target) so promotes light the lane during verify-promotion-order before Deployments exist.
   const laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = reclassifyCancelledLaneSnapshots(
-    {
+    overlayActiveDeployVersionLaneSnapshots(repo, runs, {
       ...buildRunBasedLaneSnapshots(repo, runs),
       ...deploymentLaneSnapshots,
-    },
+    }),
     runs
   );
 

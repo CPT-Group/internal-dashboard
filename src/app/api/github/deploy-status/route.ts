@@ -10,11 +10,12 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Aggregates latest CD workflow runs for monitored CPT-Group repos (Actions API).
- * Token order: **`GITHUB_TOKEN_3`** → **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`**.
+ * Token order: **`GH_MASTER_PAT_KYLE`** → **`GITHUB_TOKEN_3`** → **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`**.
  * **Rotation:** try the next token when the current one clearly cannot serve the board:
  * - **Any** repo returns hard auth / rate-limit (`401`, `bad credentials`, `rate limit`), or
  * - **Every** repo fails with a retryable error (`401`, `403`, `404`, rate limit, bad credentials) —
  *   e.g. fine-grained PAT with `/user` OK but **no Actions** access → **404** on all workflow-run URLs.
+ * - Deployments API degraded (`deploymentsDiag.ok === false`) — advances so a stronger PAT can retry.
  */
 function liveDeployRows(repos: GitHubDeployWorkflowStatus[]): GitHubDeployWorkflowStatus[] {
   return repos.filter((row) => !row.isPlaceholder);
@@ -53,6 +54,7 @@ function shouldAdvanceTokenInChain(repos: GitHubDeployWorkflowStatus[]): boolean
 
 /** Which env token produced the successful fetch (telemetry only). */
 type DeployStatusTokenUsed =
+  | 'GH_MASTER_PAT_KYLE'
   | 'GITHUB_TOKEN_3'
   | 'GITHUB_TOKEN_2'
   | 'GITHUB_DEPLOY_READ_TOKEN';
@@ -72,10 +74,10 @@ interface DeployStatusCacheEntry {
   fetchedAtMs: number;
 }
 
-// 45s (was 20s): with the 40-probe env index removed, a refresh is ~30-40 GitHub calls; at 45s the
-// board stays well under the token's hourly budget so the Deployments API stops 403-rate-limiting
-// (the cause of the stg/prod false-N/A). Still fresh enough for a wall-mounted deploy board.
-const DEPLOY_STATUS_CACHE_TTL_MS = 45_000;
+// 20s: with the 40-probe env index removed, a refresh is ~30-45 GitHub calls (Auto-Merge workflows
+// added). At 20s the board stays under the token hourly budget while catching Dev Fast / TST
+// Auto-Merge within about half a minute (was 45s — TV often looked idle until CD was nearly done).
+const DEPLOY_STATUS_CACHE_TTL_MS = 20_000;
 const DEPLOY_STATUS_STALE_MAX_MS = 5 * 60_000;
 const DEPLOY_STATUS_RATE_LIMIT_COOLDOWN_MS = 60_000;
 
@@ -120,10 +122,12 @@ function toSuccessResponse(
 }
 
 async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry> {
+  const masterPat = process.env.GH_MASTER_PAT_KYLE?.trim();
   const token3 = process.env.GITHUB_TOKEN_3?.trim();
   const token2 = process.env.GITHUB_TOKEN_2?.trim();
   const deployRead = process.env.GITHUB_DEPLOY_READ_TOKEN?.trim();
   const tokenChain: Array<{ tokenUsed: DeployStatusTokenUsed; token: string }> = [
+    masterPat ? { tokenUsed: 'GH_MASTER_PAT_KYLE', token: masterPat } : null,
     token3 ? { tokenUsed: 'GITHUB_TOKEN_3', token: token3 } : null,
     token2 ? { tokenUsed: 'GITHUB_TOKEN_2', token: token2 } : null,
     deployRead ? { tokenUsed: 'GITHUB_DEPLOY_READ_TOKEN', token: deployRead } : null,
@@ -131,7 +135,7 @@ async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry
 
   if (tokenChain.length === 0) {
     throw new Error(
-      'Missing deploy tokens (set at least one of: GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)'
+      'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)'
     );
   }
 
@@ -187,6 +191,7 @@ async function getFreshDeployStatus(nowMs: number): Promise<DeployStatusCacheEnt
 export async function GET(): Promise<Response> {
   const nowMs = Date.now();
   const hasAnyToken = Boolean(
+    process.env.GH_MASTER_PAT_KYLE?.trim() ||
     process.env.GITHUB_TOKEN_2?.trim() ||
     process.env.GITHUB_TOKEN_3?.trim() ||
     process.env.GITHUB_DEPLOY_READ_TOKEN?.trim()
@@ -197,7 +202,7 @@ export async function GET(): Promise<Response> {
       {
         ok: false,
         message:
-          'Missing deploy tokens (set at least one of: GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)',
+          'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)',
         repos: [],
       },
       { status: 503 }

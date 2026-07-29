@@ -130,10 +130,18 @@ export type DeployCardHealth = 'ok' | 'warning' | 'error';
 
 /**
  * Per-lane swim-lane state used for card header health (matches GithubDeployRepoCards).
- * `na` = lane does not exist for this repo (package repo Stg/Prod); excluded from health like
- * `idle`, but rendered as a static "N/A" row rather than an empty idle row.
+ * `na` = lane does not exist for this repo (package/npm libs only — never a deploy target).
+ * `api_error` = Deployments API (or other lane source) failed; never use `na` for that.
  */
-export type DeployLaneSnapshotState = 'ok' | 'running' | 'failed' | 'queued' | 'idle' | 'na' | 'cancelled';
+export type DeployLaneSnapshotState =
+  | 'ok'
+  | 'running'
+  | 'failed'
+  | 'queued'
+  | 'idle'
+  | 'na'
+  | 'cancelled'
+  | 'api_error';
 
 function nonIdleLaneStates(states: readonly DeployLaneSnapshotState[]): DeployLaneSnapshotState[] {
   // `cancelled` is excluded like `idle`/`na`: a deliberately-cancelled deploy left the env
@@ -141,10 +149,10 @@ function nonIdleLaneStates(states: readonly DeployLaneSnapshotState[]): DeployLa
   return states.filter((state) => state !== 'idle' && state !== 'na' && state !== 'cancelled');
 }
 
-/** Worst-lane card health: any failed lane → error; any active lane → warning; all ok → ok. */
+/** Worst-lane card health: any failed/API ERR lane → error; any active lane → warning; all ok → ok. */
 export function cardHealthFromLaneStates(states: readonly DeployLaneSnapshotState[]): DeployCardHealth {
   const relevant = nonIdleLaneStates(states);
-  if (relevant.some((state) => state === 'failed')) return 'error';
+  if (relevant.some((state) => state === 'failed' || state === 'api_error')) return 'error';
   if (relevant.some((state) => state === 'running' || state === 'queued')) return 'warning';
   if (relevant.length > 0 && relevant.every((state) => state === 'ok')) return 'ok';
   return 'warning';
@@ -154,7 +162,7 @@ export function tagSeverityFromLaneStates(
   states: readonly DeployLaneSnapshotState[]
 ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
   const relevant = nonIdleLaneStates(states);
-  if (relevant.some((state) => state === 'failed')) return 'danger';
+  if (relevant.some((state) => state === 'failed' || state === 'api_error')) return 'danger';
   if (relevant.some((state) => state === 'running')) return 'warning';
   if (relevant.some((state) => state === 'queued')) return 'info';
   if (relevant.length > 0 && relevant.every((state) => state === 'ok')) return 'success';
@@ -163,6 +171,7 @@ export function tagSeverityFromLaneStates(
 
 export function tagValueFromLaneStates(states: readonly DeployLaneSnapshotState[]): string {
   const relevant = nonIdleLaneStates(states);
+  if (relevant.some((state) => state === 'api_error')) return 'API ERR';
   if (relevant.some((state) => state === 'failed')) return 'failure';
   if (relevant.some((state) => state === 'running')) return 'In Progress';
   if (relevant.some((state) => state === 'queued')) return 'Queued';

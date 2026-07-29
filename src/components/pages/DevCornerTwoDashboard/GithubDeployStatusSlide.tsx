@@ -6,10 +6,11 @@ import { Card } from 'primereact/card';
 import { Message } from 'primereact/message';
 import { MeterGroup } from 'primereact/metergroup';
 import { Skeleton } from 'primereact/skeleton';
-import { GITHUB_ACTIVITY_POLL_INTERVAL_MS } from '@/constants';
+import { GITHUB_DEPLOY_STATUS_POLL_INTERVAL_MS } from '@/constants';
 import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
 import type { DeployLaneSnapshotState } from '@/utils/githubDeployDisplay';
-import { GithubDeployRepoCards, deriveEnvironmentSnapshots } from './GithubDeployRepoCards';
+import { deriveEnvironmentSnapshots } from '@/utils/deriveDeployEnvironmentSnapshots';
+import { GithubDeployRepoCards } from './GithubDeployRepoCards';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './GithubDeployStatusSlide.module.scss';
 import slideStyles from './DevCornerTwoDashboard.module.scss';
@@ -50,6 +51,7 @@ function environmentStateFromLaneState(state: DeployLaneSnapshotState): DeployEn
     case 'queued':
       return 'queued';
     case 'failed':
+    case 'api_error':
       return 'failed';
     // cancelled / idle / na are neutral — never counted as a failure.
     default:
@@ -120,7 +122,7 @@ export const GithubDeployStatusSlide = () => {
 
   useEffect(() => {
     void fetchStatus();
-    const id = window.setInterval(() => void fetchStatus(), GITHUB_ACTIVITY_POLL_INTERVAL_MS);
+    const id = window.setInterval(() => void fetchStatus(), GITHUB_DEPLOY_STATUS_POLL_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, [fetchStatus]);
 
