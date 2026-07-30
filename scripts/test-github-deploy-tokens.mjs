@@ -39,6 +39,12 @@ const TOKEN_ENVS = [
   'GITHUB_DEPLOY_READ_TOKEN',
 ];
 
+const HAS_GITHUB_APP = Boolean(
+  process.env.GITHUB_APP_ID?.trim() &&
+    process.env.GITHUB_APP_INSTALLATION_ID?.trim() &&
+    process.env.GITHUB_APP_PRIVATE_KEY?.trim()
+);
+
 function headers(token) {
   return {
     Authorization: `Bearer ${token}`,
@@ -101,7 +107,12 @@ async function main() {
   console.log('  • 404 on workflow runs usually means wrong workflow ID, repo moved, or token cannot see the repo.');
   console.log('  • 401 / 403 on /user means the token is invalid or expired.');
   console.log(
-    '  • Deploy route tries GH_MASTER_PAT_KYLE → GH_ROY_PAT_MASTER_CLASSIC → GITHUB_TOKEN_3 → GITHUB_TOKEN_2 → GITHUB_DEPLOY_READ_TOKEN.'
+    '  • Deploy route tries GITHUB_APP → GH_MASTER_PAT_KYLE → GH_ROY_PAT_MASTER_CLASSIC → GITHUB_TOKEN_3 → GITHUB_TOKEN_2 → GITHUB_DEPLOY_READ_TOKEN.'
+  );
+  console.log(
+    HAS_GITHUB_APP
+      ? '  • GITHUB_APP_* env is set (installation token is minted at request time; not probed as a static PAT here).'
+      : '  • GITHUB_APP_* env is not fully set (App ID + installation ID + private key).'
   );
   console.log('  • Tokens with core rate-limit remaining under 50 are skipped before a full refresh.');
 }

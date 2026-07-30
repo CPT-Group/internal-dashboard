@@ -1,5 +1,9 @@
 import { LIVE_DEPLOY_WORKFLOW_MONITORS } from '@/constants/GITHUB_DEPLOY_MONITORS';
 import {
+  getGitHubAppInstallationToken,
+  hasGitHubAppConfig,
+} from '@/lib/githubAppAuth';
+import {
   fetchAllDeployWorkflowStatuses,
   mergeDeployStatusesInMonitorOrder,
 } from '@/services/github/fetchDeployWorkflowStatus';
@@ -10,13 +14,14 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Aggregates latest CD workflow runs for monitored CPT-Group repos (Actions API).
- * Token order: **`GH_MASTER_PAT_KYLE`** → **`GH_ROY_PAT_MASTER_CLASSIC`** → **`GITHUB_TOKEN_3`** →
- * **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`**.
+ * Token order: **`GITHUB_APP`** (installation token) → **`GH_MASTER_PAT_KYLE`** →
+ * **`GH_ROY_PAT_MASTER_CLASSIC`** → **`GITHUB_TOKEN_3`** → **`GITHUB_TOKEN_2`** →
+ * **`GITHUB_DEPLOY_READ_TOKEN`**.
  * **Rotation:** try the next token when the current one clearly cannot serve the board:
  * - Core rate-limit remaining is below the refresh budget (skip — never burn a 0/5000 PAT), or
  * - That GitHub **user** is already exhausted this refresh (classic PATs share one 5000/hr budget
  *   per user — Kyle’s PAT and `GITHUB_DEPLOY_READ_TOKEN` are the same account; Roy’s classics share
- *   another), or
+ *   another). App installation tokens have a separate budget and are tried first, or
  * - **Any** repo returns hard auth / rate-limit (`401`, `bad credentials`, `rate limit`), or
  * - **Every** repo fails with a retryable error (`401`, `403`, `404`, rate limit, bad credentials) —
  *   e.g. fine-grained PAT with `/user` OK but **no Actions** access → **404** on all workflow-run URLs.
@@ -59,12 +64,16 @@ function shouldAdvanceTokenInChain(repos: GitHubDeployWorkflowStatus[]): boolean
 
 /** Which env token produced the successful fetch (telemetry only). */
 type DeployStatusTokenUsed =
+  | 'GITHUB_APP'
   | 'GH_MASTER_PAT_KYLE'
   | 'GH_ROY_PAT_MASTER_CLASSIC'
   | 'GITHUB_TOKEN_3'
   | 'GITHUB_TOKEN_2'
   | 'GITHUB_DEPLOY_READ_TOKEN';
 type DeployStatusSource = 'live' | 'cache' | 'stale-cache';
+
+const DEPLOY_TOKEN_ENV_HINT =
+  'GITHUB_APP_* (ID + INSTALLATION_ID + PRIVATE_KEY), GH_MASTER_PAT_KYLE, GH_ROY_PAT_MASTER_CLASSIC, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN';
 
 /** Skip a PAT when core remaining cannot cover one deploy-status refresh (~30–45 GitHub calls). */
 const MIN_CORE_REMAINING_FOR_REFRESH = 50;
@@ -193,32 +202,49 @@ function toSuccessResponse(
   };
 }
 
-async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry> {
+async function buildDeployTokenChain(): Promise<Array<{ tokenUsed: DeployStatusTokenUsed; token: string }>> {
+  const rawChain: Array<{ tokenUsed: DeployStatusTokenUsed; token: string } | null> = [];
+
+  if (hasGitHubAppConfig()) {
+    try {
+      const appToken = await getGitHubAppInstallationToken();
+      rawChain.push({ tokenUsed: 'GITHUB_APP', token: appToken });
+    } catch (error) {
+      // Fall through to personal PATs — App misconfig should not blank the board if PATs work.
+      console.error(
+        '[deploy-status] GitHub App installation token failed:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
   const masterPat = process.env.GH_MASTER_PAT_KYLE?.trim();
   const royPat = process.env.GH_ROY_PAT_MASTER_CLASSIC?.trim();
   const token3 = process.env.GITHUB_TOKEN_3?.trim();
   const token2 = process.env.GITHUB_TOKEN_2?.trim();
   const deployRead = process.env.GITHUB_DEPLOY_READ_TOKEN?.trim();
-  const rawChain: Array<{ tokenUsed: DeployStatusTokenUsed; token: string }> = [
+  rawChain.push(
     masterPat ? { tokenUsed: 'GH_MASTER_PAT_KYLE', token: masterPat } : null,
     royPat ? { tokenUsed: 'GH_ROY_PAT_MASTER_CLASSIC', token: royPat } : null,
     token3 ? { tokenUsed: 'GITHUB_TOKEN_3', token: token3 } : null,
     token2 ? { tokenUsed: 'GITHUB_TOKEN_2', token: token2 } : null,
-    deployRead ? { tokenUsed: 'GITHUB_DEPLOY_READ_TOKEN', token: deployRead } : null,
-  ].filter((entry): entry is { tokenUsed: DeployStatusTokenUsed; token: string } => Boolean(entry));
+    deployRead ? { tokenUsed: 'GITHUB_DEPLOY_READ_TOKEN', token: deployRead } : null
+  );
 
-  // Same secret pasted into two env vars → one attempt.
   const seenTokenValues = new Set<string>();
-  const tokenChain = rawChain.filter((entry) => {
+  return rawChain.filter((entry): entry is { tokenUsed: DeployStatusTokenUsed; token: string } => {
+    if (!entry) return false;
     if (seenTokenValues.has(entry.token)) return false;
     seenTokenValues.add(entry.token);
     return true;
   });
+}
+
+async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry> {
+  const tokenChain = await buildDeployTokenChain();
 
   if (tokenChain.length === 0) {
-    throw new Error(
-      'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GH_ROY_PAT_MASTER_CLASSIC, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)'
-    );
+    throw new Error(`Missing deploy tokens (set at least one of: ${DEPLOY_TOKEN_ENV_HINT})`);
   }
 
   const exhaustedUserIds = new Set<number>();
@@ -321,19 +347,19 @@ async function getFreshDeployStatus(nowMs: number): Promise<DeployStatusCacheEnt
 export async function GET(): Promise<Response> {
   const nowMs = Date.now();
   const hasAnyToken = Boolean(
-    process.env.GH_MASTER_PAT_KYLE?.trim() ||
-    process.env.GH_ROY_PAT_MASTER_CLASSIC?.trim() ||
-    process.env.GITHUB_TOKEN_2?.trim() ||
-    process.env.GITHUB_TOKEN_3?.trim() ||
-    process.env.GITHUB_DEPLOY_READ_TOKEN?.trim()
+    hasGitHubAppConfig() ||
+      process.env.GH_MASTER_PAT_KYLE?.trim() ||
+      process.env.GH_ROY_PAT_MASTER_CLASSIC?.trim() ||
+      process.env.GITHUB_TOKEN_2?.trim() ||
+      process.env.GITHUB_TOKEN_3?.trim() ||
+      process.env.GITHUB_DEPLOY_READ_TOKEN?.trim()
   );
 
   if (!hasAnyToken) {
     return Response.json(
       {
         ok: false,
-        message:
-          'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GH_ROY_PAT_MASTER_CLASSIC, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)',
+        message: `Missing deploy tokens (set at least one of: ${DEPLOY_TOKEN_ENV_HINT})`,
         repos: [],
       },
       { status: 503 }
