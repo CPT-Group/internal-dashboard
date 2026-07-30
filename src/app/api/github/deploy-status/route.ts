@@ -10,8 +10,13 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Aggregates latest CD workflow runs for monitored CPT-Group repos (Actions API).
- * Token order: **`GH_MASTER_PAT_KYLE`** → **`GITHUB_TOKEN_3`** → **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`**.
+ * Token order: **`GH_MASTER_PAT_KYLE`** → **`GH_ROY_PAT_MASTER_CLASSIC`** → **`GITHUB_TOKEN_3`** →
+ * **`GITHUB_TOKEN_2`** → **`GITHUB_DEPLOY_READ_TOKEN`**.
  * **Rotation:** try the next token when the current one clearly cannot serve the board:
+ * - Core rate-limit remaining is below the refresh budget (skip — never burn a 0/5000 PAT), or
+ * - That GitHub **user** is already exhausted this refresh (classic PATs share one 5000/hr budget
+ *   per user — Kyle’s PAT and `GITHUB_DEPLOY_READ_TOKEN` are the same account; Roy’s classics share
+ *   another), or
  * - **Any** repo returns hard auth / rate-limit (`401`, `bad credentials`, `rate limit`), or
  * - **Every** repo fails with a retryable error (`401`, `403`, `404`, rate limit, bad credentials) —
  *   e.g. fine-grained PAT with `/user` OK but **no Actions** access → **404** on all workflow-run URLs.
@@ -55,10 +60,77 @@ function shouldAdvanceTokenInChain(repos: GitHubDeployWorkflowStatus[]): boolean
 /** Which env token produced the successful fetch (telemetry only). */
 type DeployStatusTokenUsed =
   | 'GH_MASTER_PAT_KYLE'
+  | 'GH_ROY_PAT_MASTER_CLASSIC'
   | 'GITHUB_TOKEN_3'
   | 'GITHUB_TOKEN_2'
   | 'GITHUB_DEPLOY_READ_TOKEN';
 type DeployStatusSource = 'live' | 'cache' | 'stale-cache';
+
+/** Skip a PAT when core remaining cannot cover one deploy-status refresh (~30–45 GitHub calls). */
+const MIN_CORE_REMAINING_FOR_REFRESH = 50;
+
+const ALL_TOKENS_RATE_LIMITED_MESSAGE =
+  'All GitHub deploy tokens are rate-limited (per-user API budgets exhausted). Retry after the hourly reset, or add a PAT from a different GitHub user.';
+
+/** Process-lifetime cache: PAT string → GitHub numeric user id (classic PATs share budget per user). */
+const tokenUserIdCache = new Map<string, number>();
+
+function githubApiHeaders(token: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'cpt-internal-dashboard',
+  };
+}
+
+/** `/rate_limit` does not consume the budget. */
+async function getCoreRateLimitRemaining(token: string): Promise<number | null> {
+  try {
+    const res = await fetch('https://api.github.com/rate_limit', {
+      headers: githubApiHeaders(token),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      resources?: { core?: { remaining?: number } };
+    };
+    const remaining = data.resources?.core?.remaining;
+    return typeof remaining === 'number' && Number.isFinite(remaining) ? remaining : null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveGithubUserId(token: string): Promise<number | null> {
+  const cached = tokenUserIdCache.get(token);
+  if (cached != null) return cached;
+  try {
+    const res = await fetch('https://api.github.com/user', {
+      headers: githubApiHeaders(token),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { id?: number };
+    if (typeof data.id !== 'number' || !Number.isFinite(data.id)) return null;
+    tokenUserIdCache.set(token, data.id);
+    return data.id;
+  } catch {
+    return null;
+  }
+}
+
+function parseRateLimitedUserIdFromRepos(repos: GitHubDeployWorkflowStatus[]): number | null {
+  for (const row of liveDeployRows(repos)) {
+    if (!row.error) continue;
+    const match = /rate limit exceeded for user ID (\d+)/i.exec(row.error);
+    if (match?.[1]) {
+      const id = Number(match[1]);
+      if (Number.isFinite(id)) return id;
+    }
+  }
+  return null;
+}
 
 interface DeployStatusSuccessResponse {
   ok: true;
@@ -123,37 +195,89 @@ function toSuccessResponse(
 
 async function fetchDeployStatusFromTokenChain(): Promise<DeployStatusCacheEntry> {
   const masterPat = process.env.GH_MASTER_PAT_KYLE?.trim();
+  const royPat = process.env.GH_ROY_PAT_MASTER_CLASSIC?.trim();
   const token3 = process.env.GITHUB_TOKEN_3?.trim();
   const token2 = process.env.GITHUB_TOKEN_2?.trim();
   const deployRead = process.env.GITHUB_DEPLOY_READ_TOKEN?.trim();
-  const tokenChain: Array<{ tokenUsed: DeployStatusTokenUsed; token: string }> = [
+  const rawChain: Array<{ tokenUsed: DeployStatusTokenUsed; token: string }> = [
     masterPat ? { tokenUsed: 'GH_MASTER_PAT_KYLE', token: masterPat } : null,
+    royPat ? { tokenUsed: 'GH_ROY_PAT_MASTER_CLASSIC', token: royPat } : null,
     token3 ? { tokenUsed: 'GITHUB_TOKEN_3', token: token3 } : null,
     token2 ? { tokenUsed: 'GITHUB_TOKEN_2', token: token2 } : null,
     deployRead ? { tokenUsed: 'GITHUB_DEPLOY_READ_TOKEN', token: deployRead } : null,
   ].filter((entry): entry is { tokenUsed: DeployStatusTokenUsed; token: string } => Boolean(entry));
 
+  // Same secret pasted into two env vars → one attempt.
+  const seenTokenValues = new Set<string>();
+  const tokenChain = rawChain.filter((entry) => {
+    if (seenTokenValues.has(entry.token)) return false;
+    seenTokenValues.add(entry.token);
+    return true;
+  });
+
   if (tokenChain.length === 0) {
     throw new Error(
-      'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)'
+      'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GH_ROY_PAT_MASTER_CLASSIC, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)'
     );
   }
 
+  const exhaustedUserIds = new Set<number>();
+  let lastAttempt: DeployStatusCacheEntry | null = null;
+  let attemptedAny = false;
+
   for (let i = 0; i < tokenChain.length; i += 1) {
     const chainEntry = tokenChain[i];
+    const hasNextToken = i < tokenChain.length - 1;
+
+    const remaining = await getCoreRateLimitRemaining(chainEntry.token);
+    const userId = await resolveGithubUserId(chainEntry.token);
+
+    if (userId != null && exhaustedUserIds.has(userId)) {
+      continue;
+    }
+
+    // Never burn a PAT that cannot finish a refresh — including the last chain entry.
+    if (remaining !== null && remaining < MIN_CORE_REMAINING_FOR_REFRESH) {
+      if (userId != null) exhaustedUserIds.add(userId);
+      continue;
+    }
+
+    attemptedAny = true;
     const liveRepos = await fetchAllDeployWorkflowStatuses(
       chainEntry.token,
       LIVE_DEPLOY_WORKFLOW_MONITORS
     );
     const repos = mergeDeployStatusesInMonitorOrder(liveRepos);
+    lastAttempt = { repos, tokenUsed: chainEntry.tokenUsed, fetchedAtMs: Date.now() };
+
     const advance = shouldAdvanceTokenInChain(repos);
-    const hasNextToken = i < tokenChain.length - 1;
-    if (!advance || !hasNextToken) {
-      return { repos, tokenUsed: chainEntry.tokenUsed, fetchedAtMs: Date.now() };
+    if (!advance) {
+      return lastAttempt;
+    }
+
+    // Rate-limit / auth failure on this PAT → mark that GitHub user exhausted for the rest of the chain.
+    if (hasRateLimitOrAuthError(repos)) {
+      const fromError = parseRateLimitedUserIdFromRepos(repos);
+      if (fromError != null) exhaustedUserIds.add(fromError);
+      if (userId != null) exhaustedUserIds.add(userId);
+    }
+
+    if (!hasNextToken) {
+      break;
     }
   }
 
-  return { repos: [], tokenUsed: tokenChain[tokenChain.length - 1]!.tokenUsed, fetchedAtMs: Date.now() };
+  if (lastAttempt != null && !hasRateLimitOrAuthError(lastAttempt.repos)) {
+    return lastAttempt;
+  }
+
+  // All PATs skipped (budgets empty) or every attempt was rate-limited — throw so GET can serve
+  // stale cache, instead of publishing "API rate limit exceeded" on every card.
+  if (!attemptedAny || lastAttempt == null || hasRateLimitOrAuthError(lastAttempt.repos)) {
+    throw new Error(ALL_TOKENS_RATE_LIMITED_MESSAGE);
+  }
+
+  return lastAttempt;
 }
 
 async function getFreshDeployStatus(nowMs: number): Promise<DeployStatusCacheEntry> {
@@ -177,6 +301,12 @@ async function getFreshDeployStatus(nowMs: number): Promise<DeployStatusCacheEnt
       return deployStatusCache as DeployStatusCacheEntry;
     }
 
+    // Never replace a good board with a rate-limit error payload (even if stale window lapsed).
+    if (freshHasErrors && freshHasRateLimit && deployStatusCache != null) {
+      rateLimitCooldownUntilMs = nowMs + DEPLOY_STATUS_RATE_LIMIT_COOLDOWN_MS;
+      return deployStatusCache;
+    }
+
     deployStatusCache = fresh;
     return fresh;
   })();
@@ -192,6 +322,7 @@ export async function GET(): Promise<Response> {
   const nowMs = Date.now();
   const hasAnyToken = Boolean(
     process.env.GH_MASTER_PAT_KYLE?.trim() ||
+    process.env.GH_ROY_PAT_MASTER_CLASSIC?.trim() ||
     process.env.GITHUB_TOKEN_2?.trim() ||
     process.env.GITHUB_TOKEN_3?.trim() ||
     process.env.GITHUB_DEPLOY_READ_TOKEN?.trim()
@@ -202,7 +333,7 @@ export async function GET(): Promise<Response> {
       {
         ok: false,
         message:
-          'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)',
+          'Missing deploy tokens (set at least one of: GH_MASTER_PAT_KYLE, GH_ROY_PAT_MASTER_CLASSIC, GITHUB_TOKEN_3, GITHUB_TOKEN_2, GITHUB_DEPLOY_READ_TOKEN)',
         repos: [],
       },
       { status: 503 }
@@ -225,10 +356,13 @@ export async function GET(): Promise<Response> {
         : 'live';
     return Response.json(toSuccessResponse(fresh, source, Date.now()));
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch deploy status';
+    if (message === ALL_TOKENS_RATE_LIMITED_MESSAGE || /rate.?limit/i.test(message)) {
+      rateLimitCooldownUntilMs = nowMs + DEPLOY_STATUS_RATE_LIMIT_COOLDOWN_MS;
+    }
     if (deployStatusCache && nowMs - deployStatusCache.fetchedAtMs <= DEPLOY_STATUS_STALE_MAX_MS) {
       return Response.json(toSuccessResponse(deployStatusCache, 'stale-cache', nowMs));
     }
-    const message = error instanceof Error ? error.message : 'Failed to fetch deploy status';
     return Response.json({ ok: false, message, repos: [] }, { status: 503 });
   }
 }
