@@ -73,6 +73,8 @@ interface GhBranchRun {
 
 function token(): string {
   return (
+    process.env.GH_MASTER_PAT_KYLE?.trim() ||
+    process.env.GH_ROY_PAT_MASTER_CLASSIC?.trim() ||
     process.env.GITHUB_TOKEN_3?.trim() ||
     process.env.GITHUB_TOKEN_2?.trim() ||
     process.env.GITHUB_DEPLOY_READ_TOKEN?.trim() ||

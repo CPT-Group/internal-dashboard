@@ -31,7 +31,13 @@ if (probeResult.status !== 0 || !probeResult.stdout.trim()) {
 /** Derived from `GITHUB_DEPLOY_MONITORS` + `GITHUB_DEPLOY_LANE_WORKFLOWS`. */
 const MONITORS = JSON.parse(probeResult.stdout);
 
-const TOKEN_ENVS = ['GITHUB_TOKEN_3', 'GITHUB_TOKEN_2', 'GITHUB_DEPLOY_READ_TOKEN'];
+const TOKEN_ENVS = [
+  'GH_MASTER_PAT_KYLE',
+  'GH_ROY_PAT_MASTER_CLASSIC',
+  'GITHUB_TOKEN_3',
+  'GITHUB_TOKEN_2',
+  'GITHUB_DEPLOY_READ_TOKEN',
+];
 
 function headers(token) {
   return {
@@ -94,7 +100,10 @@ async function main() {
   console.log('Notes:');
   console.log('  • 404 on workflow runs usually means wrong workflow ID, repo moved, or token cannot see the repo.');
   console.log('  • 401 / 403 on /user means the token is invalid or expired.');
-  console.log('  • Deploy route tries GITHUB_TOKEN_3, then GITHUB_TOKEN_2, then GITHUB_DEPLOY_READ_TOKEN.');
+  console.log(
+    '  • Deploy route tries GH_MASTER_PAT_KYLE → GH_ROY_PAT_MASTER_CLASSIC → GITHUB_TOKEN_3 → GITHUB_TOKEN_2 → GITHUB_DEPLOY_READ_TOKEN.'
+  );
+  console.log('  • Tokens with core rate-limit remaining under 50 are skipped before a full refresh.');
 }
 
 main().catch((e) => {
