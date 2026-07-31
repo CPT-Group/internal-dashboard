@@ -18,6 +18,7 @@ import {
   getNaLaneLabel,
   mapEnvironmentToLane,
   normalizeDeployEnvironment,
+  parseDeployEnvironmentFromJobName,
   parseDeployEnvironmentFromRunName,
   type DeployEnvironmentKey,
   type DeployLaneKey,
@@ -706,20 +707,84 @@ function reclassifyCancelledLaneSnapshots(
   return out;
 }
 
+interface GitHubWorkflowJobApi {
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+}
+
+/**
+ * When `run-name` is missing (legacy workflow file / accidental dispatch), infer the Deploy Version
+ * target from job names like `Deploy supportrequestapi (tst)`. One jobs list call per orphan run.
+ */
+async function resolveDeployVersionEnvFromJobs(
+  token: string,
+  owner: string,
+  repo: string,
+  runId: number
+): Promise<DeployEnvironmentKey | null> {
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}/jobs?per_page=40`;
+    const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { jobs?: GitHubWorkflowJobApi[] };
+    const jobs = Array.isArray(data.jobs) ? data.jobs : [];
+    for (const job of jobs) {
+      const env = parseDeployEnvironmentFromJobName(job.name);
+      if (env) return env;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveActiveDeployVersionEnvs(
+  token: string,
+  owner: string,
+  repo: string,
+  runs: readonly FetchedRunEntry[]
+): Promise<Map<number, DeployEnvironmentKey>> {
+  const deployVersionIds = new Set(getDeployVersionWorkflowIds(repo));
+  const resolved = new Map<number, DeployEnvironmentKey>();
+  if (deployVersionIds.size === 0) return resolved;
+
+  const orphanRuns = runs.filter((entry) => {
+    if (!deployVersionIds.has(entry.workflowId)) return false;
+    if (entry.run.status === 'completed') return false;
+    const fromTitle = parseDeployEnvironmentFromRunName(runDisplayTitle(entry.run));
+    if (fromTitle) {
+      resolved.set(entry.run.id, fromTitle);
+      return false;
+    }
+    return true;
+  });
+
+  await Promise.all(
+    orphanRuns.map(async (entry) => {
+      const fromJobs = await resolveDeployVersionEnvFromJobs(token, owner, repo, entry.run.id);
+      if (fromJobs) resolved.set(entry.run.id, fromJobs);
+    })
+  );
+  return resolved;
+}
+
 /**
  * Overlay in-flight Deploy Version runs onto their TARGET lane as soon as the run exists.
  *
  * Dedicated Dev/Tst snapshots deliberately exclude Deploy Version (so promotes do not paint Dev/Tst
  * via `development`). Stg/Prod wait on the Deployments API — but app CD now runs
  * `verify-promotion-order` before the env-gated job, so Actions shows In Progress while no
- * Deployment exists yet. Parse `run-name` / display title (`Deploy Version — stg`) and light that
- * lane immediately. Only non-completed runs overlay; completed state stays on Deployments /
- * dedicated workflows.
+ * Deployment exists yet. Parse `run-name` / display title (`Deploy Version — stg`), or a pre-resolved
+ * env from job names when run-name is missing, and light that lane immediately. Only non-completed
+ * runs overlay; completed state stays on Deployments / dedicated workflows.
  */
 export function overlayActiveDeployVersionLaneSnapshots(
   repo: string,
   runs: readonly FetchedRunEntry[],
-  laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>
+  laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>,
+  envByRunId?: ReadonlyMap<number, DeployEnvironmentKey>
 ): Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> {
   const deployVersionIds = new Set(getDeployVersionWorkflowIds(repo));
   if (deployVersionIds.size === 0) return laneSnapshots;
@@ -733,7 +798,8 @@ export function overlayActiveDeployVersionLaneSnapshots(
     if (entry.run.status === 'completed') continue;
 
     const title = runDisplayTitle(entry.run);
-    const env = parseDeployEnvironmentFromRunName(title);
+    const env =
+      envByRunId?.get(entry.run.id) ?? parseDeployEnvironmentFromRunName(title);
     if (!env) continue;
 
     const lane = mapEnvironmentToLane(repo, env);
@@ -750,9 +816,18 @@ export function overlayActiveDeployVersionLaneSnapshots(
       }
     }
 
+    // GitHub often keeps the run-level status as `queued` while matrix jobs are already running —
+    // prefer `running` when the run is non-completed so the lane matches Actions reality.
+    const laneState =
+      entry.run.status === 'completed'
+        ? laneStateFromRunStatus(entry.run.status, entry.run.conclusion)
+        : entry.run.status === 'queued' || entry.run.status === 'waiting' || entry.run.status === 'pending'
+          ? 'running'
+          : laneStateFromRunStatus(entry.run.status, entry.run.conclusion);
+
     out[lane] = buildRunLaneSnapshot({
       lane,
-      state: laneStateFromRunStatus(entry.run.status, entry.run.conclusion),
+      state: laneState,
       createdAt: entry.run.created_at,
       updatedAt: entry.run.updated_at,
       title: title || entry.run.name,
@@ -818,13 +893,22 @@ export async function fetchDeployWorkflowStatus(
     ?? runs.find(({ run }) => run.status !== 'completed');
   const lastDoneEntry = runs.find(({ run }) => run.status === 'completed');
 
+  // Resolve Deploy Version targets (run-name, else job-name fallback) before overlay so orphan
+  // promotes (bare "Deploy Version" titles) still light tst/stg/prd during verify-promotion-order.
+  const deployVersionEnvs = await resolveActiveDeployVersionEnvs(token, owner, repo, runs);
+
   // dev/tst ← dedicated workflow; stg/prod ← Deployments API; then overlay in-flight Deploy Version
-  // (run-name target) so promotes light the lane during verify-promotion-order before Deployments exist.
+  // so promotes light the lane during verify-promotion-order before Deployments exist.
   const laneSnapshots: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = reclassifyCancelledLaneSnapshots(
-    overlayActiveDeployVersionLaneSnapshots(repo, runs, {
-      ...buildRunBasedLaneSnapshots(repo, runs),
-      ...deploymentLaneSnapshots,
-    }),
+    overlayActiveDeployVersionLaneSnapshots(
+      repo,
+      runs,
+      {
+        ...buildRunBasedLaneSnapshots(repo, runs),
+        ...deploymentLaneSnapshots,
+      },
+      deployVersionEnvs
+    ),
     runs
   );
 

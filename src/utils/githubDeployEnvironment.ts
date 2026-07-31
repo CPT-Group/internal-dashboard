@@ -103,6 +103,8 @@ export function detectDeployEnvironmentFromBranch(branch: string | null): Deploy
   return null;
 }
 
+const DEPLOY_ENV_TOKEN = '(dev|development|tst|test|stg|staging|prd|prod|production)';
+
 /**
  * Parse target env from a Deploy Version `run-name` / display title
  * (e.g. `Deploy Version — stg`, `Deploy Version - prd`). Used so in-flight promotes
@@ -115,15 +117,30 @@ export function parseDeployEnvironmentFromRunName(title: string | null | undefin
   if (!trimmed) return null;
   // Prefer explicit "Deploy Version — <env>" (em dash / hyphen / en dash / colon).
   const deployVersionMatch = trimmed.match(
-    /deploy\s*version\s*[—–\-|:]\s*(dev|development|tst|test|stg|staging|prd|prod|production)\b/i
+    new RegExp(`deploy\\s*version\\s*[—–\\-|:]\\s*${DEPLOY_ENV_TOKEN}\\b`, 'i')
   );
   if (deployVersionMatch?.[1]) {
     return normalizeDeployEnvironment(deployVersionMatch[1]);
   }
   // Fallback: trailing "— stg" / "- prd" on other CD run names.
-  const trailingMatch = trimmed.match(/[—–\-|:]\s*(dev|development|tst|test|stg|staging|prd|prod|production)\s*$/i);
+  const trailingMatch = trimmed.match(new RegExp(`[—–\\-|:]\\s*${DEPLOY_ENV_TOKEN}\\s*$`, 'i'));
   if (trailingMatch?.[1]) {
     return normalizeDeployEnvironment(trailingMatch[1]);
+  }
+  return null;
+}
+
+/**
+ * Parse target env from a Deploy Version job name when `run-name` is missing
+ * (e.g. `Deploy supportrequestapi (tst)`, `Deploy UI (stg)`).
+ */
+export function parseDeployEnvironmentFromJobName(jobName: string | null | undefined): DeployEnvironmentKey | null {
+  if (!jobName) return null;
+  const trimmed = jobName.trim();
+  if (!trimmed) return null;
+  const paren = trimmed.match(new RegExp(`\\(${DEPLOY_ENV_TOKEN}\\)\\s*$`, 'i'));
+  if (paren?.[1]) {
+    return normalizeDeployEnvironment(paren[1]);
   }
   return null;
 }
