@@ -159,31 +159,28 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
 
   const laneStates = envSnapshots.map((env) => env.state);
   const inProgressCount = isPlaceholder ? 0 : row.inProgressCount ?? 0;
-  // If monitored CD is in flight but no lane has a target yet (pre-run-name / pre-Deployment),
-  // still show In Progress on the card header — do not look idle while Actions is busy.
+  const laneHasActive = laneStates.some((s) => s === 'running' || s === 'queued');
+  // Monitored CD is busy in Actions but no swim lane resolved a target (missing run-name,
+  // non-standard dispatch, stuck queue). Keep the primary badge on lane truth; surface a muted
+  // secondary chip so we do not contradict green OK lanes with a false Queued/In Progress badge.
+  const actionsBusy =
+    !isPlaceholder && !err && !laneHasActive && queuedCount + inProgressCount > 0;
+  // Single source of truth with the meter + lane pills: swim-lane state only.
   const tagValue = isPlaceholder
     ? 'Not configured'
     : err
       ? 'API error'
-      : queuedCount > 0 && inProgressCount === 0
-        ? `Queued (${queuedCount})`
-        : inProgressCount > 0 && !laneStates.some((s) => s === 'running' || s === 'queued')
-          ? 'In Progress'
-          : tagValueFromLaneStates(laneStates);
+      : tagValueFromLaneStates(laneStates);
   const severity = isPlaceholder
     ? 'secondary'
     : err
       ? 'danger'
-      : inProgressCount > 0 && !laneStates.some((s) => s === 'running' || s === 'failed' || s === 'api_error')
-        ? 'warning'
-        : tagSeverityFromLaneStates(laneStates);
+      : tagSeverityFromLaneStates(laneStates);
   const health = isPlaceholder
     ? 'warning'
     : err
       ? 'error'
-      : inProgressCount > 0 && !laneStates.some((s) => s === 'failed' || s === 'api_error')
-        ? 'warning'
-        : cardHealthFromLaneStates(laneStates);
+      : cardHealthFromLaneStates(laneStates);
   const deployerLabel = isPlaceholder ? '—' : run?.actorLogin ?? 'unknown';
 
   const cardClassName = [
@@ -215,9 +212,9 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
             <span className={`${styles.statusTagWrap} ${statusTagWrapClass(severity)}`}>
               <Tag value={tagValue} severity={severity} rounded />
             </span>
-            {queuedCount > 0 ? (
-              <span className={styles.headerQueueTagWrap}>
-                <Tag value={`Q ${queuedCount}`} severity="info" rounded />
+            {actionsBusy ? (
+              <span className={styles.headerActionsBusyWrap} title="Monitored CD workflow is active but no swim-lane target resolved yet">
+                <Tag value="Actions busy" severity="secondary" rounded />
               </span>
             ) : null}
           </div>

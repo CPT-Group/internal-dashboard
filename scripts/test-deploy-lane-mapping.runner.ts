@@ -4,6 +4,7 @@ import {
   getDeployLaneConfig,
   getNaLaneLabel,
   isWithinDeployIdleWindow,
+  parseDeployEnvironmentFromJobName,
   parseDeployEnvironmentFromRunName,
   type DeployLaneKey,
 } from '@/utils/githubDeployEnvironment';
@@ -561,6 +562,36 @@ function testParseDeployEnvironmentFromRunName() {
   assert.equal(parseDeployEnvironmentFromRunName('Deploy Version — tst'), 'tst');
   assert.equal(parseDeployEnvironmentFromRunName('Deploy Version'), null);
   assert.equal(parseDeployEnvironmentFromRunName('CI - Build & Lint'), null);
+  assert.equal(parseDeployEnvironmentFromJobName('Deploy supportrequestapi (tst)'), 'tst');
+  assert.equal(parseDeployEnvironmentFromJobName('Deploy UI (stg)'), 'stg');
+  assert.equal(parseDeployEnvironmentFromJobName('verify-promotion-order'), null);
+}
+
+function testOverlayJobNameFallbackLightsTstWhenRunNameMissing() {
+  // Live AZF failure mode: display_title is bare "Deploy Version", env only in job names.
+  const runs: FetchedRunEntry[] = [
+    fetchedRun(INTERNAL_TOOLS_DEV_FAST_ID, 'completed', 'success', 40),
+    fetchedRun(INTERNAL_TOOLS_TST_BUILD_ID, 'completed', 'success', 30),
+    fetchedRun(
+      INTERNAL_TOOLS_DEPLOY_VERSION_ID,
+      'queued',
+      null,
+      2,
+      'development',
+      'Deploy Version'
+    ),
+  ];
+  const envByRunId = new Map([[runs[2]!.run.id, 'tst' as const]]);
+  const base = buildRunBasedLaneSnapshots('cpt-internal-tools', runs);
+  const overlaid = overlayActiveDeployVersionLaneSnapshots(
+    'cpt-internal-tools',
+    runs,
+    base,
+    envByRunId
+  );
+  assert.equal(overlaid.dev?.state, 'ok');
+  assert.equal(overlaid.tst?.state, 'running', 'queued Deploy Version with job-env lights Tst as running');
+  assert.equal(overlaid.stg, undefined);
 }
 
 function testGithubDeploymentEnvironmentNamesPerLane() {
@@ -689,6 +720,7 @@ function main() {
   testEfTstBuildSnapshotShowsRealFailure();
   testDeployVersionLabelExtractedFromMergeTitle();
   testParseDeployEnvironmentFromRunName();
+  testOverlayJobNameFallbackLightsTstWhenRunNameMissing();
   testGithubDeploymentEnvironmentNamesPerLane();
   testOverlayInFlightDeployVersionLightsStgBeforeDeployment();
   testDeploymentsApiFailureShowsApiErrNotNa();

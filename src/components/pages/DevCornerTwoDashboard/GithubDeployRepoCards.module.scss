@@ -332,6 +332,23 @@
   }
 }
 
+/** Orphan monitored CD (no lane target) — muted so it never fights green OK lane pills. */
+.headerActionsBusyWrap {
+  display: inline-flex;
+  align-items: center;
+
+  :global(.p-tag) {
+    background: var(--github-deploy-surface-muted-bg) !important;
+    border: 1px solid var(--github-deploy-surface-muted-border) !important;
+    color: var(--text-color-secondary, var(--text-color)) !important;
+    font-size: calc(var(--content-text-size, 1rem) * 0.58);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.1rem 0.28rem;
+    opacity: 0.9;
+  }
+}
+
 .environmentRow {
   display: grid;
   grid-template-columns: minmax(4.2rem, max-content) 3.9rem auto minmax(0, 1fr);
