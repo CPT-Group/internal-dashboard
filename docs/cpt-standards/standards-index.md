@@ -19,5 +19,15 @@ front matter of every canonical standard:
 | Reference material | https://github.com/CPT-Group/cpt-standards/tree/main/reference |
 | Templates | https://github.com/CPT-Group/cpt-standards/tree/main/templates |
 
+## Key platform standards (React / frontend repos)
+
+| Standard | Location |
+|---|---|
+| React frontend (components, state, performance & correctness, AI-agent protocol) | https://github.com/CPT-Group/cpt-standards/blob/main/standards/platforms/react-frontend-standards.md |
+| Frontend caching / data freshness | https://github.com/CPT-Group/cpt-standards/blob/main/standards/platforms/caching-standards.md |
+| PrimeReact editable-grid performance | https://github.com/CPT-Group/cpt-standards/blob/main/standards/platforms/primereact-datatable-editable-grid-performance.md |
+| Cross-stack performance ("measure before optimizing") | https://github.com/CPT-Group/cpt-standards/blob/main/standards/global/performance-standards.md |
+| AI-agent governance | https://github.com/CPT-Group/cpt-standards/blob/main/standards/global/ai-agent-standards.md |
+
 To find which standards apply to **this** repo, open its profile in the hub
 [`profiles/`](https://github.com/CPT-Group/cpt-standards/tree/main/profiles) folder.
