@@ -21,10 +21,22 @@ Open [`react.md`](./react.md) **first** — it routes to the canonical React fro
 states the **mandatory startup protocol** and the **compliance + permission-before-deviation**
 rules that apply to every React / JS / TS / JSX / TSX change (human or AI agent).
 
+## Before identity / audit / attribution work
+
+Open [`identity.md`](./identity.md) **first** — it routes to the canonical identity-context standard
+and states the **locked target audit architecture**, the **four identity roles**, and the
+**prohibited patterns**. It applies to any change that records who did something, resolves an actor,
+adds a stored procedure taking `p_identity_chain`, or writes an audit or log row.
+
+Two things it settles up front: **audits record human interaction, logs record system actions — they
+are not interchangeable**; and new audit writes go to the **`audit_logs_vault`** contract, **not** to
+`internal_tools_app_shell.audit_logs`, which is a transitional legacy store.
+
 ## In this repo
 
 - `docs/cpt-standards/AGENTS.md` -- this repo's own agent guide (repo-specific; **not** synced).
 - `docs/cpt-standards/react.md` -- React/TS startup + compliance routing (synced from the hub).
+- `docs/cpt-standards/identity.md` -- identity/audit/attribution contract + prohibited patterns (synced from the hub).
 - `docs/cpt-standards/azure.md`, `database.md`, `documentation.md`, `dependabot.md` -- shared routing stubs synced from the hub.
 - `docs/cpt-standards/standards-index.md` -- pointer to the hub's generated standards index.
 
