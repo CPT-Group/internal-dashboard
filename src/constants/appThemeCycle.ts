@@ -13,6 +13,7 @@ export const APP_THEME_CYCLE_ORDER = [
   'dark-synth',
   'ms-access-2010',
   'miami-vice',
+  'miami-vice-light',
   'cpt-barbie',
   'dark-barbie',
   'floral',

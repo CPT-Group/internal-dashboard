@@ -19,6 +19,7 @@ const TITLE_BY_THEME: Record<string, string> = {
   'dark-synth': 'Dark Synth',
   'ms-access-2010': 'MS Access 2010',
   'miami-vice': 'Miami Vice',
+  'miami-vice-light': 'Miami Vice Light',
   'cpt-barbie': 'CPT Barbie',
   'dark-barbie': 'CPT Dark Barbie',
   'floral': 'Floral',
