@@ -15,6 +15,7 @@ import {
 import {
   P2P_DEV_FAST_WORKFLOW_ID,
   P2P_PROMOTE_WORKFLOW_ID,
+  isP2pStgLaneDeploymentWorkflow,
   resolveP2pRunEnvironment,
 } from '@/utils/p2pDeployEnvironment';
 import {
@@ -27,10 +28,12 @@ import {
   buildRunLaneSnapshot,
   laneStateFromDeploymentState,
   laneStateFromRunStatus,
+  pickMeaningfulDeploymentStatus,
 } from '@/utils/githubDeployLaneSnapshots';
 import {
   buildRunBasedLaneSnapshots,
   githubDeploymentEnvironmentNames,
+  isAcceptableDeploymentForLane,
   overlayActiveDeployVersionLaneSnapshots,
   type FetchedRunEntry,
 } from '@/services/github/fetchDeployWorkflowStatus';
@@ -455,6 +458,55 @@ function testDeploymentStateMapsToLanePill() {
   assert.equal(laneStateFromDeploymentState(null), 'idle');
 }
 
+function testPickMeaningfulDeploymentStatusSkipsInactiveTip() {
+  // AZF matrix: GitHub appends `inactive` after `success` when a sibling supersedes the tip.
+  const picked = pickMeaningfulDeploymentStatus([
+    { state: 'inactive', created_at: '2026-08-03T23:10:00Z', log_url: 'https://example/runs/1' },
+    { state: 'success', created_at: '2026-08-03T23:08:00Z', log_url: 'https://example/runs/1' },
+    { state: 'in_progress', created_at: '2026-08-03T23:05:00Z', log_url: 'https://example/runs/1' },
+  ]);
+  assert.ok(picked);
+  assert.equal(picked.state, 'success');
+  assert.equal(picked.created_at, '2026-08-03T23:08:00Z');
+  assert.equal(pickMeaningfulDeploymentStatus([{ state: 'inactive' }]), null);
+  assert.equal(pickMeaningfulDeploymentStatus([]), null);
+}
+
+function testP2pStgRejectsDevFastOnpremNonprod() {
+  assert.equal(isP2pStgLaneDeploymentWorkflow(P2P_PROMOTE_WORKFLOW_ID), true);
+  assert.equal(isP2pStgLaneDeploymentWorkflow(P2P_DEV_FAST_WORKFLOW_ID), false);
+
+  const promoteRun = fetchedRun(P2P_PROMOTE_WORKFLOW_ID, 'completed', 'success', 60);
+  const devFastRun = fetchedRun(P2P_DEV_FAST_WORKFLOW_ID, 'completed', 'success', 2);
+  const runs = [devFastRun, promoteRun];
+
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'stg', { runId: devFastRun.run.id }, runs),
+    false,
+    'Dev Fast must not light P2P Stg via onprem-nonprod'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'stg', { runId: promoteRun.run.id }, runs),
+    true,
+    'Deploy Version (promote) may light P2P Stg'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'stg', { runId: null }, runs),
+    false,
+    'Unknown run linkage must not light P2P Stg'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-azure-functions-api', 'stg', { runId: null }, runs),
+    true,
+    'Non-P2P stg ignores promote attribution'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'prod', { runId: null }, runs),
+    true,
+    'P2P prod (onprem-prd) is not gated by promote workflow id'
+  );
+}
+
 function testRunStatusMapsToLanePill() {
   assert.equal(laneStateFromRunStatus('completed', 'success'), 'ok');
   assert.equal(laneStateFromRunStatus('completed', 'failure'), 'failed');
@@ -715,6 +767,8 @@ function testSingleWorkflowTstLaneUnchangedByPriority() {
 
 function main() {
   testDeploymentStateMapsToLanePill();
+  testPickMeaningfulDeploymentStatusSkipsInactiveTip();
+  testP2pStgRejectsDevFastOnpremNonprod();
   testRunStatusMapsToLanePill();
   testEfStgDeploymentSnapshotIsOkNotNa();
   testEfTstBuildSnapshotShowsRealFailure();

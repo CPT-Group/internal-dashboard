@@ -37,8 +37,8 @@ export type DeploymentStatusState =
 /**
  * Map a GitHub Deployment-status `state` to a lane pill state.
  * success → ok; failure/error → failed; in_progress → running; queued/pending/waiting → queued.
- * `inactive` (a superseded deployment) and any unknown state fall back to `idle` so we never
- * paint a misleading OK/Fail for an indeterminate status.
+ * `inactive` / unknown → `idle` (safety net only — callers should use
+ * {@link pickMeaningfulDeploymentStatus} so superseded tips never reach here).
  */
 export function laneStateFromDeploymentState(state: DeploymentStatusState | null): GitHubDeployLaneState {
   switch (state) {
@@ -56,6 +56,31 @@ export function laneStateFromDeploymentState(state: DeploymentStatusState | null
     default:
       return 'idle';
   }
+}
+
+/** Minimal deployment-status row shape (GitHub returns newest-first). */
+export interface DeploymentStatusRow {
+  state?: string | null;
+  log_url?: string | null;
+  target_url?: string | null;
+  created_at?: string | null;
+}
+
+/**
+ * Pick the first non-`inactive` status from a newest-first list.
+ *
+ * Multi-app Deploy Version matrices often append `inactive` after `success` when a sibling
+ * deployment supersedes the env tip. Taking `per_page=1` alone painted false Idle while the
+ * prior status (and `updatedAt`) were still minutes old.
+ */
+export function pickMeaningfulDeploymentStatus<T extends DeploymentStatusRow>(
+  statuses: readonly T[]
+): T | null {
+  for (const status of statuses) {
+    if ((status.state ?? null) === 'inactive') continue;
+    return status;
+  }
+  return null;
 }
 
 /**

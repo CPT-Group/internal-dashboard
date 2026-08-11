@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dev Corner One — Brandon on Team Activity + Work Hours**: Restored Brandon Fay to `NOVA_CORE_DEVS` (still excludes Carlos) so Dev Corner One Team Activity and Work Hours Today show his assigned tickets and logged hours (QA / scrum-master work). Trevor’s work-hours chart uses the same roster.
+
 ### Fixed
 
+- **Dev Corner Two — false Idle on fresh Stg/Prod deployments**: Deployment status resolution skips GitHub’s superseded **`inactive`** tip and uses the prior meaningful state (`success` / `failure` / `in_progress` / …), so AZF (and other matrix deploys) no longer show Idle minutes after a successful Stg/Prod deploy.
+- **Dev Corner Two — P2P Stg lit by Dev Fast**: P2P Stg is sourced from `onprem-nonprod`, which Dev Fast also writes. Stg now accepts only **Deploy Version (promote)** deployments for that env, so Dev OK + fresh Stg no longer appears while Tst/Prod are correctly aged Idle.
 - **Dev Corner Two — deploy card badge vs lane contradiction**: Card header badge and top meter now use **swim-lane state only** (same source as DEV/TST/STG/PROD pills). Orphan monitored CD (`queuedCount`/`inProgressCount` with no lane target) shows a muted **Actions busy** chip instead of a false Queued/In Progress badge. In-flight Deploy Version without `run-name` resolves target env from job names (e.g. `Deploy … (tst)`); run-level `queued` with a known target lights the lane as **running**.
 - **Dev Corner Two — Deploy Version in-flight + false N/A**: Swim lanes again light **In Progress** as soon as a monitored **Deploy Version** run starts (parse `run-name` / display title e.g. `Deploy Version — stg`), covering the `verify-promotion-order` window before GitHub creates an env Deployment. Deployments API failures render **API ERR** on Stg/Prod — never **N/A** (N/A remains package/npm libs only). Card header also shows In Progress when `inProgressCount > 0` even if no lane target is resolved yet. App-repo `deploy-version.yml` adds `run-name: Deploy Version — ${{ inputs.environment }}` (internal-tools, AZF, EF, nuget) so new runs carry the target env.
 - **Dev Corner Two — deploy-status token chain**: Prefers **GitHub App** installation token (`GITHUB_APP_ID` / `GITHUB_APP_INSTALLATION_ID` / `GITHUB_APP_PRIVATE_KEY`) then **`GH_MASTER_PAT_KYLE`** → **`GH_ROY_PAT_MASTER_CLASSIC`** → `GITHUB_TOKEN_3` → `GITHUB_TOKEN_2` → `GITHUB_DEPLOY_READ_TOKEN`. Skips PATs with core remaining under **50** (never burns the last exhausted token). Skips sibling PATs for the same GitHub user once that user’s budget is empty (classic PATs share one 5000/hr limit per account). When all user budgets are exhausted, serves stale cache or a clear 503 instead of painting rate-limit errors on every card.

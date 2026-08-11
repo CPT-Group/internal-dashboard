@@ -32,6 +32,14 @@ export function isP2pGoServiceRepo(repo: string): boolean {
   return repo.toLowerCase() === P2P_GO_SERVICE_REPO;
 }
 
+/**
+ * P2P Stg is sourced from GitHub Deployments `onprem-nonprod`, but Dev Fast also writes that
+ * env when deploying to nonprod. Only Deploy Version (promote) may light the Stg lane.
+ */
+export function isP2pStgLaneDeploymentWorkflow(workflowId: number): boolean {
+  return workflowId === P2P_PROMOTE_WORKFLOW_ID;
+}
+
 function countPriorPromotesInWave(
   run: P2pRunEnvironmentInput,
   allRuns: readonly P2pRunEnvironmentInput[]

@@ -28,9 +28,11 @@ import {
   buildRunLaneSnapshot,
   laneStateFromDeploymentState,
   laneStateFromRunStatus,
+  pickMeaningfulDeploymentStatus,
 } from '@/utils/githubDeployLaneSnapshots';
 import {
   isP2pGoServiceRepo,
+  isP2pStgLaneDeploymentWorkflow,
   resolveP2pRunEnvironment,
   type P2pDeploymentHint,
   type P2pRunEnvironmentInput,
@@ -246,7 +248,7 @@ interface DeploymentStatusApi {
   created_at?: string | null;
 }
 
-/** The latest deployment status: its `state`, originating run id, run link, and timestamp. */
+/** Meaningful deployment status: `state`, originating run id, run link, and timestamp. */
 interface DeploymentLatestStatus {
   state: string | null;
   runId: number | null;
@@ -254,11 +256,14 @@ interface DeploymentLatestStatus {
   createdAt: string | null;
 }
 
+/** Status pages we read so an `inactive` tip can fall through to the prior success/failure. */
+const DEPLOYMENT_STATUSES_PER_PAGE = 5;
+
 /**
- * For a single deployment, read its most recent status. `per_page=1` is enough: every status row
- * for a deployment points at the same run, and the `log_url` link is present from the first
- * (`waiting`/`queued`) status onward — so this resolves even a still-queued upper-env run onto
- * its env row AND captures the live `state` for the lane pill.
+ * For a single deployment, read recent statuses (newest-first) and keep the first non-`inactive`
+ * state. Every status row points at the same run (`log_url` from queued onward), so this still
+ * resolves a still-queued upper-env run onto its env row without painting false Idle after
+ * GitHub appends a superseded `inactive` tip.
  */
 async function fetchDeploymentLatestStatus(
   token: string,
@@ -266,17 +271,26 @@ async function fetchDeploymentLatestStatus(
   repo: string,
   deploymentId: number
 ): Promise<DeploymentLatestStatus | null> {
-  const url = `https://api.github.com/repos/${owner}/${repo}/deployments/${deploymentId}/statuses?per_page=1`;
+  const url =
+    `https://api.github.com/repos/${owner}/${repo}/deployments/${deploymentId}` +
+    `/statuses?per_page=${DEPLOYMENT_STATUSES_PER_PAGE}`;
   try {
     const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
     if (!res.ok) return null;
     const data = (await res.json()) as DeploymentStatusApi[];
     if (!Array.isArray(data) || data.length === 0) return null;
-    const status = data[0];
-    const logUrl = status.log_url ?? status.target_url ?? null;
+    const status = pickMeaningfulDeploymentStatus(data);
+    if (!status) return null;
+    const tip = data[0];
+    const logUrl =
+      status.log_url ??
+      status.target_url ??
+      tip?.log_url ??
+      tip?.target_url ??
+      null;
     return {
       state: status.state ?? null,
-      runId: runIdFromStatusUrl(status.log_url) ?? runIdFromStatusUrl(status.target_url),
+      runId: runIdFromStatusUrl(logUrl),
       logUrl,
       createdAt: status.created_at ?? null,
     };
@@ -286,57 +300,73 @@ async function fetchDeploymentLatestStatus(
 }
 
 /**
- * Latest deployment per env (newest by `created_at`). Used to anchor stg/prod lane snapshots on
- * the FULL deploy history rather than the truncated recent-runs window — the regression fix.
+ * Deployments for one env, newest first. Callers walk the list when the tip is unusable
+ * (inactive-only history, or P2P Stg lit by Dev Fast via `onprem-nonprod`).
  */
-function latestDeploymentPerEnvironment(
-  deployments: readonly RepoDeployment[]
-): Map<DeployEnvironmentKey, RepoDeployment> {
-  const latest = new Map<DeployEnvironmentKey, RepoDeployment>();
-  for (const d of deployments) {
-    const current = latest.get(d.environment);
-    if (!current || d.createdAtMs > current.createdAtMs) {
-      latest.set(d.environment, d);
-    }
-  }
-  return latest;
+function deploymentsForEnvironmentNewestFirst(
+  deployments: readonly RepoDeployment[],
+  env: DeployEnvironmentKey
+): RepoDeployment[] {
+  return deployments
+    .filter((d) => d.environment === env)
+    .sort((a, b) => b.createdAtMs - a.createdAtMs);
 }
 
 /**
- * Build stg/prod lane snapshots from the GitHub Deployments API: for each env's LATEST
- * deployment, read its latest status (`state`) and map it to the lane pill. This is the
- * authoritative env-row source — it covers full deploy history and gives live
- * queued→in_progress→done, immune to the recent-runs(30) truncation that caused the N/A
- * regression. P2P is intentionally excluded (its on-prem `onprem-nonprod`/`onprem-prd` envs
- * can't separate tst/stg, and stg has no deployment at all — it keeps its dedicated resolver).
+ * P2P Stg uses `onprem-nonprod`, which Dev Fast also writes. Only Deploy Version (promote)
+ * deployments may light Stg; unknown/missing run linkage is rejected so Dev Fast cannot sneak in.
+ */
+export function isAcceptableDeploymentForLane(
+  repo: string,
+  env: DeployEnvironmentKey,
+  status: { runId: number | null },
+  runs: readonly FetchedRunEntry[]
+): boolean {
+  if (!isP2pGoServiceRepo(repo) || env !== 'stg') return true;
+  if (status.runId === null) return false;
+  const entry = runs.find((r) => r.run.id === status.runId);
+  if (!entry) return false;
+  return isP2pStgLaneDeploymentWorkflow(entry.workflowId);
+}
+
+/**
+ * Build stg/prod lane snapshots from the GitHub Deployments API: for each env, walk newest
+ * deployments until a usable status is found, then map it to the lane pill. This is the
+ * authoritative env-row source — full deploy history, live queued→in_progress→done, immune to
+ * recent-runs truncation. P2P Stg/Prod are included (`onprem-nonprod` / `onprem-prd`), but Stg
+ * ignores Dev Fast deployments that share `onprem-nonprod`.
  */
 async function buildDeploymentLaneSnapshots(
   token: string,
   owner: string,
   repo: string,
   deployments: readonly RepoDeployment[],
-  envLanes: readonly DeployEnvironmentKey[]
+  envLanes: readonly DeployEnvironmentKey[],
+  runs: readonly FetchedRunEntry[]
 ): Promise<Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>>> {
-  const latestByEnv = latestDeploymentPerEnvironment(deployments);
   const out: Partial<Record<DeployLaneKey, GitHubDeployLaneSnapshot>> = {};
   const probes = await Promise.all(
     envLanes.map(async (env) => {
-      const deployment = latestByEnv.get(env);
-      if (!deployment) return { env, deployment: null, status: null };
-      const status = await fetchDeploymentLatestStatus(token, owner, repo, deployment.id);
-      return { env, deployment, status };
+      const candidates = deploymentsForEnvironmentNewestFirst(deployments, env);
+      for (const deployment of candidates) {
+        const status = await fetchDeploymentLatestStatus(token, owner, repo, deployment.id);
+        if (!status) continue;
+        if (!isAcceptableDeploymentForLane(repo, env, status, runs)) continue;
+        return { env, deployment, status };
+      }
+      return { env, deployment: null, status: null };
     })
   );
   for (const { env, deployment, status } of probes) {
-    if (!deployment) continue;
+    if (!deployment || !status) continue;
     const lane = mapEnvironmentToLane(repo, env);
     out[lane] = buildDeploymentLaneSnapshot({
       lane,
       env,
-      state: laneStateFromDeploymentState(status?.state ?? null),
-      statusCreatedAt: status?.createdAt ?? null,
+      state: laneStateFromDeploymentState(status.state),
+      statusCreatedAt: status.createdAt,
       deploymentCreatedAt: new Date(deployment.createdAtMs).toISOString(),
-      logUrl: status?.logUrl ?? null,
+      logUrl: status.logUrl,
     });
   }
   return out;
@@ -664,9 +694,8 @@ export function buildRunBasedLaneSnapshots(
 
 /**
  * Env keys whose stg/prod lane snapshots come from the Deployments API.
- * P2P (on-prem Go service) deploys to `onprem-nonprod` (→ stg lane, its pre-prod target) and
- * `onprem-prd` (→ prod). Both are deployment-sourced so p2p's stg shows its real nonprod deploy
- * instead of N/A (dev/tst still come from the dedicated workflow runs).
+ * P2P deploys to `onprem-nonprod` (→ Stg, promote-only — Dev Fast also writes that env) and
+ * `onprem-prd` (→ Prod). Dev/Tst still come from dedicated workflow runs.
  */
 function deploymentLaneEnvsForRepo(repo: string): DeployEnvironmentKey[] {
   if (isP2pGoServiceRepo(repo)) return ['stg', 'prod'];
@@ -858,18 +887,9 @@ export async function fetchDeployWorkflowStatus(
     fetchRepoDeploymentsForLanes(token, owner, repo, deploymentLaneEnvs),
   ]);
 
-  // Stg/prod lane pills come from buildDeploymentLaneSnapshots — the latest deployment per env plus
-  // its status (2 probes/repo). We deliberately DO NOT build the 40-per-repo deployment→run env
-  // index anymore: at ~240 GitHub calls/refresh it rate-limited the Deployments API. Timeline
-  // env labels fall back to run-name + SHA/time over this small per-env list.
+  // Timeline env labels fall back to run-name + SHA/time over this small per-env list (we no
+  // longer build a 40-per-repo deployment→run index — that rate-limited the Deployments API).
   const runEnvIndex: DeploymentRunEnvironmentIndex = new Map();
-  const deploymentLaneSnapshots = await buildDeploymentLaneSnapshots(
-    token,
-    owner,
-    repo,
-    deployments,
-    deploymentLaneEnvs
-  );
 
   const successful = workflowFetches.filter((f) => !f.error);
 
@@ -885,6 +905,17 @@ export async function fetchDeployWorkflowStatus(
   const runs = successful
     .flatMap((f) => f.runs.map((run) => ({ run, workflowId: f.workflowId })))
     .sort((a, b) => Date.parse(b.run.updated_at) - Date.parse(a.run.updated_at));
+
+  // Stg/prod ← Deployments API (skip inactive tips; P2P Stg skips Dev Fast onprem-nonprod).
+  // Needs `runs` so P2P can attribute deployment log_url → workflow id.
+  const deploymentLaneSnapshots = await buildDeploymentLaneSnapshots(
+    token,
+    owner,
+    repo,
+    deployments,
+    deploymentLaneEnvs,
+    runs
+  );
 
   const allRunEntries = runs;
 

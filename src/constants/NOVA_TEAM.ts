@@ -32,15 +32,12 @@ export const NOVA_TEAM_ORDERED = NOVA_TEAM_ACCOUNT_IDS_ARRAY.map((id, i) => ({
 })) as { accountId: string; displayName: string }[];
 
 /**
- * Core developers shown on the Dev Corner One NOVA Team panel.
- * Excludes Brandon (scrum master) and Carlos for now — add them back
- * by uncommenting when they should appear on the dev-focused dashboard.
+ * Core people shown on Dev Corner One Team Activity + Work Hours (and Trevor work hours).
+ * Includes Brandon (scrum master / QA) so his assigned tickets and hours appear on the TV.
+ * Still excludes Carlos — add him by removing his id from the filter when ready.
  */
 export const NOVA_CORE_DEVS = NOVA_TEAM_ORDERED.filter(
-  (m) => ![
-    '712020:384111d1-8f9d-4155-8420-37ff1888d6c3', // Brandon Fay (scrum master)
-    '712020:47cb6286-8794-44bf-bcb8-6ca1b6aadb79', // Carlos
-  ].includes(m.accountId)
+  (m) => m.accountId !== '712020:47cb6286-8794-44bf-bcb8-6ca1b6aadb79' // Carlos
 );
 
 export type NovaTeamMember = (typeof NOVA_TEAM_DISPLAY_NAMES)[number];
