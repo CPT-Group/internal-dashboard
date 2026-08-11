@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Dev Corner One — Brandon on Team Activity + Work Hours**: Restored Brandon Fay to `NOVA_CORE_DEVS` (still excludes Carlos) so Dev Corner One Team Activity and Work Hours Today show his assigned tickets and logged hours (QA / scrum-master work). Trevor’s work-hours chart uses the same roster.
+- **Dev Corner One — Brandon on Team Activity + Work Hours**: Restored Brandon Fay to `NOVA_CORE_DEVS` so Dev Corner One Team Activity and Work Hours Today show his assigned tickets and logged hours (QA / scrum-master work). Trevor’s work-hours chart uses the same roster. Hide/show is a one-line edit on `NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS` (Carlos stays excluded).
 
 ### Fixed
 
