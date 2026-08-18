@@ -143,7 +143,7 @@ function assertImpedimentInvariants(analytics: ReturnType<typeof buildImpediment
   assertInProgressInvariants(analytics);
 }
 
-// Team activity only includes NOVA_CORE_DEVS (Brandon/Carlos excluded from panel)
+// Team activity includes NOVA_CORE_DEVS (exclude list in NOVA_TEAM.ts; empty = full roster)
 {
   const analytics = buildFromOpen([]);
   assert.equal(analytics.teamActivity.length, NOVA_CORE_DEVS.length);
