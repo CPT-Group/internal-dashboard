@@ -70,10 +70,11 @@ export const WorkHoursTodayPanel = ({ hours, loading }: WorkHoursTodayPanelProps
   const targetHours = useMemo(() => getCurrentTargetHours(now), [now]);
 
   const members = useMemo(
-    () => NOVA_CORE_DEVS.map((m) => ({
-      name: m.displayName.split(' ')[0],
-      hours: formatHours(hours.get(m.accountId) ?? 0),
-    })).sort((a, b) => b.hours - a.hours),
+    () =>
+      NOVA_CORE_DEVS.map((m) => ({
+        name: m.displayName.split(' ')[0],
+        hours: formatHours(hours.get(m.accountId) ?? 0),
+      })),
     [hours]
   );
 

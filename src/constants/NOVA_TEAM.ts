@@ -39,10 +39,27 @@ export const NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS: readonly string[] = [
   '712020:47cb6286-8794-44bf-bcb8-6ca1b6aadb79', // Carlos
 ];
 
-/** Core roster = full NOVA team minus {@link NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS}. */
-export const NOVA_CORE_DEVS = NOVA_TEAM_ORDERED.filter(
-  (m) => !NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS.includes(m.accountId)
-);
+/**
+ * Fixed display order for Dev Corner One Work Hours + Team Activity (and Trevor work-hours roster).
+ * Kyle → Roy → James → Brandon. Carlos is not listed (also on the exclude list).
+ */
+export const NOVA_CORE_DEVS_ACCOUNT_ID_ORDER: readonly string[] = [
+  '712020:7d1dde47-7dd4-4e25-a87f-25f3f20b6837', // Kyle Dilbeck
+  '712020:a6b7bce7-9035-4bd2-b2a3-cef5a6991f3f', // Roy
+  '712020:02567f23-bfb1-419b-aadd-9e51f5ed81ef', // James Cassidy
+  '712020:384111d1-8f9d-4155-8420-37ff1888d6c3', // Brandon Fay
+];
+
+/** Core roster in {@link NOVA_CORE_DEVS_ACCOUNT_ID_ORDER}, minus {@link NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS}. */
+export const NOVA_CORE_DEVS = NOVA_CORE_DEVS_ACCOUNT_ID_ORDER.filter(
+  (accountId) => !NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS.includes(accountId)
+).map((accountId) => {
+  const member = NOVA_TEAM_ORDERED.find((m) => m.accountId === accountId);
+  if (!member) {
+    throw new Error(`NOVA_CORE_DEVS_ACCOUNT_ID_ORDER references unknown accountId: ${accountId}`);
+  }
+  return member;
+});
 
 export type NovaTeamMember = (typeof NOVA_TEAM_DISPLAY_NAMES)[number];
 

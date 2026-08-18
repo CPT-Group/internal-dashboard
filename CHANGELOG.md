@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dev Corner One — roster display order**: Work Hours Today and Team Activity use fixed order **Kyle → Roy → James → Brandon** (`NOVA_CORE_DEVS_ACCOUNT_ID_ORDER`). Work Hours no longer re-sorts bars by hours logged. Carlos remains excluded.
 - **Dev Corner One — Brandon on Team Activity + Work Hours (Carlos stays excluded)**: `NOVA_CORE_DEVS` shows Roy, Kyle, James, Brandon. Carlos remains on `NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS` so he does not appear on Work Hours Today or Team Activity (Trevor work hours uses the same roster).
 
 ### Fixed

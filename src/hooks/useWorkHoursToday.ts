@@ -10,7 +10,7 @@ const CORE_DEV_IDS = NOVA_CORE_DEVS.map((d) => d.accountId);
 const POLL_MS = 10 * 60 * 1000;
 
 /**
- * Fetches work hours logged today (Pacific time) for NOVA_CORE_DEVS (Roy, Kyle, James, Brandon).
+ * Fetches work hours logged today (Pacific time) for NOVA_CORE_DEVS (Kyle, Roy, James, Brandon).
  * Returns author totals plus issue-level breakdown for those same worklogs.
  */
 export function useWorkHoursToday() {
