@@ -33,13 +33,10 @@ export const NOVA_TEAM_ORDERED = NOVA_TEAM_ACCOUNT_IDS_ARRAY.map((id, i) => ({
 
 /**
  * Account IDs omitted from Dev Corner One Team Activity + Work Hours (and Trevor work hours).
- * Empty = full NOVA roster. Add an accountId here to hide someone from those panels only
- * (they stay in JQL / other analytics via NOVA_TEAM_*).
+ * Add/remove ids here — Brandon stays visible; Carlos stays off these panels.
  */
 export const NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS: readonly string[] = [
-  // Examples (uncomment to hide):
-  // '712020:384111d1-8f9d-4155-8420-37ff1888d6c3', // Brandon Fay
-  // '712020:47cb6286-8794-44bf-bcb8-6ca1b6aadb79', // Carlos
+  '712020:47cb6286-8794-44bf-bcb8-6ca1b6aadb79', // Carlos
 ];
 
 /** Core roster = full NOVA team minus {@link NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS}. */

@@ -313,9 +313,9 @@ Dev Corner One and Two are TVs **side-by-side** in the 2nd-floor office, near th
 
 - **Dev Corner One (LEFT TV)** — **Developer-focused**. Closest to the dev desks. Single-view layout:
   - KPI strip: **Limbo** (unattributed active tickets), Landed Today, Closed Today, Net, Avg Close Time, Throughput Ratio.
-  - Middle left: **Work Hours Today** — horizontal bar chart showing hours logged today (Pacific time) per `NOVA_CORE_DEVS` (full NOVA roster when the exclude list is empty: Roy, Kyle, James, Brandon, Carlos). Uses `useWorkHoursToday` hook (10-min poll). Data from Jira worklog API via `/api/jira/worklogs-today`.
+  - Middle left: **Work Hours Today** — horizontal bar chart showing hours logged today (Pacific time) per core roster (Roy, Kyle, James, Brandon). Uses `useWorkHoursToday` hook (10-min poll). Data from Jira worklog API via `/api/jira/worklogs-today`.
   - Middle right: Component Activity table (per-component: open, today, this week).
-  - Bottom: NOVA Team Activity panel (`NOVA_CORE_DEVS` cards — same roster as Work Hours — with in-progress + To Do ticket chips).
+  - Bottom: NOVA Team Activity panel (`NOVA_CORE_DEVS` cards — Roy, Kyle, James, Brandon — with in-progress + To Do ticket chips). Carlos stays off these panels via `NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS`.
   - Scoped to NOVA team; component `ComponentActivityPanel`, `TeamActivityPanel`, `ThroughputPanel`.
 - **Dev Corner Two (RIGHT TV)** — **Company-facing**. Visible to non-dev employees. Carousel slides and dwell times are configured in **`devCornerTwoSlides.config.ts`**: each slide has **`enabled: true | false`** and **`durationMs`** (e.g. **25s** for Jira slides, **300s** for GitHub). Only enabled slides are mounted and rotated; order is fixed in that file. **`DEV_CORNER_TWO_FIXED_SLIDE_INDEX`** pins a **0-based index among enabled slides only** (e.g. `0` when GitHub is the sole enabled slide); `null` = auto-advance.
   - **In-Progress** ticket cards (card grid with key, summary, status, assignee, age); keys starting with `NOVA-` use the same nova accent styling as Dev 1 chips.
