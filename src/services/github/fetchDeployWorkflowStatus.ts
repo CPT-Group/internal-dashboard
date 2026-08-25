@@ -32,7 +32,6 @@ import {
 } from '@/utils/githubDeployLaneSnapshots';
 import {
   isP2pGoServiceRepo,
-  isP2pStgLaneDeploymentWorkflow,
   resolveP2pRunEnvironment,
   type P2pDeploymentHint,
   type P2pRunEnvironmentInput,
@@ -111,11 +110,13 @@ function getDeploymentsFetchDiag(owner: string, repo: string): DeploymentsFetchD
 }
 
 /**
- * How many deployments to pull per GitHub `environment` filter. Lane pills only need the newest
- * row; a small window also feeds SHA→env timeline heuristics without drowning in dev/tst spam.
- * (Unfiltered `per_page=100` was dropping multi-day-old `prd` behind a flood of lower envs.)
+ * How many deployments to pull per GitHub `environment` filter. Must be deep enough that a real
+ * Deploy Version tip is still reachable when admin/ops workflows (Feature Flag Admin, DB probes,
+ * CPTID audit, …) mint the same `stg`/`prd` GitHub Environments — measured EF prd tip was #17
+ * under Feature Flag Admin noise (2026-08-24). (Unfiltered `per_page=100` was dropping multi-day-old
+ * `prd` behind a flood of lower envs; we stay per-env filtered.)
  */
-const DEPLOYMENTS_PER_ENV = 8;
+const DEPLOYMENTS_PER_ENV = 30;
 
 type DeploymentApiRow = {
   id?: number | null;
@@ -313,8 +314,19 @@ function deploymentsForEnvironmentNewestFirst(
 }
 
 /**
- * P2P Stg uses `onprem-nonprod`, which Dev Fast also writes. Only Deploy Version (promote)
- * deployments may light Stg; unknown/missing run linkage is rejected so Dev Fast cannot sneak in.
+ * Whether this workflow id is a Deploy Version (promoter) for the repo.
+ * std-operational-visibility: Stg/Prd primary signal = Deploy Version + Deployments for that env.
+ */
+export function isDeployVersionWorkflowId(repo: string, workflowId: number): boolean {
+  return getDeployVersionWorkflowIds(repo).includes(workflowId);
+}
+
+/**
+ * Stg/Prod lane tips must come from Deploy Version — not every job that pins `environment: stg|prd`.
+ * EF Feature Flag Admin / partition probes / CPTID audit mint real GitHub Environment Deployments
+ * (secrets + reviewers) on `development` and would otherwise paint false Prod/Stg OK|Failed.
+ * P2P Stg shares `onprem-nonprod` with Dev Fast — same gate. Missing run linkage is rejected so
+ * unverified tips cannot light the pill (walk to the next candidate instead).
  */
 export function isAcceptableDeploymentForLane(
   repo: string,
@@ -322,19 +334,21 @@ export function isAcceptableDeploymentForLane(
   status: { runId: number | null },
   runs: readonly FetchedRunEntry[]
 ): boolean {
-  if (!isP2pGoServiceRepo(repo) || env !== 'stg') return true;
+  if (env !== 'stg' && env !== 'prod') return true;
+  const deployVersionIds = getDeployVersionWorkflowIds(repo);
+  if (deployVersionIds.length === 0) return true;
   if (status.runId === null) return false;
   const entry = runs.find((r) => r.run.id === status.runId);
   if (!entry) return false;
-  return isP2pStgLaneDeploymentWorkflow(entry.workflowId);
+  return deployVersionIds.includes(entry.workflowId);
 }
 
 /**
  * Build stg/prod lane snapshots from the GitHub Deployments API: for each env, walk newest
  * deployments until a usable status is found, then map it to the lane pill. This is the
  * authoritative env-row source — full deploy history, live queued→in_progress→done, immune to
- * recent-runs truncation. P2P Stg/Prod are included (`onprem-nonprod` / `onprem-prd`), but Stg
- * ignores Dev Fast deployments that share `onprem-nonprod`.
+ * recent-runs truncation. Only Deploy Version–linked Deployments light Stg/Prod (admin workflows
+ * that pin the same GitHub Environment are skipped). P2P uses `onprem-nonprod` / `onprem-prd`.
  */
 async function buildDeploymentLaneSnapshots(
   token: string,
@@ -385,6 +399,10 @@ const ENV_CORRELATION_WINDOW_MS = 45 * 60 * 1000;
  * `development`'s SHA — disambiguated by the deployment whose creation time is closest. Returns null
  * when no confident match exists (the caller then falls back to the branch). The `runEnvIndex` param
  * is retained so a future deterministic source can repopulate it without touching callers.
+ *
+ * SHA→env correlation is **Deploy Version only**. Dev Fast / TST Build / Auto-Merge share the same
+ * `development` SHA as Feature Flag Admin `prd` Deployments; correlating those runs painted false
+ * `resolvedEnvironment: prod` on the timeline while Actions correctly showed the `development` branch.
  */
 function runDisplayTitle(run: GitHubWorkflowRunApi): string {
   if (run.display_title && run.display_title.trim() !== '') return run.display_title.trim();
@@ -394,7 +412,8 @@ function runDisplayTitle(run: GitHubWorkflowRunApi): string {
 function resolveRunEnvironment(
   run: GitHubWorkflowRunApi,
   deployments: readonly RepoDeployment[],
-  runEnvIndex: DeploymentRunEnvironmentIndex
+  runEnvIndex: DeploymentRunEnvironmentIndex,
+  allowShaEnvCorrelation: boolean
 ): DeployEnvironmentKey | null {
   const linked = runEnvIndex.get(run.id);
   if (linked) return linked;
@@ -402,6 +421,8 @@ function resolveRunEnvironment(
   // run-name / display title (e.g. "Deploy Version — stg") — available before Deployments exist.
   const fromName = parseDeployEnvironmentFromRunName(runDisplayTitle(run));
   if (fromName) return fromName;
+
+  if (!allowShaEnvCorrelation) return null;
 
   const headSha = run.head_sha?.trim() ?? '';
   const runMs = Date.parse(run.created_at);
@@ -430,13 +451,13 @@ function toP2pDeploymentHints(deployments: readonly RepoDeployment[]): P2pDeploy
   }));
 }
 
-function resolveEnvironmentForWorkflowRun(
+export function resolveEnvironmentForWorkflowRun(
   repo: string,
   run: GitHubWorkflowRunApi,
   workflowId: number,
   allRuns: readonly { run: GitHubWorkflowRunApi; workflowId: number }[],
   deployments: readonly RepoDeployment[],
-  runEnvIndex: DeploymentRunEnvironmentIndex
+  runEnvIndex: DeploymentRunEnvironmentIndex = new Map()
 ): DeployEnvironmentKey | null {
   if (isP2pGoServiceRepo(repo)) {
     // P2P deployments use `onprem-nonprod` / `onprem-prd`: the nonprod env can't separate
@@ -458,7 +479,12 @@ function resolveEnvironmentForWorkflowRun(
     };
     return resolveP2pRunEnvironment(current, p2pRuns, toP2pDeploymentHints(deployments));
   }
-  return resolveRunEnvironment(run, deployments, runEnvIndex);
+  return resolveRunEnvironment(
+    run,
+    deployments,
+    runEnvIndex,
+    isDeployVersionWorkflowId(repo, workflowId)
+  );
 }
 
 function toSummary(
@@ -883,7 +909,7 @@ export async function fetchDeployWorkflowStatus(
   const deploymentLaneEnvs = deploymentLaneEnvsForRepo(repo);
   const [workflowFetches, deployments] = await Promise.all([
     Promise.all(workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))),
-    // Per-env Deployments (`?environment=stg|prd`, per_page=8) — not unfiltered top-100.
+    // Per-env Deployments (`?environment=stg|prd`, per_page=30) — not unfiltered top-100.
     fetchRepoDeploymentsForLanes(token, owner, repo, deploymentLaneEnvs),
   ]);
 

@@ -34,7 +34,9 @@ import {
   buildRunBasedLaneSnapshots,
   githubDeploymentEnvironmentNames,
   isAcceptableDeploymentForLane,
+  isDeployVersionWorkflowId,
   overlayActiveDeployVersionLaneSnapshots,
+  resolveEnvironmentForWorkflowRun,
   type FetchedRunEntry,
 } from '@/services/github/fetchDeployWorkflowStatus';
 import { deriveEnvironmentSnapshots } from '@/utils/deriveDeployEnvironmentSnapshots';
@@ -496,14 +498,146 @@ function testP2pStgRejectsDevFastOnpremNonprod() {
     'Unknown run linkage must not light P2P Stg'
   );
   assert.equal(
-    isAcceptableDeploymentForLane('cpt-azure-functions-api', 'stg', { runId: null }, runs),
-    true,
-    'Non-P2P stg ignores promote attribution'
+    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'prod', { runId: null }, runs),
+    false,
+    'P2P prod also requires Deploy Version linkage'
   );
   assert.equal(
-    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'prod', { runId: null }, runs),
+    isAcceptableDeploymentForLane('cpt-group-p2p-go-service', 'prod', { runId: promoteRun.run.id }, runs),
     true,
-    'P2P prod (onprem-prd) is not gated by promote workflow id'
+    'Deploy Version may light P2P Prod'
+  );
+}
+
+/** EF Feature Flag Admin / probes mint real stg|prd Deployments — must not light CD lanes. */
+function testStgProdRequireDeployVersionWorkflow() {
+  const EF_DEPLOY_VERSION_ID = 285810377;
+  const EF_DEV_FAST_ID = 285810378;
+  /** Not a monitored CD workflow — stands in for feature-flag-admin.yml. */
+  const EF_FEATURE_FLAG_ADMIN_ID = 999001001;
+
+  const dvRun = fetchedRun(EF_DEPLOY_VERSION_ID, 'completed', 'success', 120);
+  const adminRun = fetchedRun(EF_FEATURE_FLAG_ADMIN_ID, 'completed', 'cancelled', 2);
+  const devFastRun = fetchedRun(EF_DEV_FAST_ID, 'completed', 'success', 5);
+  const runs = [adminRun, devFastRun, dvRun];
+
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'prod', { runId: adminRun.run.id }, runs),
+    false,
+    'Feature Flag Admin must not light Prod'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'stg', { runId: adminRun.run.id }, runs),
+    false,
+    'Feature Flag Admin must not light Stg'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'prod', { runId: devFastRun.run.id }, runs),
+    false,
+    'Dev Fast must not light Prod'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'prod', { runId: dvRun.run.id }, runs),
+    true,
+    'Deploy Version may light Prod'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'stg', { runId: dvRun.run.id }, runs),
+    true,
+    'Deploy Version may light Stg'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-azure-functions-api', 'stg', { runId: null }, runs),
+    false,
+    'Unlinked stg tip is rejected on all CD repos (walk to next candidate)'
+  );
+  assert.equal(
+    isDeployVersionWorkflowId('cpt-ef-postgres-migrations', EF_DEPLOY_VERSION_ID),
+    true
+  );
+  assert.equal(
+    isDeployVersionWorkflowId('cpt-ef-postgres-migrations', EF_FEATURE_FLAG_ADMIN_ID),
+    false
+  );
+}
+
+/**
+ * Timeline SHA→env must not paint Dev Fast / promote(test) as prod when an admin workflow
+ * minted a prd Deployment on the same development SHA.
+ */
+function testTimelineShaCorrelationIsDeployVersionOnly() {
+  const EF_DEPLOY_VERSION_ID = 285810377;
+  const EF_DEV_FAST_ID = 285810378;
+  const sha = 'e2dfaef98fb7aaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const createdAt = runIso(10);
+  const deployments = [
+    {
+      id: 1,
+      environment: 'prod' as const,
+      sha,
+      createdAtMs: Date.parse(createdAt),
+    },
+  ];
+
+  const baseRun = {
+    id: 1,
+    run_number: 1,
+    name: 'Dev Fast Deploy',
+    display_title: 'ci(NOVA-4483): label a VACUOUS pass',
+    status: 'completed',
+    conclusion: 'success',
+    head_branch: 'development',
+    head_sha: sha,
+    html_url: 'https://github.com/CPT-Group/cpt-ef-postgres-migrations/actions/runs/1',
+    created_at: createdAt,
+    updated_at: createdAt,
+  };
+
+  assert.equal(
+    resolveEnvironmentForWorkflowRun(
+      'cpt-ef-postgres-migrations',
+      baseRun,
+      EF_DEV_FAST_ID,
+      [{ run: baseRun, workflowId: EF_DEV_FAST_ID }],
+      deployments
+    ),
+    null,
+    'Dev Fast must not SHA-correlate to a Feature Flag Admin prd Deployment'
+  );
+
+  const dvRun = {
+    ...baseRun,
+    id: 2,
+    name: 'Deploy Version',
+    display_title: 'Deploy Version',
+  };
+  assert.equal(
+    resolveEnvironmentForWorkflowRun(
+      'cpt-ef-postgres-migrations',
+      dvRun,
+      EF_DEPLOY_VERSION_ID,
+      [{ run: dvRun, workflowId: EF_DEPLOY_VERSION_ID }],
+      deployments
+    ),
+    'prod',
+    'Deploy Version may still SHA-correlate when run-name lacks an env suffix'
+  );
+
+  const namedDv = {
+    ...dvRun,
+    id: 3,
+    display_title: 'Deploy Version - stg',
+  };
+  assert.equal(
+    resolveEnvironmentForWorkflowRun(
+      'cpt-ef-postgres-migrations',
+      namedDv,
+      EF_DEPLOY_VERSION_ID,
+      [{ run: namedDv, workflowId: EF_DEPLOY_VERSION_ID }],
+      deployments
+    ),
+    'stg',
+    'run-name wins over SHA even for Deploy Version'
   );
 }
 
@@ -769,6 +903,8 @@ function main() {
   testDeploymentStateMapsToLanePill();
   testPickMeaningfulDeploymentStatusSkipsInactiveTip();
   testP2pStgRejectsDevFastOnpremNonprod();
+  testStgProdRequireDeployVersionWorkflow();
+  testTimelineShaCorrelationIsDeployVersionOnly();
   testRunStatusMapsToLanePill();
   testEfStgDeploymentSnapshotIsOkNotNa();
   testEfTstBuildSnapshotShowsRealFailure();
