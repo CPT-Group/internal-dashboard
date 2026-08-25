@@ -161,11 +161,11 @@ html[data-theme='evergreen'],
   --github-deploy-inline-running-track: rgba(251, 191, 36, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(251, 191, 36, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(16, 38, 26, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(18, 53, 36, 0.34) !important;
-  --github-deploy-footer-ticker-text: #123524 !important;
+  --github-deploy-footer-ticker-border: rgba(34, 197, 94, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #123524 !important;
+  --github-deploy-timeline-meta-color: #22c55e !important;
   --data-quality-valid: #186045 !important;
   --data-quality-warning: #685816 !important;
   --data-quality-error: #733d3a !important;

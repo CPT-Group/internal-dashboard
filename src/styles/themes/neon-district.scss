@@ -161,11 +161,11 @@ html[data-theme='neon-district'],
   --github-deploy-inline-running-track: rgba(251, 191, 36, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(251, 191, 36, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(22, 23, 45, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(26, 27, 54, 0.34) !important;
-  --github-deploy-footer-ticker-text: #1a1b36 !important;
+  --github-deploy-footer-ticker-border: rgba(122, 162, 247, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #1a1b36 !important;
+  --github-deploy-timeline-meta-color: #7aa2f7 !important;
   --data-quality-valid: #1e5e51 !important;
   --data-quality-warning: #6d5622 !important;
   --data-quality-error: #773e52 !important;

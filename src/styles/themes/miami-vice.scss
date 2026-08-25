@@ -180,7 +180,7 @@ html[data-theme='miami-vice'],
   --github-deploy-inline-queued-track: rgba(255, 179, 71, 0.22) !important;
   --github-deploy-footer-ticker-bg: rgba(7, 20, 46, 0.9) !important;
   --github-deploy-footer-ticker-border: rgba(95, 217, 255, 0.34) !important;
-  --github-deploy-footer-ticker-text: #5fd9ff !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: 0 0 8px rgba(95, 217, 255, 0.35) !important;
   --content-text-size: 1.06rem !important;
   --github-deploy-timeline-meta-color: #5fd9ff !important;

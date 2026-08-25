@@ -167,7 +167,7 @@ html[data-theme='atlas-light'],
   --github-deploy-inline-queued-track: rgba(234, 88, 12, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(248, 250, 252, 0.98) !important;
   --github-deploy-footer-ticker-border: rgba(192, 38, 211, 0.34) !important;
-  --github-deploy-footer-ticker-text: #a21caf !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
   --github-deploy-timeline-meta-color: #c026d3 !important;

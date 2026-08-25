@@ -128,6 +128,7 @@ function dashboardExtras(p: ResolvedThemePalette, r: Record<string, string>, isD
 		'--chart-warning': hexToRgba(warn, 0.9),
 		'--chart-warning-border': `rgb(${parseColor(warn)?.r ?? 0}, ${parseColor(warn)?.g ?? 0}, ${parseColor(warn)?.b ?? 0})`,
 		'--chart-label-color': chartLabel,
+		'--chart-label-stroke': 'var(--surface-card)',
 		'--chart-info': hexToRgba(info, isDark ? 0.24 : 0.24),
 		'--chart-info-border': `rgb(${parseColor(info)?.r ?? 0}, ${parseColor(info)?.g ?? 0}, ${parseColor(info)?.b ?? 0})`,
 		'--chart-orange': hexToRgba(warn, 0.22),
@@ -183,12 +184,16 @@ function dashboardExtras(p: ResolvedThemePalette, r: Record<string, string>, isD
 		'--github-deploy-queue-chip-text': text,
 		'--github-deploy-inline-running-track': hexToRgba(warn, 0.18),
 		'--github-deploy-inline-queued-track': hexToRgba(warn, 0.16),
+		// Ticker text MUST contrast with ticker bg (≥3:1). Always bind to --text-color —
+		// never headerBg/surfaceCard (those match the bg → invisible on dark themes).
 		'--github-deploy-footer-ticker-bg': isDark ? hexToRgba(surfaceCard, 0.98) : 'rgba(255, 255, 255, 0.98)',
-		'--github-deploy-footer-ticker-border': hexToRgba(headerBg, 0.34),
-		'--github-deploy-footer-ticker-text': headerBg,
-		'--github-deploy-footer-ticker-shadow': 'none',
+		'--github-deploy-footer-ticker-border': hexToRgba(primary, 0.34),
+		'--github-deploy-footer-ticker-text': 'var(--text-color)',
+		'--github-deploy-footer-ticker-shadow': isDark
+			? `0 0 8px ${hexToRgba(primary, 0.35)}`
+			: 'none',
 		'--content-text-size': '1.05rem',
-		'--github-deploy-timeline-meta-color': headerBg,
+		'--github-deploy-timeline-meta-color': primary,
 		'--data-quality-valid': pick(r, '--data-quality-valid', hexToRgba(success, 0.4)),
 		'--data-quality-warning': pick(r, '--data-quality-warning', hexToRgba(warn, 0.4)),
 		'--data-quality-error': pick(r, '--data-quality-error', hexToRgba(danger, 0.45)),

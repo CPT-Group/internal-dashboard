@@ -161,11 +161,11 @@ html[data-theme='frostbyte'],
   --github-deploy-inline-running-track: rgba(251, 191, 36, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(251, 191, 36, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(8, 47, 73, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(12, 74, 110, 0.34) !important;
-  --github-deploy-footer-ticker-text: #0c4a6e !important;
+  --github-deploy-footer-ticker-border: rgba(103, 232, 249, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #0c4a6e !important;
+  --github-deploy-timeline-meta-color: #67e8f9 !important;
   --data-quality-valid: #176354 !important;
   --data-quality-warning: #665b25 !important;
   --data-quality-error: #714148 !important;

@@ -659,15 +659,22 @@
   border: 1px solid var(--github-deploy-footer-ticker-border);
   background: var(--github-deploy-footer-ticker-bg);
   padding: 0.16rem 0;
+  /* Same readable body text as Maple-style themes: never dark-on-dark / light-on-light. */
+  color: var(--github-deploy-footer-ticker-text, var(--text-color)) !important;
 }
 
 .footerTickerMarquee {
   padding: 0 0.45rem;
   font-size: calc(var(--content-text-size, 1rem) * 0.82);
   font-weight: 800;
-  color: var(--github-deploy-footer-ticker-text, var(--github-deploy-timeline-meta-color, var(--text-color)));
+  color: inherit !important;
   text-shadow: var(--github-deploy-footer-ticker-shadow);
   line-height: 1.35;
+
+  /* CSS-module segment hashes vary — force inherit on all descendants. */
+  * {
+    color: inherit !important;
+  }
 }
 
 @keyframes queuedTagPulse {

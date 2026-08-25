@@ -161,11 +161,11 @@ html[data-theme='colorblind-mono-dark'],
   --github-deploy-inline-running-track: rgba(163, 163, 163, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(163, 163, 163, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(17, 17, 17, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(31, 31, 31, 0.34) !important;
-  --github-deploy-footer-ticker-text: #1f1f1f !important;
+  --github-deploy-footer-ticker-border: rgba(229, 229, 229, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #1f1f1f !important;
+  --github-deploy-timeline-meta-color: #e5e5e5 !important;
   --data-quality-valid: #585858 !important;
   --data-quality-warning: #444444 !important;
   --data-quality-error: #723636 !important;

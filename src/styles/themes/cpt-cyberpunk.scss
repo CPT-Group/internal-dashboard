@@ -161,11 +161,11 @@ html[data-theme='cpt-cyberpunk'],
   --github-deploy-inline-running-track: rgba(250, 255, 0, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(250, 255, 0, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(23, 0, 38, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(34, 0, 56, 0.34) !important;
-  --github-deploy-footer-ticker-text: #220038 !important;
+  --github-deploy-footer-ticker-border: rgba(0, 245, 255, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #220038 !important;
+  --github-deploy-timeline-meta-color: #00f5ff !important;
   --data-quality-valid: #1a5449 !important;
   --data-quality-warning: #69660c !important;
   --data-quality-error: #75333e !important;

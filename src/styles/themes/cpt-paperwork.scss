@@ -152,11 +152,11 @@ html[data-theme='cpt-paperwork'],
   --github-deploy-inline-running-track: rgba(194, 65, 12, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(194, 65, 12, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(255, 255, 255, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(231, 220, 200, 0.34) !important;
-  --github-deploy-footer-ticker-text: #e7dcc8 !important;
+  --github-deploy-footer-ticker-border: rgba(31, 78, 121, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #e7dcc8 !important;
+  --github-deploy-timeline-meta-color: #1f4e79 !important;
   --data-quality-valid: #a3d3a7 !important;
   --data-quality-warning: #e1ab90 !important;
   --data-quality-error: #ea9c9f !important;

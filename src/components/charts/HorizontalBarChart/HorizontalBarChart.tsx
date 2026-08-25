@@ -19,6 +19,8 @@ interface ChartTheme {
   barPrimary: string;
   barPrimaryBorder: string;
   labelColor: string;
+  /** Halo behind bar value labels — must follow theme (never hardcode dark-synth purple). */
+  labelStroke: string;
 }
 
 interface MarkerScale {
@@ -281,6 +283,10 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
       barPrimary: s.getPropertyValue('--chart-bar-primary').trim() || 'rgba(36,205,197,0.82)',
       barPrimaryBorder: s.getPropertyValue('--chart-bar-primary-border').trim() || 'rgb(36,205,197)',
       labelColor: s.getPropertyValue('--chart-label-color').trim() || '#ffffff',
+      labelStroke:
+        s.getPropertyValue('--chart-label-stroke').trim() ||
+        s.getPropertyValue('--surface-card').trim() ||
+        'rgba(12, 0, 32, 0.92)',
     });
   }, [activeTheme]);
 
@@ -569,7 +575,8 @@ export const HorizontalBarChart = ({ data }: HorizontalBarChartProps) => {
                 align: 'start' as const,
                 offset: 4,
                 color: theme.labelColor,
-                textStrokeColor: 'rgba(80, 20, 120, 0.75)',
+                // Was hardcoded dark-synth purple — stuck on every theme (Maple, Espresso, …).
+                textStrokeColor: theme.labelStroke,
                 textStrokeWidth: 3,
                 font: { weight: 'bold' as const, size: 13 },
                 formatter: (value: number) => (value > 0 ? `${value}${suffix}` : ''),

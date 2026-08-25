@@ -169,7 +169,7 @@ html[data-theme='cpt-barbie'],
   --github-deploy-inline-queued-track: rgba(245, 158, 11, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(255, 248, 251, 0.98) !important;
   --github-deploy-footer-ticker-border: rgba(194, 24, 91, 0.34) !important;
-  --github-deploy-footer-ticker-text: #c2185b !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
   --github-deploy-timeline-meta-color: #c2185b !important;

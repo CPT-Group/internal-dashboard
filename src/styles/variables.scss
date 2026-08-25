@@ -148,6 +148,8 @@
   --chart-cat-7: rgba(249, 115, 22, 0.82) !important;
   --chart-cat-8: rgba(99, 102, 241, 0.82) !important;
   --chart-label-color: #ffffff !important;
+  /** Halo/stroke behind Chart.js bar value labels (Work Hours, etc.). Follows surface so Maple ≠ purple. */
+  --chart-label-stroke: var(--surface-card) !important;
 
   // TV / dense dashboards — primary body line height for cards + GitHub deploy slide (themes override)
   --content-text-size: 1.04rem !important;
@@ -236,7 +238,8 @@
   --github-deploy-inline-queued-track: rgba(249, 115, 22, 0.22) !important;
   --github-deploy-footer-ticker-bg: rgba(30, 30, 46, 0.9) !important;
   --github-deploy-footer-ticker-border: rgba(255, 79, 216, 0.34) !important;
-  --github-deploy-footer-ticker-text: var(--github-deploy-timeline-meta-color) !important;
+  /** Must stay ≥3:1 vs --github-deploy-footer-ticker-bg (see scripts/fix-github-deploy-ticker-contrast.mjs). */
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: 0 0 8px rgba(255, 79, 216, 0.35) !important;
 
   // Dev Corner One — Work Hours target marker line

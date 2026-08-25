@@ -161,11 +161,11 @@ html[data-theme='tempest'],
   --github-deploy-inline-running-track: rgba(250, 204, 21, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(250, 204, 21, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(30, 41, 59, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(17, 24, 39, 0.34) !important;
-  --github-deploy-footer-ticker-text: #111827 !important;
+  --github-deploy-footer-ticker-border: rgba(56, 189, 248, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #111827 !important;
+  --github-deploy-timeline-meta-color: #38bdf8 !important;
   --data-quality-valid: #1e6256 !important;
   --data-quality-warning: #6d5f22 !important;
   --data-quality-error: #78404a !important;

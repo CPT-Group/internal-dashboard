@@ -161,11 +161,11 @@ html[data-theme='embercore'],
   --github-deploy-inline-running-track: rgba(255, 209, 102, 0.18) !important;
   --github-deploy-inline-queued-track: rgba(255, 209, 102, 0.16) !important;
   --github-deploy-footer-ticker-bg: rgba(36, 9, 0, 0.98) !important;
-  --github-deploy-footer-ticker-border: rgba(59, 13, 0, 0.34) !important;
-  --github-deploy-footer-ticker-text: #3b0d00 !important;
+  --github-deploy-footer-ticker-border: rgba(255, 107, 0, 0.34) !important;
+  --github-deploy-footer-ticker-text: var(--text-color) !important;
   --github-deploy-footer-ticker-shadow: none !important;
   --content-text-size: 1.05rem !important;
-  --github-deploy-timeline-meta-color: #3b0d00 !important;
+  --github-deploy-timeline-meta-color: #ff6b00 !important;
   --data-quality-valid: #20573d !important;
   --data-quality-warning: #715629 !important;
   --data-quality-error: #7a3533 !important;
