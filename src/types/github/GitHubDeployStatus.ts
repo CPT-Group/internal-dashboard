@@ -1,5 +1,15 @@
 import type { DeployLaneKey } from '@/utils/githubDeployEnvironment';
 
+/** Runs held on an Environment approval gate, split by whether they are deploys or ops/probes. */
+export interface ApprovalWaitingSummary {
+  /** All runs repo-wide with GitHub status `waiting` (held for a reviewer). */
+  total: number;
+  /** Of those, runs on a Deploy Version workflow — a real promotion awaiting approval. */
+  deploy: number;
+  /** Of those, admin/ops/probe runs that pin an environment for its gate but deploy nothing. */
+  admin: number;
+}
+
 /** One row per monitored deploy workflow (from GET /api/github/deploy-status). */
 export interface GitHubDeployWorkflowStatus {
   owner: string;
@@ -17,6 +27,17 @@ export interface GitHubDeployWorkflowStatus {
   inProgressCount?: number;
   /** Total active runs (queued + in-progress) for this monitored workflow. */
   activeCount?: number;
+  /**
+   * Runs parked on a GitHub Environment approval gate, repo-wide. Omitted when none are waiting.
+   *
+   * `status=waiting` is a distinct GitHub filter from `queued`, so these are invisible to
+   * `queuedCount`/`inProgressCount` — the card would otherwise read green while a reviewer is
+   * being asked to approve something. Split by kind because they mean different things: a
+   * `deploy` waiter is a Deploy Version promotion held for a reviewer, while an `admin` waiter is
+   * an ops/probe workflow (feature-flag admin, read-only DB probe) that pins the same environment
+   * for its human gate but deploys nothing — correctly excluded from the lanes, still needs a person.
+   */
+  approvalWaiting?: ApprovalWaitingSummary;
   /** Latest run that is not completed (queued, in_progress, waiting, etc.), if any. */
   activeRun?: GitHubDeployRunSummary;
   /** Most recent completed run when nothing is active. */
