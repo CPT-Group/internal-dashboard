@@ -5,7 +5,10 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
 import { MarqueeTicker } from '@/components/ui';
-import type { GitHubDeployWorkflowStatus } from '@/types/github/GitHubDeployStatus';
+import type {
+  ApprovalWaitingSummary,
+  GitHubDeployWorkflowStatus,
+} from '@/types/github/GitHubDeployStatus';
 import {
   cardHealthFromLaneStates,
   formatDeployRunDuration,
@@ -139,6 +142,31 @@ function DeployRepoCardBody({ children }: { children: ReactNode }) {
   return <div className={styles.cardBody}>{children}</div>;
 }
 
+/**
+ * Compact chip text for runs held on an Environment approval gate. Kept short deliberately — this
+ * sits beside the lane pills on a TV card, so it has to read at a glance without crowding them.
+ * A deploy waiter outranks a probe waiter: if both are pending, the deploy is what matters.
+ */
+function approvalWaitingLabel(w: ApprovalWaitingSummary): string {
+  if (w.deploy > 0) return w.deploy > 1 ? `Approve ${w.deploy}` : 'Approve';
+  return w.admin > 1 ? `Probe ${w.admin}` : 'Probe';
+}
+
+/** Long-form tooltip — says what is waiting and why a probe does not light a deploy lane. */
+function approvalWaitingTitle(w: ApprovalWaitingSummary): string {
+  const parts: string[] = [];
+  if (w.deploy > 0) {
+    parts.push(`${w.deploy} deploy run${w.deploy > 1 ? 's' : ''} awaiting reviewer approval`);
+  }
+  if (w.admin > 0) {
+    parts.push(
+      `${w.admin} admin/probe run${w.admin > 1 ? 's' : ''} awaiting approval ` +
+        '(pins an environment for its human gate but deploys nothing, so it does not light a lane)'
+    );
+  }
+  return parts.join(' · ');
+}
+
 interface DeployPipelineCardProps {
   row: GitHubDeployWorkflowStatus;
   showBranchContext: boolean;
@@ -150,6 +178,9 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
   const run = isPlaceholder ? undefined : row.activeRun ?? row.lastCompletedRun;
   const err = isPlaceholder ? undefined : row.error;
   const queuedCount = isPlaceholder ? 0 : row.queuedCount ?? 0;
+  // Env-approval waiters are repo-wide and invisible to queuedCount (GitHub reports `waiting`
+  // separately from `queued`), so they get their own chip rather than being folded into a lane.
+  const approvalWaiting = isPlaceholder ? undefined : row.approvalWaiting;
 
   const laneConfig = getDeployLaneConfig(row.repo);
   const envSnapshots = isPlaceholder
@@ -215,6 +246,15 @@ function DeployPipelineCard({ row, showBranchContext }: DeployPipelineCardProps)
             {actionsBusy ? (
               <span className={styles.headerActionsBusyWrap} title="Monitored CD workflow is active but no swim-lane target resolved yet">
                 <Tag value="Actions busy" severity="secondary" rounded />
+              </span>
+            ) : null}
+            {approvalWaiting ? (
+              <span className={styles.headerActionsBusyWrap} title={approvalWaitingTitle(approvalWaiting)}>
+                <Tag
+                  value={approvalWaitingLabel(approvalWaiting)}
+                  severity={approvalWaiting.deploy > 0 ? 'warning' : 'secondary'}
+                  rounded
+                />
               </span>
             ) : null}
           </div>

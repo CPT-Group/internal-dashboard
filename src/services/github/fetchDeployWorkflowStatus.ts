@@ -9,6 +9,7 @@ import {
   getDeployVersionWorkflowIds,
 } from '@/constants/GITHUB_DEPLOY_LANE_WORKFLOWS';
 import type {
+  ApprovalWaitingSummary,
   GitHubDeployLaneSnapshot,
   GitHubDeployRunSummary,
   GitHubDeployWorkflowStatus,
@@ -52,6 +53,8 @@ export interface GitHubWorkflowRunApi {
   display_title?: string | null;
   created_at: string;
   updated_at: string;
+  /** Present on repo-wide run listings; used to tell a Deploy Version run from an admin/probe run. */
+  workflow_id?: number | null;
 }
 
 interface GitHubWorkflowRunsResponse {
@@ -541,6 +544,46 @@ async function fetchWorkflowRunCountByStatus(
   return typeof data.total_count === 'number' ? data.total_count : 0;
 }
 
+/**
+ * Repo-wide count of runs parked on a GitHub Environment approval gate.
+ *
+ * GitHub reports these as `status=waiting`, which is a DISTINCT filter from `queued` — a run held
+ * for a reviewer is absent from `?status=queued`, so the per-workflow queued/in-progress counters
+ * cannot see it and the card reads green while a human is being asked for something. Verified
+ * against cpt-ef-postgres-migrations on 2026-08-28: `queued`=3, `waiting`=1, `in_progress`=0.
+ *
+ * Deliberately repo-wide rather than per monitored workflow: approval gates are also used by
+ * admin/ops workflows (feature-flag admin, read-only DB probes) that are correctly excluded from
+ * the deploy lanes by `isDeployVersionWorkflowId`. Those must not light a lane — but they DO need
+ * a human, so they are surfaced as a muted chip instead of being invisible.
+ */
+async function fetchRepoApprovalWaiting(
+  token: string,
+  owner: string,
+  repo: string
+): Promise<ApprovalWaitingSummary | undefined> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?status=waiting&per_page=30`;
+  try {
+    const res = await fetch(url, { headers: githubHeaders(token), cache: 'no-store' });
+    if (!res.ok) return undefined;
+    const data = (await res.json()) as GitHubWorkflowRunsResponse;
+    const runs = Array.isArray(data.workflow_runs) ? data.workflow_runs : [];
+    if (runs.length === 0) return undefined;
+    let deploy = 0;
+    let admin = 0;
+    for (const run of runs) {
+      const id = typeof run.workflow_id === 'number' ? run.workflow_id : null;
+      if (id !== null && isDeployVersionWorkflowId(repo, id)) deploy += 1;
+      else admin += 1;
+    }
+    return { total: runs.length, deploy, admin };
+  } catch {
+    // Never fail the card on this secondary signal — absence reads as "nothing waiting", which is
+    // the same as today's behaviour, not a regression.
+    return undefined;
+  }
+}
+
 interface WorkflowRunsFetchResult {
   workflowId: number;
   runs: GitHubWorkflowRunApi[];
@@ -907,10 +950,12 @@ export async function fetchDeployWorkflowStatus(
 
   const workflowIds = monitorWorkflowIds(monitor);
   const deploymentLaneEnvs = deploymentLaneEnvsForRepo(repo);
-  const [workflowFetches, deployments] = await Promise.all([
+  const [workflowFetches, deployments, approvalWaiting] = await Promise.all([
     Promise.all(workflowIds.map((id) => fetchWorkflowRunsById(token, owner, repo, id))),
     // Per-env Deployments (`?environment=stg|prd`, per_page=30) — not unfiltered top-100.
     fetchRepoDeploymentsForLanes(token, owner, repo, deploymentLaneEnvs),
+    // Repo-wide `status=waiting` — the env-approval queue the per-workflow counters cannot see.
+    fetchRepoApprovalWaiting(token, owner, repo),
   ]);
 
   // Timeline env labels fall back to run-name + SHA/time over this small per-env list (we no
@@ -976,6 +1021,7 @@ export async function fetchDeployWorkflowStatus(
     queuedCount,
     inProgressCount,
     activeCount: queuedCount + inProgressCount,
+    approvalWaiting,
     activeRun: activeEntry
       ? toSummary(
           activeEntry.run,
