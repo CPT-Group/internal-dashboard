@@ -7,7 +7,7 @@
  *
  * Future: replace with a date-range schedule or environment variable.
  */
-export const CODE_FREEZE_ENABLED = true;
+export const CODE_FREEZE_ENABLED = false;
 
 /** How often the CODE FREEZE modal opens (ms). Default: 30 minutes. */
 export const CODE_FREEZE_NOTICE_INTERVAL_MS = 30 * 60 * 1000;

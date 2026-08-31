@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Code Freeze ON**: `CODE_FREEZE_ENABLED = true` in `src/constants/CODE_FREEZE.ts` — frost theme + periodic notice on Dev Corner One and Two only (other TV rooms unchanged).
+- **Code Freeze OFF**: `CODE_FREEZE_ENABLED = false` in `src/constants/CODE_FREEZE.ts` — Dev Corner One/Two frost theme + periodic notice disabled.
 
 - **Docs — Work Hours y-label skip + Tizen note**: Documented that short/zoomed Work Hours charts can hide category names via Chart.js `ticks.autoSkip` (bars still draw); deferred fix is `autoSkip: false` (+ optional smaller canvas `font.size`), not CSS `rem`/`nowrap`. Reinforced Tizen / pre-2020 CSS constraints next to that note.
 - **Dev Corner One — roster display order**: Work Hours Today and Team Activity use fixed order **Kyle → Roy → James → Brandon** (`NOVA_CORE_DEVS_ACCOUNT_ID_ORDER`). Work Hours no longer re-sorts bars by hours logged. Carlos remains excluded.
