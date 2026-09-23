@@ -1,4 +1,4 @@
-# Documentation standards (all ZION repos)
+# Documentation standards (all ZION/ATLAS repos)
 
 **Canonical standard:** [documentation-standards.md](https://github.com/CPT-Group/cpt-standards/blob/main/standards/global/documentation-standards.md) — naming, folder structure, document layout, synchronization.
 
