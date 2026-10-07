@@ -312,15 +312,15 @@ worked example.
 
 ## Project IDs / status IDs
 
-Global (cross-project) in Jira Cloud. Snapshot as of 2026-04-16:
+Global (cross-project) in Jira Cloud. Snapshot refreshed **2026-09-08** (NOVA Archive added):
 
 | Project | projectId | Workflow statuses we care about |
 |---|---|---|
-| NOVA | 10183 | To Do, In Dev, Dev Review, **QA (10003)**, **UAT (10012)**, Done, Backlog |
+| NOVA | 10183 | Backlog (`10000`), To Do (`10007`), In Dev (`10492`), Dev Review (`10225`), **QA (`10003`)**, **UAT (`10012`)**, Done (`10002`), **Archive (`10903`)** — Archive is Done-category; Story/Task/Epic/Research only |
 | OPRD | 10002 | To Do, Requirement Review, Development, Peer Testing, QA/QC (10011), **UAT (10012)**, Resolved |
 | CM   | 10017 | New, Requested, Data Team New, Data Team In Progress, Data Team Testing, Data Team Complete, Request Complete, Completed (no UAT) |
 
-Re-verify any time with `verify-workflow-statuses.mjs`.
+Re-verify any time with `verify-workflow-statuses.mjs` or `GET /rest/api/3/project/NOVA/statuses`.
 
 ---
 

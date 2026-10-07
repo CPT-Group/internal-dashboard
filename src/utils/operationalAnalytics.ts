@@ -197,6 +197,9 @@ const DEV_RESPONSIBLE_STATUSES: Record<string, Set<string>> = {
     'Data Team In Progress', 'DATA TEAM IN PROGRESS',
     'Data Team Testing', 'DATA TEAM TESTING',
   ]),
+  // Dev-owned statuses for "in flight" attribution. Terminal Done-category
+  // statuses (Done, UAT, Archive) are intentionally omitted — board JQL uses
+  // statusCategory != Done so Archive (10903) stays off open dashboards.
   NOVA: new Set(['To Do', 'In Dev', 'Dev Review', 'QA']),
 };
 

@@ -1,6 +1,7 @@
 /**
  * Set today's Pacific worklogs for Kyle + James on their NOVA "In Dev" tickets only.
- * Deletes any other worklogs logged today, then creates one entry per in-progress ticket (even split).
+ * Deletes any other worklogs logged today, then creates one entry per destination ticket.
+ * Minutes are always an uneven distinct split (no two tickets share the same minute count).
  *
  * Usage:
  *   node scripts/jira/set-in-progress-worklogs-today.mjs --hours=4
@@ -8,12 +9,24 @@
  *   node scripts/jira/set-in-progress-worklogs-today.mjs k:+1 j:-0.5 --apply
  *   node scripts/jira/set-in-progress-worklogs-today.mjs --james-hours=3 --apply
  *   node scripts/jira/set-in-progress-worklogs-today.mjs k:4 --include-dev-review --apply
+ *   node scripts/jira/set-in-progress-worklogs-today.mjs k:+2 --keys=NOVA-3434,NOVA-4789 --apply
  */
 import fs from 'node:fs';
 
 const apply = process.argv.includes('--apply');
 const includeDevReview = process.argv.includes('--include-dev-review');
-const rawArgs = process.argv.slice(2).filter((a) => a !== '--apply' && a !== '--include-dev-review');
+const keysArg = process.argv.find((a) => a.startsWith('--keys='));
+/** Optional explicit destination keys (any status); skips default In Dev search when set. */
+const explicitKeys = keysArg
+  ? keysArg
+      .slice('--keys='.length)
+      .split(',')
+      .map((k) => k.trim().toUpperCase())
+      .filter(Boolean)
+  : [];
+const rawArgs = process.argv
+  .slice(2)
+  .filter((a) => a !== '--apply' && a !== '--include-dev-review' && !a.startsWith('--keys='));
 
 const DEFAULT_STATUSES = ['In Dev'];
 const EXPANDED_STATUSES = ['In Dev', 'Dev Review'];
@@ -140,31 +153,67 @@ function formatSeconds(total) {
   return `${m}m`;
 }
 
-function evenSplitSeconds(totalSeconds, count) {
+/**
+ * Split totalSeconds into `count` minute values that are all distinct integers ≥ 1.
+ * Uses 1..n as the base set, then randomly bumps slots until the target sum is hit,
+ * then shuffles assignment. If 1..count already exceeds the target, uses as many
+ * tickets as the triangular number allows (drops the rest).
+ * @param {number} totalSeconds
+ * @param {number} count
+ * @returns {number[]} seconds per ticket (length may be < count when total is too small)
+ */
+function distinctUnevenSplitSeconds(totalSeconds, count) {
   if (count === 0 || totalSeconds <= 0) return [];
-  const baseSec = Math.floor(totalSeconds / count / 60) * 60;
-  const slots = Array.from({ length: count }, () => Math.max(MIN_SECONDS, baseSec));
-  let drift = totalSeconds - slots.reduce((s, v) => s + v, 0);
-  let i = 0;
-  while (drift !== 0) {
-    const step = drift > 0 ? 60 : -60;
-    const next = slots[i % count] + step;
-    if (next >= MIN_SECONDS) {
-      slots[i % count] = next;
-      drift -= step;
+  const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
+
+  let n = count;
+  while (n > 1 && (n * (n + 1)) / 2 > totalMinutes) n -= 1;
+
+  /** @type {number[]} */
+  const minutes = Array.from({ length: n }, (_, i) => i + 1);
+  let remaining = totalMinutes - minutes.reduce((s, v) => s + v, 0);
+  const used = new Set(minutes);
+  let guard = 0;
+  while (remaining > 0 && guard < totalMinutes * 200) {
+    const i = Math.floor(Math.random() * n);
+    const next = minutes[i] + 1;
+    if (!used.has(next)) {
+      used.delete(minutes[i]);
+      minutes[i] = next;
+      used.add(next);
+      remaining -= 1;
     }
-    i += 1;
-    if (i > count * 200) break;
+    guard += 1;
   }
-  return slots;
+  if (remaining > 0) {
+    const max = Math.max(...minutes);
+    minutes[minutes.indexOf(max)] += remaining;
+  }
+
+  for (let i = minutes.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = minutes[i];
+    minutes[i] = minutes[j];
+    minutes[j] = tmp;
+  }
+
+  return minutes.map((m) => m * 60);
 }
 
 function pacificWorklogStarted(index, total) {
+  // Spread across the workday with a light random jitter so starts aren't identical.
   const hour = 8 + Math.floor((index * 7) / Math.max(total, 1));
-  const minute = (index * 13) % 60;
-  const hh = String(hour).padStart(2, '0');
+  const minute = (index * 17 + Math.floor(Math.random() * 7)) % 60;
+  const hh = String(Math.min(16, hour)).padStart(2, '0');
   const mm = String(minute).padStart(2, '0');
   return `${todayPacific}T${hh}:${mm}:00.000-0700`;
+}
+
+async function fetchIssuesByKeys(keys) {
+  if (keys.length === 0) return [];
+  const quoted = keys.map((k) => `"${k}"`).join(', ');
+  const jql = `key in (${quoted}) ORDER BY key ASC`;
+  return searchIssues(jql);
 }
 
 async function searchIssues(jql) {
@@ -318,13 +367,19 @@ Max ${MAX_HOURS_PER_PERSON}h per person per day (Pacific).`);
 
   console.log(`Pacific today: ${todayPacific}`);
   const statusLabel = includeDevReview ? 'In Dev + Dev Review' : 'In Dev';
-  console.log(`${apply ? 'APPLY' : 'DRY-RUN'} — max ${MAX_HOURS_PER_PERSON}h/person on ${statusLabel} tickets only\n`);
+  const destLabel = explicitKeys.length > 0 ? `explicit keys (${explicitKeys.length})` : statusLabel;
+  console.log(
+    `${apply ? 'APPLY' : 'DRY-RUN'} — max ${MAX_HOURS_PER_PERSON}h/person on ${destLabel}; distinct uneven minutes\n`
+  );
 
   const activeStatuses = includeDevReview ? EXPANDED_STATUSES : DEFAULT_STATUSES;
 
   for (const author of AUTHORS) {
     const targetSeconds = Math.round(author.targetHours * 3600);
-    const inProgress = await fetchActiveDevIssues(author.id, activeStatuses);
+    const inProgress =
+      explicitKeys.length > 0
+        ? await fetchIssuesByKeys(explicitKeys)
+        : await fetchActiveDevIssues(author.id, activeStatuses);
     const inProgressKeys = new Set(inProgress.map((i) => i.key));
     const mineToday = allToday.filter((e) => e.authorId === author.id);
     const toDeleteAll = mineToday;
@@ -339,16 +394,18 @@ Max ${MAX_HOURS_PER_PERSON}h per person per day (Pacific).`);
 
     if (inProgress.length === 0) {
       console.log(`=== ${author.label} — target ${formatSeconds(targetSeconds)}${deltaNote}${capNote} ===`);
-      console.log(`No ${statusLabel} assignee tickets — skip\n`);
+      console.log(`No destination tickets — skip\n`);
       continue;
     }
 
-    const perTicket = evenSplitSeconds(targetSeconds, inProgress.length);
+    const perTicket = distinctUnevenSplitSeconds(targetSeconds, inProgress.length);
+    // If triangular bound dropped some tickets, only create for the first N that got minutes.
+    const destIssues = inProgress.slice(0, perTicket.length);
     const plannedTotal = perTicket.reduce((s, v) => s + v, 0);
 
     console.log(`=== ${author.label} — target ${formatSeconds(targetSeconds)}${deltaNote}${capNote} ===`);
-    console.log(`${statusLabel} tickets (${inProgress.length}):`);
-    inProgress.forEach((issue, idx) => {
+    console.log(`Destination tickets (${destIssues.length}${destIssues.length < inProgress.length ? ` of ${inProgress.length} requested` : ''}):`);
+    destIssues.forEach((issue, idx) => {
       const sec = perTicket[idx] ?? 0;
       const statusName = issue.fields?.status?.name ?? '';
       console.log(`  ${issue.key} | ${formatSeconds(sec)} | ${statusName} | ${issue.fields.summary.slice(0, 55)}`);
@@ -384,10 +441,10 @@ Max ${MAX_HOURS_PER_PERSON}h per person per day (Pacific).`);
       continue;
     }
 
-    for (let idx = 0; idx < inProgress.length; idx++) {
-      const issue = inProgress[idx];
+    for (let idx = 0; idx < destIssues.length; idx++) {
+      const issue = destIssues[idx];
       const seconds = perTicket[idx] ?? MIN_SECONDS;
-      const started = pacificWorklogStarted(idx, inProgress.length);
+      const started = pacificWorklogStarted(idx, destIssues.length);
       try {
         await createWorklog(issue.key, started, seconds, author.id);
         console.log(`  [created] ${issue.key} ${formatSeconds(seconds)} @ ${started.slice(11, 16)} PT`);

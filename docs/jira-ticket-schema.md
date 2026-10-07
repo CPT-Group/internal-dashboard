@@ -41,8 +41,29 @@ Fields we use for analytics (aligned with `JiraIssueFields` in code).
 | Field            | Type   | Description |
 |------------------|--------|-------------|
 | `id`             | string | Status ID   |
-| `name`           | string | Status name (e.g. To Do, In Progress, Done) |
-| `statusCategory`| object \| optional | `key`, `name` (e.g. "done", "indeterminate") |
+| `name`           | string | Status name (exact Jira name — see table below) |
+| `statusCategory`| object \| optional | `id`, `key`, `name`, `colorName` |
+
+### NOVA statuses (live `GET /rest/api/3/project/NOVA/statuses`, 2026-09-08)
+
+There is **no** status named "Completed" or "Archived". Exact names:
+
+| `name` | `id` | `statusCategory.key` | `statusCategory.name` | Where available |
+|--------|------|----------------------|------------------------|-----------------|
+| Backlog | `10000` | `new` | To Do | Most template types + Bug / Case Update Request |
+| To Do | `10007` | `new` | To Do | All common types |
+| In Dev | `10492` | `indeterminate` | In Progress | All common types (dashboards display as "In Progress") |
+| Dev Review | `10225` | `indeterminate` | In Progress | All common types |
+| QA | `10003` | `indeterminate` | In Progress | All common types |
+| UAT | `10012` | `done` | Done | All common types (requester handoff) |
+| Done | `10002` | `done` | Done | All common types |
+| **Archive** | **`10903`** | **`done`** | **Done** | **Story, Task, Epic, Research only** |
+
+**Open / active board JQL:** always use `statusCategory != Done` (excludes Done, UAT, **and Archive**). Do **not** use `status != Done` alone — that still returns Archive tickets.
+
+**Fetch one status:** `GET /rest/api/3/status/10903` → `{ "name": "Archive", "id": "10903", "statusCategory": { "key": "done", ... } }`.
+
+**Sample Archive issues:** `project = NOVA AND status = Archive` (e.g. NOVA-4019, NOVA-3904).
 
 ---
 
@@ -98,7 +119,9 @@ Fields we use for analytics (aligned with `JiraIssueFields` in code).
 **Example JQL for NOVA:**
 - All NOVA: `project = NOVA`
 - Recent: `project = NOVA order by created DESC`
-- Open: `project = NOVA AND status != Done`
+- Open / active (preferred): `project = NOVA AND statusCategory != Done` — excludes Done, UAT, and Archive
+- Avoid for open counts: `status != Done` — does **not** exclude Archive (`id=10903`)
+- Archived only: `project = NOVA AND status = Archive`
 - This sprint: `project = NOVA AND sprint in openSprints()`
 
 ---

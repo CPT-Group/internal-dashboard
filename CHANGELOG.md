@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **AGENTS — Atlassian token rotation**: Noted that Kyle is rotating an expiring Atlassian API token; agents should treat sudden Jira **401/403** as possible stale `.env.local` / deploy secrets and report the repo + expected vars (`KYLE_*` / `JAMES_*`) rather than assuming a code regression.
+- **Docs — NOVA Archive status**: Verified live status **`Archive`** (`id=10903`, `statusCategory` Done/`done`) on Story/Task/Epic/Research. Documented in `AGENTS.md`, `docs/jira-ticket-schema.md`, and `scripts/jira/README.md`. Prefer `statusCategory != Done` over `status != Done` so Archive is excluded from open boards (same as UAT/Done). Also noted Salesforce Request issue type and Database Request naming.
+- **`/cpt-sr-dev-time-sync`**: Worklog splits are now **distinct uneven minutes** (no two tickets share the same minute count). Optional **`--keys=`** focuses destinations (e.g. ADA + Interactive Site Manager housekeeping). Skill + AGENTS preference updated accordingly.
 - **Code Freeze OFF**: `CODE_FREEZE_ENABLED = false` in `src/constants/CODE_FREEZE.ts` — Dev Corner One/Two frost theme + periodic notice disabled.
 
 - **Docs — Work Hours y-label skip + Tizen note**: Documented that short/zoomed Work Hours charts can hide category names via Chart.js `ticks.autoSkip` (bars still draw); deferred fix is `autoSkip: false` (+ optional smaller canvas `font.size`), not CSS `rem`/`nowrap`. Reinforced Tizen / pre-2020 CSS constraints next to that note.
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Netlify deploy — secrets scan on `GITHUB_APP_ID`**: Build failed because `AGENTS.md` contained the literal App ID / install ID values that match Netlify env secrets. Removed those numbers from docs (keep them only in `.env.local` / Netlify UI) so production redeploys can succeed and pick up rotated `KYLE_JIRA_TOKEN`.
 - **Dev Corner One — Work Hours bar label purple glow**: Hour values (`1h`, `0.92h`, …) used a hardcoded Chart.js `textStrokeColor` (`rgba(80, 20, 120, 0.75)` — dark-synth purple) on every theme. Stroke now follows `--chart-label-stroke` → `--surface-card` (Maple cream, Espresso brown, etc.).
 - **Dev Corner Two — deploy card footer ticker contrast (regression)**: Dark themes (Aurora, Evergreen, GitHub Dark, etc.) had near-invisible footer marquees while light themes (Maple) looked fine — root cause was ticker text = `headerBg`/surface (dark-on-dark). All **49** themes now bind `--github-deploy-footer-ticker-text: var(--text-color)`; SCSS forces inherit + `!important` on `.footerTicker`; generator + `scripts/fix-github-deploy-ticker-contrast.mjs` enforce the ≥3:1 rule. Hard-refresh after theme SCSS deploy.
 - **Dev Corner Two — Stg/Prod lit by admin workflows (false Prod)**: Stg/Prod Deployments tips now accept only **Deploy Version** runs (`getDeployVersionWorkflowIds`) on every CD repo — not Feature Flag Admin, partition probes, CPTID audit, or Dev Fast that pin the same GitHub Environment (`stg`/`prd` / P2P `onprem-*`). Timeline SHA→env labels are Deploy Version–only so `development` Dev Fast / promote(test) rows no longer paint as prod when an admin workflow minted a same-SHA `prd` Deployment. Per-env Deployments page size raised **8 → 30** so a real Deploy Version tip remains reachable under admin noise (EF prd tip measured at #17 on 2026-08-24). Aligns with cpt-standards `std-operational-visibility` (Stg/Prd = Deploy Version + Deployments).
