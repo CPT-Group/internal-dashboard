@@ -114,7 +114,7 @@ const MemberCard = ({
         <span className={styles.teamName}>{firstName(m.displayName)}</span>
         <span className={styles.teamCounts}>
           <span className={styles.teamCountInDev}>
-            {m.inProgressCount} IN DEV
+            {m.inProgressCount} IN PROGRESS
           </span>
           <span className={styles.teamCountSeparator}>/</span>
           <span className={styles.teamCountTodo}>

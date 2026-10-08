@@ -449,7 +449,7 @@ Before every commit and push:
 - Do not implement product/code changes after an investigation-only answer unless the user explicitly requests it — user reverted unsolicited Team Activity attribution edit.
 - When commenting root cause on Jira, post **evidence-backed** findings only — do not ship speculative “likely” causes; gather more proof first.
 - Dev Corner One Team Activity **To Do** chips: visible but secondary via `--team-activity-todo-*` theme tokens; **~0.68 opacity** (user corrected ~0.52 as too muted).
-- Dev Corner One Team Activity card header: labeled counts **`N IN DEV / M TO DO`** — not a combined open badge or `X / Y open`.
+- Dev Corner One Team Activity card header: labeled counts **`N IN PROGRESS / M TO DO`** — not a combined open badge or `X / Y open`. **`IN PROGRESS`, not `IN DEV`:** the count is `inProgressCount` = `statusCategory.key === 'indeterminate'`, which spans **In Dev + Dev Review + QA**, so `IN DEV` named one of the three statuses it counts and read as "actively being developed". `In Progress` is that statusCategory's own name, and `STATUS_DISPLAY_NAMES` already maps `In Dev` → `In Progress` for readability.
 - Dev Corner One **Work Hours** and **Team Activity** use **`NOVA_CORE_DEVS`** (Brandon included; **Carlos stays excluded** via `NOVA_CORE_DEVS_EXCLUDED_ACCOUNT_IDS` — edit the exclude list, do not empty it when “unlocking” someone). Fixed display order **Kyle → Roy → James → Brandon** (`NOVA_CORE_DEVS_ACCOUNT_ID_ORDER`) for both panels.
 
 ## Learned Workspace Facts
