@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`/code-freeze` skill**: Project skill `.cursor/skills/code-freeze` enables/disables `CODE_FREEZE_ENABLED`, updates changelog, commits, and pushes `main` so Dev Corner TVs pick up frost mode via Netlify.
+
 ### Changed
 
 - **Dev Corner One — Team Activity header label**: `N IN DEV` → **`N IN PROGRESS`**. The count is `inProgressCount` = `statusCategory.key === 'indeterminate'`, which spans **In Dev + Dev Review + QA** — so `IN DEV` named only one of the three statuses it counts and read as "actively being developed" (9 shown where 5 were In Dev, 2 Dev Review, 1 QA awaiting QA handoff). `In Progress` is that statusCategory's own name, and `STATUS_DISPLAY_NAMES` already maps `In Dev` → `In Progress` for readability. **Label only** — the query, the buckets and `STATUS_DISPLAY_NAMES` are untouched. `AGENTS.md` updated, since it specified the old label.
