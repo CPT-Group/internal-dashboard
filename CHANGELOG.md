@@ -13,12 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Code Freeze ON**: `CODE_FREEZE_ENABLED = true` — Dev Corner One/Two frost theme + periodic notice.
+- **Code Freeze OFF**: `CODE_FREEZE_ENABLED = false` — Dev Corner One/Two frost theme + periodic notice disabled.
 - **Dev Corner One — Team Activity header label**: `N IN DEV` → **`N IN PROGRESS`**. The count is `inProgressCount` = `statusCategory.key === 'indeterminate'`, which spans **In Dev + Dev Review + QA** — so `IN DEV` named only one of the three statuses it counts and read as "actively being developed" (9 shown where 5 were In Dev, 2 Dev Review, 1 QA awaiting QA handoff). `In Progress` is that statusCategory's own name, and `STATUS_DISPLAY_NAMES` already maps `In Dev` → `In Progress` for readability. **Label only** — the query, the buckets and `STATUS_DISPLAY_NAMES` are untouched. `AGENTS.md` updated, since it specified the old label.
 - **AGENTS — Atlassian token rotation**: Noted that Kyle is rotating an expiring Atlassian API token; agents should treat sudden Jira **401/403** as possible stale `.env.local` / deploy secrets and report the repo + expected vars (`KYLE_*` / `JAMES_*`) rather than assuming a code regression.
 - **Docs — NOVA Archive status**: Verified live status **`Archive`** (`id=10903`, `statusCategory` Done/`done`) on Story/Task/Epic/Research. Documented in `AGENTS.md`, `docs/jira-ticket-schema.md`, and `scripts/jira/README.md`. Prefer `statusCategory != Done` over `status != Done` so Archive is excluded from open boards (same as UAT/Done). Also noted Salesforce Request issue type and Database Request naming.
 - **`/cpt-sr-dev-time-sync`**: Worklog splits are now **distinct uneven minutes** (no two tickets share the same minute count). Optional **`--keys=`** focuses destinations (e.g. ADA + Interactive Site Manager housekeeping). Skill + AGENTS preference updated accordingly.
-- **Code Freeze OFF**: `CODE_FREEZE_ENABLED = false` in `src/constants/CODE_FREEZE.ts` — Dev Corner One/Two frost theme + periodic notice disabled.
 
 - **Docs — Work Hours y-label skip + Tizen note**: Documented that short/zoomed Work Hours charts can hide category names via Chart.js `ticks.autoSkip` (bars still draw); deferred fix is `autoSkip: false` (+ optional smaller canvas `font.size`), not CSS `rem`/`nowrap`. Reinforced Tizen / pre-2020 CSS constraints next to that note.
 - **Dev Corner One — roster display order**: Work Hours Today and Team Activity use fixed order **Kyle → Roy → James → Brandon** (`NOVA_CORE_DEVS_ACCOUNT_ID_ORDER`). Work Hours no longer re-sorts bars by hours logged. Carlos remains excluded.
