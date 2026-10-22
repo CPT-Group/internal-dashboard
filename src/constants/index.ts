@@ -13,6 +13,7 @@ export * from './JIRA_OPERATIONAL';
 export * from './JIRA_IMPEDIMENT';
 export * from './JULIES_BACKGROUND';
 export * from './JACKIES_BACKGROUND';
+export * from './MARKS_BACKGROUND';
 export * from './DEV1_CONFIG';
 export * from './GITHUB_WEBHOOK';
 export * from './GITHUB_DEPLOY_MONITORS';

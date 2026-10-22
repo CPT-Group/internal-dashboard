@@ -7,6 +7,7 @@ import { getPageReloadInterval, CODE_FREEZE_ENABLED } from '@/constants';
 import { ConferenceRoomDashboard } from '@/components/pages/ConferenceRoomDashboard';
 import { JackiesOfficeDashboard } from '@/components/pages/JackiesOfficeDashboard';
 import { JuliesOfficeDashboard } from '@/components/pages/JuliesOfficeDashboard';
+import { MarksOfficeDashboard } from '@/components/pages/MarksOfficeDashboard';
 import { CodeFreezeOverlay } from '@/components/ui/CodeFreezeOverlay';
 
 const TrevorDashboard = dynamic(
@@ -63,6 +64,9 @@ export const TVDashboard = ({ roomName, config, data }: DashboardProps) => {
   }
   if (roomName === 'julie') {
     return <JuliesOfficeDashboard />;
+  }
+  if (roomName === 'mark') {
+    return <MarksOfficeDashboard />;
   }
   if (roomName === 'github-activity') {
     return <GithubActivityDashboard />;

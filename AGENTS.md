@@ -5,7 +5,7 @@ Context for AI coding agents working on this repo. See also README (if present) 
 ## Project overview
 
 - **Stack**: Next.js 16, React 19, TypeScript, PrimeReact, Zustand, react-hook-form, Chart.js (date-fns adapter), SASS.
-- **Purpose**: Internal TV dashboards and home screen (conference room, Julie's Office, Dev Corner One/Two, etc.). Uses PrimeReact components and a shared theme system.
+- **Purpose**: Internal TV dashboards and home screen (conference room, Julie's/Jackie's/Mark's personal office dashboards, Dev Corner One/Two, etc.). Uses PrimeReact components and a shared theme system.
 
 ## The NOVA team
 
@@ -229,6 +229,7 @@ These run automatically before `dev` and `build`:
 - `scripts/generate-conference-slides.js` — reads `public/backgrounds/conference-room/`, writes `conferenceBackgroundSlides.generated.ts`.
 - `scripts/generate-julies-background-slides.js` — reads `public/backgrounds/julies-unicorns/`, writes `juliesBackgroundSlides.generated.ts`.
 - `scripts/generate-jackies-background-slides.js` — reads `public/backgrounds/jackies-cute-backgrounds/`, writes `jackiesBackgroundSlides.generated.ts`.
+- `scripts/generate-marks-background-slides.js` — reads `public/backgrounds/marks-finance-backgrounds/`, writes `marksBackgroundSlides.generated.ts`.
 
 Add/remove images in those folders and re-run `npm run dev` or `npm run build` to refresh. Generated `.generated.ts` files are committed. All background image folders live under `public/backgrounds/`.
 
@@ -301,7 +302,8 @@ Re-run a full CPT2K16 scan with the same plaintext heuristic after bulk encrypt.
 
 ## TV routes and dashboards
 
-- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `DevCornerTwoDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; `github-activity` → `GithubActivityDashboard`. Route slugs match the dashboard/person name.
+- **Router**: `src/components/pages/TVDashboard/TVDashboard.tsx` — by `roomName`: `dev-corner-one` → `DevCornerOneDashboard`; `dev-corner-two` → `DevCornerTwoDashboard`; `trevor` → `TrevorDashboard`; `conference-room` → `ConferenceRoomDashboard`; `jackie` → `JackiesOfficeDashboard`; `julie` → `JuliesOfficeDashboard`; `mark` → `MarksOfficeDashboard`; `github-activity` → `GithubActivityDashboard`. Route slugs match the dashboard/person name.
+- **Personal office dashboards** (Jackie/Julie/Mark): near-identical layout (`BackgroundSlideshow` + 2–3 `CornerInfoCard`s — name/title bottom-right, Completed Today top-right, clock bottom-left). Jackie's and Julie's add an `AssignedTicketsCornerCard` top-left (each has a Jira `accountId`); **Mark's Office omits it** — Mark (CFO) has no Jira account, his tooling is QuickBooks/finance systems we don't integrate with. On the home screen these three are consolidated into one **"Executive Offices"** tile (`DASHBOARD_LIST.ts`, `variant: 'splitGroup'`) rendered as a PrimeReact `SplitButton` in `HomePage.tsx`: clicking the face navigates to the default (`route`, currently Julie's Office), the dropdown arrow lists `splitOptions` (Julie, Jackie, Mark). Add a 4th person the same way — new `*OfficeDashboard` component, new `*_BACKGROUND.ts` + generator script (mirror `generate-marks-background-slides.js`), room name in `routes.ts`, route case in `TVDashboard.tsx`, and an extra `splitOptions` entry (or promote to a proper menu if the list grows much past 3–4).
 - **Website Health**: `/website-health` is intentionally **not a TV dashboard**. It is the only planned mobile-first/responsive dashboard for desktop/laptop/phone usage.
 - **Website Health data intent**: read-only discrepancy checks between website `Submissions` on `10.0.0.5` and mapped 2K16 `CleanClaims` rows; source scope requires `DateReceived IS NOT NULL`, excludes test IDs `2000000-2000039`, excludes `@cptgroup.com` emails, and includes same-day rows only through **5:15 AM** (later same-day submissions are excluded until next downloader window).
 - **Website Health API**: `GET /api/website-health?sinceDays=...` for scan summaries, `POST /api/website-health` (`{ sinceDays, notify }`) for on-demand scan + optional Teams alert (refreshes active-case list), and `GET /api/website-health/site?siteKey=...&sinceDays=...` for on-demand missing-row details.
@@ -398,7 +400,7 @@ JQL constants → Zustand store (fetch + cache) → analytics builder → chart 
 - `ByBoardByComponentStackedBarChart` — stacked horizontal (project × component).
 - `GanttChart` — timeline (start/end dates, progress).
 
-### Slideshow dashboards (Conference, Julie, Jackie)
+### Slideshow dashboards (Conference, Julie, Jackie, Mark)
 
 These dashboards display rotating background images with optional overlays. See "Build-time scripts" for image generation. They use `BackgroundSlideshow` (reusable UI) and `CornerInfoCard` (name badge). Layout: full viewport, no scroll, position-absolute overlays.
 
@@ -423,6 +425,7 @@ Before every commit and push:
    node scripts/generate-conference-slides.js
    node scripts/generate-julies-background-slides.js
    node scripts/generate-jackies-background-slides.js
+   node scripts/generate-marks-background-slides.js
    ```
    Stage the updated `.generated.ts` files along with any new/removed images.
 2. **Run `npm run lint`** before considering a task done.

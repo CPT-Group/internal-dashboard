@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Mark's Office dashboard (CFO) + home screen "Executive Offices" consolidation**: New `/tv/mark` personal TV dashboard for Mark Brandenberger (CFO) — same layout as Jackie's/Julie's (`BackgroundSlideshow` + name/title, Completed Today, clock corner cards), minus the Assigned Tickets card since Mark has no Jira account. New rotating background folder `public/backgrounds/marks-finance-backgrounds/` (8 AI-generated finance/numbers-themed placeholder images — gold/navy/emerald abstract charts, ledgers, skyline; swap in real photos later) with its own generator script (`scripts/generate-marks-background-slides.js` → `marksBackgroundSlides.generated.ts`, wired into `dev`/`build`). On the home screen, Jackie's Office, Julie's Office, and Mark's Office are now consolidated into a single **"Executive Offices"** tile rendered as a PrimeReact `SplitButton` (`DASHBOARD_LIST.ts` new `variant: 'splitGroup'` + `splitOptions`): clicking the tile face goes to Julie's Office (default), the dropdown lists Julie's, Jackie's, and Mark's. Reduces the home grid from 7 tiles to 6 without losing any destination.
 - **`/code-freeze` skill**: Project skill `.cursor/skills/code-freeze` enables/disables `CODE_FREEZE_ENABLED`, updates changelog, commits, and pushes `main` so Dev Corner TVs pick up frost mode via Netlify.
 
 ### Changed

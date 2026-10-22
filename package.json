@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "predev": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir data/cursor-analytics/csv --out data/cursor-analytics/cursor-analytics-summary.json",
-    "dev": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next dev -p 3333",
+    "dev": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && node scripts/generate-marks-background-slides.js && next dev -p 3333",
     "prebuild": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir data/cursor-analytics/csv --out data/cursor-analytics/cursor-analytics-summary.json",
-    "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && next build",
+    "build": "node scripts/generate-conference-slides.js && node scripts/generate-julies-background-slides.js && node scripts/generate-jackies-background-slides.js && node scripts/generate-marks-background-slides.js && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

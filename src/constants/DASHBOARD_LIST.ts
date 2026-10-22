@@ -1,10 +1,23 @@
+export interface DashboardSplitOption {
+  label: string;
+  route: string;
+  icon: string;
+}
+
 export interface DashboardItem {
   title: string;
   description: string;
   route: string;
   icon: string;
-  /** Optional card variant for special styling (e.g. 'unicorn' for Julie's Office). */
-  variant?: 'unicorn';
+  /**
+   * Optional card variant for special styling/behavior:
+   * - 'unicorn': Julie's Office sparkle gradient (legacy, pre-split-group).
+   * - 'splitGroup': renders as a PrimeReact SplitButton — clicking the face
+   *   navigates to `route` (the default), the dropdown arrow opens `splitOptions`.
+   */
+  variant?: 'unicorn' | 'splitGroup';
+  /** Required when variant is 'splitGroup' — the non-default destinations shown in the dropdown. */
+  splitOptions?: DashboardSplitOption[];
   enabled: boolean;
 }
 
@@ -39,18 +52,17 @@ export const DASHBOARD_LIST: DashboardItem[] = [
     enabled: false,
   },
   {
-    title: "Jackie's Office",
-    description: 'Dashboard for case manager operations',
-    route: '/tv/jackie',
-    icon: 'pi pi-briefcase',
-    enabled: true,
-  },
-  {
-    title: "Julie's Office",
-    description: 'President’s dashboard',
+    title: 'Executive Offices',
+    description: "Julie, Jackie & Mark's personal TV dashboards",
+    // Default face-click destination: Julie (President).
     route: '/tv/julie',
-    icon: 'pi pi-star',
-    variant: 'unicorn',
+    icon: 'pi pi-building',
+    variant: 'splitGroup',
+    splitOptions: [
+      { label: "Julie's Office", route: '/tv/julie', icon: 'pi pi-star' },
+      { label: "Jackie's Office", route: '/tv/jackie', icon: 'pi pi-briefcase' },
+      { label: "Mark's Office", route: '/tv/mark', icon: 'pi pi-dollar' },
+    ],
     enabled: true,
   },
   {

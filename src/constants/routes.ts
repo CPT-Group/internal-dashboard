@@ -7,6 +7,7 @@ export const TV_ROOM_NAMES = [
   'trevor',
   'jackie',
   'julie',
+  'mark',
 ] as const;
 
 export type TVRoomName = (typeof TV_ROOM_NAMES)[number];
@@ -46,6 +47,12 @@ export const TV_ROUTE_CONFIGS: Record<string, TVRouteConfig> = {
     roomName: 'julie',
     displayName: "Julie's Office",
     description: "President's dashboard",
+    enabled: true,
+  },
+  mark: {
+    roomName: 'mark',
+    displayName: "Mark's Office",
+    description: "CFO's dashboard",
     enabled: true,
   },
 };

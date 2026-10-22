@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { Ripple } from 'primereact/ripple';
+import { SplitButton } from 'primereact/splitbutton';
+import type { MenuItem } from 'primereact/menuitem';
 import { useTheme } from '@/providers/ThemeProvider';
 import { DASHBOARD_LIST } from '@/constants/DASHBOARD_LIST';
 import { isWebsiteHealthHomeTileVisible } from '@/utils/websiteHealthHomeTile';
@@ -41,24 +43,45 @@ export const HomePage = () => {
   return (
     <div className={styles.container}>
       <div className={styles.grid}>
-        {enabled.map((d) => (
-          <div
-            key={d.route}
-            className={`${styles.tile} ${d.variant === 'unicorn' ? styles.tileUnicorn : ''} p-ripple`}
-            onClick={() => router.push(d.route)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && router.push(d.route)}
-          >
-            <Ripple />
-            {d.variant === 'unicorn' ? (
-              <span className={styles.tileIcon}><UnicornIcon /></span>
-            ) : (
-              <i className={`${d.icon} ${styles.tileIcon}`} />
-            )}
-            <span className={styles.tileTitle}>{d.title}</span>
-          </div>
-        ))}
+        {enabled.map((d) => {
+          if (d.variant === 'splitGroup') {
+            const model: MenuItem[] = (d.splitOptions ?? []).map((opt) => ({
+              label: opt.label,
+              icon: opt.icon,
+              command: () => router.push(opt.route),
+            }));
+            return (
+              <SplitButton
+                key={d.route}
+                label={d.title}
+                icon={d.icon}
+                model={model}
+                onClick={() => router.push(d.route)}
+                className={styles.splitTile}
+                buttonClassName={styles.splitTileButton}
+                menuButtonClassName={styles.splitTileMenuButton}
+              />
+            );
+          }
+          return (
+            <div
+              key={d.route}
+              className={`${styles.tile} ${d.variant === 'unicorn' ? styles.tileUnicorn : ''} p-ripple`}
+              onClick={() => router.push(d.route)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && router.push(d.route)}
+            >
+              <Ripple />
+              {d.variant === 'unicorn' ? (
+                <span className={styles.tileIcon}><UnicornIcon /></span>
+              ) : (
+                <i className={`${d.icon} ${styles.tileIcon}`} />
+              )}
+              <span className={styles.tileTitle}>{d.title}</span>
+            </div>
+          );
+        })}
       </div>
 
       <button
