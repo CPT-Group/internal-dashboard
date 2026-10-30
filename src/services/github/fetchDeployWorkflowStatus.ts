@@ -84,6 +84,12 @@ interface RepoDeployment {
   environment: DeployEnvironmentKey;
   sha: string;
   createdAtMs: number;
+  /**
+   * Deployment `description`. A Deploy Version promotion self-identifies here
+   * (`"Deploy Version artifact <sha> to <env> (NOVA-6176)"`); probe/admin records do not.
+   * Used to accept a link-less NOVA-6176 record without admitting a probe.
+   */
+  description: string | null;
 }
 
 /**
@@ -126,6 +132,7 @@ type DeploymentApiRow = {
   environment?: string | null;
   sha?: string | null;
   created_at?: string | null;
+  description?: string | null;
 };
 
 /**
@@ -161,7 +168,7 @@ function parseDeploymentApiRows(data: DeploymentApiRow[]): RepoDeployment[] {
     const env = normalizeDeployEnvironment(d.environment);
     const createdAtMs = Date.parse(d.created_at ?? '');
     if (typeof d.id === 'number' && env && d.sha && Number.isFinite(createdAtMs)) {
-      out.push({ id: d.id, environment: env, sha: d.sha, createdAtMs });
+      out.push({ id: d.id, environment: env, sha: d.sha, createdAtMs, description: d.description ?? null });
     }
   }
   return out;
@@ -331,19 +338,39 @@ export function isDeployVersionWorkflowId(repo: string, workflowId: number): boo
  * P2P Stg shares `onprem-nonprod` with Dev Fast — same gate. Missing run linkage is rejected so
  * unverified tips cannot light the pill (walk to the next candidate instead).
  */
+/**
+ * A Deploy Version promotion self-identifies in its DEPLOYMENT `description`
+ * (`"Deploy Version artifact <sha> to <env> (NOVA-6176)"`). Measured across EF + AZF stg/prd:
+ * only Deploy Version records carry this prefix — auto-minted env-pin and Feature-Flag-Admin/probe
+ * records have `null` or other descriptions — so it is a safe fallback discriminator when a record
+ * has no run link to check.
+ *
+ * NOTE: key on the DEPLOYMENT `description`, NOT the deployment STATUS `description` (which starts
+ * `"artifact …"`). They are one word apart and the rejection this guards runs while walking statuses.
+ */
+export function isDeployVersionDeploymentRecord(deploymentDescription: string | null | undefined): boolean {
+  return /^Deploy Version\b/i.test((deploymentDescription ?? '').trim());
+}
+
 export function isAcceptableDeploymentForLane(
   repo: string,
   env: DeployEnvironmentKey,
   status: { runId: number | null },
-  runs: readonly FetchedRunEntry[]
+  runs: readonly FetchedRunEntry[],
+  deploymentDescription: string | null = null
 ): boolean {
   if (env !== 'stg' && env !== 'prod') return true;
   const deployVersionIds = getDeployVersionWorkflowIds(repo);
   if (deployVersionIds.length === 0) return true;
-  if (status.runId === null) return false;
-  const entry = runs.find((r) => r.run.id === status.runId);
-  if (!entry) return false;
-  return deployVersionIds.includes(entry.workflowId);
+  if (status.runId !== null) {
+    const entry = runs.find((r) => r.run.id === status.runId);
+    if (!entry) return false;
+    return deployVersionIds.includes(entry.workflowId);
+  }
+  // No run link — NOVA-6176's explicit record-deployment writes the status without `log_url`.
+  // Accept only when the DEPLOYMENT record self-identifies as a Deploy Version promotion; a probe
+  // never carries that prefix, so the probe filter the run-link check provides is preserved.
+  return isDeployVersionDeploymentRecord(deploymentDescription);
 }
 
 /**
@@ -368,7 +395,7 @@ async function buildDeploymentLaneSnapshots(
       for (const deployment of candidates) {
         const status = await fetchDeploymentLatestStatus(token, owner, repo, deployment.id);
         if (!status) continue;
-        if (!isAcceptableDeploymentForLane(repo, env, status, runs)) continue;
+        if (!isAcceptableDeploymentForLane(repo, env, status, runs, deployment.description)) continue;
         return { env, deployment, status };
       }
       return { env, deployment: null, status: null };
@@ -384,6 +411,7 @@ async function buildDeploymentLaneSnapshots(
       statusCreatedAt: status.createdAt,
       deploymentCreatedAt: new Date(deployment.createdAtMs).toISOString(),
       logUrl: status.logUrl,
+      linkMissing: !status.logUrl,
     });
   }
   return out;

@@ -549,7 +549,27 @@ function testStgProdRequireDeployVersionWorkflow() {
   assert.equal(
     isAcceptableDeploymentForLane('cpt-azure-functions-api', 'stg', { runId: null }, runs),
     false,
-    'Unlinked stg tip is rejected on all CD repos (walk to next candidate)'
+    'Unlinked stg tip with no description is rejected on CD repos (walk to next candidate)'
+  );
+  // NOVA-6176: an explicit record-deployment writes a link-less status (runId null). Accept it ONLY
+  // when the DEPLOYMENT description self-identifies as a Deploy Version promotion; a probe/admin
+  // record (null or any other description) stays rejected, preserving the probe filter.
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'stg', { runId: null }, runs,
+      'Deploy Version artifact e23b8a0de31bf2e0ff2ebaef419b9b60edac076f to stg (NOVA-6176)'),
+    true,
+    'Link-less NOVA-6176 record is accepted via its "Deploy Version" deployment description'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'stg', { runId: null }, runs, null),
+    false,
+    'Link-less record with no description (probe/admin) stays rejected'
+  );
+  assert.equal(
+    isAcceptableDeploymentForLane('cpt-ef-postgres-migrations', 'prod', { runId: null }, runs,
+      'feature-flag admin sync'),
+    false,
+    'Link-less record whose description is not a Deploy Version promotion stays rejected'
   );
   assert.equal(
     isDeployVersionWorkflowId('cpt-ef-postgres-migrations', EF_DEPLOY_VERSION_ID),
@@ -576,6 +596,7 @@ function testTimelineShaCorrelationIsDeployVersionOnly() {
       environment: 'prod' as const,
       sha,
       createdAtMs: Date.parse(createdAt),
+      description: null,
     },
   ];
 

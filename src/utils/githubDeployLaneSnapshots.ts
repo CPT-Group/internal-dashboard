@@ -131,6 +131,8 @@ export interface DeploymentLaneSnapshotInput {
   deploymentCreatedAt: string | null;
   /** Originating Actions run link from the status `log_url`, when present. */
   logUrl: string | null;
+  /** True when the accepted record carried no run link (NOVA-6176 explicit record-deployment). */
+  linkMissing?: boolean;
 }
 
 /** Build a stg/prod lane snapshot from its latest deployment + latest status. */
@@ -138,15 +140,19 @@ export function buildDeploymentLaneSnapshot(
   input: DeploymentLaneSnapshotInput
 ): GitHubDeployLaneSnapshot {
   const updatedAt = input.statusCreatedAt ?? input.deploymentCreatedAt;
+  const linkMissing = input.linkMissing ?? false;
   return {
     lane: input.lane,
     state: input.state,
     createdAt: input.deploymentCreatedAt ?? input.statusCreatedAt,
     updatedAt,
-    triggerText: `${ENV_LANE_LABEL[input.env]} deployment`,
+    triggerText: linkMissing
+      ? `${ENV_LANE_LABEL[input.env]} deployment · run link missing`
+      : `${ENV_LANE_LABEL[input.env]} deployment`,
     branch: null,
     deployVersionLabel: null,
     htmlUrl: input.logUrl,
+    linkMissing,
   };
 }
 
