@@ -82,6 +82,14 @@ export interface GitHubDeployLaneSnapshot {
   deployVersionLabel: string | null;
   /** Link to the originating Actions run, when known. */
   htmlUrl: string | null;
+  /**
+   * True when the accepted deployment record carried NO run link (`log_url`) — the shape
+   * NOVA-6176's explicit `record-deployment` writes. The deploy is real and green; the link is
+   * absent, so the card surfaces "run link missing" rather than papering over it. The producer
+   * fix (adding `log_url` to the status) clears this going forward; the flag keeps an
+   * already-written link-less record honest in the meantime.
+   */
+  linkMissing?: boolean;
 }
 
 /**
