@@ -31,6 +31,7 @@ import {
   JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14,
   JIRA_TREVOR_JQL,
   JIRA_TREVOR_JQL_OPEN,
+  NOVA_CORE_DEVS,
 } from '../src/constants';
 import type { JiraNamedQueryName, JiraNamedQueryParams } from '../src/constants';
 import {
@@ -49,6 +50,8 @@ import { GET as jiraSearchGET } from '../src/app/api/jira/search/route';
 import { GET as salesforceQueryGET } from '../src/app/api/salesforce/query/route';
 import { GET as salesforceDiscoverGET } from '../src/app/api/salesforce/discover/route';
 import { POST as websiteHealthTicketPOST } from '../src/app/api/jira/website-health-ticket/route';
+import { GET as jiraTransitionsGET } from '../src/app/api/jira/transitions/route';
+import { GET as jiraWorklogsTodayGET } from '../src/app/api/jira/worklogs-today/route';
 
 // ── Environment + network isolation ─────────────────────────────────────────
 
@@ -430,6 +433,51 @@ async function main(): Promise<void> {
     assert.equal(res.status, 200);
     assert.equal(recordedCalls.length, 1);
     assert.equal(new URL(recordedCalls[0].url).pathname, '/rest/api/3/issue');
+  });
+
+  // ── Transitions + worklogs-today input validation ──
+
+  const transitionsRequest = (keys: string): NextRequest =>
+    new NextRequest(`http://localhost/api/jira/transitions?keys=${encodeURIComponent(keys)}`);
+  const worklogsRequest = (ids: readonly string[]): NextRequest =>
+    new NextRequest(
+      `http://localhost/api/jira/worklogs-today?accountIds=${encodeURIComponent(ids.join(','))}`
+    );
+
+  await test('transitions: malformed or path-shaped keys -> 400, Jira never called', async () => {
+    for (const keys of ['../myself', 'CM-1,../../search', 'cm-1', 'CM-1?x=1', 'CM-0', 'CM-1/changelog', 'CM']) {
+      const res = await jiraTransitionsGET(transitionsRequest(keys));
+      assert.equal(res.status, 400, keys);
+    }
+    assert.equal(recordedCalls.length, 0);
+  });
+
+  await test('transitions: valid CM/OPRD keys still reach Jira changelog (control)', async () => {
+    nextJiraResponse = () => Response.json({ values: [] });
+    const res = await jiraTransitionsGET(transitionsRequest('CM-123,OPRD-45'));
+    assert.equal(res.status, 200);
+    const paths = recordedCalls.map((c) => new URL(c.url).pathname).sort();
+    assert.deepEqual(paths, ['/rest/api/3/issue/CM-123/changelog', '/rest/api/3/issue/OPRD-45/changelog']);
+  });
+
+  await test('worklogs-today: non-team or injected accountIds -> 400, Jira never called', async () => {
+    const coreId = NOVA_CORE_DEVS[0].accountId;
+    for (const ids of [
+      ['someone-else'],
+      [coreId, `${coreId}") OR project = HR OR worklogAuthor in ("x`],
+      [JIRA_OFFICE_JACKIE_ACCOUNT_ID],
+    ]) {
+      const res = await jiraWorklogsTodayGET(worklogsRequest(ids));
+      assert.equal(res.status, 400, ids.join(','));
+    }
+    assert.equal(recordedCalls.length, 0);
+  });
+
+  await test('worklogs-today: the Work Hours roster is still accepted (control)', async () => {
+    const res = await jiraWorklogsTodayGET(worklogsRequest(NOVA_CORE_DEVS.map((d) => d.accountId)));
+    assert.equal(res.status, 200);
+    assert.equal(recordedCalls.length, 1);
+    assert.equal(new URL(recordedCalls[0].url).pathname, '/rest/api/3/search/jql');
   });
 
   console.log(`All ${passed} API route hardening tests passed.`);
