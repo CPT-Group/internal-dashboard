@@ -3,14 +3,7 @@ import type { JiraIssue } from '@/types';
 import type { NovaAnalytics } from '@/types';
 import { buildAnalyticsFromNovaQueries } from '@/utils/jiraAnalytics';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
-import {
-  getJiraCacheTtl,
-  JIRA_SEARCH_MAX_RESULTS,
-  JIRA_NOVA_JQL_TODAY,
-  JIRA_NOVA_JQL_OPEN,
-  JIRA_NOVA_JQL_OVERDUE,
-  JIRA_NOVA_JQL_DONE,
-} from '@/constants';
+import { getJiraCacheTtl, JIRA_SEARCH_MAX_RESULTS } from '@/constants';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
 interface JiraNovaState {
@@ -48,10 +41,10 @@ export const useJiraNovaStore = create<JiraNovaState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const [todayRes, openRes, overdueRes, doneRes] = await Promise.all([
-        jiraSearch(JIRA_NOVA_JQL_TODAY, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_NOVA_JQL_OPEN, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_NOVA_JQL_OVERDUE, JIRA_SEARCH_MAX_RESULTS).catch(() => ({ issues: [] as JiraIssue[], total: 0 })),
-        jiraSearch(JIRA_NOVA_JQL_DONE, JIRA_SEARCH_MAX_RESULTS).catch(() => ({ issues: [] as JiraIssue[], total: 0 })),
+        jiraSearch('nova-today', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('nova-open', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('nova-overdue', JIRA_SEARCH_MAX_RESULTS).catch(() => ({ issues: [] as JiraIssue[], total: 0 })),
+        jiraSearch('nova-done', JIRA_SEARCH_MAX_RESULTS).catch(() => ({ issues: [] as JiraIssue[], total: 0 })),
       ]);
       const filterNova = (issues: JiraIssue[]) => filterIssuesNovaMinKey(issues);
       set({

@@ -13,4 +13,6 @@ export {
   jqlTicketsTransitionedToday,
   jqlTicketsCreatedToday,
   jqlTicketsUpdatedSince,
+  jqlTicketsUpdatedAfter,
+  formatJqlDateTime,
 } from './jql';

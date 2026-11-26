@@ -1,12 +1,10 @@
 'use client';
 
 import { AssignedTicketsCornerCard, BackgroundSlideshow, CornerInfoCard } from '@/components/ui';
-import { JULIES_BACKGROUND_SLIDES } from '@/constants';
+import { JIRA_OFFICE_JULIE_ACCOUNT_ID, JULIES_BACKGROUND_SLIDES } from '@/constants';
 import { useAssignedJiraTickets, useCompletedTodayCount, useSyncedClock } from '@/hooks';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './JuliesOfficeDashboard.module.css';
-
-const JULIE_JIRA_ACCOUNT_ID = '70121:35744a1b-356c-45c7-8a12-156352d60ddb';
 
 /**
  * Julie's Office dashboard – rotating unicorn-themed background from
@@ -16,7 +14,7 @@ export const JuliesOfficeDashboard = () => {
   const { cycleTheme } = useTheme();
   const { completedToday, loading: completedTodayLoading } = useCompletedTodayCount();
   const { tickets: assignedTickets, loading: assignedTicketsLoading } =
-    useAssignedJiraTickets(JULIE_JIRA_ACCOUNT_ID);
+    useAssignedJiraTickets(JIRA_OFFICE_JULIE_ACCOUNT_ID);
   const { timeLabel, dateLabel } = useSyncedClock();
 
   return (

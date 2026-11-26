@@ -11,6 +11,7 @@ export * from './JIRA_DEV1';
 export * from './JIRA_JULIE';
 export * from './JIRA_OPERATIONAL';
 export * from './JIRA_IMPEDIMENT';
+export * from './JIRA_NAMED_QUERIES';
 export * from './JULIES_BACKGROUND';
 export * from './JACKIES_BACKGROUND';
 export * from './DEV1_CONFIG';

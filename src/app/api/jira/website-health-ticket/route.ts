@@ -9,6 +9,7 @@ import type {
 import { formatWebsiteHealthPacificDateTime } from '@/lib/formatWebsiteHealthPacificDateTime';
 import type { JiraAdfDoc } from '@/services/api/jiraService';
 import { createIssue } from '@/services/api/jiraService';
+import { authorizeWebsiteHealthTicketRequest } from '@/lib/websiteHealthTicketAuth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -110,6 +111,9 @@ function isBodyShape(value: unknown): value is WebsiteHealthCreateJiraTicketRequ
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
+  const denied = authorizeWebsiteHealthTicketRequest(request.headers);
+  if (denied) return denied;
+
   let payload: unknown;
   try {
     payload = await request.json();

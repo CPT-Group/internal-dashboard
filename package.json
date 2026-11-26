@@ -22,6 +22,7 @@
     "cursor-analytics:sync-billing": "tsx scripts/cursor-analytics/sync-billing.ts",
     "test:cursor-billing-store": "tsx scripts/cursor-analytics/test-cursor-billing-store.ts",
     "test:cursor-analytics-auth": "tsx scripts/test-cursor-analytics-auth.ts",
+    "test:api-route-hardening": "tsx scripts/test-api-route-hardening.ts",
     "cursor-analytics:summarize": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir data/cursor-analytics/csv",
     "cursor-analytics:regen": "node scripts/cursor-analytics/summarize-cursor-exports.mjs --dir data/cursor-analytics/csv --out data/cursor-analytics/cursor-analytics-summary.json"
   },

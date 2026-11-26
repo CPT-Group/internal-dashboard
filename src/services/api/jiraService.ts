@@ -11,7 +11,7 @@ import type { JiraSearchParams, JiraSearchV3Raw, JiraSearchResponse } from '@/ty
 const JIRA_REST_PREFIX = '/rest/api/3';
 
 /** Default fields for analytics (full ticket data). */
-const DEFAULT_JIRA_FIELDS = [
+export const DEFAULT_JIRA_FIELDS = [
   'summary',
   'status',
   'project',

@@ -7,16 +7,7 @@ import { jiraSearch, jiraTransitionDates } from '@/services/api/jiraSearchClient
 import {
   getJiraCacheTtl,
   JIRA_SEARCH_MAX_RESULTS,
-  JIRA_IMPEDIMENT_LINK_CARRIERS_JQL,
   JIRA_IMPEDIMENT_SEARCH_FIELDS,
-  JIRA_OPERATIONAL_JQL_OPEN,
-  JIRA_OPERATIONAL_JQL_LIMBO,
-  JIRA_OPERATIONAL_JQL_LANDED_TODAY,
-  JIRA_OPERATIONAL_JQL_CLOSED_TODAY,
-  JIRA_OPERATIONAL_JQL_LANDED_LAST_14,
-  JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14,
-  JIRA_OPERATIONAL_JQL_LANDED_PREV_14,
-  JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14,
 } from '@/constants';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
@@ -94,15 +85,15 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
     try {
       const impedimentFields = [...JIRA_IMPEDIMENT_SEARCH_FIELDS];
       const [open, limbo, linkCarriers, landedToday, closedToday, landedLast14, resolvedLast14, landedPrev14, resolvedPrev14] = await Promise.all([
-        jiraSearch(JIRA_OPERATIONAL_JQL_OPEN, JIRA_SEARCH_MAX_RESULTS, impedimentFields),
-        jiraSearch(JIRA_OPERATIONAL_JQL_LIMBO, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_IMPEDIMENT_LINK_CARRIERS_JQL, JIRA_SEARCH_MAX_RESULTS, impedimentFields),
-        jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_TODAY, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_CLOSED_TODAY, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_RESOLVED_LAST_14, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_LANDED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_OPERATIONAL_JQL_RESOLVED_PREV_14, JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('operational-open', JIRA_SEARCH_MAX_RESULTS, impedimentFields),
+        jiraSearch('operational-limbo', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('impediment-link-carriers', JIRA_SEARCH_MAX_RESULTS, impedimentFields),
+        jiraSearch('operational-landed-today', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('operational-closed-today', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('operational-landed-last-14', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('operational-resolved-last-14', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('operational-landed-prev-14', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('operational-resolved-prev-14', JIRA_SEARCH_MAX_RESULTS),
       ]);
       const filterNova = (issues: JiraIssue[]) => filterIssuesNovaMinKey(issues);
       const openFiltered = filterNova(open.issues);
@@ -178,7 +169,7 @@ export const useOperationalJiraStore = create<OperationalJiraState>((set, get) =
     try {
       const impedimentFields = [...JIRA_IMPEDIMENT_SEARCH_FIELDS];
       const linkCarriers = await jiraSearch(
-        JIRA_IMPEDIMENT_LINK_CARRIERS_JQL,
+        'impediment-link-carriers',
         JIRA_SEARCH_MAX_RESULTS,
         impedimentFields
       );
