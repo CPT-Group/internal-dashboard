@@ -206,6 +206,8 @@ Example:
 
 Website Health creates Jira tickets through `POST /api/jira/website-health-ticket`.
 
+- **Requires a shared secret**: header `x-website-health-ticket-secret` must match the server-only env var `WEBSITE_HEALTH_TICKET_SECRET`. Unset → the route answers 404 (disabled); wrong or missing header → 401. The secret must never be exposed to the browser, so the Website Health page's in-browser **Create Jira ticket** button is refused until ticket creation moves behind an authenticated server path.
+
 - Default project: `NOVA` (`WEBSITE_HEALTH_JIRA_PROJECT_KEY` to override)
 - Default issue type: `Task` (`WEBSITE_HEALTH_JIRA_ISSUE_TYPE` to override)
 - Note: NOVA `Bug` may require extra custom fields (Actual Results, Expected Results, Frequency, Stage Found, User Impact, etc.). If you set issue type to `Bug`, make sure your automation also supplies all required fields for your Jira screen/workflow.

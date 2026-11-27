@@ -26,6 +26,10 @@ All Salesforce API calls are **server-side only** and **read-only**. Required in
 
 ## Discovery endpoints in this app
 
+> **Disabled by default.** Both routes return **404** unless the server-only env var
+> `SALESFORCE_DEBUG_ROUTES_ENABLED=true` is set (local `.env.local` only; never `NEXT_PUBLIC_*`,
+> and leave it unset on deployed sites).
+
 - **GET `/api/salesforce/discover`** – Describe Global (list of all sobjects). Optional `?sobject=Account` returns full describe (fields, types) for that sobject.
 - **GET `/api/salesforce/query?q=SOQL`** – Run a read-only SOQL query. Example: `?q=SELECT Id, Name FROM Account LIMIT 10`. Use to explore data and shape future widgets.
 - Use these to explore objects, fields, and data before wiring charts.

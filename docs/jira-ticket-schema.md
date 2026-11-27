@@ -107,7 +107,12 @@ There is **no** status named "Completed" or "Archived". Exact names:
 
 ## Search Request (JQL)
 
-**Endpoint:** `GET /api/jira/search` (our proxy) or POST Jira `/rest/api/3/search/jql`.
+**Endpoint:** POST Jira `/rest/api/3/search/jql` (the table below is Jira's request shape).
+
+> Our `GET /api/jira/search` route does **not** accept `jql`. It runs only server-defined named
+> queries: `?query=<name>` (names: `src/constants/JIRA_NAMED_QUERIES.ts`, JQL:
+> `src/services/jira/namedQueries.ts`), plus optional `maxResults` (1-500) and `fields`
+> (allowlisted IDs). Add a widget query by adding a name and its JQL there.
 
 | Query / Body | Type   | Description |
 |--------------|--------|-------------|

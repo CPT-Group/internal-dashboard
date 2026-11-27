@@ -22,16 +22,31 @@ export function jqlTicketsCreatedToday(): string {
 }
 
 /**
- * Tickets updated since a given time (for polling "what changed").
- * since: ISO date string or Date; will be formatted for JQL (yyyy-MM-dd HH:mm).
+ * Format a time for JQL (yyyy-MM-dd HH:mm) in the caller's LOCAL timezone.
+ * Runs in the browser so the value matches what the widget always sent.
  */
-export function jqlTicketsUpdatedSince(since: Date | string): string {
+export function formatJqlDateTime(since: Date | string): string {
   const d = typeof since === 'string' ? new Date(since) : since;
   const y = d.getFullYear();
   const M = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   const h = String(d.getHours()).padStart(2, '0');
   const m = String(d.getMinutes()).padStart(2, '0');
-  const jqlDate = `${y}-${M}-${day} ${h}:${m}`;
+  return `${y}-${M}-${day} ${h}:${m}`;
+}
+
+/**
+ * Tickets updated at/after an already-formatted JQL date (yyyy-MM-dd HH:mm).
+ * The server validates `jqlDate` before calling this (named query `nova-updated-since`).
+ */
+export function jqlTicketsUpdatedAfter(jqlDate: string): string {
   return `${NOVA_BASE} AND updated >= "${jqlDate}" ORDER BY updated DESC`;
+}
+
+/**
+ * Tickets updated since a given time (for polling "what changed").
+ * since: ISO date string or Date; will be formatted for JQL (yyyy-MM-dd HH:mm).
+ */
+export function jqlTicketsUpdatedSince(since: Date | string): string {
+  return jqlTicketsUpdatedAfter(formatJqlDateTime(since));
 }

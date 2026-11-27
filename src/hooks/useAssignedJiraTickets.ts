@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
 
 const POLL_INTERVAL_MS = 60_000;
@@ -28,19 +28,15 @@ export function useAssignedJiraTickets(accountId: string): UseAssignedJiraTicket
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const jql = useMemo(
-    () =>
-      `assignee = "${accountId}" AND statusCategory != Done AND status != Backlog ORDER BY updated DESC`,
-    [accountId]
-  );
-
   useEffect(() => {
     let isMounted = true;
 
     const fetchTickets = async () => {
       try {
         setError(null);
-        const result = await jiraSearch(jql, 100);
+        // JQL is server-defined (named query 'office-assigned-active'); accountId must be on the
+        // server's office-assignee allowlist (JIRA_OFFICE_ASSIGNEE_ACCOUNT_IDS).
+        const result = await jiraSearch('office-assigned-active', 100, undefined, { accountId });
         if (!isMounted) return;
 
         const mapped = result.issues
@@ -76,7 +72,7 @@ export function useAssignedJiraTickets(accountId: string): UseAssignedJiraTicket
       isMounted = false;
       clearInterval(interval);
     };
-  }, [jql]);
+  }, [accountId]);
 
   return { tickets, loading, error };
 }

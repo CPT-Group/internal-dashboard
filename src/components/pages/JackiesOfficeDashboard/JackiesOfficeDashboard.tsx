@@ -1,12 +1,10 @@
 'use client';
 
 import { AssignedTicketsCornerCard, BackgroundSlideshow, CornerInfoCard } from '@/components/ui';
-import { JACKIES_BACKGROUND_SLIDES } from '@/constants';
+import { JACKIES_BACKGROUND_SLIDES, JIRA_OFFICE_JACKIE_ACCOUNT_ID } from '@/constants';
 import { useAssignedJiraTickets, useCompletedTodayCount, useSyncedClock } from '@/hooks';
 import { useTheme } from '@/providers/ThemeProvider';
 import styles from './JackiesOfficeDashboard.module.css';
-
-const JACKIE_JIRA_ACCOUNT_ID = '6170ed0ef6da6a006aa38240';
 
 /**
  * Jackie's Office dashboard – rotating background from
@@ -16,7 +14,7 @@ export const JackiesOfficeDashboard = () => {
   const { cycleTheme } = useTheme();
   const { completedToday, loading: completedTodayLoading } = useCompletedTodayCount();
   const { tickets: assignedTickets, loading: assignedTicketsLoading } =
-    useAssignedJiraTickets(JACKIE_JIRA_ACCOUNT_ID);
+    useAssignedJiraTickets(JIRA_OFFICE_JACKIE_ACCOUNT_ID);
   const { timeLabel, dateLabel } = useSyncedClock();
 
   return (

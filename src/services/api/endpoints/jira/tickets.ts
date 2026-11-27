@@ -7,7 +7,6 @@ import type { JiraIssue } from '@/types';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 import { JIRA_SEARCH_MAX_RESULTS } from '@/constants';
-import { jqlTicketsTransitionedToday, jqlTicketsCreatedToday } from './jql';
 
 export interface TicketsTransitionedTodayResult {
   issues: JiraIssue[];
@@ -19,8 +18,7 @@ export interface TicketsTransitionedTodayResult {
  * Not "created today" – specifically resolutiondate >= startOfDay().
  */
 export async function getTicketsTransitionedToday(): Promise<TicketsTransitionedTodayResult> {
-  const jql = jqlTicketsTransitionedToday();
-  const { issues, total } = await jiraSearch(jql, JIRA_SEARCH_MAX_RESULTS);
+  const { issues, total } = await jiraSearch('nova-transitioned-today', JIRA_SEARCH_MAX_RESULTS);
   const filtered = filterIssuesNovaMinKey(issues);
   return { issues: filtered, total: filtered.length };
 }
@@ -32,8 +30,7 @@ export interface TicketsCreatedTodayResult {
 
 /** Fetch tickets created today (for "opened today" style widgets). */
 export async function getTicketsCreatedToday(): Promise<TicketsCreatedTodayResult> {
-  const jql = jqlTicketsCreatedToday();
-  const { issues, total } = await jiraSearch(jql, JIRA_SEARCH_MAX_RESULTS);
+  const { issues, total } = await jiraSearch('nova-created-today', JIRA_SEARCH_MAX_RESULTS);
   const filtered = filterIssuesNovaMinKey(issues);
   return { issues: filtered, total: filtered.length };
 }

@@ -7,7 +7,7 @@ import type { JiraIssue } from '@/types';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 import { JIRA_SEARCH_MAX_RESULTS } from '@/constants';
-import { jqlTicketsUpdatedSince } from './jql';
+import { formatJqlDateTime } from './jql';
 
 export interface FetchUpdatesResult {
   issues: JiraIssue[];
@@ -22,8 +22,9 @@ export interface FetchUpdatesResult {
  * Result issues are filtered to NOVA-661+.
  */
 export async function fetchUpdates(since: Date | string): Promise<FetchUpdatesResult> {
-  const jql = jqlTicketsUpdatedSince(since);
-  const { issues, total } = await jiraSearch(jql, JIRA_SEARCH_MAX_RESULTS);
+  const { issues, total } = await jiraSearch('nova-updated-since', JIRA_SEARCH_MAX_RESULTS, undefined, {
+    since: formatJqlDateTime(since),
+  });
   const filtered = filterIssuesNovaMinKey(issues);
   return {
     issues: filtered,

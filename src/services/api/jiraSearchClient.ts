@@ -1,9 +1,10 @@
 /**
- * Client-side Jira search. Calls Next.js API route /api/jira/search.
+ * Client-side Jira search. Calls Next.js API route /api/jira/search with a named query.
  * Used by Jira dashboard stores (Nova, Trevor, etc.) so fetch logic lives in one place.
  */
 
 import type { JiraIssue } from '@/types';
+import type { JiraNamedQueryName, JiraNamedQueryParams } from '@/constants';
 import { JIRA_SEARCH_MAX_RESULTS } from '@/constants';
 
 export interface JiraSearchClientResult {
@@ -89,16 +90,26 @@ export async function fetchWorkHoursToday(
   return { byAuthorSeconds, byIssueByAuthorSeconds };
 }
 
+/**
+ * Run a server-defined named Jira query (see JIRA_NAMED_QUERY_NAMES). The JQL lives server-side;
+ * the route refuses raw JQL. `params` carries only the parameters a query declares.
+ */
 export async function jiraSearch(
-  jql: string,
+  query: JiraNamedQueryName,
   maxResults: number = JIRA_SEARCH_MAX_RESULTS,
-  fields?: readonly string[]
+  fields?: readonly string[],
+  params?: JiraNamedQueryParams
 ): Promise<JiraSearchClientResult> {
   const q = new URLSearchParams();
-  q.set('jql', jql);
+  q.set('query', query);
   q.set('maxResults', String(maxResults));
   if (fields?.length) {
     q.set('fields', fields.join(','));
+  }
+  if (params) {
+    for (const [name, value] of Object.entries(params)) {
+      if (value !== undefined) q.set(name, value);
+    }
   }
   const res = await fetch(`/api/jira/search?${q.toString()}`);
   const json = await res.json();

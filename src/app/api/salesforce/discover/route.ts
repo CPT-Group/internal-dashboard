@@ -1,5 +1,9 @@
 import { NextRequest } from 'next/server';
 import { describeGlobal, describeSObject } from '@/services/api/salesforceService';
+import {
+  areSalesforceDebugRoutesEnabled,
+  salesforceDebugRoutesDisabledResponse,
+} from '@/lib/salesforceDebugRoutes';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,8 +11,11 @@ export const dynamic = 'force-dynamic';
  * Discovery endpoint: list sobjects or describe one.
  * GET /api/salesforce/discover           → describeGlobal (all sobjects)
  * GET /api/salesforce/discover?sobject=Account → describe for that sobject (fields, etc.)
+ * Disabled (404) unless SALESFORCE_DEBUG_ROUTES_ENABLED=true (server-only env).
  */
 export async function GET(request: NextRequest) {
+  if (!areSalesforceDebugRoutesEnabled()) return salesforceDebugRoutesDisabledResponse();
+
   try {
     const { searchParams } = new URL(request.url);
     const sobject = searchParams.get('sobject');

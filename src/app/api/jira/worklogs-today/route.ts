@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getWorklogsToday } from '@/services/api/jiraService';
+import { NOVA_TEAM_ACCOUNT_IDS } from '@/constants';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -7,6 +8,11 @@ export async function GET(request: Request) {
 
   if (ids.length === 0) {
     return NextResponse.json({ error: 'accountIds query param required' }, { status: 400 });
+  }
+
+  // Account IDs are placed in JQL; only NOVA team members (the Work Hours roster) are accepted.
+  if (ids.some((id) => !NOVA_TEAM_ACCOUNT_IDS.has(id))) {
+    return NextResponse.json({ error: 'Unsupported accountId.' }, { status: 400 });
   }
 
   try {

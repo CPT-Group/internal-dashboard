@@ -3,13 +3,7 @@ import type { JiraIssue } from '@/types';
 import type { NovaAnalytics } from '@/types';
 import { buildAnalyticsFromIssueList } from '@/utils/jiraAnalytics';
 import { jiraSearch } from '@/services/api/jiraSearchClient';
-import {
-  getJiraCacheTtl,
-  JIRA_SEARCH_MAX_RESULTS,
-  JIRA_TREVOR_JQL,
-  JIRA_TREVOR_JQL_OPEN,
-  NOVA_TEAM_ACCOUNT_IDS,
-} from '@/constants';
+import { getJiraCacheTtl, JIRA_SEARCH_MAX_RESULTS, NOVA_TEAM_ACCOUNT_IDS } from '@/constants';
 import { filterIssuesNovaMinKey } from '@/utils/jiraNovaFilter';
 
 function isNovaTeamIssue(issue: JiraIssue): boolean {
@@ -48,8 +42,8 @@ export const useTrevorJiraStore = create<TrevorJiraState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const [listResult, openResult] = await Promise.all([
-        jiraSearch(JIRA_TREVOR_JQL, JIRA_SEARCH_MAX_RESULTS),
-        jiraSearch(JIRA_TREVOR_JQL_OPEN, 1),
+        jiraSearch('trevor-list', JIRA_SEARCH_MAX_RESULTS),
+        jiraSearch('trevor-open', 1),
       ]);
       const issuesFiltered = filterIssuesNovaMinKey(listResult.issues);
       set({
